@@ -4,39 +4,50 @@
 use super::cst::Cst;
 use super::ast::Ast;
 
-/// The final outcome of a parsing rule.
-/// 
-/// This acts as a sovereign container for all "Iron" cargo. 
-/// It remains opaque during the parsing process to be resolved 
-/// only at the boundary of a finished parse.
+/// The core interface for anything produced by the parser.
+pub trait Value {
+    /// Returns the underlying parsed data, stripping any type labels.
+    fn value(self) -> Parsed;
+    
+    /// Returns the grammar-defined typename, if any.
+    fn typename(&self) -> Option<&str>;
+}
+
+/// The raw variants of parsed data.
 pub enum Parsed {
-    /// A fast-path for raw string matches.
     Token(String),
-    /// A fragment of the concrete syntax tree.
     Cst(Cst),
-    /// A structured mapping of named elements.
     Ast(Ast),
 }
 
-impl From<String> for Parsed {
-    fn from(s: String) -> Self {
-        Parsed::Token(s)
+impl Value for Parsed {
+    fn value(self) -> Parsed {
+        self
+    }
+
+    fn typename(&self) -> Option<&str> {
+        None
     }
 }
 
-impl From<Cst> for Parsed {
-    fn from(c: Cst) -> Self {
-        Parsed::Cst(c)
+/// A decorator that adds a type label to a Parsed value.
+pub struct TypedParsed {
+    pub typename: String,
+    pub payload: Parsed,
+}
+
+impl TypedParsed {
+    pub fn new(typename: String, payload: Parsed) -> Self {
+        Self { typename, payload }
     }
 }
 
-impl From<Ast> for Parsed {
-    fn from(a: Ast) -> Self {
-        Parsed::Ast(a)
+impl Value for TypedParsed {
+    fn value(self) -> Parsed {
+        self.payload
     }
-}
 
-impl Parsed {
-    // Methods for JSON serialization and Python boundary 
-    // resolution will be added here once the State logic is settled.
+    fn typename(&self) -> Option<&str> {
+        Some(&self.typename)
+    }
 }
