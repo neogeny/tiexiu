@@ -6,18 +6,14 @@ use super::cst::{Cst, cst_add};
 use super::parsed::Parsed;
 
 /// A structured mapping for AST nodes.
-///
-/// This manages named grammar elements, providing Python-safe
-/// keys and ensuring that all defined fields exist in the result.
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct Ast {
     pub fields: HashMap<String, Option<Cst>>,
 }
 
 impl Ast {
     pub fn new() -> Self {
-        Self {
-            fields: HashMap::new(),
-        }
+        Self::default()
     }
 
     /// Pre-defines keys to ensure they exist in the resulting mapping.
@@ -29,26 +25,24 @@ impl Ast {
 
         for &k in list_keys {
             let key = self.safekey(k);
-            self.fields.entry(key).or_insert_with(|| Some(Cst::List(Vec::new())));
+            // Initialize list keys with an empty Cst::List
+            self.fields.entry(key).or_insert(Some(Cst::List(Vec::new())));
         }
     }
 
     /// Sets a value using our internal Parsed type.
-    ///
-    /// No more generics or dyn Any. The data arrives as a 'Parsed'
-    /// package and is merged into the existing structure.
     pub fn set(&mut self, key: &str, item: Parsed, as_list: bool) {
         let key = self.safekey(key);
 
         // Take ownership of the current value to process it via cst_add
+        // Note: .flatten() is useful here to collapse Option<Option<Cst>>
         let current = self.fields.remove(&key).flatten();
         let updated = cst_add(current, item, as_list);
 
         self.fields.insert(key, Some(updated));
     }
 
-    /// Protects the Python boundary by ensuring keys don't collide
-    /// with built-in dictionary methods.
+    /// Protects the Python boundary by ensuring keys don't collide.
     fn safekey(&self, key: &str) -> String {
         let mut k = key.to_string();
         while self.is_unsafe(&k) {

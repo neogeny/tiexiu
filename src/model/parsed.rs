@@ -5,6 +5,7 @@ use super::cst::Cst;
 use super::ast::Ast;
 
 /// The internal variants of parsed data.
+#[derive(Debug, Clone, PartialEq)]
 pub enum ParsedValue {
     Token(String),
     Cst(Cst),
@@ -13,9 +14,7 @@ pub enum ParsedValue {
 }
 
 /// The sovereign result of a parsing rule.
-/// 
-/// This struct replaces 'dyn Any' entirely. It carries both the 
-/// structural data (Value) and the grammar-defined type label.
+#[derive(Debug, Clone, PartialEq)]
 pub struct Parsed {
     pub typename: Option<String>,
     pub value: ParsedValue,
@@ -50,6 +49,12 @@ impl Parsed {
 impl From<String> for Parsed {
     fn from(s: String) -> Self {
         Parsed::new(ParsedValue::Token(s))
+    }
+}
+
+impl From<&str> for Parsed {
+    fn from(s: &str) -> Self {
+        Parsed::new(ParsedValue::Token(s.to_string()))
     }
 }
 
