@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-use super::parsed::{Parsed, ParsedKind};
+use super::parsed::{Parsed, ParsedValue};
 
 /// The Carrier Enum: Manages the "Open" vs "Closed" state of the CST.
 ///
@@ -49,8 +49,8 @@ pub fn cst_add(cst: Option<Cst>, item: Parsed, as_list: bool) -> Cst {
 /// directly without expensive downcasting.
 pub fn cst_merge(cst: Option<Cst>, other: Parsed) -> Cst {
     // Determine if the incoming 'other' is already a Cst we can flatten
-    let other_cst = match other.kind {
-        ParsedKind::Cst(c) => c,
+    let other_cst = match other.value {
+        ParsedValue::Cst(c) => c,
         _ => Cst::Item(Box::new(other)),
     };
 

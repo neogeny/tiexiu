@@ -1,6 +1,7 @@
 use pyo3::prelude::*;
 
 pub mod model;
+mod input;
 
 #[pymodule]
 mod _tiexiu {

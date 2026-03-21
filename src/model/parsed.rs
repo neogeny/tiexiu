@@ -5,7 +5,7 @@ use super::cst::Cst;
 use super::ast::Ast;
 
 /// The internal variants of parsed data.
-pub enum ParsedKind {
+pub enum ParsedValue {
     Token(String),
     Cst(Cst),
     Ast(Ast),
@@ -17,15 +17,15 @@ pub enum ParsedKind {
 /// structural data (Kind) and the grammar-defined type label.
 pub struct Parsed {
     pub typename: Option<String>,
-    pub kind: ParsedKind,
+    pub value: ParsedValue,
 }
 
 impl Parsed {
     /// Creates a new, unlabeled Parsed result.
-    pub fn new(kind: ParsedKind) -> Self {
+    pub fn new(kind: ParsedValue) -> Self {
         Self {
             typename: None,
-            kind,
+            value: kind,
         }
     }
 
@@ -43,18 +43,18 @@ impl Parsed {
 // Ergonomic conversions to create Parsed from raw types
 impl From<String> for Parsed {
     fn from(s: String) -> Self {
-        Parsed::new(ParsedKind::Token(s))
+        Parsed::new(ParsedValue::Token(s))
     }
 }
 
 impl From<Cst> for Parsed {
     fn from(c: Cst) -> Self {
-        Parsed::new(ParsedKind::Cst(c))
+        Parsed::new(ParsedValue::Cst(c))
     }
 }
 
 impl From<Ast> for Parsed {
     fn from(a: Ast) -> Self {
-        Parsed::new(ParsedKind::Ast(a))
+        Parsed::new(ParsedValue::Ast(a))
     }
 }
