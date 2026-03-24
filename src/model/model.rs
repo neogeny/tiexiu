@@ -1,4 +1,4 @@
-use crate::model::ctx::{Ctx, ParseResult};
+use crate::engine::ctx::{Ctx, ParseResult};
 
 pub trait Model {
     fn parse(&self, ctx: &mut Ctx) -> ParseResult;
