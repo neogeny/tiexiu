@@ -1,5 +1,4 @@
 use crate::model::ctx::{Ctx, ParseResult};
-use crate::model::scope::StateScope;
 use super::model::Model;
 
 pub struct ChoiceOption {
@@ -13,10 +12,8 @@ pub(crate) struct Choice {
 impl Model for Choice {
     fn parse(&self, ctx: &mut Ctx) -> ParseResult {
         // Rust's version of with ctx.choice() as ch:
-        let scope = StateScope::new(ctx);
         for option in &self.options {
-            if let Ok(result) = option.parse(scope.ctx) {
-                scope.merge();
+            if let Ok(result) = option.parse(ctx) {
                 return Ok(result);
             }
         }

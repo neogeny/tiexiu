@@ -3,7 +3,7 @@ use pyo3::prelude::*;
 
 pub mod input;
 pub mod model;
-mod grammars;
+pud mod grammars;
 
 #[pymodule]
 mod _tiexiu {

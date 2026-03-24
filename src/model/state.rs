@@ -83,23 +83,23 @@ impl<'a> ParseStateStack<'a> {
         }
     }
 
-    /// Access the current active state.
     pub fn top(&mut self) -> &mut ParseState<'a> {
         self.states.last_mut().expect("Empty state stack")
     }
 
-    /// Pushes a fresh state (used when starting a new rule).
     pub fn push(&mut self) {
         let new_state = self.top().clone_state();
         self.states.push(new_state);
     }
 
-    /// Pops the top state. If pos is provided, moves the new top cursor to it.
-    pub fn pop(&mut self, pos: Option<usize>) -> ParseState<'a> {
+    pub fn undo(&mut self) -> ParseState<'a> {
         let popped = self.states.pop().expect("State stack underflow");
-        if let Some(p) = pos {
-            self.top().cursor.goto(p);
-        }
+        popped
+    }
+    
+    pub fn pop(&mut self) -> ParseState<'a> {
+        let popped = self.states.pop().expect("State stack underflow");
+        self.top().cursor.goto(popped.cursor.pos());
         popped
     }
 

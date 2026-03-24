@@ -1,6 +1,5 @@
-pub mod ast;
-pub mod cst;
+mod state;
+mod ast;
+mod cst;
 pub mod ctx;
 pub mod parsed;
-pub mod scope;
-pub mod state;
