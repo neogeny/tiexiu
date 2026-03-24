@@ -1,12 +1,27 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+use super::ast::Ast;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Cst {
     Token(String),
     List(Vec<Cst>),
     Closed(Vec<Cst>),
+    Ast(Ast),
     Void
+}
+
+impl From<Vec<Cst>> for Cst {
+    fn from(v: Vec<Cst>) -> Self {
+        Cst::List(v)
+    }
+}
+
+impl<const N: usize> From<[Cst; N]> for Cst {
+    fn from(arr: [Cst; N]) -> Self {
+        Cst::List(arr.into())
+    }
 }
 
 impl Cst {

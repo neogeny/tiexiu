@@ -1,10 +1,10 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+use super::cst::Cst;
 use super::state::ParseStateStack;
-use super::parsed::ParsedValue;
 
-pub type ParseResult = Result<ParsedValue, String>;
+pub type ParseResult = Result<Cst, String>;
 
 pub struct RuleInfo {}
 

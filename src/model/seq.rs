@@ -1,4 +1,5 @@
 use crate::engine::ctx::{Ctx, ParseResult};
+use crate::engine::cst::Cst;
 use super::model::Model;
 
 pub struct Sequence {
@@ -10,15 +11,12 @@ impl Sequence {
     pub fn new(exps: Vec<Box<dyn Model>>) -> Self {
         Self { exps }
     }
-    
+
     fn parse(&self, ctx: &mut Ctx) -> ParseResult {
         let mut results = Vec::new();
         for exp in &self.exps {
-            // The '?' operator is the key: 
-            // it exits early and returns the Err if any element fails.
             results.push(exp.parse(ctx)?);
         }
-        Err("Not implemented".to_string())
-        // Ok(ParsedValue::new(results))
+        Ok(Cst::from(results))
     }
 }

@@ -1,9 +1,10 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+use std::rc::Rc;
+
 use super::ast::{Ast, __AT__};
 use super::cst::Cst;
-use super::parsed::ParsedValue;
 use crate::input::text::CursorBox;
 
 pub struct ParseState<'a> {
@@ -63,15 +64,15 @@ impl<'a> ParseState<'a> {
         self.cst = prev.merge(node);
     }
 
-    pub fn node(&mut self) -> ParsedValue {
+    pub fn node(&mut self) -> Cst {
         if let Some(val) = self.ast.fields.get(__AT__) {
-            ParsedValue::Cst(val.clone())
+            val.clone()
         }
         else if self.ast.fields.len() >= 1 {
-            ParsedValue::Ast(self.ast.clone())
+            Cst::Ast(self.ast.clone())
         }
         else{
-            ParsedValue::Cst(self.cst.clone())
+            self.cst.clone()
         }
     }
 }
