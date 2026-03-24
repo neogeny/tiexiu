@@ -11,7 +11,7 @@ pub struct ParseState<'a> {
     pub ast: Ast,
     pub cst: CstRc,
     pub cutseen: bool,
-    pub last_node: CstRc,  // FIXME: cannot keep a copy of a complet parse tree
+    pub last_node: CstRc,
 }
 
 /// Manages the lifecycle of states during the parse.
@@ -36,10 +36,8 @@ impl<'a> ParseState<'a> {
         let initial_cst = Rc::new(Cst::Void);
         Self {
             cursor: self.cursor.clone(),
-            ast: Ast {
-                fields: self.ast.fields.clone(),
-            },
-            cst: initial_cst.clone(),
+            ast: self.ast.clone(),
+            cst: Rc::clone(&initial_cst),
             cutseen: self.cutseen,
             last_node: initial_cst,
         }
@@ -48,34 +46,28 @@ impl<'a> ParseState<'a> {
     pub fn merge(&mut self, other: ParseState<'a>) {
         self.cursor.goto(other.cursor.pos());
         self.extend((*other.cst).clone());
-        for (key, value) in other.ast.fields {
-            self.ast.fields.insert(key, value);
-        }
+        self.ast.update(&other.ast);
     }
 
     pub fn append(&mut self, node: Cst) {
-        let noderc = Rc::new(node.clone());
-        self.last_node = noderc.clone();
-        let prev = (*self.cst).clone();
-        self.cst = Rc::new(prev.add(node));
+        let cst = std::mem::take(Rc::make_mut(&mut self.cst));
+        self.cst = cst.add(node);
+        self.last_node = Rc::clone(&self.cst);
     }
 
     pub fn extend(&mut self, node: Cst) {
-        let noderc = Rc::new(node.clone());
-        self.last_node = noderc.clone();
-        let prev = (*self.cst).clone();
-        self.cst = Rc::new(prev.merge(node));
+        let cst = std::mem::take(Rc::make_mut(&mut self.cst));
+        self.cst = cst.merge(node);
+        self.last_node = Rc::clone(&self.cst);
     }
 
-    pub fn node(&mut self) -> Cst {
-        if let Some(val) = self.ast.fields.get(__AT__) {
-            val.clone()
-        }
-        else if self.ast.fields.len() >= 1 {
-            Cst::Ast(self.ast.clone())
-        }
-        else{
-            (*self.cst).clone()
+    pub fn node(self) -> CstRc {
+        if let Some(val) = self.ast.get(__AT__) {
+            Rc::clone(val)
+        } else if !self.ast.is_empty() {
+            Rc::new(Cst::Ast(self.ast))
+        } else {
+            self.cst
         }
     }
 }
@@ -112,5 +104,10 @@ impl<'a> ParseStateStack<'a> {
     pub fn merge(&mut self) {
         let child = self.states.pop().expect("State stack underflow");
         self.top().merge(child);
+    }
+
+    pub fn node(&mut self) -> CstRc {
+        let state = self.states.pop().expect("Stack underflow");
+        state.node()  // this drops the state
     }
 }
