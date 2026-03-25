@@ -1,5 +1,4 @@
-use crate::engine::ctx::Ctx;
-use crate::engine::cst::Cst;
+use crate::engine::{Cst, Ctx};
 use super::model::Model;
 
 pub struct Sequence {

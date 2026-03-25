@@ -1,5 +1,4 @@
-use crate::engine::cst::Cst;
-use crate::engine::ctx::Ctx;
+use crate::engine::{Cst, Ctx};
 
 pub trait Model {
     fn parse(&self, mut _ctx: Ctx) -> Result<(Ctx, Cst), String> {
