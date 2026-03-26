@@ -11,7 +11,6 @@ pub struct ParseState<'a> {
     pub ast: Ast,
     pub cst: CstRc,
     pub cutseen: bool,
-    pub last_node: CstRc,
 }
 
 /// Manages the lifecycle of states during the parse.
@@ -22,24 +21,20 @@ pub struct ParseStateStack<'a> {
 
 impl<'a> ParseState<'a> {
     pub fn new(cursor: CursorBox<'a>) -> Self {
-        let initial_cst = Rc::new(Cst::Void);
         Self {
             cursor,
             ast: Ast::new(),
-            cst: initial_cst.clone(),
+            cst: Rc::new(Cst::Void),
             cutseen: false,
-            last_node: initial_cst,
         }
     }
 
     pub fn clone_state(&self) -> Self {
-        let initial_cst = Rc::new(Cst::Void);
         Self {
             cursor: self.cursor.clone(),
             ast: self.ast.clone(),
-            cst: initial_cst.clone(),
+            cst: Rc::new(Cst::Void),
             cutseen: self.cutseen,
-            last_node: initial_cst,
         }
     }
 
@@ -52,16 +47,14 @@ impl<'a> ParseState<'a> {
     pub fn append(&mut self, node: Cst) {
         let cst = std::mem::take(Rc::make_mut(&mut self.cst));
         self.cst = cst.add(node);
-        self.last_node = self.cst.clone();
     }
 
     pub fn extend(&mut self, node: Cst) {
         let cst = std::mem::take(Rc::make_mut(&mut self.cst));
         self.cst = cst.merge(node);
-        self.last_node = self.cst.clone();
     }
 
-    // this drops self
+    /// Consumes the state and returns the resulting CST node.
     pub fn node(self) -> CstRc {
         if let Some(val) = self.ast.get(__AT__) {
             val.clone()
@@ -91,8 +84,7 @@ impl<'a> ParseStateStack<'a> {
     }
 
     pub fn undo(&mut self) -> ParseState<'a> {
-        let popped = self.states.pop().expect("State stack underflow");
-        popped
+        self.states.pop().expect("State stack underflow")
     }
 
     pub fn pop(&mut self) -> ParseState<'a> {
@@ -109,6 +101,6 @@ impl<'a> ParseStateStack<'a> {
 
     pub fn node(&mut self) -> CstRc {
         let state = self.states.pop().expect("Stack underflow");
-        state.node()  // this drops the state
+        state.node()
     }
 }
