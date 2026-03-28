@@ -32,11 +32,19 @@ impl<C: Cursor> Ctx<C> {
     pub fn eof_check(&mut self) -> ParseResult<C> {
         unimplemented!()
     }
-    
+
+    pub fn next(&mut self) -> Option<Ctx<C>> {
+        // do it with cursor goto(+1)?
+        unimplemented!()
+    }
+
     pub fn token(&mut self, _token: &str) -> ParseResult<C> {
         unimplemented!()
     }
     pub fn pattern(&mut self, _pattern: &str) -> ParseResult<C> {
+        unimplemented!()
+    }
+    pub fn search(&mut self, _pattern: &str) -> ParseResult<C> {
         unimplemented!()
     }
 }

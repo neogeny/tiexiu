@@ -27,6 +27,7 @@ pub enum Model<M>
     OverrideList(OverrideList<M>),
 
     Group(Group<M>),
+    SkipGroup(SkipGroup<M>),
     Sequence(Sequence<M>),
     Choice(Choice<M>),
     Optional(Optional<M>),
@@ -60,6 +61,7 @@ where
             Self::OverrideList(m) => m.parse(ctx),
 
             Self::Group(m) => m.parse(ctx),
+            Self::SkipGroup(m) => m.parse(ctx),
             Self::Sequence(m) => m.parse(ctx),
             Self::Choice(m) => m.parse(ctx),
             Self::Optional(m) => m.parse(ctx),
