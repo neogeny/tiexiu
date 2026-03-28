@@ -61,11 +61,11 @@ where
 
 
 // #9
-pub struct Token<'t> {
-    pub token: &'t str,
+pub struct Token {
+    pub token: &'static str,
 }
 
-impl<'t, C> CanParse<C> for Token<'t>
+impl<C> CanParse<C> for Token
 where
     C: Cursor,
 {
@@ -76,32 +76,32 @@ where
 
 
 // #10
-pub struct Constant<'c> {
-    pub literal: &'c str,
+pub struct Constant {
+    pub literal: &'static str,
 }
 
-impl<'c, C> CanParse<C> for Constant<'c>
+impl<C> CanParse<C> for Constant
 where
     C: Cursor,
 {
     fn parse(&self, ctx: Ctx<C>) -> ParseResult<C> {
-        Ok((ctx, Cst::Literal(self.literal.to_string())))
+        Ok((ctx, Cst::Literal(self.literal)))
     }
 }
 
 
 // #11
-pub struct Alert<'a> {
-    pub literal: &'a str,
+pub struct Alert {
+    pub literal: &'static str,
     pub level: u8
 }
 
-impl<'a, C> CanParse<C> for Alert<'a>
+impl<C> CanParse<C> for Alert
 where
     C: Cursor,
 {
     fn parse(&self, ctx: Ctx<C>) -> ParseResult<C> {
-        Ok((ctx, Cst::Literal(self.literal.to_string())))
+        Ok((ctx, Cst::Literal(self.literal)))
     }
 }
 

@@ -5,12 +5,13 @@ use super::ast::Ast;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Cst {
-    Token(String),
-    Literal(String),
+    Token(&'static str),
+    Literal(&'static str),
     Item(Box<Cst>),
     List(Vec<Box<Cst>>),
     Closure(Vec<Box<Cst>>),
-    Named(String, Box<Cst>),
+    Named(&'static str, Box<Cst>),
+    NamedList(&'static str, Box<Cst>),
     Ast(Box<Ast>),
     Nil,
 }

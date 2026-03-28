@@ -5,14 +5,14 @@ use super::cst::Cst;
 use super::ast::Ast;
 
 /// The internal variants of parsed data.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub enum ParsedValue {
     Cst(Cst),
     Ast(Ast),
 }
 
 /// The sovereign result of a parsing rule.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct Parsed {
     pub typename: Option<String>,
     pub value: ParsedValue,

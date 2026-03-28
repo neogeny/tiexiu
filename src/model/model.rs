@@ -10,16 +10,16 @@ pub trait CanParse<C: Cursor> {
     }
 }
 
-pub enum Model<'m, M>
+pub enum Model<M>
 {
     Cut(Cut),
     Void(Void),
     Fail(Fail),
     Dot(Dot),
     Eof(Eof),
-    Token(Token<'m>),
-    Constant(Constant<'m>),
-    Alert(Alert<'m>),
+    Token(Token),
+    Constant(Constant),
+    Alert(Alert),
     Group(Group<M>),
     Sequence(Sequence<M>),
     Choice(Choice<M>),
@@ -32,7 +32,7 @@ pub enum Model<'m, M>
     PositiveGather(PositiveGather<M>),
 }
 
-impl<'m, M, C> CanParse<C> for Model<'m, M>
+impl<M, C> CanParse<C> for Model<M>
 where
     M: CanParse<C>,
     C: Cursor

@@ -5,6 +5,7 @@ mod sequence;
 mod optional;
 mod closure;
 mod basic;
+mod named;
 
 pub use model::{CanParse, ParseResult};
 pub use choice::*;
@@ -13,3 +14,4 @@ pub use group::*;
 pub use optional::*;
 pub use closure::*;
 pub use basic::*;
+pub use named::*;
