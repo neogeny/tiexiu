@@ -51,18 +51,20 @@ where
     M: CanParse<C>,
     C: Cursor,
 {
-    fn parse(&self, _ctx: Ctx<C>) -> ParseResult<C> {
-        unimplemented!()
-        // while let Err(err_ctx) = self.exp.parse(ctx) {
-        //     match err_ctx.next() {
-        //         None => Err(),
-        //         Some(next_cxt) => {
-        //             ctx = next_cxt;
-        //             continue;
-        //         }
-        //     }
-        //
-        // }
+    fn parse(&self, mut ctx: Ctx<C>) -> ParseResult<C> {
+        loop {
+            match self.exp.parse(ctx) {
+                Err(err_ctx) => {
+                    match err_ctx.next() {
+                        Ok(next_cxt) => {
+                            ctx = next_cxt;
+                        },
+                        Err(e) => return Err(e)
+                    }
+                }
+                ok => return ok,
+            }
+        }
     }
 }
 

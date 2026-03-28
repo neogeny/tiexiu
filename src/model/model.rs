@@ -37,6 +37,10 @@ pub enum Model<M>
     PositiveJoin(PositiveJoin<M>),
     Gather(Gather<M>),
     PositiveGather(PositiveGather<M>),
+
+    Lookahead(Lookahead<M>),
+    NegativeLookahead(NegativeLookahead<M>),
+    SkipTo(SkipTo<M>)
 }
 
 impl<M, C> CanParse<C> for Model<M>
@@ -71,6 +75,10 @@ where
             Self::PositiveJoin(m) => m.parse(ctx),
             Self::Gather(m) => m.parse(ctx),
             Self::PositiveGather(m) => m.parse(ctx),
+
+            Self::Lookahead(m) => m.parse(ctx),
+            Self::NegativeLookahead(m) => m.parse(ctx),
+            Self::SkipTo(m) => m.parse(ctx),
         }
     }
 }

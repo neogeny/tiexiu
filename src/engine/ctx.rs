@@ -33,9 +33,9 @@ impl<C: Cursor> Ctx<C> {
         unimplemented!()
     }
 
-    pub fn next(&mut self) -> Option<Ctx<C>> {
+    pub fn next(self) -> Result<Ctx<C>, Ctx<C>> {
         // do it with cursor goto(+1)?
-        unimplemented!()
+        Err(self)
     }
 
     pub fn token(&mut self, _token: &str) -> ParseResult<C> {
