@@ -20,6 +20,12 @@ pub enum Model<M>
     Token(Token),
     Constant(Constant),
     Alert(Alert),
+
+    Named(Named<M>),
+    NamedList(NamedList<M>),
+    Override(Override<M>),
+    OverrideList(OverrideList<M>),
+
     Group(Group<M>),
     Sequence(Sequence<M>),
     Choice(Choice<M>),
@@ -47,6 +53,11 @@ where
             Self::Token(m) => m.parse(ctx),
             Self::Constant(m) => m.parse(ctx),
             Self::Alert(m) => m.parse(ctx),
+            
+            Self::Named(m) => m.parse(ctx),
+            Self::NamedList(m) => m.parse(ctx),
+            Self::Override(m) => m.parse(ctx),
+            Self::OverrideList(m) => m.parse(ctx),
 
             Self::Group(m) => m.parse(ctx),
             Self::Sequence(m) => m.parse(ctx),

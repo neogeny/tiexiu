@@ -12,6 +12,8 @@ pub enum Cst {
     Closure(Vec<Box<Cst>>),
     Named(&'static str, Box<Cst>),
     NamedList(&'static str, Box<Cst>),
+    OverrideValue(Box<Cst>),
+    OverrideList(Box<Cst>),
     Ast(Box<Ast>),
     Nil,
 }
