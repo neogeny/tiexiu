@@ -1,34 +1,22 @@
-use serde_json::{json, Value, Map};
+use serde_json::{Map, Value};
 
+/// Converts a Cst (and its nested Ast) into a JSON-compatible Value.
+/// This acts as the boundary layer, requiring no Serialize traits on internal types.
 pub fn cst_to_json(cst: &Cst) -> Value {
     match cst {
-        // Simple terminals
+        // Basic terminal values
         Cst::Token(s) | Cst::Literal(s) => Value::String(s.to_string()),
 
-        // Passthrough for single items
+        // Structural passthrough
         Cst::Item(child) => cst_to_json(child),
 
-        // Arrays
+        // Iterables
         Cst::List(items) | Cst::Closure(items) => {
             let array = items.iter().map(|c| cst_to_json(c)).collect();
             Value::Array(array)
         }
 
-        // Object with a single key mapping to a value
-        Cst::Named(name, child) => {
-            let mut obj = Map::new();
-            obj.insert(name.to_string(), cst_to_json(child));
-            Value::Object(obj)
-        }
-
-        // Object with a single key mapping to an array of one value
-        Cst::NamedList(name, child) => {
-            let mut obj = Map::new();
-            obj.insert(name.to_string(), Value::Array(vec![cst_to_json(child)]));
-            Value::Object(obj)
-        }
-
-        // The constructed Ast: convert the internal HashMap to a JSON Object
+        // Pre-transformed Structured Mapping
         Cst::Ast(ast) => {
             let mut obj = Map::new();
             for (key, value) in &ast.fields {
@@ -37,7 +25,21 @@ pub fn cst_to_json(cst: &Cst) -> Value {
             Value::Object(obj)
         }
 
-        // Null/Empty
+        // These exist in the enum but, as noted, are usually
+        // folded into an Ast before reaching the boundary.
+        Cst::Named(name, child) => {
+            let mut obj = Map::new();
+            obj.insert(name.to_string(), cst_to_json(child));
+            Value::Object(obj)
+        }
+
+        Cst::NamedList(name, child) => {
+            let mut obj = Map::new();
+            obj.insert(name.to_string(), Value::Array(vec![cst_to_json(child)]));
+            Value::Object(obj)
+        }
+
+        // Empty results
         Cst::Nil => Value::Null,
     }
 }
