@@ -1,8 +1,12 @@
-pub mod model;
-pub mod choice;
-pub mod group;
-pub mod seq;
+mod model;
+mod choice;
+mod group;
+mod sequence;
+mod optional;
+mod closure;
 
-use choice::*;
-use seq::*;
-use group::*;
+pub use choice::*;
+pub use sequence::*;
+pub use group::*;
+pub use optional::*;
+pub use closure::*;

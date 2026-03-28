@@ -15,6 +15,9 @@ pub enum Model<M>
     Group(Group<M>),
     Sequence(Sequence<M>),
     Choice(Choice<M>),
+    Optional(Optional<M>),
+    Closure(Closure<M>),
+    PositiveClosure(PositiveClosure<M>)
 }
 
 impl<M, C> CanParse<C> for Model<M>
@@ -27,6 +30,9 @@ where
             Self::Group(m) => m.parse(ctx),
             Self::Sequence(m) => m.parse(ctx),
             Self::Choice(m) => m.parse(ctx),
+            Self::Optional(m) => m.parse(ctx),
+            Self::Closure(m) => m.parse(ctx),
+            Self::PositiveClosure(m) => m.parse(ctx),
             // Self::Token(m) => m.parse(ctx),
             // ...
         }

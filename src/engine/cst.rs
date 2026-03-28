@@ -27,6 +27,7 @@ impl From<Vec<Cst>> for Cst {
     }
 }
 
+
 impl<const N: usize> From<[Cst; N]> for Cst {
     fn from(arr: [Cst; N]) -> Self {
         let boxed = arr.into_iter().map(Box::new).collect();
