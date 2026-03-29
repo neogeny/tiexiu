@@ -1,35 +1,51 @@
-use std::sync::{Arc, OnceLock};
+// Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+// use std::sync::{Arc, OnceLock};
 use crate::input::Cursor;
 use super::model::{CanParse, ParseResult};
 use crate::engine::{Ctx};
 
 
-pub struct Call<C: Cursor> {
+pub struct Call<M> {
     pub name: &'static str,
-    // The cache stores a thread-safe, shared pointer to the erased rule.
-    // This breaks the circular dependency at the type level.
-    pub cache: OnceLock<Arc<dyn CanParse<C>>>,
+    pub rule: Option<Box<M>>
 }
 
-impl<C: Cursor> Call<C> {
+impl<M> Call<M> {
     pub fn new(name: &'static str) -> Self {
         Self {
             name,
-            cache: OnceLock::new(),
+            // rule: OnceLock::new(),
+            rule: None
         }
     }
 }
 
-impl<C: Cursor> CanParse<C> for Call<C> {
+impl<M, C> CanParse<C> for Call<M>
+where
+    M: CanParse<C>,
+    C: Cursor
+{
     fn parse(&self, ctx: Ctx<C>) -> ParseResult<C> {
         // First-hit resolution:
         // 1. Check the cache.
         // 2. If empty, ask Ctx to find the Arc<dyn CanParse<C>> by name.
         // 3. Store the Arc in the cache for all future calls.
-        let rule = self.cache.get_or_init(|| {
-            ctx.resolve(self.name)
-        });
-
-        rule.parse(ctx)
+        // let rule = self.cache.get_or_init(|| {
+        //     // ctx.resolve(self.name)
+        //     ()
+        // });
+        if let Some(rule) = &self.rule {
+            match rule.parse(ctx) {
+                Ok((new_ctx, cst)) => {
+                    Ok((new_ctx, cst.distill()))
+                },
+                err => err,
+            }
+        }
+        else {
+            Err(ctx)
+        }
     }
 }

@@ -6,16 +6,13 @@ use super::model::{CanParse, ParseResult};
 use crate::engine::{Cst, Ctx};
 
 // #28
-pub struct Lookahead<M> {
-    pub exp: Box<M>,
+pub struct Lookahead {
+    pub exp: Box<dyn CanParse>,
 }
 
-impl<M, C> CanParse<C> for Lookahead<M>
-where
-    M: CanParse<C>,
-    C: Cursor,
+impl CanParse for Lookahead
 {
-    fn parse(&self, ctx: Ctx<C>) -> ParseResult<C> {
+    fn parse<'a>(&self, ctx: Ctx<'a>) -> ParseResult<'a> {
         let _ = self.exp.parse(ctx.clone())?;
         Ok((ctx, Cst::Nil))
     }
@@ -23,16 +20,13 @@ where
 
 
 // #29
-pub struct NegativeLookahead<M> {
-    pub exp: Box<M>,
+pub struct NegativeLookahead {
+    pub exp: Box<dyn CanParse>,
 }
 
-impl<M, C> CanParse<C> for NegativeLookahead<M>
-where
-    M: CanParse<C>,
-    C: Cursor,
+impl CanParse for NegativeLookahead
 {
-    fn parse(&self, ctx: Ctx<C>) -> ParseResult<C> {
+    fn parse<'a>(&self, ctx: Ctx<'a>) -> ParseResult<'a> {
         if let Ok((_, _)) = self.exp.parse(ctx.clone()) {
             return Err(ctx)
         }

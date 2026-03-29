@@ -60,21 +60,6 @@ where
 }
 
 
-// #9
-pub struct Token {
-    pub token: &'static str,
-}
-
-impl<C> CanParse<C> for Token
-where
-    C: Cursor,
-{
-    fn parse(&self, mut ctx: Ctx<C>) -> ParseResult<C> {
-        ctx.token(self.token)
-    }
-}
-
-
 // #10
 pub struct Constant {
     pub literal: &'static str,

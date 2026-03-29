@@ -1,9 +1,14 @@
-mod state;
-mod ast;
-pub mod cst;
-pub mod ctx;
-pub mod parsed;
-pub mod ruleinfo;
+// Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
+// SPDX-License-Identifier: AGPL-3.0-or-later
 
-pub use cst::Cst;
-pub use ctx::Ctx;
+#![allow(dead_code)]
+mod ast;
+mod cst;
+mod ctx;
+mod parsed;
+mod ruleinfo;
+mod state;
+
+pub use ast::*;
+pub use cst::*;
+pub use ctx::*;

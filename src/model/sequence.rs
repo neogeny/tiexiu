@@ -1,25 +1,30 @@
-use crate::input::Cursor;
+// Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 use crate::engine::{Cst, Ctx};
 use super::model::{CanParse, ParseResult};
 
-pub struct Sequence<M> {
-    pub exps: Vec<Box<M>>,
+pub struct Sequence {
+    pub exps: Vec<Box<dyn CanParse>>,
 }
 
-impl<M, C> CanParse<C> for Sequence<M>
-where
-    M: CanParse<C>,
-    C: Cursor,
+impl Sequence {
+    pub fn new(exps: Vec<Box<dyn CanParse>>) -> Self {
+        Self { exps }
+    }
+}
+
+
+impl CanParse for Sequence
 {
-    fn parse(&self, mut ctx: Ctx<C>) -> ParseResult<C> {
+    fn parse<'a>(&self, mut ctx: Ctx<'a>) -> ParseResult<'a> {
         let mut results = Vec::new();
+
         for exp in &self.exps {
             let (new_ctx, cst) = exp.parse(ctx)?;
+            results.push(cst);
             ctx = new_ctx;
-            results.push(cst)
         }
-        Ok(
-            (ctx, Cst::from(results))
-        )
+        Ok((ctx, Cst::from(results)))
     }
 }

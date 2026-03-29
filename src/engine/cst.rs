@@ -91,7 +91,7 @@ impl Cst {
         }
     }
 
-    pub fn distill(self) -> Self {
+    pub fn distill(self) -> Cst {
         match self {
             Cst::List(elements) => {
                 let mut new_list = Vec::new();

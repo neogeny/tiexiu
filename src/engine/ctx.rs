@@ -2,36 +2,34 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 use std::collections::HashMap;
-use std::sync::Arc;
 use crate::input::Cursor;
-use crate::model::{CanParse, ParseResult};
+use crate::model::{ParseResult, Rule};
 
 /// The rule registry. Using Arc allows the Ctx to own it without copying the data.
-pub type RuleMap<C> = Arc<HashMap<&'static str, Arc<dyn CanParse<C>>>>;
+pub type RuleMap<'g> = HashMap<&'g str, Rule<'g>>;
 
 #[derive(Clone)]
-pub struct Ctx<C: Cursor> {
-    pub cursor: C,
+pub struct Ctx<'c> {
+    pub cursor: Box<&'c dyn Cursor>,
     pub cut_seen : bool,
     pub error_msg: Option<String>,
-    pub rules: RuleMap<C>,
+    pub rules: RuleMap<'c>,
 }
 
-impl<C: Cursor> Ctx<C> {
-    pub fn new(cursor: C) -> Self {
+impl<'c> Ctx<'c> {
+    pub fn new(cursor: &'c dyn Cursor) -> Self {
         Self {
-            cursor,
+            cursor: Box::new(cursor),
             cut_seen: false,
             error_msg: None,
-            rules: RuleMap::new(HashMap::new())}
+            rules: RuleMap::new(),
+        }
     }
 
-    pub fn resolve(&self, name: &str) -> Arc<dyn CanParse<C>> {
-        self.rules.get(name)
-            .cloned()
-            .unwrap_or_else(|| panic!("Rule {} not found", name))
+    pub fn resolve(&self, name: &str) -> &Rule {
+        self.rules.get(name).unwrap()
     }
-    
+
     pub fn mark(&self) -> usize {
         self.cursor.mark()
     }
@@ -40,25 +38,25 @@ impl<C: Cursor> Ctx<C> {
         self.cut_seen = true;
     }
     
-    pub fn dot(&mut self) -> ParseResult<C> {
+    pub fn dot(&mut self) -> ParseResult {
         unimplemented!()
     }
-    pub fn eof_check(&mut self) -> ParseResult<C> {
+    pub fn eof_check(&mut self) -> ParseResult {
         unimplemented!()
     }
 
-    pub fn next(self) -> Result<Ctx<C>, Ctx<C>> {
+    pub fn next(self) -> Result<Ctx<'c>, Ctx<'c>> {
         // do it with cursor goto(+1)?
         Err(self)
     }
 
-    pub fn token(&mut self, _token: &str) -> ParseResult<C> {
+    pub fn token(self, _token: &str) -> ParseResult {
         unimplemented!()
     }
-    pub fn pattern(&mut self, _pattern: &str) -> ParseResult<C> {
+    pub fn pattern(&mut self, _pattern: &str) -> ParseResult {
         unimplemented!()
     }
-    pub fn search(&mut self, _pattern: &str) -> ParseResult<C> {
+    pub fn search(&mut self, _pattern: &str) -> ParseResult {
         unimplemented!()
     }
 }

@@ -7,16 +7,9 @@ pub trait Text<C: Cursor> {
 }
 
 /// The abstraction of the position in the input.
-pub trait Cursor: Clone {
-    fn new() -> Self;
-    /// Returns the Text provider (the dump holder) for this cursor.
-    // fn text(&self) -> &dyn Text<'a>;
-
-    // Basic state accessors
+pub trait Cursor {
     fn mark(&self) -> usize;
     fn reset(&mut self, mark: usize);
-
-    /// The text from current pos to end.
     fn textstr(&self) -> &str;
     // 
     // /// The full source text from the provider.

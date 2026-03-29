@@ -1,41 +1,29 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-use crate::input::Cursor;
 use super::model::{CanParse, ParseResult};
 use crate::engine::Ctx;
 
 
-pub struct Choice<M> {
-    pub options: Vec<Box<M>>,
+pub struct Choice {
+    pub options: Vec<Box<dyn CanParse>>
 }
 
-impl<M, C> CanParse<C> for Choice<M>
-where
-    M: CanParse<C>,
-    C: Cursor
+impl CanParse for Choice
 {
-    fn parse(&self, mut ctx: Ctx<C>) -> ParseResult<C> {
-        let mut furthest_err = Ctx::new(C::new());
-
+    fn parse<'a>(&self, mut ctx: Ctx<'a>) -> ParseResult<'a> {
         for option in &self.options {
             match option.parse(ctx) {
                 Ok(res) => return Ok(res),
                 Err(mut err_ctx) => {
-                    err_ctx.cut_seen = false;
                     if err_ctx.cut_seen {
+                        err_ctx.cut_seen = false;
                         return Err(err_ctx);
                     }
-                    if err_ctx.mark() >= furthest_err.mark() {
-                        ctx = err_ctx.clone();
-                        furthest_err = err_ctx;
-                    }
-                    else {
-                        ctx = err_ctx;
-                    }
+                    ctx = err_ctx;
                 }
             }
         }
-        Err(furthest_err)
+        Err(ctx)
     }
 }

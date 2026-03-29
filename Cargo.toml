@@ -17,9 +17,9 @@ exclude = [
 #python = ["dep:pyo3"]
 
 [dependencies]
-pyo3 = { version = "0.28.2", features = ["extension-module"]}
+#pyo3 = { version = "0.28.2", features = ["extension-module"]}
 #pyo3 = { version = "0.28.2", features = ["extension-module"], optional = true }
 
 [lib]
-name = "_tiexiu"
+name = "tiexiu"
 crate-type = ["cdylib", "rlib"]
