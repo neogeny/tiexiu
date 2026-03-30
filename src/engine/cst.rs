@@ -7,13 +7,13 @@ use super::ast::Ast;
 pub enum Cst {
     Token(String),
     Literal(String),
-    List(Vec<Box<Cst>>),
-    Closure(Vec<Box<Cst>>),
+    List(Vec<Cst>),
+    Closure(Vec<Cst>),
     Named(String, Box<Cst>),
     NamedList(String, Box<Cst>),
     OverrideValue(Box<Cst>),
     OverrideList(Box<Cst>),
-    Ast(Box<Ast>),
+    Ast(Ast),
     Nil,
 }
 
@@ -25,41 +25,37 @@ impl Default for Cst {
 
 impl From<Vec<Cst>> for Cst {
     fn from(v: Vec<Cst>) -> Self {
-        let boxed = v.into_iter().map(Box::new).collect();
-        Cst::List(boxed)
+        Cst::List(v)
     }
 }
 
 
 impl<'c, const N: usize> From<[Cst; N]> for Cst {
     fn from(arr: [Cst; N]) -> Self {
-        let boxed = arr.into_iter().map(Box::new).collect();
-        Cst::List(boxed)
+        Cst::List(arr.into())
     }
 }
 
 impl Cst {
     pub fn add(self, node: Cst) -> Cst {
-        let node_box = Box::new(node);
         match self {
-            Cst::Nil => *node_box,
+            Cst::Nil => node,
             Cst::List(mut list) => {
-                list.push(node_box);
+                list.push(node);
                 Cst::List(list)
             }
-            _ => Cst::List(vec![Box::new(self), node_box]),
+            _ => Cst::List(vec![self, node]),
         }
     }
 
     pub fn addlist(self, node: Cst) -> Cst {
-        let node_box = Box::new(node);
         match self {
-            Cst::Nil => Cst::List(vec![node_box]),
+            Cst::Nil => Cst::List(vec![node]),
             Cst::List(mut list) => {
-                list.push(node_box);
+                list.push(node);
                 Cst::List(list)
             }
-            _ => Cst::List(vec![Box::new(self), node_box]),
+            _ => Cst::List(vec![self, node]),
         }
     }
 
@@ -70,11 +66,11 @@ impl Cst {
                 Cst::List(list)
             }
             (Cst::List(mut list), other_node) => {
-                list.push(Box::new(other_node));
+                list.push(other_node);
                 Cst::List(list)
             }
-            (some_node, Cst::List(mut other_list)) => {
-                other_list.insert(0, Box::new(some_node));
+            (self_node, Cst::List(mut other_list)) => {
+                other_list.insert(0, self_node);
                 Cst::List(other_list)
             }
             (s, n) => s.add(n),
@@ -83,7 +79,6 @@ impl Cst {
 
     pub fn closed(self) -> Cst {
         match self {
-            Cst::List(mut list) if list.len() == 1 => *list.pop().unwrap(),
             Cst::List(list) => Cst::Closure(list),
             _ => self,
         }
@@ -96,9 +91,8 @@ impl Cst {
 
         match self {
             Cst::List(elements) => {
-                for boxed_node in elements {
-                    // Recursive call handles the "Splat"
-                    let (child_ast, child_ovr, child_cst) = (*boxed_node)._distill();
+                for node in elements {
+                    let (child_ast, child_ovr, child_cst) = node._distill();
 
                     ast.update(&child_ast);
                     ovr = ovr.merge(child_ovr);
@@ -106,7 +100,6 @@ impl Cst {
                 }
             }
 
-            // Active Markers (Parser Injections)
             Cst::Named(name, val) => ast.set(&name, *val),
             Cst::NamedList(name, val) => ast.set_list(&name, *val),
             Cst::OverrideValue(val) => ovr = ovr.add(*val),
@@ -114,7 +107,6 @@ impl Cst {
 
             Cst::Nil => {}
 
-            // Opaque Atoms (Already finalized results)
             other => cst = cst.merge(other),
         }
 
@@ -128,7 +120,7 @@ impl Cst {
         if ovr != Cst::Nil {
             cst_closed(ovr)
         } else if !ast.is_empty() {
-            Cst::Ast(Box::new(ast))
+            Cst::Ast(ast)
         } else {
             cst_closed(cst)
         }
