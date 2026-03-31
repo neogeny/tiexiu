@@ -59,53 +59,39 @@ pub trait Ctx: Clone + Debug {
     }
 
     fn recursive_call(mut self, rule: &Rule) -> ParseResult<Self> {
-        let key = self.key(rule.name);
-        let start_mark = self.mark();
-
-        // Fast Path: Non-LRec rules
         if !rule.is_lrec {
             panic!("Recursive call on non-LRec rule {}", rule.name);
         }
 
-        // The Seed-Growing Loop (LRec Ratchet)
-        // Plant the seed. memoize() will record the current (start) mark.
+        let key = self.key(rule.name);
+        let start_mark = self.mark();
         self.memoize(&key, &Cst::Bottom);
 
         let mut best_cst: Option<Cst> = None;
         let mut high_water_mark = start_mark;
 
         loop {
-            // Prospecting: attempt a fresh parse from the original start
-            let mut trial_ctx = self.clone();
-            trial_ctx.reset(start_mark);
+            let mut ctx = self.clone();
+            ctx.reset(start_mark);
 
-            match rule.parse(trial_ctx) {
-                Ok((next_ctx, new_cst)) => {
-                    let end_mark = next_ctx.mark();
-
-                    // Progress Check: Did we move the cursor further?
-                    if end_mark > high_water_mark {
-                        high_water_mark = end_mark;
-                        best_cst = Some(new_cst.clone());
-
-                        // Update the shared memo with the new 'End Mark'
-                        // next_ctx.memoize() captures its own 'end_mark' internally.
-                        self.memoize(&key, &new_cst);
-
-                        // Advance our primary context to this successful state
-                        self = next_ctx;
-                    } else {
-                        // Fixed point reached
+            match rule.parse(ctx) {
+                Err(_) => break,
+                Ok((mut ctx, cst)) => {
+                    let mark = ctx.mark();
+                    if mark < high_water_mark {
                         break;
                     }
+
+                    ctx.memoize(&key, &cst);
+                    high_water_mark = mark;
+                    best_cst = Some(cst);
+                    self = ctx;
                 }
-                Err(_) => break, // No further growth possible
             }
         }
 
-        // 4. Finalize
-        if let Some(final_cst) = best_cst {
-            Ok((self, final_cst))
+        if let Some(cst) = best_cst {
+            Ok((self, cst))
         } else {
             Err(self)
         }
