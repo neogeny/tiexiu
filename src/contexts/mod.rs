@@ -5,6 +5,7 @@
 mod ast;
 mod cst;
 mod ctx;
+pub mod memo;
 mod parsed;
 mod ruleinfo;
 

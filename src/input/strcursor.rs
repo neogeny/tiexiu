@@ -1,30 +1,39 @@
+use std::rc::Rc;
 use super::Cursor;
 use regex::Regex;
 
-#[derive(Debug, Clone, Copy)]
+
+#[derive(Debug)]
+pub struct Patterns<'a> {
+    whitespace: &'a str,
+    eol_comments: &'a str,
+    comments: &'a str,
+}
+
+#[derive(Debug, Clone)]
 pub struct StrCursor<'a> {
     text: &'a str,
     offset: usize,
-
-    whitespace_pattern: &'a str,
-    eol_comments_pattern: &'a str,
-    comments_pattern: &'a str,
+    patterns: Rc<Patterns<'a>>
 }
 
 impl<'a> StrCursor<'a> {
     pub fn new(
         text: &'a str,
         offset: usize,
-        whitespace_pattern: &'a str,
-        eol_comments_pattern: &'a str,
-        comments_pattern: &'a str,
+        whitespace: &'a str,
+        eol_comments: &'a str,
+        comments: &'a str,
     ) -> Self {
+        let patterns = Patterns {
+            whitespace,
+            eol_comments,
+            comments,
+        };
         Self {
             text,
             offset,
-            whitespace_pattern,
-            eol_comments_pattern,
-            comments_pattern,
+            patterns: patterns.into(),
         }
     }
 }
@@ -93,11 +102,11 @@ impl<'a> Cursor for StrCursor<'a> {
         while self.offset != last_p {
             last_p = self.offset;
 
-            self.eat_pattern(self.whitespace_pattern);
-            if self.eat_pattern(self.eol_comments_pattern) {
-                self.eat_pattern(self.whitespace_pattern);
+            self.eat_pattern(self.patterns.whitespace);
+            if self.eat_pattern(self.patterns.eol_comments) {
+                self.eat_pattern(self.patterns.whitespace);
             }
-            self.eat_pattern(self.comments_pattern);
+            self.eat_pattern(self.patterns.comments);
         }
     }
 

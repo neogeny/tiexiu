@@ -1,10 +1,13 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+use super::memo::Cache;
 use crate::grammars::{ParseResult, Parser};
 use crate::input::{Cursor, StrCursor};
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::Debug;
+use std::rc::Rc;
 
 pub trait Ctx: Clone + Debug {
     fn call(self, name: &str) -> ParseResult<Self>;
@@ -23,24 +26,30 @@ pub trait Ctx: Clone + Debug {
 
 #[derive(Clone, Debug)]
 pub struct StrCtx<'c> {
-    cursor: StrCursor<'c>,
-    _cut_seen: bool,
-    rulemap: HashMap<&'c str, &'c dyn Parser<Self>>,
+    cursor: Box<StrCursor<'c>>,
+    cutseen: bool,
+    cache: Rc<RefCell<Cache<'c, Self>>>,
 }
 
 impl<'c> StrCtx<'c> {
     pub fn new(cursor: StrCursor<'c>) -> Self {
+        let map = HashMap::new();
         Self {
-            cursor,
-            _cut_seen: false,
-            rulemap: HashMap::new(),
+            cursor: cursor.into(),
+            cutseen: false,
+            cache: Rc::new(RefCell::new(Cache::new(map))),
         }
+    }
+
+    pub fn parser(&mut self, name: &str) -> &'c dyn Parser<Self> {
+        let mut cache = self.cache.borrow_mut();
+        cache.parser(self.cursor.mark(), name)
     }
 }
 
 impl<'c> Ctx for StrCtx<'c> {
-    fn call(self, name: &str) -> ParseResult<Self> {
-        let rule = self.rulemap.get(name).expect("Rule not found");
+    fn call(mut self, name: &str) -> ParseResult<Self> {
+        let rule = self.parser(name);
         rule.parse(self)
     }
 
@@ -73,14 +82,36 @@ impl<'c> Ctx for StrCtx<'c> {
     }
 
     fn cut(&mut self) {
-        self._cut_seen = true;
+        self.cutseen = true;
     }
 
     fn uncut(&mut self) {
-        self._cut_seen = false;
+        self.cutseen = false;
     }
 
     fn cut_seen(&self) -> bool {
-        self._cut_seen
+        self.cutseen
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::mem::size_of;
+    
+    const TARGET: usize = 32;
+
+    #[test]
+    fn test_ctx_size() {
+        let size = size_of::<StrCtx>();
+        // 24 bytes: Box (8) + Rc (8) + bool/padding (8)
+        assert!(size <= TARGET, "StrCtx size is {} > {} bytes", size, TARGET);
+    }
+
+    #[test]
+    fn test_cursor_size() {
+        let size = size_of::<StrCursor>();
+        // StrCursor contains &str (16) and usize (8) = 24 bytes.
+        assert!(size <= TARGET, "StrCursor size is {} > {} bytes", size, TARGET);
     }
 }
