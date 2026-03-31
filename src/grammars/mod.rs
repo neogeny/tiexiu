@@ -3,7 +3,9 @@
 
 #![allow(dead_code)]
 pub mod grammar;
+mod leftrec;
 pub mod model;
+mod nullability;
 pub mod parser;
 pub mod repeat;
 pub mod rule;

@@ -72,7 +72,7 @@ impl<'c> Ctx for StrCtx<'c> {
             Ok((mut ctx, cst)) => {
                 ctx.memoize(name, &cst);
                 Ok((ctx, cst))
-            },
+            }
             Err(mut ctx) => {
                 ctx.memoize(name, &Cst::Bottom);
                 Err(ctx)

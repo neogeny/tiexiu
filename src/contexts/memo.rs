@@ -26,11 +26,7 @@ impl<'c> Cache<'c> {
 impl<'c> Cache<'c> {
     pub fn memo(&mut self, mark: usize, name: &str) -> Option<Cst> {
         let key = Key(mark, name.into());
-        if let Some(cst) = self.memos.get(&key) {
-            Some(cst.clone())
-        } else {
-            None
-        }
+        self.memos.get(&key).cloned()
     }
 
     pub fn memoize(&mut self, mark: usize, name: &str, cst: &Cst) {

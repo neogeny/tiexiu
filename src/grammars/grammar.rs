@@ -6,6 +6,6 @@ use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct Grammar<'g> {
-    name: &'g str,
-    rulemap: HashMap<&'g str, Rule<'g>>,
+    pub name: &'g str,
+    pub rulemap: HashMap<&'g str, Rule<'g>>,
 }

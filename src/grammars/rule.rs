@@ -6,10 +6,10 @@ use crate::contexts::Ctx;
 
 #[derive(Debug, Clone)]
 pub struct Rule<'r> {
-    name: &'r str,
-    is_memo: bool,
-    is_lrec: bool,
-    rhs: &'r Model,
+    pub name: &'r str,
+    pub is_memo: bool,
+    pub is_lrec: bool,
+    pub rhs: &'r Model,
 }
 
 impl<'r> Rule<'r> {
