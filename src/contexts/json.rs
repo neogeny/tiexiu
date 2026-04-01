@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 use super::ast::Ast;
-use super::cst::{Cst, KeyValue};
+use super::cst::Cst;
 use std::collections::HashMap;
 use std::ops::Deref;
 
@@ -33,7 +33,7 @@ impl Cst {
             Cst::Token(s) | Cst::Literal(s) => Json::String(s.deref().to_string()),
             Cst::List(v) | Cst::Closure(v) => Json::Array(v.iter().map(|c| c.to_json()).collect()),
             Cst::Named(keyval) | Cst::NamedList(keyval) => {
-                let KeyValue(name, cst) = keyval.deref();
+                let (name, cst) = keyval.deref();
                 let mut map: HashMap<String, Json> = std::collections::HashMap::new();
                 map.insert(name.to_string(), cst.to_json());
                 Json::Object(map)

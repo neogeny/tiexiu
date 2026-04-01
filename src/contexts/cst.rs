@@ -6,8 +6,11 @@ use super::json::Json;
 use std::ops::Add;
 use std::ops::Deref;
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct KeyValue(pub Box<str>, pub Cst);
+pub type KeyValue = (Box<str>, Cst);
+
+pub fn keyval(name: &str, cst: Cst) -> KeyValue {
+    (name.into(), cst.clone())
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Cst {
@@ -70,11 +73,11 @@ impl From<&Cst> for Json {
 
 impl Cst {
     pub fn named(key: &str, value: Cst) -> Self {
-        Cst::Named(Box::new(KeyValue(key.into(), value)))
+        Cst::Named(Box::new(keyval(key, value)))
     }
 
     pub fn named_list(key: &str, value: Cst) -> Self {
-        Cst::NamedList(Box::new(KeyValue(key.into(), value)))
+        Cst::NamedList(Box::new(keyval(key, value)))
     }
 
     fn _add(self, node: Self) -> Self {
@@ -149,11 +152,11 @@ impl Cst {
                 }
             }
             Cst::Named(keyval) => {
-                let KeyValue(name, val) = keyval.deref();
+                let (name, val) = keyval.deref();
                 ast.set(name, val.clone())
             }
             Cst::NamedList(keyval) => {
-                let KeyValue(name, val) = keyval.deref();
+                let (name, val) = keyval.deref();
                 ast.set_list(name, val.clone())
             }
             Cst::OverrideValue(val) => ovr = ovr.add(*val),
