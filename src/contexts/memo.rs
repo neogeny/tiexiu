@@ -52,4 +52,8 @@ impl<'c> Cache<'c> {
         }
         panic!("no such parser: {}", name);
     }
+    
+    pub fn prune(&mut self, cutpoint: usize) {
+        self.memos.retain(|key, _| key.0 >= cutpoint);
+    }
 }

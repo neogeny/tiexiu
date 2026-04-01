@@ -73,6 +73,8 @@ impl<'c> Ctx for StrCtx<'c> {
 
     fn cut(&mut self) {
         self.cutseen = true;
+        let mut cache = self.cache.borrow_mut();
+        cache.prune(self.mark())
     }
 
     fn uncut(&mut self) {
