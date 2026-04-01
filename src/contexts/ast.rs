@@ -45,7 +45,7 @@ impl Ast {
 
         for &k in list_keys {
             let key = self.safekey(k);
-            self.fields.entry(key).or_insert(Cst::List(Vec::new()));
+            self.fields.entry(key).or_insert(Cst::List([].into()));
         }
     }
 

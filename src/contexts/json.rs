@@ -1,8 +1,10 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-use super::cst::Cst;
 use super::ast::Ast;
+use super::cst::{Cst, KeyValue};
+use std::collections::HashMap;
+use std::ops::Deref;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Json {
@@ -11,7 +13,7 @@ pub enum Json {
     Number(f64),
     String(String),
     Array(Vec<Json>),
-    Object(std::collections::HashMap<String, Json>),
+    Object(HashMap<String, Json>),
 }
 
 impl Ast {
@@ -28,20 +30,17 @@ impl Cst {
     pub fn to_json(&self) -> Json {
         match self {
             Cst::Nil | Cst::Bottom | Cst::Void => Json::Null,
-            Cst::Token(s) | Cst::Literal(s) => Json::String(s.clone()),
-            Cst::List(v) | Cst::Closure(v) => {
-                Json::Array(v.iter().map(|c| c.to_json()).collect())
-            }
-            Cst::Named(name, cst) | Cst::NamedList(name, cst) => {
-                let mut map = std::collections::HashMap::new();
-                map.insert(name.clone(), cst.to_json());
+            Cst::Token(s) | Cst::Literal(s) => Json::String(s.deref().to_string()),
+            Cst::List(v) | Cst::Closure(v) => Json::Array(v.iter().map(|c| c.to_json()).collect()),
+            Cst::Named(keyval) | Cst::NamedList(keyval) => {
+                let KeyValue(name, cst) = keyval.deref();
+                let mut map: HashMap<String, Json> = std::collections::HashMap::new();
+                map.insert(name.to_string(), cst.to_json());
                 Json::Object(map)
             }
             Cst::Number(n) => Json::Number(*n),
             Cst::OverrideValue(cst) | Cst::OverrideList(cst) => cst.to_json(),
-            Cst::Ast(ast) => {
-                ast.to_json()
-            }
+            Cst::Ast(ast) => ast.to_json(),
         }
     }
 }
@@ -53,7 +52,8 @@ impl Json {
     pub fn to_serde(&self) -> Option<Value> {
         #[cfg(not(feature = "serde_json"))]
         {
-            #[allow(clippy::needless_return)] return None;
+            #[allow(clippy::needless_return)]
+            return None;
         }
         #[cfg(feature = "serde_json")]
         {
@@ -70,9 +70,7 @@ impl Json {
                             .unwrap_or(Value::Null)
                     }
                     Json::String(s) => Value::String(s.clone()),
-                    Json::Array(arr) => {
-                        Value::Array(arr.iter().map(convert).collect())
-                    }
+                    Json::Array(arr) => Value::Array(arr.iter().map(convert).collect()),
                     Json::Object(obj) => {
                         let mut map = Map::new();
                         for (k, v) in obj {

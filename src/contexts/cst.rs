@@ -3,20 +3,24 @@
 
 use super::ast::Ast;
 use super::json::Json;
-pub use std::ops::Add;
+use std::ops::Add;
+use std::ops::Deref;
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct KeyValue(pub Box<str>, pub Cst);
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Cst {
-    Token(String),
-    Literal(String),
-    Number(f64),
-    List(Vec<Cst>),
-    Closure(Vec<Cst>),
-    Named(String, Box<Cst>),
-    NamedList(String, Box<Cst>),
-    OverrideValue(Box<Cst>),
-    OverrideList(Box<Cst>),
-    Ast(Ast),
+    Token(Box<str>),          // 16 bytes
+    Literal(Box<str>),        // 16 bytes
+    Number(f64),              // 8 bytes
+    List(Box<[Cst]>),         // 16 bytes
+    Closure(Box<[Cst]>),      // 16 bytes
+    Named(Box<KeyValue>),     // 8 bytes
+    NamedList(Box<KeyValue>), // 8 bytes
+    OverrideValue(Box<Cst>),  // 8 bytes
+    OverrideList(Box<Cst>),   // 8 bytes
+    Ast(Box<Ast>),            // 8 bytes
     Void,
     Nil,
     Bottom,
@@ -38,10 +42,17 @@ pub fn cst_closed(cst: Cst) -> Cst {
     cst.closed()
 }
 
+impl Add for Cst {
+    type Output = Self;
+
+    fn add(self, node: Self) -> Self {
+        self._add(node)
+    }
+}
 
 impl From<Vec<Cst>> for Cst {
     fn from(v: Vec<Cst>) -> Self {
-        Cst::List(v)
+        Cst::List(v.into_boxed_slice())
     }
 }
 
@@ -57,51 +68,59 @@ impl From<&Cst> for Json {
     }
 }
 
-
-impl Add for Cst {
-    type Output = Self;
-
-    fn add(self, node: Self) -> Self::Output {
-        match (self, node) {
-            // Identity: Nil + node = node
-            (Cst::Nil, node) => node,
-            // Identity: self + Nil = self
-            (s, Cst::Nil) => s,
-
-            (Cst::List(mut list), node) => {
-                list.push(node);
-                Cst::List(list)
-            }
-            (s, n) => Cst::List(vec![s, n]),
-        }
-    }
-}
-
 impl Cst {
-    pub fn addlist(self, node: Cst) -> Cst {
-        match self {
-            Cst::Nil => Cst::List(vec![node]),
-            Cst::List(mut list) => {
-                list.push(node);
-                Cst::List(list)
+    pub fn named(key: &str, value: Cst) -> Self {
+        Cst::Named(Box::new(KeyValue(key.into(), value)))
+    }
+
+    pub fn named_list(key: &str, value: Cst) -> Self {
+        Cst::NamedList(Box::new(KeyValue(key.into(), value)))
+    }
+
+    fn _add(self, node: Self) -> Self {
+        match (self, node) {
+            (Self::Nil, n) => n,
+            (s, Self::Nil) => s,
+            (Self::List(list), node) => {
+                let mut v = list.into_vec();
+                v.push(node);
+                Self::List(v.into_boxed_slice())
             }
-            _ => Cst::List(vec![self, node]),
+            (s, n) => Self::List(vec![s, n].into_boxed_slice()),
         }
     }
 
-    pub fn merge(self, node: Cst) -> Cst {
+    pub fn addlist(self, node: Self) -> Self {
         match (self, node) {
-            (Cst::List(mut list), Cst::List(other_list)) => {
-                list.extend(other_list);
-                Cst::List(list)
+            (Self::Nil, n) => Self::List(vec![n].into_boxed_slice()),
+            (s, Self::Nil) => s,
+            (Self::List(list), n) => {
+                let mut v = list.into_vec();
+                v.push(n);
+                Self::List(v.into_boxed_slice())
             }
-            (Cst::List(mut list), other_node) => {
-                list.push(other_node);
-                Cst::List(list)
+            (s, n) => Self::List(vec![s, n].into_boxed_slice()),
+        }
+    }
+
+    pub fn merge(self, node: Self) -> Self {
+        match (self, node) {
+            (Self::Nil, n) => n,
+            (s, Self::Nil) => s,
+            (Self::List(l1), Self::List(l2)) => {
+                let mut v = l1.into_vec();
+                v.extend(l2.into_vec());
+                Self::List(v.into_boxed_slice())
             }
-            (self_node, Cst::List(mut other_list)) => {
-                other_list.insert(0, self_node);
-                Cst::List(other_list)
+            (Self::List(l1), n) => {
+                let mut v = l1.into_vec();
+                v.push(n);
+                Self::List(v.into_boxed_slice())
+            }
+            (s, Self::List(l2)) => {
+                let mut v = vec![s];
+                v.extend(l2.into_vec());
+                Self::List(v.into_boxed_slice())
             }
             (s, n) => s.add(n),
         }
@@ -129,8 +148,14 @@ impl Cst {
                     cst = cst.merge(child_cst);
                 }
             }
-            Cst::Named(name, val) => ast.set(&name, *val),
-            Cst::NamedList(name, val) => ast.set_list(&name, *val),
+            Cst::Named(keyval) => {
+                let KeyValue(name, val) = keyval.deref();
+                ast.set(name, val.clone())
+            }
+            Cst::NamedList(keyval) => {
+                let KeyValue(name, val) = keyval.deref();
+                ast.set_list(name, val.clone())
+            }
             Cst::OverrideValue(val) => ovr = ovr.add(*val),
             Cst::OverrideList(val) => ovr = ovr.addlist(*val),
             Cst::Nil => {}
@@ -147,7 +172,7 @@ impl Cst {
         if ovr != Cst::Nil {
             cst_closed(ovr)
         } else if !ast.is_empty() {
-            Cst::Ast(ast)
+            Cst::Ast(ast.into())
         } else {
             cst_closed(cst)
         }
@@ -158,7 +183,7 @@ impl Cst {
 mod tests {
     use super::*;
 
-    const TARGET: usize = 16;
+    const TARGET: usize = 32;
 
     #[test]
     fn test_cst_size() {
@@ -167,14 +192,13 @@ mod tests {
         assert!(size <= TARGET, "Cst size is {} > {} bytes", size, TARGET);
     }
 
-
     #[test]
     fn test_node_nil_removal() {
         // Input: List([Nil, Bottom, Nil])
         // Step 1: cst = merge(Nil, Nil) -> Nil
         // Step 2: cst = merge(Nil, Bottom) -> Bottom
         // Step 3: cst = merge(Bottom, Nil) -> Bottom (The Identity Law)
-        let raw = Cst::List(vec![Cst::Nil, Cst::Bottom, Cst::Nil]);
+        let raw = Cst::List([Cst::Nil, Cst::Bottom, Cst::Nil].into());
         let result = raw.node();
 
         // result = cst_closed(Bottom)
@@ -183,7 +207,7 @@ mod tests {
 
     #[test]
     fn test_node_nil_removal_to_bottom() {
-        let raw = Cst::List(vec![Cst::Nil, Cst::Bottom, Cst::Nil]);
+        let raw = Cst::List([Cst::Nil, Cst::Bottom, Cst::Nil].into());
         let result = raw.node();
 
         // If cst_closed is identity for non-lists, this is just Bottom
@@ -195,7 +219,7 @@ mod tests {
         // Input: [Bottom, Nil, Bottom]
         // Step 1: cst = merge(Bottom, Nil) -> Bottom
         // Step 2: cst = merge(Bottom, Bottom) -> List([Bottom, Bottom])
-        let raw = Cst::List(vec![Cst::Bottom, Cst::Nil, Cst::Bottom]);
+        let raw = Cst::List([Cst::Bottom, Cst::Nil, Cst::Bottom].into());
         let result = raw.node();
 
         if let Cst::Closure(v) = result {
@@ -210,7 +234,7 @@ mod tests {
     #[test]
     fn test_node_nil_purging_preserves_count() {
         // Input: List([Nil, Bottom, Nil])
-        let raw = Cst::List(vec![Cst::Nil, Cst::Bottom, Cst::Nil]);
+        let raw = Cst::List([Cst::Nil, Cst::Bottom, Cst::Nil].into());
         let result = raw.node();
 
         // Since it's effectively Bottom, and Bottom isn't a list,

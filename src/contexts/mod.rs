@@ -5,12 +5,12 @@
 mod ast;
 mod cst;
 mod ctx;
+pub mod json;
 pub mod leftrec;
 pub mod memo;
 mod parsed;
 mod ruleinfo;
 pub mod strctx;
-pub mod json;
 
 pub use ast::*;
 pub use cst::*;

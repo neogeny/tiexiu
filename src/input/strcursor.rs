@@ -98,7 +98,7 @@ impl<'a> Cursor for StrCursor<'a> {
             self.offset = whole.end();
 
             // Logic: If there is 1+ group, return group 1. Else return group 0.
-            return Some(caps.get(1).or(caps.get(0))?.as_str())
+            return Some(caps.get(1).or(caps.get(0))?.as_str());
         }
         None
     }

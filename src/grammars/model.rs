@@ -99,15 +99,15 @@ where
                     Err(ctx)
                 }
             }
-            Self::Constant(literal) => Ok((ctx, Cst::Literal(literal.to_string()))),
-            Self::Alert(literal, _) => Ok((ctx, Cst::Literal(literal.to_string()))),
+            Self::Constant(literal) => Ok((ctx, Cst::Literal(literal.deref().into()))),
+            Self::Alert(literal, _) => Ok((ctx, Cst::Literal(literal.deref().into()))),
 
             Self::Named(name, exp) => match exp.parse(ctx) {
-                Ok((ctx, cst)) => Ok((ctx, Cst::Named(name.to_string(), Box::new(cst)))),
+                Ok((ctx, cst)) => Ok((ctx, Cst::named(name, cst))),
                 err => err,
             },
             Self::NamedList(name, exp) => match exp.parse(ctx) {
-                Ok((ctx, cst)) => Ok((ctx, Cst::NamedList(name.to_string(), Box::new(cst)))),
+                Ok((ctx, cst)) => Ok((ctx, Cst::named_list(name, cst))),
                 err => err,
             },
             Self::Override(exp) => match exp.parse(ctx) {

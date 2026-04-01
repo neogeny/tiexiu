@@ -12,11 +12,7 @@ pub struct Grammar<'g> {
 
 impl<'g> Grammar<'g> {
     pub fn new(name: &'g str, rules: &[Rule<'g>]) -> Self {
-        let rulemap = rules
-            .iter()
-            .cloned()
-            .map(|r| (r.name, r))
-            .collect();
+        let rulemap = rules.iter().cloned().map(|r| (r.name, r)).collect();
 
         let grammar = Self { name, rulemap };
         super::leftrec::mark_left_recursion(grammar)
