@@ -3,13 +3,16 @@
 
 use super::cst::Cst;
 use super::memo::{Cache, Key, Memo};
+use crate::grammars::{ParseResult, Parser, S};
 use crate::input::Cursor;
-use crate::grammars::{ParseResult, Rule, S};
 use std::fmt::Debug;
-use std::cell::RefCell;
 
 pub trait Ctx: Clone + Debug {
     fn cursor(&mut self) -> &mut dyn Cursor;
+
+    fn with_cache_mut<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&mut Cache) -> R;
 
     fn eof_check(&mut self) -> bool {
         self.cursor().at_end()
@@ -46,14 +49,25 @@ pub trait Ctx: Clone + Debug {
         self.cursor().reset(mark);
     }
 
-    fn memo(&mut self, key: &Key) -> Option<Memo>;
-    fn memoize(&mut self, key: &Key, cst: &Cst);
+    fn memo(&mut self, key: &Key) -> Option<Memo> {
+        self.with_cache_mut(|cache| cache.memo(key))
+    }
 
+    fn memoize(&mut self, key: &Key, cst: &Cst) {
+        let mark = self.mark();
+        self.with_cache_mut(|cache| {
+            cache.memoize(key, cst, mark);
+        });
+    }
+
+
+    fn cut_seen(&self) -> bool;
     fn cut(&mut self);
     fn uncut(&mut self);
-    fn cut_seen(&self) -> bool;
 
-    fn parser(&self, name: &str) -> (Self, &Rule<'_>);
+    fn prune_cache(&mut self);
+
+    fn parser(self, name: &str) -> (Self, &dyn Parser<Self>);
 
     fn call(mut self, name: &str) -> ParseResult<Self> {
         let key = self.key(name);
@@ -69,10 +83,9 @@ pub trait Ctx: Clone + Debug {
         }
 
         let (ctx, rule) = self.parser(name);
-        if rule.is_lrec {
-            return ctx.recursive_call(rule);
+        if rule.is_left_recursive() {
+            return ctx.recursive_call(key, rule);
         }
-
         match rule.parse(ctx) {
             Ok(S(mut ctx, cst)) => {
                 ctx.memoize(&key, &cst);
@@ -85,15 +98,13 @@ pub trait Ctx: Clone + Debug {
         }
     }
 
-    fn recursive_call(mut self, rule: &Rule) -> ParseResult<Self> {
-        if !rule.is_lrec {
-            panic!("Recursive call on non-LRec rule {}", rule.name);
+    fn recursive_call(mut self, key: Key, rule: &dyn Parser<Self>) -> ParseResult<Self> {
+        if !rule.is_left_recursive() {
+            panic!("Recursive call on non-LRec rule");
         }
-
-        let key = self.key(rule.name);
-        let start_mark = self.mark();
+        
         self.memoize(&key, &Cst::Bottom);
-
+        let start_mark = self.mark();
         let mut best_cst: Option<Cst> = None;
         let mut high_water_mark = start_mark;
 

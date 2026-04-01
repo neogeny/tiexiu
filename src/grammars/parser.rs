@@ -8,6 +8,10 @@ pub type ParseResult<C> = Result<S<C>, C>;
 
 pub trait Parser<C: Ctx>: Debug {
     fn parse(&self, ctx: C) -> ParseResult<C>;
+    
+    fn is_left_recursive(&self) -> bool {
+        false
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]

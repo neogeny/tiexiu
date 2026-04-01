@@ -9,6 +9,7 @@ pub mod json;
 pub mod leftrec;
 pub mod memo;
 pub mod strctx;
+pub mod corectx;
 
 pub use ast::*;
 pub use cst::*;

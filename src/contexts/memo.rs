@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 use super::cst::Cst;
-use crate::grammars::Rule;
 use std::collections::HashMap;
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
-pub struct Key(usize, String);
+pub struct Key{
+    pub mark: usize,
+    pub name: Box<String>
+}
 
 #[derive(Clone, Debug)]
 pub struct Memo {
@@ -15,23 +17,27 @@ pub struct Memo {
 }
 
 #[derive(Debug)]
-pub struct Cache<'c> {
-    parsers: HashMap<&'c str, &'c Rule<'c>>,
+pub struct Cache {
     memos: HashMap<Key, Memo>,
 }
 
-impl<'c> Cache<'c> {
-    pub fn new(parsers: HashMap<&'c str, &'c Rule<'c>>) -> Self {
+impl Default for Cache {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Cache {
+    pub fn new() -> Self {
         Self {
-            memos: HashMap::new(),
-            parsers,
+            memos: HashMap::new()
         }
     }
 }
 
-impl<'c> Cache<'c> {
+impl Cache {
     pub fn key(mark: usize, name: &str) -> Key {
-        Key(mark, name.into())
+        Key{mark, name: name.to_string().into()}
     }
 
     pub fn memo(&mut self, key: &Key) -> Option<Memo> {
@@ -46,14 +52,7 @@ impl<'c> Cache<'c> {
         self.memos.insert(key.clone(), memo);
     }
 
-    pub fn rule(&mut self, name: &str) -> &'c Rule<'c> {
-        if let Some(&parser) = self.parsers.get(name) {
-            return parser;
-        }
-        panic!("no such parser: {}", name);
-    }
-
     pub fn prune(&mut self, cutpoint: usize) {
-        self.memos.retain(|key, _| key.0 >= cutpoint);
+        self.memos.retain(|key, _| key.mark >= cutpoint);
     }
 }

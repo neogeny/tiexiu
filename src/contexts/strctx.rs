@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+use crate::grammars::Parser;
 use super::cst::Cst;
 use super::ctx::Ctx;
 use super::memo::{Cache, Key, Memo};
@@ -14,54 +15,60 @@ use std::rc::Rc;
 pub struct StrCtx<'c> {
     _cursor: StrCursor<'c>,
     cutseen: bool,
-    cache: Rc<RefCell<Cache<'c>>>,
+    rulemap: &'c HashMap<&'c str, Rule<'c>>,
+    cache: Rc<RefCell<Cache>>,
 }
 
 impl<'c> StrCtx<'c> {
-    pub fn new(cursor: StrCursor<'c>) -> Self {
-        let map = HashMap::new();
+    pub fn new(
+        cursor: StrCursor<'c>,
+        rulemap: &'c HashMap<&'c str, Rule<'c>>,
+    ) -> Self {
         Self {
             _cursor: cursor,
             cutseen: false,
-            cache: Rc::new(RefCell::new(Cache::new(map))),
+            rulemap,
+            cache: Rc::new(RefCell::new(Cache::new())),
         }
     }
 }
 
 impl<'c> Ctx for StrCtx<'c> {
+    fn with_cache_mut<F, R>(&self, f: F) -> R
+    where
+        for<'a> F: FnOnce(&mut Cache) -> R,
+    {
+        let mut cache = self.cache.borrow_mut();
+        f(&mut cache)
+    }
+
     fn cursor(&mut self) -> &mut dyn Cursor {
         &mut self._cursor
-    }
-
-    fn memo(&mut self, key: &Key) -> Option<Memo> {
-        let mut cache = self.cache.borrow_mut();
-        cache.memo(key)
-    }
-
-    fn memoize(&mut self, key: &Key, cst: &Cst) {
-        let mark = self.mark();
-        let mut cache = self.cache.borrow_mut();
-        cache.memoize(key, cst, mark);
-    }
-
-    fn cut(&mut self) {
-        self.cutseen = true;
-        let mark = self.mark();
-        let mut cache = self.cache.borrow_mut();
-        cache.prune(mark)
-    }
-
-    fn uncut(&mut self) {
-        self.cutseen = false;
     }
 
     fn cut_seen(&self) -> bool {
         self.cutseen
     }
 
-    fn parser(&self, name: &str) -> (Self, &Rule<'_>) {
-        let mut cache = self.cache.borrow_mut();
-        (self.clone(), cache.rule(name))
+    fn cut(&mut self) {
+        self.cutseen = true;
+        self.prune_cache();
+    }
+
+    fn uncut(&mut self) {
+        self.cutseen = false;
+    }
+    
+    fn prune_cache(&mut self) {
+        let cutpoint = self.mark();
+        self.with_cache_mut(|cache| cache.prune(cutpoint));
+    }
+
+    fn parser(self, name: &str) -> (Self, &dyn Parser<Self>) {
+        let rule = self.rulemap
+            .get(name)
+            .unwrap_or_else(|| panic!("rule '{}' not found", name));
+        (self, rule.rhs)
     }
 }
 
@@ -70,7 +77,7 @@ mod tests {
     use super::*;
     use std::mem::size_of;
 
-    const TARGET: usize = 32;
+    const TARGET: usize = 16;
 
     #[test]
     fn test_ctx_size() {
