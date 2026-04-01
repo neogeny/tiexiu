@@ -47,7 +47,7 @@ where
     fn cursor(&self) -> &dyn Cursor {
         &self.cursor
     }
-    
+
     fn cursor_mut(&mut self) -> &mut dyn Cursor {
         &mut self.cursor
     }
@@ -70,7 +70,7 @@ where
         self.with_cache_mut(|cache| cache.prune(cutpoint));
     }
 
-    fn parser(self, name: &str) -> (Self, &dyn Parser<Self>) {
+    fn parser_for(self, name: &str) -> (Self, &dyn Parser<Self>) {
         let rule = self.rulemap
             .get(name)
             .unwrap_or_else(|| panic!("rule '{}' not found", name));

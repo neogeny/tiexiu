@@ -69,7 +69,7 @@ pub trait Ctx: Clone + Debug {
 
     fn prune_cache(&mut self);
 
-    fn parser(self, name: &str) -> (Self, &dyn Parser<Self>);
+    fn parser_for(self, name: &str) -> (Self, &dyn Parser<Self>);
 
     fn call(mut self, name: &str) -> ParseResult<Self> {
         let key = self.key(name);
@@ -84,7 +84,7 @@ pub trait Ctx: Clone + Debug {
             };
         }
 
-        let (ctx, rule) = self.parser(name);
+        let (ctx, rule) = self.parser_for(name);
         if rule.is_left_recursive() {
             return ctx.recursive_call(key, rule);
         }
