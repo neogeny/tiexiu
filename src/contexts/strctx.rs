@@ -1,76 +1,11 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-use crate::grammars::Parser;
-use super::cst::Cst;
-use super::ctx::Ctx;
-use super::memo::{Cache, Key, Memo};
-use crate::grammars::Rule;
-use crate::input::{Cursor, StrCursor};
-use std::cell::RefCell;
-use std::collections::HashMap;
-use std::rc::Rc;
+use super::corectx::CoreCtx;
+use crate::input::StrCursor;
 
-#[derive(Clone, Debug)]
-pub struct StrCtx<'c> {
-    _cursor: StrCursor<'c>,
-    cutseen: bool,
-    rulemap: &'c HashMap<&'c str, Rule<'c>>,
-    cache: Rc<RefCell<Cache>>,
-}
+pub type StrCtx<'c> = CoreCtx<'c, StrCursor<'c>>;
 
-impl<'c> StrCtx<'c> {
-    pub fn new(
-        cursor: StrCursor<'c>,
-        rulemap: &'c HashMap<&'c str, Rule<'c>>,
-    ) -> Self {
-        Self {
-            _cursor: cursor,
-            cutseen: false,
-            rulemap,
-            cache: Rc::new(RefCell::new(Cache::new())),
-        }
-    }
-}
-
-impl<'c> Ctx for StrCtx<'c> {
-    fn with_cache_mut<F, R>(&self, f: F) -> R
-    where
-        for<'a> F: FnOnce(&mut Cache) -> R,
-    {
-        let mut cache = self.cache.borrow_mut();
-        f(&mut cache)
-    }
-
-    fn cursor(&mut self) -> &mut dyn Cursor {
-        &mut self._cursor
-    }
-
-    fn cut_seen(&self) -> bool {
-        self.cutseen
-    }
-
-    fn cut(&mut self) {
-        self.cutseen = true;
-        self.prune_cache();
-    }
-
-    fn uncut(&mut self) {
-        self.cutseen = false;
-    }
-    
-    fn prune_cache(&mut self) {
-        let cutpoint = self.mark();
-        self.with_cache_mut(|cache| cache.prune(cutpoint));
-    }
-
-    fn parser(self, name: &str) -> (Self, &dyn Parser<Self>) {
-        let rule = self.rulemap
-            .get(name)
-            .unwrap_or_else(|| panic!("rule '{}' not found", name));
-        (self, rule.rhs)
-    }
-}
 
 #[cfg(test)]
 mod tests {

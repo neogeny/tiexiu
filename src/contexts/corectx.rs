@@ -6,7 +6,6 @@ use crate::input::Cursor;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
-use crate::input::{StrCursor};
 
 #[derive(Clone, Debug)]
 pub struct CoreCtx<'c, C>
@@ -18,9 +17,6 @@ where
     pub rulemap: &'c HashMap<&'c str, Rule<'c>>,
     pub cache: Rc<RefCell<Cache>>,
 }
-
-/// Specialized version for string parsing
-pub type StrCtx<'c> = CoreCtx<'c, StrCursor<'c>>;
 
 impl<'c, C> CoreCtx<'c, C>
 where
