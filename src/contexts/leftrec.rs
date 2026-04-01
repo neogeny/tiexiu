@@ -50,7 +50,7 @@ impl<'c> StrCtx<'c> {
             trial_ctx.reset(start_mark);
 
             match rule.parse(trial_ctx) {
-                Ok(S(next_ctx, new_cst)) => {
+                Ok(S(mut next_ctx, new_cst)) => {
                     let end_mark = next_ctx.mark();
 
                     // Progress Check: Did we move the cursor further?

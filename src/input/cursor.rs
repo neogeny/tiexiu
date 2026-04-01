@@ -3,7 +3,7 @@
 
 use std::fmt::Debug;
 
-pub trait Cursor: Clone + Debug {
+pub trait Cursor: Debug {
     fn mark(&self) -> usize;
     fn reset(&mut self, mark: usize);
     fn textstr(&self) -> &str;

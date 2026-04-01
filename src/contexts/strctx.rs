@@ -12,7 +12,7 @@ use std::rc::Rc;
 
 #[derive(Clone, Debug)]
 pub struct StrCtx<'c> {
-    cursor: Box<StrCursor<'c>>,
+    _cursor: StrCursor<'c>,
     cutseen: bool,
     cache: Rc<RefCell<Cache<'c>>>,
 }
@@ -21,7 +21,7 @@ impl<'c> StrCtx<'c> {
     pub fn new(cursor: StrCursor<'c>) -> Self {
         let map = HashMap::new();
         Self {
-            cursor: cursor.into(),
+            _cursor: cursor,
             cutseen: false,
             cache: Rc::new(RefCell::new(Cache::new(map))),
         }
@@ -29,36 +29,8 @@ impl<'c> StrCtx<'c> {
 }
 
 impl<'c> Ctx for StrCtx<'c> {
-    fn eof_check(&self) -> bool {
-        self.cursor.at_end()
-    }
-
-    fn dot(&mut self) -> bool {
-        self.next().is_some()
-    }
-
-    fn next(&mut self) -> Option<char> {
-        self.cursor.next()
-    }
-
-    fn token(&mut self, token: &str) -> bool {
-        self.cursor.token(token)
-    }
-
-    fn pattern(&mut self, pattern: &str) -> Option<&str> {
-        self.cursor.pattern(pattern)
-    }
-
-    fn next_token(&mut self) {
-        self.cursor.next_token();
-    }
-
-    fn mark(&self) -> usize {
-        self.cursor.mark()
-    }
-
-    fn reset(&mut self, mark: usize) {
-        self.cursor.reset(mark);
+    fn cursor(&mut self) -> &mut dyn Cursor {
+        &mut self._cursor
     }
 
     fn memo(&mut self, key: &Key) -> Option<Memo> {
@@ -67,14 +39,16 @@ impl<'c> Ctx for StrCtx<'c> {
     }
 
     fn memoize(&mut self, key: &Key, cst: &Cst) {
+        let mark = self.mark();
         let mut cache = self.cache.borrow_mut();
-        cache.memoize(key, cst, self.mark());
+        cache.memoize(key, cst, mark);
     }
 
     fn cut(&mut self) {
         self.cutseen = true;
+        let mark = self.mark();
         let mut cache = self.cache.borrow_mut();
-        cache.prune(self.mark())
+        cache.prune(mark)
     }
 
     fn uncut(&mut self) {

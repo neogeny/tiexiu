@@ -3,22 +3,49 @@
 
 use super::cst::Cst;
 use super::memo::{Cache, Key, Memo};
+use crate::input::Cursor;
 use crate::grammars::{ParseResult, Rule, S};
 use std::fmt::Debug;
+use std::cell::RefCell;
 
 pub trait Ctx: Clone + Debug {
-    fn eof_check(&self) -> bool;
-    fn dot(&mut self) -> bool;
-    fn next(&mut self) -> Option<char>;
-    fn token(&mut self, token: &str) -> bool;
-    fn pattern(&mut self, pattern: &str) -> Option<&str>;
-    fn next_token(&mut self);
+    fn cursor(&mut self) -> &mut dyn Cursor;
 
-    fn key(&self, name: &str) -> Key {
+    fn eof_check(&mut self) -> bool {
+        self.cursor().at_end()
+    }
+
+    fn dot(&mut self) -> bool {
+        self.next().is_some()
+    }
+
+    fn next(&mut self) -> Option<char> {
+        self.cursor().next()
+    }
+
+    fn token(&mut self, token: &str) -> bool {
+        self.cursor().token(token)
+    }
+
+    fn pattern(&mut self, pattern: &str) -> Option<&str> {
+        self.cursor().pattern(pattern)
+    }
+
+    fn next_token(&mut self) {
+        self.cursor().next_token();
+    }
+
+    fn key(&mut self, name: &str) -> Key {
         Cache::key(self.mark(), name)
     }
-    fn mark(&self) -> usize;
-    fn reset(&mut self, mark: usize);
+    fn mark(&mut self) -> usize {
+        self.cursor().mark()
+    }
+
+    fn reset(&mut self, mark: usize) {
+        self.cursor().reset(mark);
+    }
+
     fn memo(&mut self, key: &Key) -> Option<Memo>;
     fn memoize(&mut self, key: &Key, cst: &Cst);
 
