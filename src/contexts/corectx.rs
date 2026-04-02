@@ -56,7 +56,7 @@ impl<'a, C: Cursor + Clone> Clone for CoreCtx<'a, C> {
         Self {
             // This clones the actual 32-byte State data into a new allocation
             state: (*self.state).clone().into(),
-            heavy: self.heavy.clone(),
+            heavy: Box::clone(&self.heavy),
         }
     }
 }
