@@ -93,7 +93,7 @@ mod tests {
     #[test]
     fn test_state_isolation_preserves_shared_cache() {
         let grammar = Grammar::default();
-        let cursor: StrCursor<DefaultPatterns> = StrCursor::new("abc");
+        let cursor: StrCursor = StrCursor::new("abc");
         let mut ctx1 = CoreCtx::new(cursor, &grammar);
         let mut ctx2 = ctx1.clone();
     

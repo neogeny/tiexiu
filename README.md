@@ -2,10 +2,7 @@
 
 A high-performance port of **TatSu** to Rust.
 
-**TieXiu** (铁修) is a PEG (Parsing Expression Grammar) engine designed for 
-maximum mechanical sympathy. It translates the flexibility and power of the 
-original **[TatSu][]** lineage into a memory-safe, high-concurrency 
-architecture optimized for modern CPU caches.
+**TieXiu** (铁修) is a PEG (Parsing Expression Grammar) engine that implements the flexibility and power of the original **[TatSu][]** lineage into a memory-safe, high-concurrency architecture optimized for modern CPU caches.
 
 [TatSu]: https://tatsu.readthedocs.io/en/stable/
 
@@ -15,15 +12,18 @@ Implementation is complete for the core execution engine, the grammar model, the
 
 ### Ultra-Lean Context (16-byte Handles)
 
-**TieXiu** uses the runtime stack for the parsing state stack. A state 
-change was reduced to a 16-byte stack footprint consisting of two  pointers: one for the *Volatile State* (Input Cursor) and one for the 
-*Heavy Stated* (Grammar + Memoization Cache). This allows for deep recursive 
-descent with 
-minimal stack pressure and $O(1)$ branching costs.
+**TieXiu** uses the runtime stack as the parsing state stack. A state 
+change has a 16-byte stack footprint consisting of two  pointers: one for the *Volatile State* (Input Cursor) and one for the *Heavy Stated* (Grammar + Memoization Cache). This allows for deep recursive descent with 
+minimal stack pressure and $O(1)$ branching costs. The `Cursor` 
+implementation for parsing text (`StrCursor`) uses 16 bytes (`&str` + 
+`usize`) and has copy-on-write semantics during a parse (grammar elements 
+that don't advance over the input share the same cursor). 
 
 ### Copy-on-Write State Transitions
 
-Backtracking in TieXiu is "lazy." Cloning a context only increments reference counts. The engine leverages the Rust runtime stack to handle state changes with high precision. Efficient branching is a 16-byte pointer operation, while a **32-Byte State Allocation** only occurs upon mutation. When a branch deviates from its parent, the state is cloned via **Copy-on-Write (CoW)**, ensuring costs are strictly bounded and isolated.
+Backtracking in TieXiu is "lazy." Cloning a context/state only increments 
+reference counts. The engine leverages the Rust runtime stack to handle 
+state changes. Branching at choice points is a *16-byte* clone of the state, with a *16-byte* (for text) allocation only when the state is mutated. Failed parses restore the cursor position and register the furthest failure position for error reporting. The state returned occupies the same space as the original state.
 
 ### Complete Parsing Engine
 
