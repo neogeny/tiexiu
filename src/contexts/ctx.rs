@@ -31,10 +31,12 @@ pub trait Ctx: Clone + Debug {
     }
 
     fn token(&mut self, token: &str) -> bool {
+        self.next_token();
         self.cursor_mut().token(token)
     }
 
     fn pattern(&mut self, pattern: &str) -> Option<&str> {
+        // NOTE: no next_token() here
         self.cursor_mut().pattern(pattern)
     }
 
@@ -81,6 +83,10 @@ pub trait Ctx: Clone + Debug {
 
     fn call(mut self, name: &str) -> ParseResult<Self> {
         let rule = self.parser_for(name);
+
+        if !rule.is_token() {
+            self.next_token();
+        }
 
         let key = self.key(name);
         if let Some(memo) = self.memo(&key) {

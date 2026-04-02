@@ -9,12 +9,11 @@ pub type StrCtx<'c, P> = CoreCtx<'c, StrCursor<'c, P>>;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::input::strcursor::DefaultPatterns;
-    use std::mem::size_of;
-    use crate::grammars::Grammar;
-    use crate::input::strcursor::StrCursor;
     use crate::contexts::{Cst, Ctx};
-
+    use crate::grammars::Grammar;
+    use crate::input::strcursor::DefaultPatterns;
+    use crate::input::strcursor::StrCursor;
+    use std::mem::size_of;
 
     const TARGET: usize = 16;
 
@@ -29,12 +28,7 @@ mod tests {
     fn test_cursor_size() {
         let size = size_of::<StrCursor<DefaultPatterns>>();
         // StrCursor contains &str (16) and usize (8) = 24 bytes.
-        assert!(
-            size <= 24,
-            "StrCursor size is {} > {} bytes",
-            size,
-            TARGET
-        );
+        assert!(size <= 24, "StrCursor size is {} > {} bytes", size, TARGET);
     }
     #[test]
     fn test_ctx_handle_size() {

@@ -23,7 +23,7 @@ where
     C: Cursor + Clone,
 {
     pub state: Rc<State<C>>,
-    pub heavy: Box<HeavyState<'c>>
+    pub heavy: Box<HeavyState<'c>>,
 }
 
 impl<'c, C> CoreCtx<'c, C>
@@ -32,11 +32,16 @@ where
 {
     pub fn new(cursor: C, grammar: &'c Grammar) -> Self {
         Self {
-            state: State{ cursor, cutseen: false}.into(),
+            state: State {
+                cursor,
+                cutseen: false,
+            }
+            .into(),
             heavy: HeavyState {
                 grammar,
                 cache: Rc::new(RefCell::new(Cache::new())),
-            }.into(),
+            }
+            .into(),
         }
     }
 
