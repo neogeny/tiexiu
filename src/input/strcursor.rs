@@ -24,11 +24,11 @@ pub struct StrCursor<'a, P> {
 }
 
 impl<'a, P: Patterns> StrCursor<'a, P> {
-    pub fn new(text: &'a str, offset: usize) -> Self {
+    pub fn new(text: &'a str) -> Self {
         let _p = P::default();
         Self {
             text,
-            offset,
+            offset: 0,
             _p: PhantomData,
         }
     }

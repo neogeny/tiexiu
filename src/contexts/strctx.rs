@@ -47,7 +47,7 @@ mod tests {
     fn test_cow_behavior() {
         let grammar = Grammar::default(); // Assuming default/mock grammar
         let text = "calculate 1 + 2";
-        let cursor: StrCursor<DefaultPatterns> = StrCursor::new(text, 0);
+        let cursor: StrCursor<DefaultPatterns> = StrCursor::new(text);
 
         let mut ctx1 = CoreCtx::new(cursor, &grammar);
 
@@ -75,7 +75,7 @@ mod tests {
     fn test_shared_memoization_semantics() {
         let grammar = Grammar::default();
         let text = "abc";
-        let cursor: StrCursor<DefaultPatterns> = StrCursor::new(text, 0);
+        let cursor: StrCursor<DefaultPatterns> = StrCursor::new(text);
         let mut ctx1 = CoreCtx::new(cursor, &grammar);
 
         // Clone the context. ctx1 and ctx2 now have independent Rc<State> handles

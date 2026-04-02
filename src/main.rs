@@ -19,7 +19,7 @@ fn test_build() {
     // let cl = Call::new("test");
     let seq = Model::Sequence([a, b, c, v].into());
 
-    let cur: StrCursor<DefaultPatterns> = StrCursor::new("a b c", 0);
+    let cur: StrCursor<DefaultPatterns> = StrCursor::new("a b c");
     let grammar = Grammar::new("test", &[]);
     let ctx = StrCtx::new(cur, &grammar);
 
