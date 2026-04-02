@@ -17,13 +17,14 @@ change has a 16-byte stack footprint consisting of two  pointers: one for the *V
 minimal stack pressure and $O(1)$ branching costs. The `Cursor` 
 implementation for parsing text (`StrCursor`) uses 16 bytes (`&str` + 
 `usize`) and has copy-on-write semantics during a parse (grammar elements 
-that don't advance over the input share the same cursor). 
+that don't advance over the input share the same cursor).
+
 
 ### Copy-on-Write State Transitions
 
-Backtracking in TieXiu is "lazy." Cloning a context/state only increments 
-reference counts. The engine leverages the Rust runtime stack to handle 
-state changes. Branching at choice points is a *16-byte* clone of the state, with a *16-byte* (for text) allocation only when the state is mutated. Failed parses restore the cursor position and register the furthest failure position for error reporting. The state returned occupies the same space as the original state.
+Backtracking in **TieXiu** is *lazy*. Cloning a context/state only increments reference counts. The engine leverages the Rust runtime stack to handle state changes. Branching at choice points is a *16-byte* clone of the state, with a *16-byte* (for text) allocation only when the state is mutated. Failed parses restore the cursor position and register the furthest failure position for error reporting. The state returned occupies the same space as the original state.
+
+A CST may use *64-bytes* per atomic node plus space proportional to the input matched, but CST are only kept for the currently successful path on the parse, and are dropped as soon as an option fails. CST are compacted on the boundary of the successful parse of a grammar rule node.
 
 ### Complete Parsing Engine
 
