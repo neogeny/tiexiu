@@ -4,7 +4,7 @@
 use super::corectx::CoreCtx;
 use crate::input::StrCursor;
 
-pub type StrCtx<'c> = CoreCtx<StrCursor<'c>>;
+pub type StrCtx<'c> = CoreCtx<'c, StrCursor<'c>>;
 
 #[cfg(test)]
 mod tests {

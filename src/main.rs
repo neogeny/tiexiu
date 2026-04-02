@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use tiexiu::contexts::strctx::StrCtx;
-use tiexiu::grammars::Model;
-use tiexiu::grammars::rule::RuleMap;
+use tiexiu::grammars::{Grammar, Model};
 use tiexiu::input::StrCursor;
 
 fn scope() -> (Model, Model) {
@@ -20,8 +19,8 @@ fn test_build() {
     let seq = Model::Sequence([a, b, c, v].into());
 
     let cur = StrCursor::new("a b c", 0, r"\s+", r"#.*$", r"");
-    let rulemap = RuleMap::new();
-    let ctx = StrCtx::new(cur, &rulemap);
+    let grammar = Grammar::new("test", &[]);
+    let ctx = StrCtx::new(cur, &grammar);
 
     let cst = seq.parse(ctx);
     print!("{:?}", cst);

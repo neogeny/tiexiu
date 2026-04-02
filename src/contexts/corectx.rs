@@ -1,39 +1,43 @@
 use crate::contexts::Ctx;
 use crate::contexts::memo::Cache;
-use crate::grammars::rule::{Rule, RuleMap};
 use crate::input::Cursor;
 use std::cell::RefCell;
 use std::rc::Rc;
+use crate::grammars::Grammar;
 
 #[derive(Clone, Debug)]
-pub struct CoreCtx<C>
+pub struct CoreCtx<'c, C>
 where
     C: Cursor,
 {
     pub cursor: C,
     pub cutseen: bool,
-    pub rulemap: RuleMap,
+    pub grammar: &'c Grammar,
     pub cache: Rc<RefCell<Cache>>,
 }
 
-impl<C> CoreCtx<C>
+impl<'c, C> CoreCtx<'c, C>
 where
     C: Cursor,
 {
-    pub fn new(cursor: C, rulemap: &RuleMap) -> Self {
+    pub fn new(cursor: C, grammar: &'c Grammar) -> Self {
         Self {
             cursor,
             cutseen: false,
-            rulemap: rulemap.clone(),
+            grammar,
             cache: Rc::new(RefCell::new(Cache::new())),
         }
     }
 }
 
-impl<C> Ctx for CoreCtx<C>
+impl<'c, C> Ctx for CoreCtx<'c, C>
 where
     C: Cursor + Clone,
 {
+    fn grammar(&self) -> &Grammar {
+        self.grammar
+    }
+
     #[inline]
     fn cursor(&self) -> &dyn Cursor {
         &self.cursor
@@ -66,17 +70,8 @@ where
         self.cutseen = true;
         self.prune_cache();
     }
-
     fn prune_cache(&mut self) {
         let cutpoint = self.mark();
         self.with_cache_mut(|cache| cache.prune(cutpoint));
-    }
-
-    fn parser_for(&self, name: &str) -> Rule {
-        let rule = self
-            .rulemap
-            .get(name)
-            .unwrap_or_else(|| panic!("rule '{}' not found", name));
-        rule.clone()
     }
 }

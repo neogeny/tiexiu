@@ -3,11 +3,13 @@
 
 use super::cst::Cst;
 use super::memo::{Cache, Key, Memo};
-use crate::grammars::{ParseResult, Rule, S};
+use crate::grammars::{Grammar, ParseResult, Rule, S};
 use crate::input::Cursor;
 use std::fmt::Debug;
 
 pub trait Ctx: Clone + Debug {
+    fn grammar(&self) -> &Grammar;
+
     fn cursor(&self) -> &dyn Cursor;
 
     fn cursor_mut(&mut self) -> &mut dyn Cursor;
@@ -67,8 +69,14 @@ pub trait Ctx: Clone + Debug {
     fn cut(&mut self);
 
     fn prune_cache(&mut self);
-
-    fn parser_for(&self, name: &str) -> Rule;
+    
+    fn parser_for(&self, name: &str) -> Rule {
+        let rule = self.grammar()
+            .rulemap
+            .get(name)
+            .unwrap_or_else(|| panic!("rule '{}' not found", name));
+        rule.clone()
+    }
 
     fn call(mut self, name: &str) -> ParseResult<Self> {
         let rule = self.parser_for(name);
