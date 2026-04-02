@@ -22,3 +22,15 @@ impl Grammar {
         grammar
     }
 }
+
+impl Default for Grammar {
+    #[inline]
+    fn default() -> Self {
+        let mut grammar = Self {
+            name: "default".to_string(),
+            rulemap: RuleMap::default(),
+        };
+        mark_left_recursion(&mut grammar);
+        grammar
+    }
+}

@@ -10,7 +10,7 @@ pub struct Key {
     pub name: String,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Memo {
     pub cst: Cst,
     pub mark: usize,
