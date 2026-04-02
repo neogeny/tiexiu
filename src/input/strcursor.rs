@@ -17,7 +17,7 @@ pub struct DefaultPatterns;
 impl Patterns for DefaultPatterns {}
 
 #[derive(Debug, Clone)]
-pub struct StrCursor<'a, P> {
+pub struct StrCursor<'a, P=DefaultPatterns> {
     text: &'a str,
     offset: usize,
     _p: PhantomData<P>, // Zero-sized: 0 bytes
