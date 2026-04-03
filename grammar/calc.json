@@ -1,6 +1,5 @@
 {
   "__class__": "Grammar",
-  name: "CALC",
   "keywords": [],
   "rules": [
     {
