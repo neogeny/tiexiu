@@ -29,7 +29,7 @@ pyo3 = { version = "0.28.2", features = ["extension-module"]}
 #pyo3 = { version = "0.28.2", features = ["extension-module"], optional = true }
 
 [[bin]]
-name = "tiexiu"
+name = "tiexiuc"
 path = "src/main.rs"
 
 [lib]
