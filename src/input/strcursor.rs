@@ -95,11 +95,11 @@ impl<'a, P: Patterns> Cursor for StrCursor<'a, P> {
         }
     }
 
+    #[cfg(feature = "regex")]
     fn pattern(&mut self, pattern: &str) -> Option<&'a str> {
         if pattern.is_empty() {
             return None;
         }
-        #[cfg(feature = "regex")]
         {
             let re = Regex::new(pattern).ok()?;
             let caps = re.captures_at(self.text, self.offset)?;
@@ -116,8 +116,6 @@ impl<'a, P: Patterns> Cursor for StrCursor<'a, P> {
             // Logic: If there is 1+ group, return group 1. Else return group 0.
             Some(caps.get(1).or(caps.get(0))?.as_str())
         }
-        #[cfg(not(feature = "regex"))]
-        None
     }
 
     fn next_token(&mut self) {
