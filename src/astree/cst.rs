@@ -66,13 +66,11 @@ impl<const N: usize> From<[Cst; N]> for Cst {
     }
 }
 
-
 impl fmt::Display for KeyValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "«{}={}»", self.0, self.1)
     }
 }
-
 
 impl fmt::Display for Cst {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -80,10 +78,16 @@ impl fmt::Display for Cst {
             Self::Token(s) | Self::Literal(s) => write!(f, "\"{}\"", s),
             Self::Number(n) => write!(f, "{}", n),
             Self::List(items) | Self::Closure(items) => {
-                let bracket = if matches!(self, Self::List(_)) { ("[", "]") } else { ("{", "}") };
+                let bracket = if matches!(self, Self::List(_)) {
+                    ("[", "]")
+                } else {
+                    ("{", "}")
+                };
                 write!(f, "{}", bracket.0)?;
                 for (i, item) in items.iter().enumerate() {
-                    if i > 0 { write!(f, ", ")?; }
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
                     write!(f, "{}", item)?;
                 }
                 write!(f, "{}", bracket.1)
@@ -98,7 +102,6 @@ impl fmt::Display for Cst {
         }
     }
 }
-
 
 impl Cst {
     pub fn named(key: &str, value: Cst) -> Self {

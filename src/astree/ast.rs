@@ -3,8 +3,8 @@
 
 use super::cst::Cst;
 use std::collections::HashMap;
-use std::ops::Add;
 use std::fmt;
+use std::ops::Add;
 
 /// A structured mapping for AST nodes.
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -20,7 +20,9 @@ impl fmt::Display for Ast {
 
         write!(f, "{{")?;
         for (i, key) in keys.iter().enumerate() {
-            if i > 0 { write!(f, ", ")?; }
+            if i > 0 {
+                write!(f, ", ")?;
+            }
             // Safe to unwrap because we just got the key from the map
             write!(f, "{}: {}", key, self.fields.get(*key).unwrap())?;
         }

@@ -1,8 +1,8 @@
 use super::Cursor;
-use std::fmt::Debug;
-use std::marker::PhantomData;
 #[cfg(feature = "regex")]
 use regex::Regex;
+use std::fmt::Debug;
+use std::marker::PhantomData;
 
 pub trait Patterns: Clone + Debug + Default {
     const WHITESPACE: &'static str = r"\s+";
@@ -21,7 +21,7 @@ pub struct DefaultPatterns {
     _eol_comments_re: Regex,
 }
 
-impl Default for DefaultPatterns{
+impl Default for DefaultPatterns {
     fn default() -> Self {
         Self {
             _whitespace_re: Regex::new(DefaultPatterns::WHITESPACE).unwrap(),
@@ -63,7 +63,6 @@ impl<'a, P: Patterns> StrCursor<'a, P> {
     }
 
     fn eat_regex(&mut self, re: &Regex) -> bool {
-
         #[cfg(feature = "regex")]
         if let Some(mat) = re.find_at(self.text, self.offset) {
             if mat.start() != self.offset {
@@ -144,7 +143,6 @@ impl<'a, P: Patterns> Cursor for StrCursor<'a, P> {
         let wre = patterns.whitespace_re();
         let cre = patterns.comments_re();
         let ere = patterns.eol_comments_re();
-
 
         let mut last_offset = usize::MAX;
         while self.offset != last_offset {

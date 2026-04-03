@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::parser::{Parser, S};
-use crate::contexts::{Cst, Ctx};
+use crate::astree::Cst;
+use crate::contexts::Ctx;
 
 pub fn skip_exp<C: Ctx>(exp: &dyn Parser<C>, ctx: C) -> Result<C, C> {
     match exp.parse(ctx) {

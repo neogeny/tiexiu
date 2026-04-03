@@ -14,7 +14,7 @@ pub trait Cursor: Debug {
         None
     }
     fn next_token(&mut self);
-    
+
     // // Character classification
     // fn is_name(&self, s: &str) -> bool;
     // fn is_name_char(&self, c: Option<&str>) -> bool;

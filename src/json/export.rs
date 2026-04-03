@@ -1,8 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::contexts::ast::Ast;
-use crate::contexts::{Cst, KeyValue};
+use crate::astree::{Ast, Cst, KeyValue};
 use std::collections::HashMap;
 use std::ops::Deref;
 
@@ -10,7 +9,6 @@ use std::ops::Deref;
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "serde_json")]
 use serde_json::Value;
-
 
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "serde_json", derive(Serialize, Deserialize))]
@@ -44,9 +42,7 @@ impl ToJson for Cst {
             Cst::Nil | Cst::Bottom | Cst::Void => Json::Null,
             Cst::Token(s) | Cst::Literal(s) => Json::String(s.deref().to_string()),
             Cst::Number(n) => Json::Number(*n),
-            Cst::List(v) | Cst::Closure(v) => {
-                Json::Array(v.iter().map(|c| c.to_json()).collect())
-            }
+            Cst::List(v) | Cst::Closure(v) => Json::Array(v.iter().map(|c| c.to_json()).collect()),
             Cst::Named(keyval) | Cst::NamedList(keyval) => {
                 let KeyValue(name, cst) = keyval.deref();
                 let mut map = HashMap::new();
@@ -76,7 +72,7 @@ impl Json {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::contexts::cst::Cst;
+    use crate::astree::cst::Cst;
 
     #[test]
     fn test_cst_to_json_export() {

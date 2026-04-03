@@ -9,7 +9,8 @@ pub type StrCtx<'c, P> = CoreCtx<'c, StrCursor<'c, P>>;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::contexts::{Cst, Ctx, KeyValue};
+    use crate::astree::{Cst, KeyValue};
+    use crate::contexts::Ctx;
     use crate::grammars::Grammar;
     use crate::input::strcursor::DefaultPatterns;
     use crate::input::strcursor::StrCursor;
@@ -27,7 +28,12 @@ mod tests {
     #[test]
     fn test_keyval_size() {
         let size = size_of::<KeyValue>();
-        assert!(size <= LARGE_TARGET, "KeyVal size is {} > {} bytes", size, TARGET);
+        assert!(
+            size <= LARGE_TARGET,
+            "KeyVal size is {} > {} bytes",
+            size,
+            TARGET
+        );
     }
 
     #[test]
