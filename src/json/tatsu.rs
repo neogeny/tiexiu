@@ -40,6 +40,9 @@ pub enum TatSuModel {
     Group {
         exp: Box<TatSuModel>,
     },
+    SkipGroup {
+        exp: Box<TatSuModel>,
+    },
     Token {
         token: String,
     },
@@ -51,7 +54,7 @@ pub enum TatSuModel {
     },
     Alert {
         literal: String,
-        leverl: u16,
+        level: u8,
     },
     Call {
         name: String,

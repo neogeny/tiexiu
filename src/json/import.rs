@@ -55,6 +55,9 @@ impl From<TatSuModel> for E {
             TatSuModel::Rule { .. } | TatSuModel::Grammar { .. } => {
                 unreachable!("Container types (Rule/Grammar) cannot be nested inside expressions.");
             }
+            TatSuModel::LeftJoin { .. } => unreachable!("LeftJoin not implemented"),
+            TatSuModel::RightJoin { .. } => unreachable!("LeftJoin not implemented"),
+
 
             // --- Core Terminals ---
             TatSuModel::Cut => E::Cut,
@@ -66,6 +69,7 @@ impl From<TatSuModel> for E {
             TatSuModel::Token { token } => E::Token(token.into()),
             TatSuModel::Pattern { pattern } => E::Pattern(pattern.into()),
             TatSuModel::Constant { literal } => E::Constant(literal.into()),
+            TatSuModel::Alert { literal, level } => E::Alert(literal.into(), level),
 
             // --- Unary Operators ---
             TatSuModel::Group { exp } => E::Group((*exp).into()),
@@ -105,13 +109,14 @@ impl From<TatSuModel> for E {
                 exp: (*exp).into(),
                 sep: (*sep).into(),
             },
-
             TatSuModel::Named { name, exp } => E::Named(name.into(), (*exp).into()),
             TatSuModel::NamedList { name, exp } => E::NamedList(name.into(), (*exp).into()),
             TatSuModel::Override { exp } => E::Override((*exp).into()),
             TatSuModel::OverrideList { exp } => E::OverrideList((*exp).into()),
+            TatSuModel::SkipGroup { exp } => E::SkipGroup((*exp).into()),
 
-            _ => todo!("Implement remaining variants: Pattern, Alert, etc."),
+
+            // _ => todo!("Implement remaining variants: Pattern, Alert, etc."),
         }
     }
 }
