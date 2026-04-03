@@ -10,8 +10,14 @@ pub trait Cursor: Debug {
     fn at_end(&self) -> bool;
     fn next(&mut self) -> Option<char>;
     fn token(&mut self, token: &str) -> bool;
-    fn pattern(&mut self, pattern: &str) -> Option<&str>;
+    fn pattern(&mut self, _pattern: &str) -> Option<&str> {
+        None
+    }
     fn next_token(&mut self);
+    
+    // // Character classification
+    // fn is_name(&self, s: &str) -> bool;
+    // fn is_name_char(&self, c: Option<&str>) -> bool;
     //
     // /// The full source text from the provider.
     // fn source(&self) -> &'a str;
@@ -31,10 +37,6 @@ pub trait Cursor: Debug {
     // fn current(&self) -> Option<&'a str>;
     // fn match_str(&mut self, token: &str) -> Option<&'a str>;
     // fn match_re(&mut self, pattern: &str) -> Option<&'a str>;
-    //
-    // // Character classification
-    // fn is_name(&self, s: &str) -> bool;
-    // fn is_name_char(&self, c: Option<&str>) -> bool;
     //
     // // Simplified coordinates
     // fn line_at(&self, pos: Option<usize>) -> usize;
