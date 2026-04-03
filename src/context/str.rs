@@ -4,15 +4,15 @@
 use super::core::CoreCtx;
 use crate::input::str::{DefaultPatterns, StrCursor};
 
-pub type StrCtx<'c, P=DefaultPatterns> = CoreCtx<'c, StrCursor<'c, P>>;
+pub type StrCtx<'c, P = DefaultPatterns> = CoreCtx<'c, StrCursor<'c, P>>;
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::astree::{Cst, KeyValue};
     use crate::context::Ctx;
-    use crate::model::Grammar;
     use crate::input::str::StrCursor;
+    use crate::model::Grammar;
     use std::mem::size_of;
 
     const TARGET: usize = 32;

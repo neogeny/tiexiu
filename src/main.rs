@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use tiexiu::context::str::StrCtx;
-use tiexiu::model::{Grammar, E, S};
 use tiexiu::input::StrCursor;
 use tiexiu::input::str::DefaultPatterns;
+use tiexiu::model::{E, Grammar, S};
 
 fn scope() -> (E, E) {
     let a = E::Token("a".into());

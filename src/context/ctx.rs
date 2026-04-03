@@ -3,8 +3,8 @@
 
 use super::memo::{Cache, Key, Memo};
 use crate::astree::cst::Cst;
-use crate::model::{Grammar, ParseResult, Rule, S};
 use crate::input::Cursor;
+use crate::model::{Grammar, ParseResult, Rule, S};
 use std::fmt::Debug;
 
 pub trait Ctx: Clone + Debug {

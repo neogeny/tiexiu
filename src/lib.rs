@@ -3,9 +3,9 @@
 
 pub mod astree;
 pub mod context;
-pub mod model;
 pub mod input;
 pub mod json;
+pub mod model;
 
 #[allow(dead_code)]
 use pyo3::prelude::*;

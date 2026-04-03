@@ -35,9 +35,7 @@ impl E {
 
             // Join/Gather variants
             E::Join { .. } | E::Gather { .. } => true, // These can match zero times
-            E::PositiveJoin { exp, .. } | E::PositiveGather { exp, .. } => {
-                exp.is_nullable()
-            }
+            E::PositiveJoin { exp, .. } | E::PositiveGather { exp, .. } => exp.is_nullable(),
 
             // Special cases
             E::SkipTo(_) => false, // SkipTo must find a match to succeed

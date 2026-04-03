@@ -3,15 +3,15 @@
 
 // #![allow(dead_code)]
 pub mod build;
+pub mod elements;
 pub mod grammar;
 pub mod leftrec;
-pub mod elements;
 pub mod nullability;
 pub mod parser;
 pub mod repeat;
 pub mod rule;
 
-pub use grammar::Grammar;
 pub use elements::E;
+pub use grammar::Grammar;
 pub use parser::{ParseResult, Parser, S};
 pub use rule::Rule;

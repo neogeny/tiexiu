@@ -1,7 +1,7 @@
 use crate::context::Ctx;
 use crate::context::memo::Cache;
-use crate::model::Grammar;
 use crate::input::Cursor;
+use crate::model::Grammar;
 use std::cell::RefCell;
 use std::rc::Rc;
 
