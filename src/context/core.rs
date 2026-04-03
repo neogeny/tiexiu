@@ -37,12 +37,10 @@ where
                 cutseen: false,
             }
             .into(),
-            heavy: RefCell::new(
-                HeavyState {
-                    grammar,
-                    cache: Cache::new(),
-                }
-            )
+            heavy: RefCell::new(HeavyState {
+                grammar,
+                cache: Cache::new(),
+            })
             .into(),
         }
     }
@@ -52,7 +50,6 @@ where
         Rc::make_mut(&mut self.state)
     }
 }
-
 
 impl<'c, C> Ctx for CoreCtx<'c, C>
 where

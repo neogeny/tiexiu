@@ -10,8 +10,8 @@ pub struct S<C: Ctx>(pub C, pub Cst);
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct F {
-    mark: usize,     // The position where the disaster occurred
-    msg: Box<str>,   // The "Why" (using your Boxed str for density)
+    mark: usize,   // The position where the disaster occurred
+    msg: Box<str>, // The "Why" (using your Boxed str for density)
     cut: bool,
 }
 

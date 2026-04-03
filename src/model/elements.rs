@@ -5,9 +5,9 @@ use super::parser::{ParseResult, Parser, S};
 use super::repeat::{add_exp, repeat, repeat_with_pre};
 use crate::astree::Cst;
 use crate::context::Ctx;
+use crate::model::F;
 use std::fmt::Debug;
 use std::ops::Deref;
-use crate::model::F;
 
 pub type ERef = Box<E>;
 pub type ERefArr = Box<[E]>;
@@ -178,8 +178,7 @@ where
                             }
 
                             match furthest {
-                                Some(ref f) if f.mark() < f.mark() => {
-                                }
+                                Some(ref f) if f.mark() < f.mark() => {}
                                 _ => furthest = Some(f),
                             }
                         }
