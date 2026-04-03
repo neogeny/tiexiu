@@ -12,9 +12,6 @@ exclude = [
     "__pycache__",
 ]
 
-#[features]
-#python = ["dep:pyo3"]
-
 [features]
 default = ["regex", "serde", "serde_json"]
 regex = ["dep:regex"]
@@ -26,7 +23,6 @@ serde = { version = "1.0", features = ["derive"], optional = true }
 regex = { version = "1.10", optional = true }
 serde_json = { version = "1.0.149", optional = true }
 pyo3 = { version = "0.28.2", features = ["extension-module"]}
-#pyo3 = { version = "0.28.2", features = ["extension-module"], optional = true }
 
 [[bin]]
 name = "tiexiuc"
