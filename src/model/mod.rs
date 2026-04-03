@@ -5,13 +5,13 @@
 pub mod build;
 pub mod grammar;
 pub mod leftrec;
-pub mod model;
+pub mod elements;
 pub mod nullability;
 pub mod parser;
 pub mod repeat;
 pub mod rule;
 
 pub use grammar::Grammar;
-pub use model::Model;
+pub use elements::E;
 pub use parser::{ParseResult, Parser, S};
 pub use rule::Rule;

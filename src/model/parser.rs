@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::astree::Cst;
-use crate::contexts::Ctx;
+use crate::context::Ctx;
 use std::fmt::Debug;
 
 pub type ParseResult<C> = Result<S<C>, C>;

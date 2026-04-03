@@ -1,4 +1,4 @@
-// A sketch of a "Grow" loop inside a Rule grammars
+// A sketch of a "Grow" loop inside a Rule model
 let mut current_ctx = ctx;
 let mut current_res = seed;
 

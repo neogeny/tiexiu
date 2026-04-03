@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::rule::{Rule, RuleMap};
-use crate::grammars::leftrec::mark_left_recursion;
+use crate::model::leftrec::mark_left_recursion;
 
 #[derive(Debug, Clone)]
 pub struct Grammar {

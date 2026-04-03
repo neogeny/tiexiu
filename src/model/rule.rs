@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::{Model, ParseResult, Parser};
-use crate::contexts::Ctx;
+use super::{E, ParseResult, Parser};
+use crate::context::Ctx;
 use std::collections::HashMap;
 
 pub type RuleMap = HashMap<String, Rule>;
@@ -14,11 +14,11 @@ pub struct Rule {
     is_lrec: bool,
     is_name: bool,
     is_tokn: bool,
-    pub rhs: Model,
+    pub rhs: E,
 }
 
 impl Rule {
-    pub fn new(name: &str, rhs: Model) -> Self {
+    pub fn new(name: &str, rhs: E) -> Self {
         Self {
             name: name.to_string(),
             is_memo: true,

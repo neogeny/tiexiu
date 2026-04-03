@@ -3,7 +3,7 @@
 
 use super::memo::{Cache, Key, Memo};
 use crate::astree::cst::Cst;
-use crate::grammars::{Grammar, ParseResult, Rule, S};
+use crate::model::{Grammar, ParseResult, Rule, S};
 use crate::input::Cursor;
 use std::fmt::Debug;
 

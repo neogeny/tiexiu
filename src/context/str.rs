@@ -1,19 +1,18 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::corectx::CoreCtx;
-use crate::input::strcursor::StrCursor;
+use super::core::CoreCtx;
+use crate::input::str::{DefaultPatterns, StrCursor};
 
-pub type StrCtx<'c, P> = CoreCtx<'c, StrCursor<'c, P>>;
+pub type StrCtx<'c, P=DefaultPatterns> = CoreCtx<'c, StrCursor<'c, P>>;
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::astree::{Cst, KeyValue};
-    use crate::contexts::Ctx;
-    use crate::grammars::Grammar;
-    use crate::input::strcursor::DefaultPatterns;
-    use crate::input::strcursor::StrCursor;
+    use crate::context::Ctx;
+    use crate::model::Grammar;
+    use crate::input::str::StrCursor;
     use std::mem::size_of;
 
     const TARGET: usize = 32;
@@ -38,18 +37,18 @@ mod tests {
 
     #[test]
     fn test_ctx_size() {
-        let size = size_of::<StrCtx<DefaultPatterns>>();
+        let size = size_of::<StrCtx>();
         assert!(size <= TARGET, "StrCtx size is {} > {} bytes", size, TARGET);
     }
 
     #[test]
     fn test_cursor_size() {
-        let size = size_of::<StrCursor<DefaultPatterns>>();
+        let size = size_of::<StrCursor>();
         assert!(size <= 24, "StrCursor size is {} > {} bytes", size, TARGET);
     }
     #[test]
     fn test_ctx_handle_size() {
-        let size = size_of::<CoreCtx<StrCursor<DefaultPatterns>>>();
+        let size = size_of::<CoreCtx<StrCursor>>();
         assert!(
             size <= TARGET,
             "CoreCtx handle size is {} > {} bytes",
@@ -62,7 +61,7 @@ mod tests {
     fn test_cow_behavior() {
         let grammar = Grammar::default();
         let text = "calculate 1 + 2";
-        let cursor: StrCursor<DefaultPatterns> = StrCursor::new(text);
+        let cursor: StrCursor = StrCursor::new(text);
 
         let mut ctx1 = CoreCtx::new(cursor, &grammar);
 
@@ -86,7 +85,7 @@ mod tests {
     fn test_shared_memoization_semantics() {
         let grammar = Grammar::default();
         let text = "abc";
-        let cursor: StrCursor<DefaultPatterns> = StrCursor::new(text);
+        let cursor: StrCursor = StrCursor::new(text);
         let mut ctx1 = CoreCtx::new(cursor, &grammar);
 
         let mut ctx2 = ctx1.clone();

@@ -1,6 +1,6 @@
-use crate::contexts::Ctx;
-use crate::contexts::memo::Cache;
-use crate::grammars::Grammar;
+use crate::context::Ctx;
+use crate::context::memo::Cache;
+use crate::model::Grammar;
 use crate::input::Cursor;
 use std::cell::RefCell;
 use std::rc::Rc;

@@ -3,7 +3,7 @@
 
 use super::parser::{Parser, S};
 use crate::astree::Cst;
-use crate::contexts::Ctx;
+use crate::context::Ctx;
 
 pub fn skip_exp<C: Ctx>(exp: &dyn Parser<C>, ctx: C) -> Result<C, C> {
     match exp.parse(ctx) {

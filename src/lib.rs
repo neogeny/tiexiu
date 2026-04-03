@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 pub mod astree;
-pub mod contexts;
-pub mod grammars;
+pub mod context;
+pub mod model;
 pub mod input;
 pub mod json;
 

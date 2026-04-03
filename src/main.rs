@@ -1,25 +1,25 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use tiexiu::contexts::strctx::StrCtx;
-use tiexiu::grammars::{Grammar, Model, S};
+use tiexiu::context::str::StrCtx;
+use tiexiu::model::{Grammar, E, S};
 use tiexiu::input::StrCursor;
-use tiexiu::input::strcursor::DefaultPatterns;
+use tiexiu::input::str::DefaultPatterns;
 
-fn scope() -> (Model, Model) {
-    let a = Model::Token("a".into());
-    let b = Model::Token("b".into());
+fn scope() -> (E, E) {
+    let a = E::Token("a".into());
+    let b = E::Token("b".into());
     (a, b)
 }
 
 fn test_build() {
     let (a, b) = scope();
-    let c = Model::Token("c".into());
-    let v = Model::Void;
-    let r = Model::closure(c);
+    let c = E::Token("c".into());
+    let v = E::Void;
+    let r = E::closure(c);
     // let cl = Call::new("test");
-    let n = Model::named("test", b);
-    let seq = Model::Sequence([a, n, r, v].into());
+    let n = E::named("test", b);
+    let seq = E::Sequence([a, n, r, v].into());
 
     let cur: StrCursor<DefaultPatterns> = StrCursor::new("a b c c c");
     let grammar = Grammar::new("test", &[]);

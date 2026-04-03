@@ -4,18 +4,18 @@
 use super::parser::{ParseResult, Parser, S};
 use super::repeat::{add_exp, repeat, repeat_with_pre};
 use crate::astree::Cst;
-use crate::contexts::Ctx;
+use crate::context::Ctx;
 use std::fmt::Debug;
 use std::ops::Deref;
 
-pub type ModelRef = Box<Model>;
-pub type ModelRefArr = Box<[Model]>;
+pub type ERef = Box<E>;
+pub type ERefArr = Box<[E]>;
 pub type Str = Box<str>;
 
 pub use super::build;
 
 #[derive(Debug, Clone)]
-pub enum Model {
+pub enum E {
     Cut,
     Void,
     Fail,
@@ -28,37 +28,37 @@ pub enum Model {
     Constant(Str),
     Alert(Str, u8),
 
-    Named(Str, ModelRef),
-    NamedList(Str, ModelRef),
-    Override(ModelRef),
-    OverrideList(ModelRef),
+    Named(Str, ERef),
+    NamedList(Str, ERef),
+    Override(ERef),
+    OverrideList(ERef),
 
-    Group(ModelRef),
-    SkipGroup(ModelRef),
+    Group(ERef),
+    SkipGroup(ERef),
 
-    Lookahead(ModelRef),
-    NegativeLookahead(ModelRef),
-    SkipTo(ModelRef),
+    Lookahead(ERef),
+    NegativeLookahead(ERef),
+    SkipTo(ERef),
 
-    Sequence(ModelRefArr),
-    Choice(ModelRefArr),
-    Optional(ModelRef),
-    Closure(ModelRef),
-    PositiveClosure(ModelRef),
+    Sequence(ERefArr),
+    Choice(ERefArr),
+    Optional(ERef),
+    Closure(ERef),
+    PositiveClosure(ERef),
 
-    Join { exp: ModelRef, sep: ModelRef },
-    PositiveJoin { exp: ModelRef, sep: ModelRef },
-    Gather { exp: ModelRef, sep: ModelRef },
-    PositiveGather { exp: ModelRef, sep: ModelRef },
+    Join { exp: ERef, sep: ERef },
+    PositiveJoin { exp: ERef, sep: ERef },
+    Gather { exp: ERef, sep: ERef },
+    PositiveGather { exp: ERef, sep: ERef },
 }
 
-impl Model {
+impl E {
     pub fn parse<C: Ctx>(&self, ctx: C) -> ParseResult<C> {
         <Self as Parser<C>>::parse(self, ctx)
     }
 }
 
-impl<C> Parser<C> for Model
+impl<C> Parser<C> for E
 where
     C: Ctx,
 {
