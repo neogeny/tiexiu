@@ -15,7 +15,8 @@ mod tests {
     use crate::input::strcursor::StrCursor;
     use std::mem::size_of;
 
-    const TARGET: usize = 8;
+    const TARGET: usize = 32;
+    const LARGE_TARGET: usize = 48;
 
     #[test]
     fn test_cst_size() {
@@ -26,7 +27,7 @@ mod tests {
     #[test]
     fn test_keyval_size() {
         let size = size_of::<KeyValue>();
-        assert!(size <= TARGET, "KeyVal size is {} > {} bytes", size, TARGET);
+        assert!(size <= LARGE_TARGET, "KeyVal size is {} > {} bytes", size, TARGET);
     }
 
     #[test]

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::cst::Cst;
-use super::json::Json;
 use std::collections::HashMap;
 use std::ops::Add;
 
@@ -10,12 +9,6 @@ use std::ops::Add;
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct Ast {
     pub fields: HashMap<String, Cst>,
-}
-
-impl From<&Ast> for Json {
-    fn from(ast: &Ast) -> Self {
-        ast.to_json()
-    }
 }
 
 impl Ast {

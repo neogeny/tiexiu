@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::ast::Ast;
-use super::json::Json;
 use std::ops::Add;
 use std::ops::Deref;
 
@@ -65,11 +64,6 @@ impl<const N: usize> From<[Cst; N]> for Cst {
     }
 }
 
-impl From<&Cst> for Json {
-    fn from(cst: &Cst) -> Self {
-        cst.to_json()
-    }
-}
 
 impl Cst {
     pub fn named(key: &str, value: Cst) -> Self {

@@ -4,6 +4,7 @@
 pub mod contexts;
 pub mod grammars;
 pub mod input;
+pub mod json;
 
 // #![allow(dead_code)]
 // use pyo3::prelude::*;
