@@ -58,7 +58,6 @@ impl From<TatSuModel> for E {
             TatSuModel::LeftJoin { .. } => unreachable!("LeftJoin not implemented"),
             TatSuModel::RightJoin { .. } => unreachable!("LeftJoin not implemented"),
 
-
             // --- Core Terminals ---
             TatSuModel::Cut => E::Cut,
             TatSuModel::EOF => E::Eof,
@@ -114,9 +113,6 @@ impl From<TatSuModel> for E {
             TatSuModel::Override { exp } => E::Override((*exp).into()),
             TatSuModel::OverrideList { exp } => E::OverrideList((*exp).into()),
             TatSuModel::SkipGroup { exp } => E::SkipGroup((*exp).into()),
-
-
-            // _ => todo!("Implement remaining variants: Pattern, Alert, etc."),
         }
     }
 }
