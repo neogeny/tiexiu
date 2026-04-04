@@ -15,24 +15,34 @@ permissions:
 
 jobs:
   benchmarks:
+    name: Run benchmarks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: install python
+      - name: Setup Python (required by PyO3)
         uses: actions/setup-python@v5
         with:
-          python-version: "3.14"
-          allow-prereleases: true
+          python-version: "3.13"
 
-      - name: install uv
+      - name: Install uv and create virtualenv
         uses: astral-sh/setup-uv@v6
 
-      - name: install dependencies
-        run: uv sync --group dev
+      - name: Create virtualenv for PyO3
+        run: uv venv
 
-      - name: Run benchmarks
+      - name: Setup Rust toolchain and cargo-codspeed
+        uses: moonrepo/setup-rust@v0
+        with:
+          channel: stable
+          cache-target: release
+          bins: cargo-codspeed
+
+      - name: Build the benchmark target(s)
+        run: cargo codspeed build --bench parsing
+
+      - name: Run the benchmarks
         uses: CodSpeedHQ/action@v4
         with:
           mode: simulation
-          run: uv run pytest tests/benchmarks/ --codspeed
+          run: cargo codspeed run --bench parsing

@@ -37,3 +37,10 @@ path = "src/main.rs"
 [lib]
 name = "tiexiu"
 crate-type = ["cdylib", "rlib"]
+
+[dev-dependencies]
+criterion = { version = "4.4.1", package = "codspeed-criterion-compat" }
+
+[[bench]]
+name = "parsing"
+harness = false
