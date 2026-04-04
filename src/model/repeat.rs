@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::parser::S;
-use crate::state::Ctx;
 use crate::model::Element;
+use crate::state::Ctx;
 use crate::trees::Tree;
 
 pub fn skip_exp<C: Ctx>(exp: &Element, ctx: C) -> C {

@@ -1,10 +1,10 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use tiexiu::state::strctx::StrCtx;
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use tiexiu::input::StrCursor;
 use tiexiu::model::{Element, Grammar};
+use tiexiu::state::strctx::StrCtx;
 
 fn bench_token_parse(c: &mut Criterion) {
     let token = Element::Token("hello".into());
@@ -27,7 +27,7 @@ fn bench_sequence_parse(c: &mut Criterion) {
             Element::Token("b".into()),
             Element::Token("c".into()),
         ]
-            .into(),
+        .into(),
     );
     let grammar = Grammar::default();
     let cursor: StrCursor = "a b c".into();
@@ -48,7 +48,7 @@ fn bench_choice_parse(c: &mut Criterion) {
             Element::Token("y".into()),
             Element::Token("z".into()),
         ]
-            .into(),
+        .into(),
     );
     let grammar = Grammar::default();
 
@@ -95,11 +95,11 @@ fn bench_nested_expression(c: &mut Criterion) {
                     Element::Token("bar".into()),
                     Element::Token("baz".into()),
                 ]
-                    .into(),
+                .into(),
             ))),
             Element::Token("end".into()),
         ]
-            .into(),
+        .into(),
     );
     let grammar = Grammar::default();
     let cursor: StrCursor = "start foo bar baz foo bar end".into();

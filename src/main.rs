@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use tiexiu::state::strctx::StrCtx;
 use tiexiu::input::StrCursor;
 use tiexiu::model::{Element, Grammar, S};
+use tiexiu::state::strctx::StrCtx;
 
 fn scope() -> (Element, Element) {
     let a = Element::Token("a".into());

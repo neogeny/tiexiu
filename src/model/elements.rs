@@ -3,8 +3,8 @@
 
 use super::parser::{ParseResult, Parser, S};
 use super::repeat::{add_exp, repeat, repeat_with_pre};
-use crate::state::Ctx;
 use crate::model::F;
+use crate::state::Ctx;
 use crate::trees::Tree;
 use std::fmt::Debug;
 use std::ops::Deref;

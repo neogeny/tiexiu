@@ -1,7 +1,7 @@
-use crate::state::Ctx;
-use crate::state::memo::{Key, Memo, MemoCache};
 use crate::input::Cursor;
 use crate::model::Grammar;
+use crate::state::Ctx;
+use crate::state::memo::{Key, Memo, MemoCache};
 use crate::trees::Tree;
 use regex::Regex;
 use std::cell::RefCell;
