@@ -29,26 +29,6 @@ pub enum Tree {
     Nil,
 }
 
-pub fn tree_add_leaf(tree: Tree, node: Tree) -> Tree {
-    tree.add_leaf(node)
-}
-
-pub fn tree_add_node(tree: Tree, node: Tree) -> Tree {
-    tree.add_node(node)
-}
-
-pub fn tree_join(tree: Tree, node: Tree) -> Tree {
-    tree.join_nodes(node)
-}
-
-pub fn tree_pruned(tree: Tree) -> Tree {
-    tree.pruned()
-}
-
-pub fn trimmed(tree: Tree) -> Tree {
-    tree.trimmed()
-}
-
 impl Add for Tree {
     type Output = Self;
 
@@ -213,7 +193,7 @@ mod tests {
         let result = raw.trimmed();
 
         // result = tree_closed(Bottom)
-        assert_eq!(result, tree_pruned(Tree::Bottom));
+        assert_eq!(result, Tree::Bottom.pruned());
     }
 
     #[test]
