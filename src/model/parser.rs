@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::trees::Tree;
 use crate::context::Ctx;
+use crate::trees::Tree;
 use std::fmt::Debug;
 
 #[derive(Debug, Clone, PartialEq)]

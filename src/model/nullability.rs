@@ -42,7 +42,9 @@ impl Element {
 
             // Join/Gather variants
             Element::Join { .. } | Element::Gather { .. } => true, // These can match zero times
-            Element::PositiveJoin { exp, .. } | Element::PositiveGather { exp, .. } => exp.is_nullable(),
+            Element::PositiveJoin { exp, .. } | Element::PositiveGather { exp, .. } => {
+                exp.is_nullable()
+            }
 
             // Special cases
             Element::SkipTo(_) => false, // SkipTo must find a match to succeed

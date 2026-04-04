@@ -2,12 +2,11 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::memo::{Key, Memo, MemoCache};
-use crate::trees::tree::Tree;
 use crate::input::Cursor;
 use crate::model::{F, Grammar, ParseResult, Rule, S};
+use crate::trees::tree::Tree;
 use regex::Regex;
 use std::fmt::Debug;
-
 
 pub trait Ctx: Clone + Debug {
     fn grammar(&self) -> &Grammar;

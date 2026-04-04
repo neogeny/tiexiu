@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use tiexiu::context::strctx::StrCtx;
 use tiexiu::input::StrCursor;
 use tiexiu::model::{Element, Grammar};
@@ -29,7 +29,7 @@ fn bench_sequence_parse(c: &mut Criterion) {
             Element::Token("b".into()),
             Element::Token("c".into()),
         ]
-            .into(),
+        .into(),
     );
     let cursor: StrCursor = "a b c".into();
     let ctx = StrCtx::new(cursor, &grammar);

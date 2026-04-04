@@ -1,8 +1,8 @@
-use crate::trees::Tree;
 use crate::context::Ctx;
 use crate::context::memo::{Key, Memo, MemoCache};
 use crate::input::Cursor;
 use crate::model::Grammar;
+use crate::trees::Tree;
 use regex::Regex;
 use std::cell::RefCell;
 use std::collections::HashMap;

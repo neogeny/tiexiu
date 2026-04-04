@@ -1,5 +1,5 @@
 use super::tatsu::TatSuModel;
-use crate::model::elements::{Element, ERef};
+use crate::model::elements::{ERef, Element};
 use crate::model::grammar::Grammar;
 use crate::model::rule::{Rule, RuleMap};
 
@@ -72,7 +72,9 @@ impl From<TatSuModel> for Element {
 
             // --- Unary Operators ---
             TatSuModel::Group { exp } => Element::Group((*exp).into()),
-            TatSuModel::Option { exp } | TatSuModel::Optional { exp } => Element::Optional((*exp).into()),
+            TatSuModel::Option { exp } | TatSuModel::Optional { exp } => {
+                Element::Optional((*exp).into())
+            }
             TatSuModel::Closure { exp } => Element::Closure((*exp).into()),
             TatSuModel::PositiveClosure { exp } => Element::PositiveClosure((*exp).into()),
 
