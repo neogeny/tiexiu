@@ -1,82 +1,74 @@
+// Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
 use super::Cursor;
-#[cfg(feature = "regex")]
 use regex::Regex;
-use std::fmt::Debug;
-use std::ops::Deref;
 use std::rc::Rc;
 
-pub trait Patterns: Clone + Debug + Default {
-    const WHITESPACE: &'static str = r"\s+";
-    const EOL_COMMENTS: &'static str = r"//.*$";
-    const COMMENTS: &'static str = r"";
-
-    fn whitespace_re(&self) -> Regex;
-    fn comments_re(&self) -> Regex;
-    fn eol_comments_re(&self) -> Regex;
-}
-
 #[derive(Clone, Debug)]
-pub struct DefaultPatterns {
-    _whitespace_re: Box<Regex>,
-    _comments_re: Box<Regex>,
-    _eol_comments_re: Box<Regex>,
+struct Patterns {
+    pub wsp: Regex,
+    pub cmt: Regex,
+    pub eol: Regex,
 }
 
-impl Default for DefaultPatterns {
-    fn default() -> Self {
+impl Patterns {
+    const DEFAULT_WSP: &'static str = r"^\s+";
+    const DEFAULT_EOL: &'static str = r"^//.*$";
+    const DEFAULT_CMT: &'static str = r"^$"; // Matches nothing by default
+
+    pub fn new(ws: &str, cmt: &str, eol: &str) -> Self {
         Self {
-            _whitespace_re: Regex::new(DefaultPatterns::WHITESPACE).unwrap().into(),
-            _comments_re: Regex::new(DefaultPatterns::COMMENTS).unwrap().into(),
-            _eol_comments_re: Regex::new(DefaultPatterns::EOL_COMMENTS).unwrap().into(),
+            wsp: Regex::new(ws).expect("invalid whitespace regex"),
+            cmt: Regex::new(cmt).expect("invalid comment regex"),
+            eol: Regex::new(eol).expect("invalid EOL regex"),
         }
     }
 }
 
-impl Patterns for DefaultPatterns {
-    fn whitespace_re(&self) -> Regex {
-        self._whitespace_re.deref().clone()
-    }
-
-    fn comments_re(&self) -> Regex {
-        self._comments_re.deref().clone()
-    }
-
-    fn eol_comments_re(&self) -> Regex {
-        self._eol_comments_re.deref().clone()
+impl Default for Patterns {
+    fn default() -> Self {
+        Self::new(Self::DEFAULT_WSP, Self::DEFAULT_CMT, Self::DEFAULT_EOL)
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct StrCursor<'a, P = DefaultPatterns> {
+pub struct StrCursor<'a> {
     text: &'a str,
     offset: usize,
-    patterns: Rc<P>, // Zero-sized: 0 bytes
+    patterns: Rc<Patterns>,
 }
 
-impl<'a, P: Patterns> StrCursor<'a, P> {
+impl<'a> StrCursor<'a> {
     pub fn new(text: &'a str) -> Self {
-        let patterns = P::default();
         Self {
             text,
             offset: 0,
-            patterns: patterns.into(),
+            patterns: Rc::new(Patterns::default()),
         }
     }
 
+    pub fn with_patterns(text: &'a str, ws: &str, cmt: &str, eol: &str) -> Self {
+        Self {
+            text,
+            offset: 0,
+            patterns: Rc::new(Patterns::new(ws, cmt, eol)),
+        }
+    }
+
+    #[inline]
     fn eat_regex(&mut self, re: &Regex) -> bool {
-        #[cfg(feature = "regex")]
         if let Some(mat) = re.find_at(self.text, self.offset) {
-            if mat.start() != self.offset {
-                return false;
+            if mat.start() == self.offset {
+                self.offset = mat.end();
+                return true;
             }
-            self.offset = mat.end();
-            return true;
         }
         false
     }
 }
 
-impl<'a, P: Patterns> Cursor for StrCursor<'a, P> {
+impl<'a> Cursor for StrCursor<'a> {
     fn mark(&self) -> usize {
         self.offset
     }
@@ -94,16 +86,9 @@ impl<'a, P: Patterns> Cursor for StrCursor<'a, P> {
     }
 
     fn next(&mut self) -> Option<char> {
-        if self.at_end() {
-            return None;
-        }
-        // Slice from the current byte offset to the end
         let rest = self.text.get(self.offset..)?;
-        // Decode the first Unicode character
         let c = rest.chars().next()?;
-        // Increment the byte offset by the character's UTF-8 width
         self.offset += c.len_utf8();
-
         Some(c)
     }
 
@@ -116,32 +101,32 @@ impl<'a, P: Patterns> Cursor for StrCursor<'a, P> {
         }
     }
 
-    #[cfg(feature = "regex")]
     fn pattern_re(&mut self, re: &Regex) -> Option<String> {
         let caps = re.captures_at(self.text, self.offset)?;
-
         let whole = caps.get(0)?;
         if whole.start() != self.offset {
             return None;
         }
 
         self.offset = whole.end();
-        Some(caps.get(1).or(caps.get(0))?.as_str().into())
+        let matched = caps.get(1).or(caps.get(0))?.as_str();
+        Some(matched.to_string())
     }
 
     fn next_token(&mut self) {
-        let wre = &self.patterns.whitespace_re();
-        let cre = &self.patterns.comments_re();
-        let ere = &self.patterns.eol_comments_re();
-
+        let p = self.patterns.clone();
         let mut last_offset = usize::MAX;
+
         while self.offset != last_offset {
             last_offset = self.offset;
-            self.eat_regex(wre);
-            if self.eat_regex(ere) {
-                self.eat_regex(wre);
+            self.eat_regex(&p.wsp);
+            if self.at_end() {
+                break;
             }
-            self.eat_regex(cre);
+            if self.eat_regex(&p.eol) {
+                self.eat_regex(&p.wsp);
+            }
+            self.eat_regex(&p.cmt);
         }
     }
 }

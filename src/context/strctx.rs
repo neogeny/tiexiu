@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::corectx::CoreCtx;
-use crate::input::strcursor::{DefaultPatterns, StrCursor};
+use crate::input::strcursor::StrCursor;
 
-pub type StrCtx<'c, P = DefaultPatterns> = CoreCtx<'c, StrCursor<'c, P>>;
+pub type StrCtx<'c> = CoreCtx<'c, StrCursor<'c>>;
 
 #[cfg(test)]
 mod tests {
