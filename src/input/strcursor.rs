@@ -58,12 +58,11 @@ impl<'a> StrCursor<'a> {
 
     #[inline]
     fn eat_regex(&mut self, re: &Regex) -> bool {
-        if let Some(mat) = re.find_at(self.text, self.offset) {
-            if mat.start() == self.offset {
+        if let Some(mat) = re.find_at(self.text, self.offset)
+            && mat.start() == self.offset {
                 self.offset = mat.end();
                 return true;
             }
-        }
         false
     }
 }
