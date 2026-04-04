@@ -4,6 +4,6 @@
 pub mod core;
 pub mod ctx;
 mod memo;
-pub mod str;
+pub mod strctx;
 
 pub use ctx::*;

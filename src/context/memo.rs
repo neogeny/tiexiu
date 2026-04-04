@@ -17,17 +17,17 @@ pub struct Memo {
 }
 
 #[derive(Clone, Debug)]
-pub struct Cache {
+pub struct MemoCache {
     memos: HashMap<Key, Memo>,
 }
 
-impl Default for Cache {
+impl Default for MemoCache {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl Cache {
+impl MemoCache {
     pub fn new() -> Self {
         Self {
             memos: HashMap::new(),
@@ -35,7 +35,7 @@ impl Cache {
     }
 }
 
-impl Cache {
+impl MemoCache {
     pub fn key(mark: usize, name: &str) -> Key {
         Key {
             mark,

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use std::fmt::Debug;
+use regex::Regex;
 
 pub trait Cursor: Debug {
     fn mark(&self) -> usize;
@@ -10,9 +11,7 @@ pub trait Cursor: Debug {
     fn at_end(&self) -> bool;
     fn next(&mut self) -> Option<char>;
     fn token(&mut self, token: &str) -> bool;
-    fn pattern(&mut self, _pattern: &str) -> Option<String> {
-        None
-    }
+    fn pattern_re(&mut self, re: &Regex) -> Option<String>;
     fn next_token(&mut self);
 
     // // Character classification

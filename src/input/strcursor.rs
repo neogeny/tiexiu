@@ -2,46 +2,47 @@ use super::Cursor;
 #[cfg(feature = "regex")]
 use regex::Regex;
 use std::fmt::Debug;
-use std::marker::PhantomData;
+use std::ops::Deref;
+use std::rc::Rc;
 
 pub trait Patterns: Clone + Debug + Default {
     const WHITESPACE: &'static str = r"\s+";
     const EOL_COMMENTS: &'static str = r"//.*$";
     const COMMENTS: &'static str = r"";
 
-    fn whitespace_re(&self) -> &Regex;
-    fn comments_re(&self) -> &Regex;
-    fn eol_comments_re(&self) -> &Regex;
+    fn whitespace_re(&self) -> Regex;
+    fn comments_re(&self) -> Regex;
+    fn eol_comments_re(&self) -> Regex;
 }
 
 #[derive(Clone, Debug)]
 pub struct DefaultPatterns {
-    _whitespace_re: Regex,
-    _comments_re: Regex,
-    _eol_comments_re: Regex,
+    _whitespace_re: Box<Regex>,
+    _comments_re: Box<Regex>,
+    _eol_comments_re: Box<Regex>,
 }
 
 impl Default for DefaultPatterns {
     fn default() -> Self {
         Self {
-            _whitespace_re: Regex::new(DefaultPatterns::WHITESPACE).unwrap(),
-            _comments_re: Regex::new(DefaultPatterns::COMMENTS).unwrap(),
-            _eol_comments_re: Regex::new(DefaultPatterns::EOL_COMMENTS).unwrap(),
+            _whitespace_re: Regex::new(DefaultPatterns::WHITESPACE).unwrap().into(),
+            _comments_re: Regex::new(DefaultPatterns::COMMENTS).unwrap().into(),
+            _eol_comments_re: Regex::new(DefaultPatterns::EOL_COMMENTS).unwrap().into(),
         }
     }
 }
 
 impl Patterns for DefaultPatterns {
-    fn whitespace_re(&self) -> &Regex {
-        &self._whitespace_re
+    fn whitespace_re(&self) -> Regex {
+        self._whitespace_re.deref().clone()
     }
 
-    fn comments_re(&self) -> &Regex {
-        &self._comments_re
+    fn comments_re(&self) -> Regex {
+        self._comments_re.deref().clone()
     }
 
-    fn eol_comments_re(&self) -> &Regex {
-        &self._eol_comments_re
+    fn eol_comments_re(&self) -> Regex {
+        self._eol_comments_re.deref().clone()
     }
 }
 
@@ -49,16 +50,16 @@ impl Patterns for DefaultPatterns {
 pub struct StrCursor<'a, P = DefaultPatterns> {
     text: &'a str,
     offset: usize,
-    _p: PhantomData<P>, // Zero-sized: 0 bytes
+    patterns: Rc<P>, // Zero-sized: 0 bytes
 }
 
 impl<'a, P: Patterns> StrCursor<'a, P> {
     pub fn new(text: &'a str) -> Self {
-        let _p = P::default();
+        let patterns = P::default();
         Self {
             text,
             offset: 0,
-            _p: PhantomData,
+            patterns: patterns.into()
         }
     }
 
@@ -116,29 +117,22 @@ impl<'a, P: Patterns> Cursor for StrCursor<'a, P> {
     }
 
     #[cfg(feature = "regex")]
-    fn pattern(&mut self, pattern: &str) -> Option<String> {
-        if pattern.is_empty() {
+    fn pattern_re(&mut self, re: &Regex) -> Option<String> {
+        let caps = re.captures_at(self.text, self.offset)?;
+
+        let whole = caps.get(0)?;
+        if whole.start() != self.offset {
             return None;
         }
-        {
-            let re = Regex::new(pattern).ok()?;
-            let caps = re.captures_at(self.text, self.offset)?;
 
-            let whole = caps.get(0)?;
-            if whole.start() != self.offset {
-                return None;
-            }
-
-            self.offset = whole.end();
-            Some(caps.get(1).or(caps.get(0))?.as_str().into())
-        }
+        self.offset = whole.end();
+        Some(caps.get(1).or(caps.get(0))?.as_str().into())
     }
 
     fn next_token(&mut self) {
-        let patterns = P::default();
-        let wre = patterns.whitespace_re();
-        let cre = patterns.comments_re();
-        let ere = patterns.eol_comments_re();
+        let wre = &self.patterns.whitespace_re();
+        let cre = &self.patterns.comments_re();
+        let ere = &self.patterns.eol_comments_re();
 
         let mut last_offset = usize::MAX;
         while self.offset != last_offset {

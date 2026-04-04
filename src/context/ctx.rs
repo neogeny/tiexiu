@@ -1,11 +1,12 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::memo::{Cache, Key, Memo};
+use super::memo::{MemoCache, Key, Memo};
 use crate::astree::cst::Cst;
 use crate::input::Cursor;
 use crate::model::{F, Grammar, ParseResult, Rule, S};
 use std::fmt::Debug;
+use regex::Regex;
 
 pub trait Ctx: Clone + Debug {
     fn grammar(&self) -> &Grammar;
@@ -13,10 +14,6 @@ pub trait Ctx: Clone + Debug {
     fn cursor(&self) -> &dyn Cursor;
 
     fn cursor_mut(&mut self) -> &mut dyn Cursor;
-
-    fn with_cache_mut<FnMut, R>(&self, f: FnMut) -> R
-    where
-        FnMut: FnOnce(&mut Cache) -> R;
 
     fn failure(&self, msg: &str) -> F {
         F::new(self.mark(), msg, self.cut_seen())
@@ -39,9 +36,12 @@ pub trait Ctx: Clone + Debug {
         self.cursor_mut().token(token)
     }
 
+    fn regex(&self, pattern: &str) -> Regex;
+
     fn pattern(&mut self, pattern: &str) -> Option<String> {
         // NOTE: no next_token() here
-        self.cursor_mut().pattern(pattern)
+        let re = self.regex(pattern);
+        self.cursor_mut().pattern_re(&re)
     }
 
     fn next_token(&mut self) {
@@ -49,7 +49,7 @@ pub trait Ctx: Clone + Debug {
     }
 
     fn key(&mut self, name: &str) -> Key {
-        Cache::key(self.mark(), name)
+        MemoCache::key(self.mark(), name)
     }
     fn mark(&self) -> usize {
         self.cursor().mark()
@@ -59,16 +59,9 @@ pub trait Ctx: Clone + Debug {
         self.cursor_mut().reset(mark);
     }
 
-    fn memo(&mut self, key: &Key) -> Option<Memo> {
-        self.with_cache_mut(|cache| cache.memo(key))
-    }
+    fn memo(&mut self, key: &Key) -> Option<Memo>;
 
-    fn memoize(&mut self, key: &Key, cst: &Cst) {
-        let mark = self.mark();
-        self.with_cache_mut(|cache| {
-            cache.memoize(key, cst, mark);
-        });
-    }
+    fn memoize(&mut self, key: &Key, cst: &Cst);
 
     fn cut_seen(&self) -> bool;
     fn uncut(&mut self);

@@ -1,9 +1,8 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use tiexiu::context::str::StrCtx;
+use tiexiu::context::strctx::StrCtx;
 use tiexiu::input::StrCursor;
-use tiexiu::input::str::DefaultPatterns;
 use tiexiu::model::{E, Grammar, S};
 
 fn scope() -> (E, E) {
@@ -21,7 +20,7 @@ fn test_build() {
     let n = E::named("test", b);
     let seq = E::Sequence([a, n, r, v].into());
 
-    let cur: StrCursor<DefaultPatterns> = StrCursor::new("a b c c c");
+    let cur: StrCursor = StrCursor::new("a b c c c");
     let grammar = Grammar::new("test", &[]);
     let ctx = StrCtx::new(cur, &grammar);
 

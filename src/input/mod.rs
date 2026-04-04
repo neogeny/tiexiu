@@ -1,6 +1,6 @@
 pub mod cursor;
-pub mod str;
+pub mod strcursor;
 pub mod text;
 
 pub use cursor::Cursor;
-pub use str::{Patterns, StrCursor};
+pub use strcursor::{Patterns, StrCursor};

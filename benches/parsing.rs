@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
-use tiexiu::context::str::StrCtx;
+use tiexiu::context::strctx::StrCtx;
 use tiexiu::input::StrCursor;
-use tiexiu::input::str::DefaultPatterns;
 use tiexiu::model::{E, Grammar};
 
 fn bench_token_parse(c: &mut Criterion) {
@@ -13,7 +12,7 @@ fn bench_token_parse(c: &mut Criterion) {
 
     c.bench_function("parse_single_token", |b| {
         b.iter(|| {
-            let cursor: StrCursor<DefaultPatterns> = StrCursor::new("hello world");
+            let cursor: StrCursor = StrCursor::new("hello world");
             let ctx = StrCtx::new(cursor, &grammar);
             black_box(token.parse(ctx))
         });
@@ -33,7 +32,7 @@ fn bench_sequence_parse(c: &mut Criterion) {
 
     c.bench_function("parse_sequence_3_tokens", |b| {
         b.iter(|| {
-            let cursor: StrCursor<DefaultPatterns> = StrCursor::new("a b c");
+            let cursor: StrCursor = StrCursor::new("a b c");
             let ctx = StrCtx::new(cursor, &grammar);
             black_box(seq.parse(ctx))
         });
@@ -53,7 +52,7 @@ fn bench_choice_parse(c: &mut Criterion) {
 
     c.bench_function("parse_choice_first_match", |b| {
         b.iter(|| {
-            let cursor: StrCursor<DefaultPatterns> = StrCursor::new("x rest");
+            let cursor: StrCursor = StrCursor::new("x rest");
             let ctx = StrCtx::new(cursor, &grammar);
             black_box(choice.parse(ctx))
         });
@@ -61,7 +60,7 @@ fn bench_choice_parse(c: &mut Criterion) {
 
     c.bench_function("parse_choice_last_match", |b| {
         b.iter(|| {
-            let cursor: StrCursor<DefaultPatterns> = StrCursor::new("z rest");
+            let cursor: StrCursor = StrCursor::new("z rest");
             let ctx = StrCtx::new(cursor, &grammar);
             black_box(choice.parse(ctx))
         });
@@ -74,7 +73,7 @@ fn bench_closure_parse(c: &mut Criterion) {
 
     c.bench_function("parse_closure_10_repetitions", |b| {
         b.iter(|| {
-            let cursor: StrCursor<DefaultPatterns> = StrCursor::new("a a a a a a a a a a");
+            let cursor: StrCursor = StrCursor::new("a a a a a a a a a a");
             let ctx = StrCtx::new(cursor, &grammar);
             black_box(closure.parse(ctx))
         });
@@ -101,7 +100,7 @@ fn bench_nested_expression(c: &mut Criterion) {
 
     c.bench_function("parse_nested_expression", |b| {
         b.iter(|| {
-            let cursor: StrCursor<DefaultPatterns> =
+            let cursor: StrCursor =
                 StrCursor::new("start foo bar baz foo bar end");
             let ctx = StrCtx::new(cursor, &grammar);
             black_box(expr.parse(ctx))
@@ -113,7 +112,7 @@ fn bench_context_clone(c: &mut Criterion) {
     let grammar = Grammar::default();
 
     c.bench_function("context_clone_cow", |b| {
-        let cursor: StrCursor<DefaultPatterns> = StrCursor::new("some text to parse");
+        let cursor: StrCursor = StrCursor::new("some text to parse");
         let ctx = StrCtx::new(cursor, &grammar);
         b.iter(|| black_box(ctx.clone()));
     });
@@ -133,7 +132,7 @@ fn bench_optional_parse(c: &mut Criterion) {
 
     c.bench_function("parse_optional_present", |b| {
         b.iter(|| {
-            let cursor: StrCursor<DefaultPatterns> = StrCursor::new("maybe rest");
+            let cursor: StrCursor = StrCursor::new("maybe rest");
             let ctx = StrCtx::new(cursor, &grammar);
             black_box(opt.parse(ctx))
         });
@@ -141,7 +140,7 @@ fn bench_optional_parse(c: &mut Criterion) {
 
     c.bench_function("parse_optional_absent", |b| {
         b.iter(|| {
-            let cursor: StrCursor<DefaultPatterns> = StrCursor::new("other rest");
+            let cursor: StrCursor = StrCursor::new("other rest");
             let ctx = StrCtx::new(cursor, &grammar);
             black_box(opt.parse(ctx))
         });
@@ -154,7 +153,7 @@ fn bench_lookahead_parse(c: &mut Criterion) {
 
     c.bench_function("parse_lookahead", |b| {
         b.iter(|| {
-            let cursor: StrCursor<DefaultPatterns> = StrCursor::new("peek rest");
+            let cursor: StrCursor = StrCursor::new("peek rest");
             let ctx = StrCtx::new(cursor, &grammar);
             black_box(la.parse(ctx))
         });
@@ -167,7 +166,7 @@ fn bench_named_parse(c: &mut Criterion) {
 
     c.bench_function("parse_named_element", |b| {
         b.iter(|| {
-            let cursor: StrCursor<DefaultPatterns> = StrCursor::new("value rest");
+            let cursor: StrCursor = StrCursor::new("value rest");
             let ctx = StrCtx::new(cursor, &grammar);
             black_box(named.parse(ctx))
         });
