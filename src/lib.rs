@@ -7,6 +7,7 @@ pub mod model;
 pub mod state;
 pub mod trees;
 pub mod ui;
+pub mod util;
 
 #[allow(dead_code)]
 use pyo3::prelude::*;
