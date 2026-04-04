@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::core::CoreCtx;
+use super::corectx::CoreCtx;
 use crate::input::strcursor::{DefaultPatterns, StrCursor};
 
 pub type StrCtx<'c, P = DefaultPatterns> = CoreCtx<'c, StrCursor<'c, P>>;

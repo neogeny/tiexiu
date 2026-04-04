@@ -46,7 +46,7 @@ where
             heavy: RefCell::new(HeavyState {
                 grammar,
                 memos: MemoCache::new(),
-                regex: HashMap::new(),
+                regex: RegexCache::new(),
             })
             .into(),
         }
