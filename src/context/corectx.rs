@@ -57,20 +57,14 @@ where
         Rc::make_mut(&mut self.state)
     }
 
-    fn with_memos_mut<F, R>(&self, f: F) -> R
+    #[inline]
+    fn with_heavy_mut<F, R>(&self, f: F) -> R
     where
-        F: FnOnce(&mut MemoCache) -> R,
+        // We define the closure to take &mut HeavyState
+        F: FnOnce(&mut HeavyState<'c>) -> R,
     {
         let mut heavy = self.heavy.borrow_mut();
-        f(&mut heavy.memos)
-    }
-
-    fn with_regex_mut<F, R>(&self, f: F) -> R
-    where
-        F: FnOnce(&mut RegexCache) -> R,
-    {
-        let mut heavy = self.heavy.borrow_mut();
-        f(&mut heavy.regex)
+        f(&mut heavy)
     }
 }
 
@@ -93,8 +87,9 @@ where
     }
 
     fn regex(&self, pattern: &str) -> Regex {
-        self.with_regex_mut(|regex| {
-            regex
+        self.with_heavy_mut(|heavy| {
+            heavy
+                .regex
                 .entry(pattern.to_string())
                 .or_insert_with(|| Regex::new(pattern).unwrap())
                 .clone()
@@ -102,13 +97,13 @@ where
     }
 
     fn memo(&mut self, key: &Key) -> Option<Memo> {
-        self.with_memos_mut(|cache| cache.memo(key))
+        self.with_heavy_mut(|heavy| heavy.memos.memo(key))
     }
 
     fn memoize(&mut self, key: &Key, cst: &Cst) {
         let mark = self.mark();
-        self.with_memos_mut(|cache| {
-            cache.memoize(key, cst, mark);
+        self.with_heavy_mut(|heavy| {
+            heavy.memos.memoize(key, cst, mark);
         });
     }
 
@@ -128,6 +123,6 @@ where
 
     fn prune_cache(&mut self) {
         let cutpoint = self.mark();
-        self.with_memos_mut(|cache| cache.prune(cutpoint));
+        self.with_heavy_mut(|heavy| heavy.memos.prune(cutpoint));
     }
 }
