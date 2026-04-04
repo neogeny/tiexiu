@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::parser::{ParseResult, Parser, S};
-use super::repeat::{add_exp, repeat, repeat_with_pre};
 use crate::model::F;
 use crate::state::Ctx;
 use crate::trees::Tree;
@@ -101,14 +100,14 @@ where
                 if ctx.token(token) {
                     Ok(S(ctx, Tree::Leaf(token.deref().into())))
                 } else {
-                    Err(ctx.failure(&format!("Expecting '{}'", token.deref())))
+                    Err(ctx.failure(&format!("Expecting '{}'", token)))
                 }
             }
             Self::Pattern(pattern) => {
                 if let Some(matched) = ctx.pattern(pattern) {
                     Ok(S(ctx, Tree::Leaf(matched.into())))
                 } else {
-                    Err(ctx.failure(&format!("Expecting '{}'", pattern.deref())))
+                    Err(ctx.failure(&format!("Expecting '{}'", pattern)))
                 }
             }
             Self::Constant(literal) => Ok(S(ctx, Tree::Leaf(literal.deref().into()))),
@@ -211,7 +210,7 @@ where
 
             Self::Closure(exp) => {
                 let mut res = Vec::new();
-                let new_ctx = repeat(exp.deref(), ctx, &mut res);
+                let new_ctx = Self::repeat(ctx, exp, &mut res);
                 Ok(S(new_ctx, Tree::from(res)))
             }
             Self::PositiveClosure(exp) => {
@@ -224,16 +223,21 @@ where
                     err => return err,
                 };
 
-                let new_ctx = repeat(exp.deref(), ctx, &mut res);
+                let new_ctx = Self::repeat(ctx, exp, &mut res);
                 Ok(S(new_ctx, Tree::from(res)))
             }
             Self::Join { exp, sep } => {
                 let mut res: Vec<Tree> = Vec::new();
 
-                match add_exp(exp.deref(), ctx, &mut res) {
+                match Self::add_exp(ctx, exp, &mut res) {
                     Ok(new_ctx) => {
-                        let ctx =
-                            repeat_with_pre(exp.deref(), sep.deref(), new_ctx, &mut res, true);
+                        let ctx = Self::repeat_with_pre(
+                            new_ctx,
+                            exp,
+                            sep,
+                            &mut res,
+                            true,
+                        );
                         Ok(S(ctx, Tree::from(res)))
                     }
                     Err(err_ctx) => Ok(S(err_ctx, Tree::from(res))),
@@ -250,15 +254,20 @@ where
                     err => return err,
                 };
 
-                let new_ctx = repeat_with_pre(exp.deref(), sep.deref(), ctx, &mut res, true);
+                let new_ctx = Self::repeat_with_pre(ctx, exp, sep, &mut res, true);
                 Ok(S(new_ctx, Tree::from(res)))
             }
             Self::Gather { exp, sep } => {
                 let mut res: Vec<Tree> = Vec::new();
-                match add_exp(exp.deref(), ctx, &mut res) {
+                match Self::add_exp(ctx, exp, &mut res) {
                     Ok(new_ctx) => {
-                        let ctx =
-                            repeat_with_pre(exp.deref(), sep.deref(), new_ctx, &mut res, false);
+                        let ctx = Self::repeat_with_pre(
+                            new_ctx,
+                            exp,
+                            sep,
+                            &mut res,
+                            false,
+                        );
                         Ok(S(ctx, Tree::from(res)))
                     }
                     Err(err_ctx) => Ok(S(err_ctx, Tree::from(res))),
@@ -275,7 +284,7 @@ where
                     err => return err,
                 };
 
-                let new_ctx = repeat_with_pre(exp.deref(), sep.deref(), ctx, &mut res, false);
+                let new_ctx = Self::repeat_with_pre(ctx, exp, sep, &mut res, false);
                 Ok(S(new_ctx, Tree::from(res)))
             }
         }
