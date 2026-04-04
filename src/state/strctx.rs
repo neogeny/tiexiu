@@ -9,7 +9,7 @@ pub type StrCtx<'c> = CoreCtx<'c, StrCursor<'c>>;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::context::Ctx;
+    use crate::state::Ctx;
     use crate::input::strcursor::StrCursor;
     use crate::model::Grammar;
     use crate::trees::{KeyValue, Tree};

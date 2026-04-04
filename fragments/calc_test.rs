@@ -9,7 +9,7 @@ fn test_calc_expression() {
     let grammar = Grammar::from_json(&grammar_json)
         .expect("Failed to bootstrap calc grammar");
 
-    // 2. Set up a context with input
+    // 2. Set up a state with input
     let mut ctx = Ctx::new("2 + 2 * 3");
 
     // 3. Play!

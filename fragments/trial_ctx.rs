@@ -3,10 +3,10 @@ impl<'c, C: Ctx> Ctx<'c> {
     where
         F: FnOnce(&mut Self) -> Result<T, String>,
     {
-        // 1. Create a "Trial" version of the context (copy/clone)
+        // 1. Create a "Trial" version of the state (copy/clone)
         let mut trial = self.clone();
 
-        // 2. Execute the grammar block on the trial context
+        // 2. Execute the grammar block on the trial state
         match body(&mut trial) {
             Ok(parsed) => {
                 // 3. SUCCESS: "Merge" by simply overwriting our state

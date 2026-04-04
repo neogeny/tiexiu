@@ -1,11 +1,11 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-pub mod context;
+pub mod state;
 pub mod input;
 pub mod json;
 pub mod model;
-pub mod tool;
+pub mod ui;
 pub mod trees;
 
 #[allow(dead_code)]

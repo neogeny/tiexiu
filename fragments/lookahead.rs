@@ -1,6 +1,6 @@
 impl Model for PositiveLookahead {
     fn parse(&self, ctx: Ctx) -> Result<(Ctx, Cst), String> {
-        // We 'try' the inner expression with a copy of the context
+        // We 'try' the inner expression with a copy of the state
         self.expr.parse(ctx)?;
 
         // If it succeeds, we return the ORIGINAL ctx.

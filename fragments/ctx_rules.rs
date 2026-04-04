@@ -1,11 +1,11 @@
 impl<C: Cursor> Ctx<C> {
-    /// Creates a new context for a specific input string (via cursor)
+    /// Creates a new state for a specific input string (via cursor)
     /// and a pre-loaded set of rules.
     pub fn new(cursor: C, rules: RuleMap<C>) -> Self {
         Self { cursor, rules }
     }
 
-    /// A helper to create a "Child" context (e.g., for branching)
+    /// A helper to create a "Child" state (e.g., for branching)
     /// that shares the same rules.
     pub fn branch(&self, new_cursor: C) -> Self {
         Self {

@@ -8,7 +8,7 @@ where
     C: Cursor,
 {
     fn parse(&self, ctx: Ctx<C>) -> ParseResult<C> {
-        // We clone the context to backtrack if the body fails
+        // We clone the state to backtrack if the body fails
         match self.body.parse(ctx.clone()) {
             Ok(success) => Ok(success),
             Err((err_ctx, _)) => {

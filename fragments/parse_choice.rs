@@ -6,7 +6,7 @@ impl Model {
         let mut last_error = (ctx.clone(), "Empty choice".to_string());
 
         for model in &self.alternatives {
-            // We clone the context to backtrack the position if the branch fails
+            // We clone the state to backtrack the position if the branch fails
             match model.parse(ctx.clone()) {
                 Ok(success) => return Ok(success),
                 Err((mut err_ctx, msg)) => {
