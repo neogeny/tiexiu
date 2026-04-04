@@ -11,16 +11,19 @@ pub struct Cli {
     pub command: Commands,
 }
 
+
 #[derive(Subcommand)]
 pub enum Commands {
-    /// Execute a grammar against an input string.
+    /// Execute a grammar against one or more input files.
     Run {
         /// Path to the compiled TatSu JSON grammar.
-        #[arg(short, long)]
+        // #[arg(short, long)]
+        #[arg(required = true)]
         grammar: String,
 
-        /// The string or file to be parsed.
-        input: String,
+        /// The files to be parsed.
+        #[arg(required = true)]
+        inputs: Vec<String>,
 
         /// Display a detailed trace of the parsing process.
         #[arg(short, long)]

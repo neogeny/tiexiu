@@ -36,8 +36,12 @@ fn cli() {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Run { grammar, input, .. } => {
-            println!("Ready to parse {} with grammar {}", input, grammar);
+        Commands::Run { grammar, inputs, .. } => {
+            println!(
+                "Ready to parse {} with grammar {}", 
+                inputs.iter().map(|s| s.as_str()).collect::<Vec<_>>().join(", "), 
+                grammar
+            );
         }
     }
 }
