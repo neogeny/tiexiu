@@ -6,10 +6,14 @@ use super::elements::Element;
 impl Element {
     pub fn is_nullable(&self) -> bool {
         match self {
+            Element::Nil => true,
+            Element::RuleInclude { name: _, exp } => exp.is_nullable(),
+
             // Consumes nothing, always succeeds (or affects state only)
+            Element::Eof => false,
+
             Element::Cut
             | Element::Void
-            | Element::Eof
             | Element::Lookahead(_)
             | Element::NegativeLookahead(_)
             | Element::Optional(_)
@@ -50,7 +54,7 @@ impl Element {
             // Special cases
             Element::SkipTo(_) => false, // SkipTo must find a match to succeed
 
-            Element::Call(_name) => {
+            Element::Call(_name, _exp) => {
                 // In a stateless walker, you cannot determine this without
                 // looking up the definition of _name in the grammar.
                 false
@@ -60,6 +64,9 @@ impl Element {
 
     pub fn callable_from(&self) -> Vec<&Element> {
         match self {
+            Element::Nil => vec![],
+            Element::RuleInclude { name: _, exp } => vec![exp.as_ref()],
+
             // These don't lead to further rules
             Element::Cut
             | Element::Void
@@ -69,8 +76,10 @@ impl Element {
             | Element::Token(_)
             | Element::Pattern(_)
             | Element::Constant(_)
-            | Element::Alert(..)
-            | Element::Call(_) => vec![],
+            | Element::Alert(..) => vec![],
+
+            // NOTE: left recursion detection handles this by resolving by name
+            Element::Call(_, _) => vec![],
 
             // Transparent wrappers: return the inner expression
             Element::Group(m)

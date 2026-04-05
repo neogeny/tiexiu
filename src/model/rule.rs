@@ -11,14 +11,20 @@ pub type RuleMap = HashMap<String, Rule>;
 #[derive(Debug, Clone)]
 pub struct Rule {
     pub name: String,
-    params: Vec<String>,
-    is_memo: bool,
-    is_lrec: bool,
-    is_name: bool,
-    is_tokn: bool,
+    pub params: Vec<String>,
+    // decorators: HashMap<String, String>;
+
+    // NOTE: these come from the grammar definition
+    pub is_name: bool,
+    pub is_tokn: bool,
+    pub no_memo: bool,
+
+    // NOTE: these belong to the left-recursion analyzer
+    pub is_memo: bool,
+    pub is_lrec: bool,
+
     pub rhs: Element,
     // kwparams: dict[str, Any] = field(default_factory=dict)
-    // decorators: list[str] = field(default_factory=list)
 }
 
 impl<C> Parser<C> for Rule
@@ -37,21 +43,27 @@ impl fmt::Display for Rule {
             params_str = format!("[{}]", self.params.join(", "));
         }
         let rhs_str = self.rhs.to_string();
-        let start_str = if rhs_str.lines().count() <= 1 {" "} else {"\n"};
-        writeln!(f, "{}{}:{}{}", self.name, params_str, start_str, rhs_str)
+        let start_str = if rhs_str.lines().count() <= 1 {
+            " "
+        } else {
+            ""
+        };
+        write!(f, "{}{}:{}{}", self.name, params_str, start_str, rhs_str)
     }
 }
 
 impl Rule {
-    pub fn new(name: &str, rhs: Element) -> Self {
+    pub fn new(name: &str, _params: Vec<String>, rhs: Element) -> Self {
         Self {
             name: name.to_string(),
             params: vec![],
-            is_memo: true,
-            is_lrec: false,
+            rhs,
+
             is_name: false,
             is_tokn: false,
-            rhs,
+            no_memo: false,
+            is_memo: true,
+            is_lrec: false,
         }
     }
 
@@ -78,6 +90,11 @@ impl Rule {
                 .chars()
                 .find(|&c| c != '_')
                 .is_some_and(|c| c.is_uppercase())
+    }
+
+    pub fn rese_left_recursion(&mut self) {
+        self.is_memo = !self.no_memo;
+        self.is_lrec = false;
     }
 
     pub fn set_left_recursive(&mut self) {

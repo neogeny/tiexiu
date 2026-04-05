@@ -63,11 +63,6 @@ impl IndentWriter {
             .collect::<Vec<_>>()
             .join(line_sep.as_str());
 
-        let result_lines = result.lines();
-        if result_lines.count() <= 1 {
-            write!(&mut self.buffer, "{}", result).unwrap();
-            return self;
-        }
         for line in result.lines() {
             writeln!(&mut self.buffer, "{}", line).unwrap();
         }

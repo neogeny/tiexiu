@@ -28,8 +28,8 @@ pub fn eof() -> Element {
     Element::Eof
 }
 
-pub fn call(name: &str) -> Element {
-    Element::Call(name.into())
+pub fn call(name: &str, exp: Element) -> Element {
+    Element::Call(name.into(), exp.into())
 }
 
 pub fn token(name: &str) -> Element {
@@ -154,8 +154,8 @@ impl Element {
         Element::Eof
     }
 
-    pub fn call(name: &str) -> Self {
-        Element::Call(name.into())
+    pub fn call(name: &str, exp: Element) -> Self {
+        Element::Call(name.into(), exp.into())
     }
 
     pub fn token(name: &str) -> Self {

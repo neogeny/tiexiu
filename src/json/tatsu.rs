@@ -3,6 +3,14 @@
 
 use serde::{Deserialize, Serialize};
 
+fn default_true() -> bool {
+    true
+}
+
+fn default_false() -> bool {
+    false
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "__class__")]
 pub enum TatSuModel {
@@ -10,26 +18,33 @@ pub enum TatSuModel {
         name: String,
         rules: Vec<TatSuModel>,
         // #[serde(default, skip_serializing_if = "std::collections::HashMap::is_empty")]
-        // directives: std::collections::HashMap<String, serde_json::Value>,
-        #[serde(default, skip_serializing_if = "Vec::is_empty")]
-        keywords: Vec<String>,
+        directives: std::collections::HashMap<String, serde_json::Value>,
+        // #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        keywords: std::collections::HashSet<String>,
+        analyzed: bool,
     },
     RuleInclude {
-        rule: Box<TatSuModel>,
+        name: String,
+        exp: Option<Box<TatSuModel>>, // HERE
     },
     Rule {
         name: String,
         exp: Box<TatSuModel>,
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        params: Vec<String>,
+
         #[serde(default, skip_serializing_if = "std::ops::Not::not")]
         is_name: bool,
         #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-        is_lrec: bool,
-        #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-        is_memo: bool,
-        #[serde(default, skip_serializing_if = "std::ops::Not::not")]
         is_tokn: bool,
-        #[serde(default, skip_serializing_if = "Vec::is_empty")]
-        params: Vec<String>,
+        #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+        no_memo: bool,
+
+        #[serde(default = "default_true")]
+        is_memo: bool,
+
+        #[serde(default = "default_false")]
+        is_lrec: bool, // Still defaults to false
     },
     Sequence {
         sequence: Vec<TatSuModel>,
@@ -63,10 +78,9 @@ pub enum TatSuModel {
     },
     Call {
         name: String,
+        // exp: Option<Box<TatSuModel>>, // HERE
     },
-    Void {
-        tags: String,
-    },
+    Void {},
     Cut,
     EOF,
     Optional {
@@ -137,7 +151,7 @@ mod tests {
     fn test_tatsumodel_round_trip() {
         let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         path.push("grammar");
-        path.push("calc.json");
+        path.push("tatsu.json");
 
         let original_json =
             fs::read_to_string(&path).expect("Unable to read original grammar file");

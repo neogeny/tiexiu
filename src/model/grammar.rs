@@ -4,6 +4,7 @@
 use super::rule::{Rule, RuleMap};
 use crate::model::{ParseResult, Parser};
 use crate::state::Ctx;
+use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::ops::Deref;
 
@@ -12,6 +13,9 @@ pub struct Grammar {
     pub name: String,
     pub rules: Box<[Rule]>,
     pub rulemap: RuleMap,
+    pub directives: HashMap<String, String>,
+    pub keywords: HashSet<String>,
+    pub analyzed: bool,
 }
 
 impl<C> Parser<C> for Grammar
@@ -44,15 +48,26 @@ impl fmt::Display for Grammar {
 
 impl Grammar {
     pub fn new(name: &str, rules: &[Rule]) -> Self {
-        let rulemap = rules.iter().cloned().map(|r| (r.name.clone(), r)).collect();
-
         let mut grammar = Self {
             name: name.to_string(),
+            analyzed: false,
             rules: rules.into(),
-            rulemap,
+            rulemap: HashMap::new(),
+            directives: HashMap::new(),
+            keywords: HashSet::new(),
         };
-        Self::mark_left_recursion(&mut grammar);
+        grammar.initialize();
         grammar
+    }
+
+    pub fn initialize(&mut self) {
+        self.rulemap = self
+            .rules
+            .iter()
+            .cloned()
+            .map(|r| (r.name.clone(), r))
+            .collect();
+        Self::mark_left_recursion(self);
     }
 
     fn parse_at<C: Ctx>(&self, start: &str, ctx: C) -> ParseResult<C> {

@@ -16,13 +16,17 @@ impl fmt::Display for Element {
 impl Element {
     fn pretty_print(&self, f: &mut IndentWriter) -> String {
         match &self {
+            Element::Nil => "".to_string(),
+            Element::RuleInclude { name, exp: _ } => {
+                format!(">{}", name)
+            }
             Element::Cut => "~".into(),
             Element::Void => "()".into(),
             Element::Fail => "!()".into(),
             Element::Dot => ".".into(),
             Element::Eof => "$".into(),
 
-            Element::Call(name) => name.to_string(),
+            Element::Call(name, _exp) => name.to_string(),
 
             Element::Token(token) => format!("\"{}\"", token),
             Element::Pattern(pattern) => {
@@ -53,8 +57,7 @@ impl Element {
                 let exp_str = exp.pretty_print(f);
                 if exp_str.lines().count() <= 1 {
                     format!("({})", exp_str)
-                }
-                else {
+                } else {
                     f.take();
                     f.writeln("(");
                     f.with_indent(|f| {
@@ -83,7 +86,11 @@ impl Element {
                     .iter()
                     .map(|s| s.pretty_print(f))
                     .collect::<Vec<_>>();
-                f.fold(0, &pretty, "", " ", "").take()
+                let folded = f.fold(0, &pretty, "", "", "").take();
+                if folded.lines().count() > 1 {
+                    return format!("\n{}", folded);
+                }
+                pretty.join(" ")
             }
             Element::Alt(exp) => exp.to_string(),
             Element::Choice(options) => {
@@ -95,7 +102,7 @@ impl Element {
                 // fold for multi-line
                 let folded = f.fold(0, &pretty, "", "", "").take();
                 if folded.lines().count() > 1 {
-                    return format!("\n{}", folded)
+                    return format!("\n{}", folded);
                 }
 
                 // fold again for single line
@@ -103,7 +110,7 @@ impl Element {
                     .iter()
                     .map(|o| o.pretty_print(f))
                     .collect::<Vec<_>>();
-                f.fold(0, &pretty, "", " | ", "").take()
+                pretty.join(" | ")
             }
             Element::Optional(exp) => {
                 format!("[{}]", exp.pretty_print(f))
