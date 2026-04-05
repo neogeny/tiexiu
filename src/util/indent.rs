@@ -1,8 +1,6 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use std::fmt;
-
 pub struct IndentWriter {
     buffer: String,
     level: usize,
@@ -24,7 +22,7 @@ impl IndentWriter {
         std::mem::take(&mut self.buffer)
     }
 
-    pub fn indent<F>(&mut self, f: F)
+    pub fn with_indent<F>(&mut self, f: F)
     where
         F: FnOnce(&mut Self),
     {
@@ -33,11 +31,12 @@ impl IndentWriter {
         self.level -= 1;
     }
 
-    pub fn writeln(&mut self, text: &str) -> fmt::Result {
-        self.writeln_with(0, text, "")
+    pub fn writeln(&mut self, text: &str) -> &mut Self {
+        self.writeln_with(0, text, "");
+        self
     }
 
-    fn writeln_with(&mut self, extra_levels: usize, text: &str, sep: &str) -> fmt::Result {
+    fn writeln_with(&mut self, extra_levels: usize, text: &str, sep: &str) -> &mut Self {
         use std::fmt::Write;
 
         let lines: Vec<&str> = text.lines().collect();
@@ -65,36 +64,34 @@ impl IndentWriter {
             .join(line_sep.as_str());
 
         for line in result.lines() {
-            writeln!(&mut self.buffer, "{}", line)?;
+            writeln!(&mut self.buffer, "{}", line).unwrap();
         }
-        Ok(())
+        self
     }
 
     pub fn fold(
         &mut self,
         extra_levels: usize,
-        items: &[&str],
+        items: &[String],
         prefix: &str,
-        lbrack: &str,
         sep: &str,
-        rbrack: &str,
-    ) -> fmt::Result {
+        suffix: &str,
+    ) -> &mut Self {
         let current_indent = self.amount * (self.level + 1);
         let available_width = self.width.saturating_sub(current_indent);
 
         let single_line = format!(
-            "{}{}{}{}",
+            "{}{}{}",
             prefix,
-            lbrack,
             items.join(format!("{} ", sep).as_str()),
-            rbrack
+            suffix
         );
-        if single_line.len() <= available_width {
+        if single_line.len() <= available_width && single_line.lines().count() == 1 {
             self.writeln_with(extra_levels, &single_line, "")
         } else {
-            self.writeln(format!("{}{}", prefix, lbrack).as_str())?;
-            self.writeln_with(1 + extra_levels, &items.join("\n"), sep)?;
-            self.writeln(rbrack)
+            self.writeln(prefix);
+            self.writeln_with(1 + extra_levels, &items.join("\n"), sep);
+            self.writeln(suffix)
         }
     }
 }
@@ -106,11 +103,11 @@ mod tests {
     #[test]
     fn test_basic_indentation() {
         let mut iw = IndentWriter::new(4);
-        iw.writeln("line1").unwrap();
-        iw.indent(|p| {
-            p.writeln("line2").unwrap();
+        iw.writeln("line1");
+        iw.with_indent(|p| {
+            p.writeln("line2");
         });
-        iw.writeln("line3").unwrap();
+        iw.writeln("line3");
 
         let expected = "line1\n    line2\nline3\n";
         assert_eq!(iw.take(), expected);
@@ -125,8 +122,8 @@ mod tests {
                 pass
         ";
         // This should strip the common 12 spaces and add 2 (from indent)
-        iw.indent(|p| {
-            p.writeln(multiline).unwrap();
+        iw.with_indent(|p| {
+            p.writeln(multiline);
         });
 
         let output = iw.take();
@@ -137,10 +134,13 @@ mod tests {
     #[test]
     fn test_fold_horizontal() {
         let mut iw = IndentWriter::new(4);
-        let items = vec!["a", "b", "c"];
+        let items = ["a", "b", "c"]
+            .iter()
+            .map(|s| s.to_string())
+            .collect::<Vec<_>>();
 
         // Correct order: extra_levels, items, prefix, lbrack, sep, rbrack
-        iw.fold(0, &items, "vec:", "[", ",", "]").unwrap();
+        iw.fold(0, &items, "vec:[", ",", "]");
 
         assert_eq!(iw.take(), "vec:[a, b, c]\n");
     }
@@ -149,10 +149,10 @@ mod tests {
     fn test_fold_vertical() {
         let mut iw = IndentWriter::new(4);
         iw.width = 15; // Force vertical break
-        let items = vec!["item1", "item2"];
+        let items = vec!["item1".to_string(), "item2".to_string()];
 
         // Correct order: extra_levels, items, prefix, lbrack, sep, rbrack
-        iw.fold(0, &items, "data:", "{", ",", "}").unwrap();
+        iw.fold(0, &items, "data:{", ",", "}");
 
         let output = iw.take();
         // data:{ ends the first line
@@ -166,7 +166,7 @@ mod tests {
     #[test]
     fn test_take_is_destructive() {
         let mut iw = IndentWriter::new(4);
-        iw.writeln("content").unwrap();
+        iw.writeln("content");
 
         let first = iw.take();
         let second = iw.take();
@@ -180,8 +180,15 @@ mod tests {
         let mut iw = IndentWriter::new(2);
         iw.width = 20;
 
-        iw.indent(|p| {
-            p.fold(0, &["x", "y"], "coords:", "(", ";", ")").unwrap();
+        iw.with_indent(|p| {
+            p.fold(
+                0,
+                &["x".to_string(), "y".to_string()],
+                "coords:(",
+                ";\
+            ",
+                ")",
+            );
         });
 
         // coords:(x; y) is 14 chars. + 2 indent = 16. Fits in 20.

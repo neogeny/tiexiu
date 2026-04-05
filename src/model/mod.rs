@@ -8,6 +8,7 @@ pub mod grammar;
 pub mod leftrec;
 pub mod nullability;
 pub mod parser;
+pub mod pretty;
 pub mod repeat;
 pub mod rule;
 
