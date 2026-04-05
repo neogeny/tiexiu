@@ -1,8 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::parser::{ParseResult, Parser, S};
-use crate::model::F;
+use super::parser::{F, ParseResult, Parser, S};
 use crate::state::Ctx;
 use crate::trees::Tree;
 use std::fmt::Debug;
@@ -16,13 +15,14 @@ pub use super::build;
 
 #[derive(Debug, Clone)]
 pub enum Element {
+    Nil,
     Cut,
     Void,
     Fail,
     Dot,
     Eof,
 
-    Call(Str),
+    Call(Str, ERef),
 
     Token(Str),
     Pattern(Str),
@@ -52,6 +52,7 @@ pub enum Element {
     PositiveJoin { exp: ERef, sep: ERef },
     Gather { exp: ERef, sep: ERef },
     PositiveGather { exp: ERef, sep: ERef },
+    RuleInclude { name: Str, exp: ERef },
 }
 
 impl Element {
@@ -66,7 +67,9 @@ where
 {
     fn parse(&self, mut ctx: C) -> ParseResult<C> {
         match self {
-            Self::Call(name) => match ctx.call(name) {
+            Self::Nil => Ok(S(ctx, Tree::Nil)),
+            Self::RuleInclude { .. } => Ok(S(ctx, Tree::Nil)),
+            Self::Call(name, _exp) => match ctx.call(name) {
                 Ok(S(mut ctx, tree)) => {
                     ctx.uncut();
                     Ok(S(ctx, tree))

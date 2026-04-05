@@ -16,13 +16,9 @@ impl fmt::Display for Element {
 impl Element {
     fn pretty_print(&self, f: &mut IndentWriter) -> String {
         match &self {
-            Element::Rule { rule } => rule.to_string(),
-            Element::RuleInclude { rule } => {
-                if let Element::Rule { rule } = rule.as_ref() {
-                    format!(">{}", rule.name)
-                } else {
-                    ">???".to_string()
-                }
+            Element::Nil => "".to_string(),
+            Element::RuleInclude { name, exp: _ } => {
+                format!(">{}", name)
             }
             Element::Cut => "~".into(),
             Element::Void => "()".into(),
@@ -30,7 +26,7 @@ impl Element {
             Element::Dot => ".".into(),
             Element::Eof => "$".into(),
 
-            Element::Call(name) => name.to_string(),
+            Element::Call(name, _exp) => name.to_string(),
 
             Element::Token(token) => format!("\"{}\"", token),
             Element::Pattern(pattern) => {

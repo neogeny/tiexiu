@@ -1,118 +1,128 @@
-// Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
-// SPDX-License-Identifier: MIT OR Apache-2.0
-
-use super::Element;
-use super::Grammar;
+use super::{Element, Grammar};
 use std::collections::HashMap;
-
-impl Grammar {
-    pub fn mark_left_recursion(grammar: &mut Grammar) {
-        let mut analysis = LeftRecursionAnalysis::new(grammar);
-        analysis.run()
-    }
-}
+use std::ops::Deref;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-enum Status {
+enum State {
     First,
     Cutoff,
     Visited,
 }
 
-struct LeftRecursionAnalysis<'a> {
+struct Analyzer<'a> {
     grammar: &'a mut Grammar,
-    node_state: HashMap<*const Element, Status>,
+    node_state: HashMap<*const Element, State>,
     node_depth: HashMap<*const Element, usize>,
     depth_stack: Vec<isize>,
-    rule_name_stack: Vec<String>,
     depth: usize,
 }
 
-impl<'a> LeftRecursionAnalysis<'a> {
-    fn new(grammar: &'a mut Grammar) -> Self {
-        Self {
-            grammar,
-            node_state: HashMap::new(),
-            node_depth: HashMap::new(),
-            depth_stack: vec![-1],
-            rule_name_stack: vec![],
-            depth: 0,
-        }
-    }
-
-    fn run(&mut self) {
-        let models = &self
-            .grammar
-            .rulemap
-            .values()
-            .map(|r| r.rhs.clone())
-            .collect::<Vec<_>>();
-        for model in models {
-            self.dfs(model);
-        }
-    }
-
+impl<'a> Analyzer<'a> {
     fn dfs(&mut self, node: &Element) {
         let ptr = node as *const Element;
 
-        if *self.node_state.get(&ptr).unwrap_or(&Status::First) != Status::First {
+        // if node_state[node] != State.FIRST: return
+        if *self.node_state.get(&ptr).unwrap_or(&State::First) != State::First {
             return;
         }
 
-        self.node_state.insert(ptr, Status::Cutoff);
-        self.node_depth.insert(ptr, self.depth);
-        self.depth += 1;
+        // node_state[node] = State.CUTOFF
+        self.node_state.insert(ptr, State::Cutoff);
 
-        for child in node.callable_from() {
-            if let Element::Call(target_name) = child {
-                // target_name is a &String inside the Model,
-                // but handle_call accepts a &str.
-                self.handle_call(target_name);
-            } else {
-                self.dfs(child);
+        // leftrec = isinstance(node, Rule) -- In your model, Rule is the RHS or accessed via Call
+        // Since we are traversing Elements, we check if this element is a "Call"
+        // to treat it like the start of a Rule logic.
+        let mut name_if_rule: Option<String> = None;
+        if let Element::Call(name, _) = node {
+            let thisname: String = name.deref().into();
+            if self
+                .grammar
+                .rulemap
+                .get(&thisname)
+                .is_some_and(|r| r.is_left_recursive())
+            {
+                self.depth_stack.push(self.depth as isize);
+                name_if_rule = Some(thisname);
             }
         }
 
-        self.node_depth.remove(&ptr);
-        self.depth -= 1;
-        self.node_state.insert(ptr, Status::Visited);
-    }
+        self.node_depth.insert(ptr, self.depth);
+        self.depth += 1;
 
-    fn handle_call(&mut self, target_name: &str) {
-        let target_rhs = {
-            let Some(rule) = self.grammar.rulemap.get(target_name) else {
-                return;
-            };
-            &rule.rhs as *const Element
-        };
+        // try:
+        for child in node.callable_from() {
+            self.dfs(child);
 
-        let rule = self.grammar.rulemap.get(target_name).unwrap();
-        let is_leftrec = rule.is_left_recursive();
-        if is_leftrec {
-            self.depth_stack.push(self.depth as isize);
-            self.rule_name_stack.push(rule.name.clone());
-        }
-        self.dfs(&rule.rhs.clone());
+            // afterEdge
+            let child_ptr = child as *const Element;
+            let child_state = *self.node_state.get(&child_ptr).unwrap_or(&State::First);
+            let child_depth = *self.node_depth.get(&child_ptr).unwrap_or(&0) as isize;
 
-        let is_cutoff = self.node_state.get(&target_rhs) == Some(&Status::Cutoff);
-        let target_depth = *self.node_depth.get(&target_rhs).unwrap_or(&0) as isize;
-        let parent_depth = *self.depth_stack.last().unwrap();
+            if child_state == State::Cutoff && child_depth > *self.depth_stack.last().unwrap() {
+                // This is a cycle. We need to mark the rule and turn off memoization.
+                if let Element::Call(target_name, _) = child {
+                    self.grammar.mark_as_lrec(target_name);
 
-        if is_cutoff
-            && target_depth > parent_depth
-            && let Some(rule) = self.grammar.rulemap.get_mut(target_name)
-        {
-            rule.set_left_recursive();
-            for name in self.rule_name_stack.iter() {
-                if let Some(rule) = self.grammar.rulemap.get_mut(name) {
-                    rule.set_no_memo();
+                    // Python: child_rules = (n for n in node_depth if isinstance(n, Rule))
+                    // We invalidate memoization for all rules currently "on the line"
+                    for n_ptr in self.node_depth.keys() {
+                        self.grammar.disable_memo_if_at_ptr(*n_ptr);
+                    }
                 }
             }
         }
 
-        if is_leftrec {
+        // finally: (afterNode)
+        if name_if_rule.is_some() {
             self.depth_stack.pop();
-            self.rule_name_stack.pop();
+        }
+        self.node_depth.remove(&ptr);
+        self.depth -= 1;
+        self.node_state.insert(ptr, State::Visited);
+    }
+}
+
+// Helper methods on Grammar to handle the mutation without locking Rule objects
+impl Grammar {
+    pub fn mark_left_recursion(&mut self) {
+        // Reset status
+        for rule in &mut self.rules {
+            rule.rese_left_recursion();
+        }
+
+        let mut analyzer = Analyzer {
+            grammar: self,
+            node_state: HashMap::new(),
+            node_depth: HashMap::new(),
+            depth_stack: vec![-1],
+            depth: 0,
+        };
+
+        // We must collect the references first to avoid borrowing self.rules while analyzer holds &mut self
+        let roots: Vec<*const Element> = analyzer
+            .grammar
+            .rules
+            .iter()
+            .map(|r| &r.rhs as *const Element)
+            .collect();
+
+        for ptr in roots {
+            unsafe { analyzer.dfs(&*ptr) };
+        }
+    }
+
+    fn mark_as_lrec(&mut self, name: &str) {
+        if let Some(rule) = self.rulemap.get_mut(name) {
+            rule.set_left_recursive();
+        }
+    }
+
+    fn disable_memo_if_at_ptr(&mut self, ptr: *const Element) {
+        // Find which rule owns this RHS pointer and kill its memo
+        for rule in &mut self.rules {
+            if std::ptr::eq(&rule.rhs, ptr) {
+                rule.set_no_memo();
+            }
         }
     }
 }

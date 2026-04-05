@@ -18,7 +18,7 @@ mod tests {
 
     #[test]
     fn test_grammar_bootstrap() -> Result<(), Box<dyn std::error::Error>> {
-        // println!("{}", TATSU_GRAMMAR_JSON);
+        println!("{}", TATSU_GRAMMAR_JSON);
         let grammar = Grammar::boot()?;
 
         assert!(!grammar.name.is_empty(), "Grammar name should not be empty");

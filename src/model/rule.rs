@@ -12,13 +12,19 @@ pub type RuleMap = HashMap<String, Rule>;
 pub struct Rule {
     pub name: String,
     pub params: Vec<String>,
-    pub is_memo: bool,
-    pub is_lrec: bool,
+    // decorators: HashMap<String, String>;
+
+    // NOTE: these come from the grammar definition
     pub is_name: bool,
     pub is_tokn: bool,
+    pub no_memo: bool,
+
+    // NOTE: these belong to the left-recursion analyzer
+    pub is_memo: bool,
+    pub is_lrec: bool,
+
     pub rhs: Element,
     // kwparams: dict[str, Any] = field(default_factory=dict)
-    // decorators: list[str] = field(default_factory=list)
 }
 
 impl<C> Parser<C> for Rule
@@ -47,15 +53,17 @@ impl fmt::Display for Rule {
 }
 
 impl Rule {
-    pub fn new(name: &str, rhs: Element) -> Self {
+    pub fn new(name: &str, _params: Vec<String>, rhs: Element) -> Self {
         Self {
             name: name.to_string(),
             params: vec![],
-            is_memo: true,
-            is_lrec: false,
+            rhs,
+
             is_name: false,
             is_tokn: false,
-            rhs,
+            no_memo: false,
+            is_memo: true,
+            is_lrec: false,
         }
     }
 
@@ -82,6 +90,11 @@ impl Rule {
                 .chars()
                 .find(|&c| c != '_')
                 .is_some_and(|c| c.is_uppercase())
+    }
+
+    pub fn rese_left_recursion(&mut self) {
+        self.is_memo = !self.no_memo;
+        self.is_lrec = false;
     }
 
     pub fn set_left_recursive(&mut self) {
