@@ -1,4 +1,5 @@
 use super::{Element, Grammar};
+use crate::model::elements::ParserElem;
 use std::collections::HashMap;
 use std::ops::Deref;
 
@@ -18,6 +19,16 @@ struct Analyzer<'a> {
 }
 
 impl<'a> Analyzer<'a> {
+    fn new(grammar: &'a mut Grammar) -> Self {
+        Self {
+            grammar,
+            node_state: HashMap::new(),
+            node_depth: HashMap::new(),
+            depth_stack: vec![-1],
+            depth: 0,
+        }
+    }
+
     fn dfs(&mut self, node: &Element) {
         let ptr = node as *const Element;
 
@@ -33,7 +44,7 @@ impl<'a> Analyzer<'a> {
         // Since we are traversing Elements, we check if this element is a "Call"
         // to treat it like the start of a Rule logic.
         let mut is_rule: bool = false;
-        if let Element::Call(name, _) = node {
+        if let ParserElem::Call(name, _) = &node.parser {
             let thisname: String = name.deref().into();
             if self
                 .grammar
@@ -60,7 +71,7 @@ impl<'a> Analyzer<'a> {
 
             if child_state == State::Cutoff && child_depth > *self.depth_stack.last().unwrap() {
                 // This is a cycle. We need to mark the rule and turn off memoization.
-                if let Element::Call(target_name, _) = child {
+                if let ParserElem::Call(target_name, _) = &child.parser {
                     self.grammar.mark_as_lrec(target_name);
 
                     // Python: child_rules = (n for n in node_depth if isinstance(n, Rule))
@@ -87,16 +98,10 @@ impl Grammar {
     pub fn mark_left_recursion(&mut self) {
         // Reset status
         for rule in &mut self.rules {
-            rule.rese_left_recursion();
+            rule.reset_left_recursion();
         }
 
-        let mut analyzer = Analyzer {
-            grammar: self,
-            node_state: HashMap::new(),
-            node_depth: HashMap::new(),
-            depth_stack: vec![-1],
-            depth: 0,
-        };
+        let mut analyzer = Analyzer::new(self);
 
         // We must collect the references first to avoid borrowing self.rules while analyzer holds &mut self
         let roots: Vec<*const Element> = analyzer

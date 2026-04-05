@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use super::node::Node;
 use crate::state::Ctx;
 use crate::trees::Tree;
 use std::fmt::Debug;
@@ -17,7 +18,7 @@ pub struct F {
 
 pub type ParseResult<C> = Result<S<C>, F>;
 
-pub trait Parser<C: Ctx>: Debug {
+pub trait Parser<C: Ctx>: Node + Debug {
     fn parse(&self, ctx: C) -> ParseResult<C>;
 }
 

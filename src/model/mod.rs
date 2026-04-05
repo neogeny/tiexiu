@@ -6,6 +6,7 @@ pub mod build;
 pub mod elements;
 pub mod grammar;
 pub mod leftrec;
+pub mod node;
 pub mod nullability;
 pub mod parser;
 pub mod pretty;

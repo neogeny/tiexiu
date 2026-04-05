@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use super::node::Node;
 use super::{Element, ParseResult, Parser};
 use crate::state::Ctx;
 use std::collections::HashMap;
@@ -25,6 +26,12 @@ pub struct Rule {
 
     pub rhs: Element,
     // kwparams: dict[str, Any] = field(default_factory=dict)
+}
+
+impl Node for Rule {
+    // fn callable_from(&self) -> Vec<&dyn Node> {
+    //     self.rhs.callable_from()
+    // }
 }
 
 impl<C> Parser<C> for Rule
@@ -92,7 +99,7 @@ impl Rule {
                 .is_some_and(|c| c.is_uppercase())
     }
 
-    pub fn rese_left_recursion(&mut self) {
+    pub fn reset_left_recursion(&mut self) {
         self.is_memo = !self.no_memo;
         self.is_lrec = false;
     }

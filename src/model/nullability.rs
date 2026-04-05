@@ -1,30 +1,40 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::elements::Element;
+use super::elements::{Element, ParserElem};
 
 impl Element {
     pub fn is_nullable(&self) -> bool {
+        self.parser.is_nullable()
+    }
+
+    pub fn callable_from(&self) -> Vec<&Element> {
+        self.parser.callable_from()
+    }
+}
+
+impl ParserElem {
+    pub fn is_nullable(&self) -> bool {
         match self {
-            Element::Nil => true,
-            Element::RuleInclude { name: _, exp } => exp.is_nullable(),
+            ParserElem::Nil => true,
+            ParserElem::RuleInclude { name: _, exp } => exp.is_nullable(),
 
             // Consumes nothing, always succeeds (or affects state only)
-            Element::Eof => false,
+            ParserElem::Eof => false,
 
-            Element::Cut
-            | Element::Void
-            | Element::Lookahead(_)
-            | Element::NegativeLookahead(_)
-            | Element::Optional(_)
-            | Element::Constant(_)
-            | Element::Alert(..)
-            | Element::Closure(_) => true,
+            ParserElem::Cut
+            | ParserElem::Void
+            | ParserElem::Lookahead(_)
+            | ParserElem::NegativeLookahead(_)
+            | ParserElem::Optional(_)
+            | ParserElem::Constant(_)
+            | ParserElem::Alert(..)
+            | ParserElem::Closure(_) => true,
 
             // Always consumes (or fails), never succeeds with zero width
-            Element::Fail | Element::Dot | Element::Token(_) => false,
+            ParserElem::Fail | ParserElem::Dot | ParserElem::Token(_) => false,
 
-            Element::Pattern(pattern) => {
+            ParserElem::Pattern(pattern) => {
                 // true if it CAN match the empty string (is nullable)
                 regex::Regex::new(pattern)
                     .map(|re| re.is_match(""))
@@ -32,29 +42,29 @@ impl Element {
             }
 
             // Transparent wrappers
-            Element::Group(m)
-            | Element::SkipGroup(m)
-            | Element::Override(m)
-            | Element::Named(_, m)
-            | Element::OverrideList(m)
-            | Element::NamedList(_, m) => m.is_nullable(),
+            ParserElem::Group(m)
+            | ParserElem::SkipGroup(m)
+            | ParserElem::Override(m)
+            | ParserElem::Named(_, m)
+            | ParserElem::OverrideList(m)
+            | ParserElem::NamedList(_, m) => m.is_nullable(),
 
             // Logic-based variants
-            Element::Alt(m) => m.is_nullable(),
-            Element::Choice(models) => models.iter().any(|m| m.is_nullable()),
-            Element::Sequence(models) => models.iter().all(|m| m.is_nullable()),
-            Element::PositiveClosure(m) => m.is_nullable(),
+            ParserElem::Alt(m) => m.is_nullable(),
+            ParserElem::Choice(models) => models.iter().any(|m| m.is_nullable()),
+            ParserElem::Sequence(models) => models.iter().all(|m| m.is_nullable()),
+            ParserElem::PositiveClosure(m) => m.is_nullable(),
 
             // Join/Gather variants
-            Element::Join { .. } | Element::Gather { .. } => true, // These can match zero times
-            Element::PositiveJoin { exp, .. } | Element::PositiveGather { exp, .. } => {
+            ParserElem::Join { .. } | ParserElem::Gather { .. } => true, // These can match zero times
+            ParserElem::PositiveJoin { exp, .. } | ParserElem::PositiveGather { exp, .. } => {
                 exp.is_nullable()
             }
 
             // Special cases
-            Element::SkipTo(_) => false, // SkipTo must find a match to succeed
+            ParserElem::SkipTo(_) => false, // SkipTo must find a match to succeed
 
-            Element::Call(_name, _exp) => {
+            ParserElem::Call(_name, _exp) => {
                 // In a stateless walker, you cannot determine this without
                 // looking up the definition of _name in the grammar.
                 false
@@ -64,43 +74,43 @@ impl Element {
 
     pub fn callable_from(&self) -> Vec<&Element> {
         match self {
-            Element::Nil => vec![],
-            Element::RuleInclude { name: _, exp } => vec![exp.as_ref()],
+            ParserElem::Nil => vec![],
+            ParserElem::RuleInclude { name: _, exp } => vec![exp.as_ref()],
 
             // These don't lead to further rules
-            Element::Cut
-            | Element::Void
-            | Element::Fail
-            | Element::Dot
-            | Element::Eof
-            | Element::Token(_)
-            | Element::Pattern(_)
-            | Element::Constant(_)
-            | Element::Alert(..) => vec![],
+            ParserElem::Cut
+            | ParserElem::Void
+            | ParserElem::Fail
+            | ParserElem::Dot
+            | ParserElem::Eof
+            | ParserElem::Token(_)
+            | ParserElem::Pattern(_)
+            | ParserElem::Constant(_)
+            | ParserElem::Alert(..) => vec![],
 
             // NOTE: left recursion detection handles this by resolving by name
-            Element::Call(_, _) => vec![],
+            ParserElem::Call(_, _) => vec![],
 
             // Transparent wrappers: return the inner expression
-            Element::Group(m)
-            | Element::SkipGroup(m)
-            | Element::Override(m)
-            | Element::Named(_, m)
-            | Element::OverrideList(m)
-            | Element::NamedList(_, m)
-            | Element::Lookahead(m)
-            | Element::NegativeLookahead(m)
-            | Element::Optional(m)
-            | Element::Closure(m)
-            | Element::PositiveClosure(m)
-            | Element::Alt(m)
-            | Element::SkipTo(m) => vec![m.as_ref()],
+            ParserElem::Group(m)
+            | ParserElem::SkipGroup(m)
+            | ParserElem::Override(m)
+            | ParserElem::Named(_, m)
+            | ParserElem::OverrideList(m)
+            | ParserElem::NamedList(_, m)
+            | ParserElem::Lookahead(m)
+            | ParserElem::NegativeLookahead(m)
+            | ParserElem::Optional(m)
+            | ParserElem::Closure(m)
+            | ParserElem::PositiveClosure(m)
+            | ParserElem::Alt(m)
+            | ParserElem::SkipTo(m) => vec![m.as_ref()],
 
             // Choice: Any option is a potential "next" step
-            Element::Choice(models) => models.iter().collect(),
+            ParserElem::Choice(models) => models.iter().collect(),
 
             // Sequence: Collect all leading nullable elements plus the first non-nullable one
-            Element::Sequence(models) => {
+            ParserElem::Sequence(models) => {
                 let mut result = Vec::new();
                 for m in models {
                     result.push(m);
@@ -112,10 +122,10 @@ impl Element {
             }
 
             // Join/Gather variants: the expression is always reachable
-            Element::Join { exp, .. }
-            | Element::PositiveJoin { exp, .. }
-            | Element::Gather { exp, .. }
-            | Element::PositiveGather { exp, .. } => vec![exp.as_ref()],
+            ParserElem::Join { exp, .. }
+            | ParserElem::PositiveJoin { exp, .. }
+            | ParserElem::Gather { exp, .. }
+            | ParserElem::PositiveGather { exp, .. } => vec![exp.as_ref()],
         }
     }
 }

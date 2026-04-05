@@ -1,12 +1,12 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::parser::S;
-use crate::model::Element;
+use super::elements::{Element, ParserElem};
+use super::parser::{Parser, S};
 use crate::state::Ctx;
 use crate::trees::Tree;
 
-impl Element {
+impl ParserElem {
     pub fn skip_exp<C: Ctx>(ctx: C, exp: &Element) -> C {
         match exp.parse(ctx.clone()) {
             Ok(S(new_ctx, _)) => new_ctx,

@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use super::node::Node;
 use super::parser::{F, ParseResult, Parser, S};
 use crate::state::Ctx;
 use crate::trees::Tree;
@@ -14,7 +15,12 @@ pub type Str = Box<str>;
 pub use super::build;
 
 #[derive(Debug, Clone)]
-pub enum Element {
+pub struct Element {
+    pub(super) parser: ParserElem,
+}
+
+#[derive(Debug, Clone)]
+pub enum ParserElem {
     Nil,
     Cut,
     Void,
@@ -55,13 +61,26 @@ pub enum Element {
     RuleInclude { name: Str, exp: ERef },
 }
 
-impl Element {
+impl ParserElem {
     pub fn parse<C: Ctx>(&self, ctx: C) -> ParseResult<C> {
         <Self as Parser<C>>::parse(self, ctx)
     }
 }
 
+impl Node for Element {}
+
+impl Node for ParserElem {}
+
 impl<C> Parser<C> for Element
+where
+    C: Ctx,
+{
+    fn parse(&self, ctx: C) -> ParseResult<C> {
+        self.parser.parse(ctx)
+    }
+}
+
+impl<C> Parser<C> for ParserElem
 where
     C: Ctx,
 {
