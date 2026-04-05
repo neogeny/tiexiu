@@ -125,15 +125,9 @@ impl From<TatSuModel> for Element {
             }
             TatSuModel::RuleInclude { name, exp } => {
                 // WARNING: NOT THE CORRECT IMPLEMENTATION
-                if let Some(exp) = exp {
-                    return Element::RuleInclude {
-                        name: name.into(),
-                        exp: (*exp).into(),
-                    };
-                }
                 Element::RuleInclude {
                     name: name.into(),
-                    exp: Element::Nil.into(),
+                    exp: (*exp).into(),
                 }
             }
             TatSuModel::LeftJoin { .. } => unreachable!("LeftJoin not implemented"),

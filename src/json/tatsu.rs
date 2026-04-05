@@ -25,7 +25,7 @@ pub enum TatSuModel {
     },
     RuleInclude {
         name: String,
-        exp: Option<Box<TatSuModel>>, // HERE
+        exp: Box<TatSuModel>, // HERE
     },
     Rule {
         name: String,
