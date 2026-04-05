@@ -32,7 +32,7 @@ impl<'a> Analyzer<'a> {
         // leftrec = isinstance(node, Rule) -- In your model, Rule is the RHS or accessed via Call
         // Since we are traversing Elements, we check if this element is a "Call"
         // to treat it like the start of a Rule logic.
-        let mut name_if_rule: Option<String> = None;
+        let mut is_rule: bool = false;
         if let Element::Call(name, _) = node {
             let thisname: String = name.deref().into();
             if self
@@ -42,7 +42,7 @@ impl<'a> Analyzer<'a> {
                 .is_some_and(|r| r.is_left_recursive())
             {
                 self.depth_stack.push(self.depth as isize);
-                name_if_rule = Some(thisname);
+                is_rule = true;
             }
         }
 
@@ -66,14 +66,14 @@ impl<'a> Analyzer<'a> {
                     // Python: child_rules = (n for n in node_depth if isinstance(n, Rule))
                     // We invalidate memoization for all rules currently "on the line"
                     for n_ptr in self.node_depth.keys() {
-                        self.grammar.disable_memo_if_at_ptr(*n_ptr);
+                        self.grammar.set_no_memo_for(*n_ptr);
                     }
                 }
             }
         }
 
         // finally: (afterNode)
-        if name_if_rule.is_some() {
+        if is_rule {
             self.depth_stack.pop();
         }
         self.node_depth.remove(&ptr);
@@ -117,7 +117,7 @@ impl Grammar {
         }
     }
 
-    fn disable_memo_if_at_ptr(&mut self, ptr: *const Element) {
+    fn set_no_memo_for(&mut self, ptr: *const Element) {
         // Find which rule owns this RHS pointer and kill its memo
         for rule in &mut self.rules {
             if std::ptr::eq(&rule.rhs, ptr) {
