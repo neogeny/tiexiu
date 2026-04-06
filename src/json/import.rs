@@ -4,7 +4,7 @@
 use super::tatsu::TatSuModel;
 use crate::peg::exp::{ERef, Exp};
 use crate::peg::grammar::Grammar;
-use crate::peg::rule::{Rule, RuleMap};
+use crate::peg::rule::{Rule, RuleInfo, RuleMap};
 use std::collections::HashMap;
 
 impl From<TatSuModel> for ERef {
@@ -71,8 +71,7 @@ impl TryFrom<TatSuModel> for Grammar {
                     let rhs: Exp = (*exp).into();
                     // let rule = Rule::new(&name, params, rhs);
                     let rule = Rule {
-                        name,
-                        params,
+                        info: RuleInfo { name, params }.into(),
                         exp: rhs,
                         is_name,
                         is_tokn,
@@ -87,10 +86,7 @@ impl TryFrom<TatSuModel> for Grammar {
             let str_directives: HashMap<String, String> = directives
                 .iter()
                 .map(|(k, v)| {
-                    let val_str = v
-                        .as_str()
-                        .map(|s| s.to_string())
-                        .unwrap_or(v.to_string());
+                    let val_str = v.as_str().map(|s| s.to_string()).unwrap_or(v.to_string());
 
                     (k.clone(), val_str)
                 })
@@ -133,9 +129,7 @@ impl From<TatSuModel> for Exp {
             TatSuModel::Call { name, .. } => Exp::call(name.as_str(), Exp::nil()),
             TatSuModel::Token { token } => Exp::token(token.as_str()),
             TatSuModel::Pattern { pattern } => Exp::pattern(pattern.as_str()),
-            TatSuModel::Constant { literal } => {
-                Exp::constant(literal.as_str().unwrap_or(""))
-            },
+            TatSuModel::Constant { literal } => Exp::constant(literal.as_str().unwrap_or("")),
             TatSuModel::Alert { literal, level } => Exp::alert(literal.as_str().unwrap(), level),
 
             // --- Unary Operators ---

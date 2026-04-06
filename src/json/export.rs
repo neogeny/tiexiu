@@ -41,7 +41,7 @@ impl ToJson for Tree {
         match self {
             Tree::Nil | Tree::Bottom | Tree::Stump => Json::Null,
             Tree::Leaf(s) => Json::String(s.deref().to_string()),
-            Tree::Node(v) | Tree::Pruned(v) => Json::Array(v.iter().map(|c| c.to_json()).collect()),
+            Tree::Node(v) => Json::Array(v.iter().map(|c| c.to_json()).collect()),
             Tree::LeafTag(keyval) | Tree::NodeTag(keyval) => {
                 let KeyValue(name, tree) = keyval.deref();
                 let mut map = HashMap::new();

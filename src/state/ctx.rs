@@ -152,7 +152,7 @@ pub trait Ctx: Clone + Debug {
         if let Some(tree) = best_cst {
             Ok(S(self, tree))
         } else {
-            Err(last_failure.unwrap_or_else(|| self.failure(&rule.name)))
+            Err(last_failure.unwrap_or_else(|| self.failure(&rule.info.name)))
         }
     }
 }

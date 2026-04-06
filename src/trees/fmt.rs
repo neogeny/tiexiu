@@ -29,7 +29,7 @@ impl fmt::Display for Tree {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Leaf(s) => write!(f, "\"{}\"", s),
-            Self::Node(items) | Self::Pruned(items) => {
+            Self::Node(items) => {
                 let bracket = if matches!(self, Self::Node(_)) {
                     ("[", "]")
                 } else {

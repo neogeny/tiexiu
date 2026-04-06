@@ -18,7 +18,6 @@ pub enum Tree {
     Leaf(Box<str>),      // 16 bytes
     Node(Box<[Tree]>),   // 16 bytes
     Tags(Box<TreeTags>), // 8 bytes
-    Pruned(Box<[Tree]>), // 16 bytes
 
     LeafTag(Box<KeyValue>), // 8 bytes
     NodeTag(Box<KeyValue>), // 8 bytes
@@ -107,23 +106,16 @@ impl Tree {
         }
     }
 
-    pub fn pruned(self) -> Tree {
-        match self {
-            Tree::Node(list) => Tree::Pruned(list),
-            _ => self,
-        }
-    }
-
     pub fn trimmed(self) -> Tree {
         let (tags, root, tree) = self._trim();
 
         // Priority Gate: Override > AST > CST
         if root != Tree::Nil {
-            root.pruned()
+            root
         } else if !tags.is_empty() {
             Tree::Tags(tags.into())
         } else {
-            tree.pruned()
+            tree
         }
     }
 
@@ -164,7 +156,7 @@ impl Tree {
             Tree::Leaf(text) => text.len(),
             Tree::RootLeaf(inner) | Tree::RootNode(inner) => inner.width(),
             Tree::Stump | Tree::Nil | Tree::Bottom => 0,
-            Tree::Node(items) | Tree::Pruned(items) => items.iter().map(|item| item.width()).sum(),
+            Tree::Node(items) => items.iter().map(|item| item.width()).sum(),
             Tree::Tags(tags) => tags.tags.values().map(|node| node.width()).sum(),
             Tree::LeafTag(pair) | Tree::NodeTag(pair) => {
                 let KeyValue(_, val) = &**pair;
@@ -193,7 +185,7 @@ mod tests {
         let result = raw.trimmed();
 
         // result = tree_closed(Bottom)
-        assert_eq!(result, Tree::Bottom.pruned());
+        assert_eq!(result, Tree::Bottom.trimmed());
     }
 
     #[test]
@@ -210,7 +202,7 @@ mod tests {
         let raw = Tree::Node([Tree::Bottom, Tree::Nil, Tree::Bottom].into());
         let result = raw.trimmed();
 
-        if let Tree::Pruned(v) = result {
+        if let Tree::Node(v) = result {
             assert_eq!(v.len(), 2); // Nil is gone, only the two Bottoms remain
             assert_eq!(v[0], Tree::Bottom);
             assert_eq!(v[1], Tree::Bottom);
