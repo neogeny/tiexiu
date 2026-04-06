@@ -1,4 +1,4 @@
-// A sketch of a "Grow" loop inside a Rule model
+// A sketch of a "Grow" loop inside a Rule peg
 let mut current_ctx = ctx;
 let mut current_res = seed;
 

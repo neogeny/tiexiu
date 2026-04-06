@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use tiexiu::input::StrCursor;
-use tiexiu::model::{Exp, Grammar, S};
+use tiexiu::peg::{Exp, Grammar, S};
 use tiexiu::state::strctx::StrCtx;
 use tiexiu::ui::cli;
 

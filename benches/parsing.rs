@@ -3,7 +3,7 @@
 
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use tiexiu::input::StrCursor;
-use tiexiu::model::{Exp, Grammar};
+use tiexiu::peg::{Exp, Grammar};
 use tiexiu::state::strctx::StrCtx;
 
 fn bench_token_parse(c: &mut Criterion) {

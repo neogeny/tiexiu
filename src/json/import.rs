@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::tatsu::TatSuModel;
-use crate::model::exp::{ERef, Exp};
-use crate::model::grammar::Grammar;
-use crate::model::rule::{Rule, RuleMap};
+use crate::peg::exp::{ERef, Exp};
+use crate::peg::grammar::Grammar;
+use crate::peg::rule::{Rule, RuleMap};
 use std::collections::HashMap;
 
 impl From<TatSuModel> for ERef {
@@ -32,7 +32,7 @@ impl Grammar {
                 format!("JSON error at {}: {}", err.path(), err)
             })?;
 
-        // println!("{:?}", model);
+        // println!("{:?}", peg);
         let grammar = Self::try_from(model)?;
         // let grammar = Self::default();
         Ok(grammar)

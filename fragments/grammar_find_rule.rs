@@ -4,7 +4,7 @@ pub struct Rule<C: Cursor> {
 }
 
 pub struct Grammar<C: Cursor> {
-    // The entire model in one contiguous chunk
+    // The entire peg in one contiguous chunk
     pub rules: Vec<Rule<C>>,
 }
 

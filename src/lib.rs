@@ -3,7 +3,7 @@
 
 pub mod input;
 pub mod json;
-pub mod model;
+pub mod peg;
 pub mod state;
 pub mod trees;
 pub mod ui;
@@ -24,7 +24,7 @@ mod tiexiu {
 
     #[pyfunction]
     fn compile(_grammar: String) -> PyResult<String> {
-        Ok("model".to_string())
+        Ok("peg".to_string())
     }
 
     #[pyfunction]

@@ -1,5 +1,5 @@
 use crate::input::Cursor;
-use crate::model::Grammar;
+use crate::peg::Grammar;
 use crate::state::Ctx;
 use crate::state::memo::{Key, Memo, MemoCache};
 use crate::trees::Tree;

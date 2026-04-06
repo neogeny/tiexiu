@@ -3,9 +3,9 @@
 
 use super::exp::Exp;
 use crate::trees::Tree;
-use crate::trees::fold;
+use crate::trees;
 
-pub trait Compiler: fold::Translator<Exp> {
+pub trait Compiler: trees::fold::Translator<Exp> {
     fn translate(&mut self, item: &Tree) -> Exp {
         self.compile(item)
     }
@@ -13,7 +13,7 @@ pub trait Compiler: fold::Translator<Exp> {
     fn compile(&mut self, item: &Tree) -> Exp;
 }
 
-pub trait Compiles: fold::Translates<Exp> {
+pub trait Compiles: trees::fold::Translates<Exp> {
     fn compile_with<V: Compiler + ?Sized>(&self, compiler: &mut V) -> Exp {
         self.translate_with(compiler)
     }

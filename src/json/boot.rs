@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::model::grammar::Grammar;
+use crate::peg::grammar::Grammar;
 
 pub const TATSU_GRAMMAR_JSON: &str = include_str!("../../grammar/tatsu.json");
 

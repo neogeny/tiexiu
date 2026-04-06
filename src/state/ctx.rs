@@ -3,7 +3,7 @@
 
 use super::memo::{Key, Memo, MemoCache};
 use crate::input::Cursor;
-use crate::model::{F, Grammar, ParseResult, Rule, S};
+use crate::peg::{F, Grammar, ParseResult, Rule, S};
 use crate::trees::tree::Tree;
 use regex::Regex;
 use std::fmt::Debug;

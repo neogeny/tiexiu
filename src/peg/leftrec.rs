@@ -1,5 +1,5 @@
 use super::{Exp, Grammar};
-use crate::model::exp::ParserExp;
+use crate::peg::exp::ParserExp;
 use std::collections::HashMap;
 use std::ops::Deref;
 
@@ -40,7 +40,7 @@ impl<'a> Analyzer<'a> {
         // node_state[node] = State.CUTOFF
         self.node_state.insert(ptr, State::Cutoff);
 
-        // leftrec = isinstance(node, Rule) -- In your model, Rule is the RHS or accessed via Call
+        // leftrec = isinstance(node, Rule) -- In your peg, Rule is the RHS or accessed via Call
         // Since we are traversing Elements, we check if this element is a "Call"
         // to treat it like the start of a Rule logic.
         let mut is_rule: bool = false;
