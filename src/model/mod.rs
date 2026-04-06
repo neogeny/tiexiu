@@ -4,6 +4,7 @@
 // #![allow(dead_code)]
 pub mod build;
 pub mod exp;
+pub mod fold;
 pub mod grammar;
 pub mod leftrec;
 pub mod nullability;
