@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::exp::Exp;
-use crate::trees::Tree;
 use crate::trees;
+use crate::trees::Tree;
 
 pub trait Compiler: trees::fold::Translator<Exp> {
     fn translate(&mut self, item: &Tree) -> Exp {

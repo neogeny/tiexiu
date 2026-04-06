@@ -31,9 +31,7 @@ fn test_build() {
 }
 
 fn main() {
-    println!("Hello, world!");
     let bootg = Grammar::boot().unwrap();
-    println!("Loaded!");
     println!("{}", bootg);
     test_build();
     cli::cli();
