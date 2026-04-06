@@ -87,13 +87,10 @@ impl TryFrom<TatSuModel> for Grammar {
             let str_directives: HashMap<String, String> = directives
                 .iter()
                 .map(|(k, v)| {
-                    // 1. Clone the key to get an owned String
-                    // 2. Use as_str() for strings to avoid double quotes,
-                    //    otherwise fall back to to_string() for numbers/bools.
                     let val_str = v
                         .as_str()
                         .map(|s| s.to_string())
-                        .unwrap_or_else(|| v.to_string());
+                        .unwrap_or(v.to_string());
 
                     (k.clone(), val_str)
                 })
@@ -136,7 +133,9 @@ impl From<TatSuModel> for Exp {
             TatSuModel::Call { name, .. } => Exp::call(name.as_str(), Exp::nil()),
             TatSuModel::Token { token } => Exp::token(token.as_str()),
             TatSuModel::Pattern { pattern } => Exp::pattern(pattern.as_str()),
-            TatSuModel::Constant { literal } => Exp::constant(literal.to_string().as_str()),
+            TatSuModel::Constant { literal } => {
+                Exp::constant(literal.as_str().unwrap_or(""))
+            },
             TatSuModel::Alert { literal, level } => Exp::alert(literal.as_str().unwrap(), level),
 
             // --- Unary Operators ---
