@@ -58,7 +58,7 @@ impl ToJson for Tree {
                         .collect(),
                 );
                 let mut map: HashMap<String, Json> = HashMap::new();
-                map.insert("name".into(), Json::String(info.name.clone()));
+                map.insert("name".into(), Json::String(info.name.to_string()));
                 map.insert("params".into(), params);
                 map.insert("tree".into(), s.to_json());
                 Json::Object(map)
@@ -84,7 +84,6 @@ impl Json {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::trees::tree::Tree;
 
     #[test]
     fn test_cst_to_json_export() {

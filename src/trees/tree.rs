@@ -119,7 +119,6 @@ impl Tree {
     pub fn trimmed(self) -> Tree {
         let (tags, root, tree) = self._trim();
 
-        // Priority Gate: Override > AST > CST
         if root != Tree::Nil {
             root
         } else if !tags.is_empty() {
@@ -137,20 +136,20 @@ impl Tree {
         match self {
             Tree::Node(elements) => {
                 for node in elements {
-                    let (child_ast, child_ovr, child_cst) = node._trim();
+                    let (child_tags, child_root, child_cst) = node._trim();
 
-                    tags.update(&child_ast);
-                    root = root.join_nodes(child_ovr);
+                    tags.update(&child_tags);
+                    root = root.join_nodes(child_root);
                     tree = tree.join_nodes(child_cst);
                 }
             }
             Tree::LeafTag(keyval) => {
                 let KeyValue(name, val) = keyval.deref();
-                tags.set(name, val.clone())
+                tags.set(name, val.clone());
             }
             Tree::NodeTag(keyval) => {
                 let KeyValue(name, val) = keyval.deref();
-                tags.set_list(name, val.clone())
+                tags.set_list(name, val.clone());
             }
             Tree::RootLeaf(val) => root = root.add_leaf(*val),
             Tree::RootNode(val) => root = root.add_node(*val),
