@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::tatsu::TatSuModel;
-use crate::model::elements::{ERef, Element};
 use crate::model::grammar::Grammar;
+use crate::model::exp::{ERef, Exp};
 use crate::model::rule::{Rule, RuleMap};
 use std::collections::HashMap;
 
 impl From<TatSuModel> for ERef {
     fn from(model: TatSuModel) -> Self {
-        ERef::new(Element::from(model))
+        ERef::new(Exp::from(model))
     }
 }
 
@@ -68,12 +68,12 @@ impl TryFrom<TatSuModel> for Grammar {
                     is_lrec,
                 } = rule_model
                 {
-                    let rhs: Element = (*exp).into();
+                    let rhs: Exp = (*exp).into();
                     // let rule = Rule::new(&name, params, rhs);
                     let rule = Rule {
                         name,
                         params,
-                        rhs,
+                        exp: rhs,
                         is_name,
                         is_tokn,
                         no_memo,
@@ -114,7 +114,7 @@ impl TryFrom<TatSuModel> for Grammar {
     }
 }
 
-impl From<TatSuModel> for Element {
+impl From<TatSuModel> for Exp {
     fn from(model: TatSuModel) -> Self {
         match model {
             TatSuModel::Grammar { .. } => {
@@ -123,62 +123,58 @@ impl From<TatSuModel> for Element {
             TatSuModel::Rule { .. } => {
                 unreachable!("Container types (Rule/Grammar) cannot be nested inside expressions.");
             }
-            TatSuModel::RuleInclude { name, exp } => Element::rule_include(&name, (*exp).into()),
+            TatSuModel::RuleInclude { name, exp } => Exp::rule_include(&name, (*exp).into()),
             TatSuModel::LeftJoin { .. } => unreachable!("LeftJoin not implemented"),
             TatSuModel::RightJoin { .. } => unreachable!("RightJoin not implemented"),
 
             // --- Core Terminals ---
-            TatSuModel::Cut => Element::cut(),
-            TatSuModel::EOF => Element::eof(),
-            TatSuModel::Void { .. } => Element::void(),
+            TatSuModel::Cut => Exp::cut(),
+            TatSuModel::EOF => Exp::eof(),
+            TatSuModel::Void { .. } => Exp::void(),
 
             // --- Calls and Tokens ---
-            TatSuModel::Call { name, .. } => Element::call(name.as_str(), Element::nil()),
-            TatSuModel::Token { token } => Element::token(token.as_str()),
-            TatSuModel::Pattern { pattern } => Element::pattern(pattern.as_str()),
-            TatSuModel::Constant { literal } => Element::constant(literal.to_string().as_str()),
-            TatSuModel::Alert { literal, level } => {
-                Element::alert(literal.as_str().unwrap(), level)
-            }
+            TatSuModel::Call { name, .. } => Exp::call(name.as_str(), Exp::nil()),
+            TatSuModel::Token { token } => Exp::token(token.as_str()),
+            TatSuModel::Pattern { pattern } => Exp::pattern(pattern.as_str()),
+            TatSuModel::Constant { literal } => Exp::constant(literal.to_string().as_str()),
+            TatSuModel::Alert { literal, level } => Exp::alert(literal.as_str().unwrap(), level),
 
             // --- Unary Operators ---
-            TatSuModel::Group { exp } => Element::group((*exp).into()),
-            TatSuModel::Optional { exp } => Element::optional((*exp).into()),
-            TatSuModel::Option { exp } => Element::alt((*exp).into()),
-            TatSuModel::Closure { exp } => Element::closure((*exp).into()),
-            TatSuModel::PositiveClosure { exp } => Element::positive_closure((*exp).into()),
+            TatSuModel::Group { exp } => Exp::group((*exp).into()),
+            TatSuModel::Optional { exp } => Exp::optional((*exp).into()),
+            TatSuModel::Option { exp } => Exp::alt((*exp).into()),
+            TatSuModel::Closure { exp } => Exp::closure((*exp).into()),
+            TatSuModel::PositiveClosure { exp } => Exp::positive_closure((*exp).into()),
 
             // --- Lookahead ---
-            TatSuModel::Lookahead { exp } => Element::lookahead((*exp).into()),
-            TatSuModel::NegativeLookahead { exp } => Element::negative_lookahead((*exp).into()),
-            TatSuModel::SkipTo { exp } => Element::skip_to((*exp).into()),
+            TatSuModel::Lookahead { exp } => Exp::lookahead((*exp).into()),
+            TatSuModel::NegativeLookahead { exp } => Exp::negative_lookahead((*exp).into()),
+            TatSuModel::SkipTo { exp } => Exp::skip_to((*exp).into()),
 
             // --- N-ary Operators ---
             TatSuModel::Sequence { sequence } => {
-                let exprs: Vec<Element> = sequence.into_iter().map(|m| m.into()).collect();
-                Element::sequence(exprs.as_slice().into())
+                let exprs: Vec<Exp> = sequence.into_iter().map(|m| m.into()).collect();
+                Exp::sequence(exprs.as_slice().into())
             }
             TatSuModel::Choice { options } => {
-                let exprs: Vec<Element> = options.into_iter().map(|m| m.into()).collect();
-                Element::choice(exprs.as_slice().into())
+                let exprs: Vec<Exp> = options.into_iter().map(|m| m.into()).collect();
+                Exp::choice(exprs.as_slice().into())
             }
 
             // --- Joins and Gathers ---
-            TatSuModel::Join { exp, sep } => Element::join((*exp).into(), (*sep).into()),
+            TatSuModel::Join { exp, sep } => Exp::join((*exp).into(), (*sep).into()),
             TatSuModel::PositiveJoin { exp, sep } => {
-                Element::positive_join((*exp).into(), (*sep).into())
+                Exp::positive_join((*exp).into(), (*sep).into())
             }
-            TatSuModel::Gather { exp, sep } => Element::gather((*exp).into(), (*sep).into()),
+            TatSuModel::Gather { exp, sep } => Exp::gather((*exp).into(), (*sep).into()),
             TatSuModel::PositiveGather { exp, sep } => {
-                Element::positive_gather((*exp).into(), (*sep).into())
+                Exp::positive_gather((*exp).into(), (*sep).into())
             }
-            TatSuModel::Named { name, exp } => Element::named(name.as_str(), (*exp).into()),
-            TatSuModel::NamedList { name, exp } => {
-                Element::named_list(name.as_str(), (*exp).into())
-            }
-            TatSuModel::Override { exp } => Element::override_node((*exp).into()),
-            TatSuModel::OverrideList { exp } => Element::override_list((*exp).into()),
-            TatSuModel::SkipGroup { exp } => Element::skip_group((*exp).into()),
+            TatSuModel::Named { name, exp } => Exp::named(name.as_str(), (*exp).into()),
+            TatSuModel::NamedList { name, exp } => Exp::named_list(name.as_str(), (*exp).into()),
+            TatSuModel::Override { exp } => Exp::override_node((*exp).into()),
+            TatSuModel::OverrideList { exp } => Exp::override_list((*exp).into()),
+            TatSuModel::SkipGroup { exp } => Exp::skip_group((*exp).into()),
         }
     }
 }

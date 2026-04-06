@@ -2,23 +2,23 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use tiexiu::input::StrCursor;
-use tiexiu::model::{Element, Grammar, S};
+use tiexiu::model::{Exp, Grammar, S};
 use tiexiu::state::strctx::StrCtx;
 use tiexiu::ui::cli;
 
-fn scope() -> (Element, Element) {
-    let a = Element::token("a");
-    let b = Element::token("b");
+fn scope() -> (Exp, Exp) {
+    let a = Exp::token("a");
+    let b = Exp::token("b");
     (a, b)
 }
 
 fn test_build() {
     let (a, b) = scope();
-    let c = Element::token("c");
-    let v = Element::void();
-    let r = Element::closure(c);
-    let n = Element::named("test", b);
-    let seq = Element::sequence([a, n, r, v].into());
+    let c = Exp::token("c");
+    let v = Exp::void();
+    let r = Exp::closure(c);
+    let n = Exp::named("test", b);
+    let seq = Exp::sequence([a, n, r, v].into());
 
     let cur: StrCursor = StrCursor::new("a b c c c");
     let grammar = Grammar::new("test", &[]);

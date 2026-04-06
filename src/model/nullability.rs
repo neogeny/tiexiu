@@ -1,40 +1,40 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::elements::{Element, ParserElem};
+use super::exp::{Exp, ParserExp};
 
-impl Element {
+impl Exp {
     pub fn is_nullable(&self) -> bool {
-        self.parser.is_nullable()
+        self.exp.is_nullable()
     }
 
-    pub fn callable_from(&self) -> Vec<&Element> {
-        self.parser.callable_from()
+    pub fn callable_from(&self) -> Vec<&Exp> {
+        self.exp.callable_from()
     }
 }
 
-impl ParserElem {
+impl ParserExp {
     pub fn is_nullable(&self) -> bool {
         match self {
-            ParserElem::Nil => true,
-            ParserElem::RuleInclude { name: _, exp } => exp.is_nullable(),
+            ParserExp::Nil => true,
+            ParserExp::RuleInclude { name: _, exp } => exp.is_nullable(),
 
             // Consumes nothing, always succeeds (or affects state only)
-            ParserElem::Eof => false,
+            ParserExp::Eof => false,
 
-            ParserElem::Cut
-            | ParserElem::Void
-            | ParserElem::Lookahead(_)
-            | ParserElem::NegativeLookahead(_)
-            | ParserElem::Optional(_)
-            | ParserElem::Constant(_)
-            | ParserElem::Alert(..)
-            | ParserElem::Closure(_) => true,
+            ParserExp::Cut
+            | ParserExp::Void
+            | ParserExp::Lookahead(_)
+            | ParserExp::NegativeLookahead(_)
+            | ParserExp::Optional(_)
+            | ParserExp::Constant(_)
+            | ParserExp::Alert(..)
+            | ParserExp::Closure(_) => true,
 
             // Always consumes (or fails), never succeeds with zero width
-            ParserElem::Fail | ParserElem::Dot | ParserElem::Token(_) => false,
+            ParserExp::Fail | ParserExp::Dot | ParserExp::Token(_) => false,
 
-            ParserElem::Pattern(pattern) => {
+            ParserExp::Pattern(pattern) => {
                 // true if it CAN match the empty string (is nullable)
                 regex::Regex::new(pattern)
                     .map(|re| re.is_match(""))
@@ -42,29 +42,29 @@ impl ParserElem {
             }
 
             // Transparent wrappers
-            ParserElem::Group(m)
-            | ParserElem::SkipGroup(m)
-            | ParserElem::Override(m)
-            | ParserElem::Named(_, m)
-            | ParserElem::OverrideList(m)
-            | ParserElem::NamedList(_, m) => m.is_nullable(),
+            ParserExp::Group(m)
+            | ParserExp::SkipGroup(m)
+            | ParserExp::Override(m)
+            | ParserExp::Named(_, m)
+            | ParserExp::OverrideList(m)
+            | ParserExp::NamedList(_, m) => m.is_nullable(),
 
             // Logic-based variants
-            ParserElem::Alt(m) => m.is_nullable(),
-            ParserElem::Choice(models) => models.iter().any(|m| m.is_nullable()),
-            ParserElem::Sequence(models) => models.iter().all(|m| m.is_nullable()),
-            ParserElem::PositiveClosure(m) => m.is_nullable(),
+            ParserExp::Alt(m) => m.is_nullable(),
+            ParserExp::Choice(models) => models.iter().any(|m| m.is_nullable()),
+            ParserExp::Sequence(models) => models.iter().all(|m| m.is_nullable()),
+            ParserExp::PositiveClosure(m) => m.is_nullable(),
 
             // Join/Gather variants
-            ParserElem::Join { .. } | ParserElem::Gather { .. } => true, // These can match zero times
-            ParserElem::PositiveJoin { exp, .. } | ParserElem::PositiveGather { exp, .. } => {
+            ParserExp::Join { .. } | ParserExp::Gather { .. } => true, // These can match zero times
+            ParserExp::PositiveJoin { exp, .. } | ParserExp::PositiveGather { exp, .. } => {
                 exp.is_nullable()
             }
 
             // Special cases
-            ParserElem::SkipTo(_) => false, // SkipTo must find a match to succeed
+            ParserExp::SkipTo(_) => false, // SkipTo must find a match to succeed
 
-            ParserElem::Call(_name, _exp) => {
+            ParserExp::Call(_name, _exp) => {
                 // In a stateless walker, you cannot determine this without
                 // looking up the definition of _name in the grammar.
                 false
@@ -72,45 +72,45 @@ impl ParserElem {
         }
     }
 
-    pub fn callable_from(&self) -> Vec<&Element> {
+    pub fn callable_from(&self) -> Vec<&Exp> {
         match self {
-            ParserElem::Nil => vec![],
-            ParserElem::RuleInclude { name: _, exp } => vec![exp.as_ref()],
+            ParserExp::Nil => vec![],
+            ParserExp::RuleInclude { name: _, exp } => vec![exp.as_ref()],
 
             // These don't lead to further rules
-            ParserElem::Cut
-            | ParserElem::Void
-            | ParserElem::Fail
-            | ParserElem::Dot
-            | ParserElem::Eof
-            | ParserElem::Token(_)
-            | ParserElem::Pattern(_)
-            | ParserElem::Constant(_)
-            | ParserElem::Alert(..) => vec![],
+            ParserExp::Cut
+            | ParserExp::Void
+            | ParserExp::Fail
+            | ParserExp::Dot
+            | ParserExp::Eof
+            | ParserExp::Token(_)
+            | ParserExp::Pattern(_)
+            | ParserExp::Constant(_)
+            | ParserExp::Alert(..) => vec![],
 
             // NOTE: left recursion detection handles this by resolving by name
-            ParserElem::Call(_, _) => vec![],
+            ParserExp::Call(_, _) => vec![],
 
             // Transparent wrappers: return the inner expression
-            ParserElem::Group(m)
-            | ParserElem::SkipGroup(m)
-            | ParserElem::Override(m)
-            | ParserElem::Named(_, m)
-            | ParserElem::OverrideList(m)
-            | ParserElem::NamedList(_, m)
-            | ParserElem::Lookahead(m)
-            | ParserElem::NegativeLookahead(m)
-            | ParserElem::Optional(m)
-            | ParserElem::Closure(m)
-            | ParserElem::PositiveClosure(m)
-            | ParserElem::Alt(m)
-            | ParserElem::SkipTo(m) => vec![m.as_ref()],
+            ParserExp::Group(m)
+            | ParserExp::SkipGroup(m)
+            | ParserExp::Override(m)
+            | ParserExp::Named(_, m)
+            | ParserExp::OverrideList(m)
+            | ParserExp::NamedList(_, m)
+            | ParserExp::Lookahead(m)
+            | ParserExp::NegativeLookahead(m)
+            | ParserExp::Optional(m)
+            | ParserExp::Closure(m)
+            | ParserExp::PositiveClosure(m)
+            | ParserExp::Alt(m)
+            | ParserExp::SkipTo(m) => vec![m.as_ref()],
 
             // Choice: Any option is a potential "next" step
-            ParserElem::Choice(models) => models.iter().collect(),
+            ParserExp::Choice(models) => models.iter().collect(),
 
             // Sequence: Collect all leading nullable elements plus the first non-nullable one
-            ParserElem::Sequence(models) => {
+            ParserExp::Sequence(models) => {
                 let mut result = Vec::new();
                 for m in models {
                     result.push(m);
@@ -122,10 +122,10 @@ impl ParserElem {
             }
 
             // Join/Gather variants: the expression is always reachable
-            ParserElem::Join { exp, .. }
-            | ParserElem::PositiveJoin { exp, .. }
-            | ParserElem::Gather { exp, .. }
-            | ParserElem::PositiveGather { exp, .. } => vec![exp.as_ref()],
+            ParserExp::Join { exp, .. }
+            | ParserExp::PositiveJoin { exp, .. }
+            | ParserExp::Gather { exp, .. }
+            | ParserExp::PositiveGather { exp, .. } => vec![exp.as_ref()],
         }
     }
 }

@@ -1,5 +1,5 @@
-use super::{Element, Grammar};
-use crate::model::elements::ParserElem;
+use super::{Exp, Grammar};
+use crate::model::exp::ParserExp;
 use std::collections::HashMap;
 use std::ops::Deref;
 
@@ -12,8 +12,8 @@ enum State {
 
 struct Analyzer<'a> {
     grammar: &'a mut Grammar,
-    node_state: HashMap<*const Element, State>,
-    node_depth: HashMap<*const Element, usize>,
+    node_state: HashMap<*const Exp, State>,
+    node_depth: HashMap<*const Exp, usize>,
     depth_stack: Vec<isize>,
     depth: usize,
 }
@@ -29,8 +29,8 @@ impl<'a> Analyzer<'a> {
         }
     }
 
-    fn dfs(&mut self, node: &Element) {
-        let ptr = node as *const Element;
+    fn dfs(&mut self, node: &Exp) {
+        let ptr = node as *const Exp;
 
         // if node_state[node] != State.FIRST: return
         if *self.node_state.get(&ptr).unwrap_or(&State::First) != State::First {
@@ -44,7 +44,7 @@ impl<'a> Analyzer<'a> {
         // Since we are traversing Elements, we check if this element is a "Call"
         // to treat it like the start of a Rule logic.
         let mut is_rule: bool = false;
-        if let ParserElem::Call(name, _) = &node.parser {
+        if let ParserExp::Call(name, _) = &node.exp {
             let thisname: String = name.deref().into();
             if self
                 .grammar
@@ -65,13 +65,13 @@ impl<'a> Analyzer<'a> {
             self.dfs(child);
 
             // afterEdge
-            let child_ptr = child as *const Element;
+            let child_ptr = child as *const Exp;
             let child_state = *self.node_state.get(&child_ptr).unwrap_or(&State::First);
             let child_depth = *self.node_depth.get(&child_ptr).unwrap_or(&0) as isize;
 
             if child_state == State::Cutoff && child_depth > *self.depth_stack.last().unwrap() {
                 // This is a cycle. We need to mark the rule and turn off memoization.
-                if let ParserElem::Call(target_name, _) = &child.parser {
+                if let ParserExp::Call(target_name, _) = &child.exp {
                     self.grammar.mark_as_lrec(target_name);
 
                     // Python: child_rules = (n for n in node_depth if isinstance(n, Rule))
@@ -104,11 +104,11 @@ impl Grammar {
         let mut analyzer = Analyzer::new(self);
 
         // We must collect the references first to avoid borrowing self.rules while analyzer holds &mut self
-        let roots: Vec<*const Element> = analyzer
+        let roots: Vec<*const Exp> = analyzer
             .grammar
             .rules
             .iter()
-            .map(|r| &r.rhs as *const Element)
+            .map(|r| &r.exp as *const Exp)
             .collect();
 
         for ptr in roots {
@@ -122,10 +122,10 @@ impl Grammar {
         }
     }
 
-    fn set_no_memo_for(&mut self, ptr: *const Element) {
+    fn set_no_memo_for(&mut self, ptr: *const Exp) {
         // Find which rule owns this RHS pointer and kill its memo
         for rule in &mut self.rules {
-            if std::ptr::eq(&rule.rhs, ptr) {
+            if std::ptr::eq(&rule.exp, ptr) {
                 rule.set_no_memo();
             }
         }

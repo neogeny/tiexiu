@@ -3,11 +3,11 @@
 
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use tiexiu::input::StrCursor;
-use tiexiu::model::{Element, Grammar};
+use tiexiu::model::{Exp, Grammar};
 use tiexiu::state::strctx::StrCtx;
 
 fn bench_token_parse(c: &mut Criterion) {
-    let token = Element::token("hello");
+    let token = Exp::token("hello");
     let grammar = Grammar::default();
     let cursor: StrCursor = "hello world".into();
     let ctx = StrCtx::new(cursor, &grammar);
@@ -21,14 +21,7 @@ fn bench_token_parse(c: &mut Criterion) {
 }
 
 fn bench_sequence_parse(c: &mut Criterion) {
-    let seq = Element::sequence(
-        [
-            Element::token("a"),
-            Element::token("b"),
-            Element::token("c"),
-        ]
-        .into(),
-    );
+    let seq = Exp::sequence([Exp::token("a"), Exp::token("b"), Exp::token("c")].into());
     let grammar = Grammar::default();
     let cursor: StrCursor = "a b c".into();
     let ctx = StrCtx::new(cursor, &grammar);
@@ -42,14 +35,7 @@ fn bench_sequence_parse(c: &mut Criterion) {
 }
 
 fn bench_choice_parse(c: &mut Criterion) {
-    let choice = Element::choice(
-        [
-            Element::token("x"),
-            Element::token("y"),
-            Element::token("z"),
-        ]
-        .into(),
-    );
+    let choice = Exp::choice([Exp::token("x"), Exp::token("y"), Exp::token("z")].into());
     let grammar = Grammar::default();
 
     c.bench_function("parse_choice_first_match", |b| {
@@ -72,7 +58,7 @@ fn bench_choice_parse(c: &mut Criterion) {
 }
 
 fn bench_closure_parse(c: &mut Criterion) {
-    let closure = Element::closure(Element::token("a"));
+    let closure = Exp::closure(Exp::token("a"));
     let grammar = Grammar::default();
     let cursor: StrCursor = "a a a a a a a a a a".into();
     let ctx = StrCtx::new(cursor, &grammar);
@@ -86,18 +72,13 @@ fn bench_closure_parse(c: &mut Criterion) {
 }
 
 fn bench_nested_expression(c: &mut Criterion) {
-    let expr = Element::sequence(
+    let expr = Exp::sequence(
         [
-            Element::token("start"),
-            Element::closure(Element::choice(
-                [
-                    Element::token("foo"),
-                    Element::token("bar"),
-                    Element::token("baz"),
-                ]
-                .into(),
+            Exp::token("start"),
+            Exp::closure(Exp::choice(
+                [Exp::token("foo"), Exp::token("bar"), Exp::token("baz")].into(),
             )),
-            Element::token("end"),
+            Exp::token("end"),
         ]
         .into(),
     );
@@ -132,7 +113,7 @@ fn bench_grammar_from_json(c: &mut Criterion) {
 }
 
 fn bench_optional_parse(c: &mut Criterion) {
-    let opt = Element::optional(Element::token("maybe"));
+    let opt = Exp::optional(Exp::token("maybe"));
     let grammar = Grammar::default();
 
     c.bench_function("parse_optional_present", |b| {
@@ -155,7 +136,7 @@ fn bench_optional_parse(c: &mut Criterion) {
 }
 
 fn bench_lookahead_parse(c: &mut Criterion) {
-    let la = Element::lookahead(Element::token("peek"));
+    let la = Exp::lookahead(Exp::token("peek"));
     let grammar = Grammar::default();
     let cursor: StrCursor = "peek rest".into();
     let ctx = StrCtx::new(cursor, &grammar);
@@ -169,7 +150,7 @@ fn bench_lookahead_parse(c: &mut Criterion) {
 }
 
 fn bench_named_parse(c: &mut Criterion) {
-    let named = Element::named("label", Element::token("value"));
+    let named = Exp::named("label", Exp::token("value"));
     let grammar = Grammar::default();
     let cursor: StrCursor = "value rest".into();
     let ctx = StrCtx::new(cursor, &grammar);

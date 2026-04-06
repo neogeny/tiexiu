@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+pub use super::build;
 use super::node::Node;
 use super::parser::{F, ParseResult, Parser, S};
 use crate::state::Ctx;
@@ -8,19 +9,17 @@ use crate::trees::Tree;
 use std::fmt::Debug;
 use std::ops::Deref;
 
-pub type ERef = Box<Element>;
-pub type ERefArr = Box<[Element]>;
+pub type ERef = Box<Exp>;
+pub type ERefArr = Box<[Exp]>;
 pub type Str = Box<str>;
 
-pub use super::build;
-
 #[derive(Debug, Clone)]
-pub struct Element {
-    pub(super) parser: ParserElem,
+pub struct Exp {
+    pub(super) exp: ParserExp,
 }
 
 #[derive(Debug, Clone)]
-pub enum ParserElem {
+pub enum ParserExp {
     Nil,
     Cut,
     Void,
@@ -61,32 +60,32 @@ pub enum ParserElem {
     RuleInclude { name: Str, exp: ERef },
 }
 
-impl Element {
+impl Exp {
     pub fn parse<C: Ctx>(&self, ctx: C) -> ParseResult<C> {
         <Self as Parser<C>>::parse(self, ctx)
     }
 }
 
-impl ParserElem {
+impl ParserExp {
     pub fn parse<C: Ctx>(&self, ctx: C) -> ParseResult<C> {
         <Self as Parser<C>>::parse(self, ctx)
     }
 }
 
-impl Node for Element {}
+impl Node for Exp {}
 
-impl Node for ParserElem {}
+impl Node for ParserExp {}
 
-impl<C> Parser<C> for Element
+impl<C> Parser<C> for Exp
 where
     C: Ctx,
 {
     fn parse(&self, ctx: C) -> ParseResult<C> {
-        self.parser.parse(ctx)
+        self.exp.parse(ctx)
     }
 }
 
-impl<C> Parser<C> for ParserElem
+impl<C> Parser<C> for ParserExp
 where
     C: Ctx,
 {

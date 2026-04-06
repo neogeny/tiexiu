@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::node::Node;
-use super::{Element, ParseResult, Parser};
+use super::{Exp, ParseResult, Parser};
 use crate::state::Ctx;
 use std::collections::HashMap;
 use std::fmt;
@@ -24,13 +24,14 @@ pub struct Rule {
     pub is_memo: bool,
     pub is_lrec: bool,
 
-    pub rhs: Element,
+    pub exp: Exp,
     // kwparams: dict[str, Any] = field(default_factory=dict)
 }
 
 impl Node for Rule {
     // fn callable_from(&self) -> Vec<&dyn Node> {
     //     self.rhs.callable_from()
+
     // }
 }
 
@@ -39,7 +40,7 @@ where
     C: Ctx,
 {
     fn parse(&self, ctx: C) -> ParseResult<C> {
-        self.rhs.parse(ctx)
+        self.exp.parse(ctx)
     }
 }
 
@@ -49,7 +50,7 @@ impl fmt::Display for Rule {
         if !self.params.is_empty() {
             params_str = format!("[{}]", self.params.join(", "));
         }
-        let rhs_str = self.rhs.to_string();
+        let rhs_str = self.exp.to_string();
         let start_str = if rhs_str.lines().count() <= 1 {
             " "
         } else {
@@ -60,11 +61,11 @@ impl fmt::Display for Rule {
 }
 
 impl Rule {
-    pub fn new(name: &str, _params: Vec<String>, rhs: Element) -> Self {
+    pub fn new(name: &str, _params: Vec<String>, rhs: Exp) -> Self {
         Self {
             name: name.to_string(),
             params: vec![],
-            rhs,
+            exp: rhs,
 
             is_name: false,
             is_tokn: false,

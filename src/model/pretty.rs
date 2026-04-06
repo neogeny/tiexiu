@@ -1,23 +1,23 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::elements::{Element, ParserElem};
+use super::exp::{Exp, ParserExp};
 use crate::util::indent::IndentWriter;
 use std::fmt;
 
-impl Element {
+impl Exp {
     pub fn pretty_print(&self, f: &mut IndentWriter) -> String {
-        self.parser.pretty_print(f)
+        self.exp.pretty_print(f)
     }
 }
 
-impl fmt::Display for Element {
+impl fmt::Display for Exp {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.parser.fmt(f)
+        self.exp.fmt(f)
     }
 }
 
-impl fmt::Display for ParserElem {
+impl fmt::Display for ParserExp {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut writer: IndentWriter = IndentWriter::new(4);
         let result = self.pretty_print(&mut writer);
@@ -25,47 +25,47 @@ impl fmt::Display for ParserElem {
     }
 }
 
-impl ParserElem {
+impl ParserExp {
     fn pretty_print(&self, f: &mut IndentWriter) -> String {
         match &self {
-            ParserElem::Nil => "".to_string(),
-            ParserElem::RuleInclude { name, exp: _ } => {
+            ParserExp::Nil => "".to_string(),
+            ParserExp::RuleInclude { name, exp: _ } => {
                 format!(">{}", name)
             }
-            ParserElem::Cut => "~".into(),
-            ParserElem::Void => "()".into(),
-            ParserElem::Fail => "!()".into(),
-            ParserElem::Dot => ".".into(),
-            ParserElem::Eof => "$".into(),
+            ParserExp::Cut => "~".into(),
+            ParserExp::Void => "()".into(),
+            ParserExp::Fail => "!()".into(),
+            ParserExp::Dot => ".".into(),
+            ParserExp::Eof => "$".into(),
 
-            ParserElem::Call(name, _exp) => name.to_string(),
+            ParserExp::Call(name, _exp) => name.to_string(),
 
-            ParserElem::Token(token) => format!("\"{}\"", token),
-            ParserElem::Pattern(pattern) => {
+            ParserExp::Token(token) => format!("\"{}\"", token),
+            ParserExp::Pattern(pattern) => {
                 if pattern.contains("/") {
                     format!("?\"{}\"", pattern)
                 } else {
                     format!("/{}/", pattern)
                 }
             }
-            ParserElem::Constant(literal) => {
+            ParserExp::Constant(literal) => {
                 if literal.lines().count() > 1 {
                     format!("`{}`", literal)
                 } else {
                     format!("```{}```", literal)
                 }
             }
-            ParserElem::Alert(literal, level) => {
+            ParserExp::Alert(literal, level) => {
                 let level_str = "^".repeat(*level as usize);
                 format!("{}`{}`", level_str, literal)
             }
 
-            ParserElem::Named(name, exp) => format!("{}={}", name, exp.pretty_print(f)),
-            ParserElem::NamedList(name, exp) => format!("{}+={}", name, exp.pretty_print(f)),
-            ParserElem::Override(exp) => format!("={}", exp.pretty_print(f)),
-            ParserElem::OverrideList(exp) => format!("+={}", exp.pretty_print(f)),
+            ParserExp::Named(name, exp) => format!("{}={}", name, exp.pretty_print(f)),
+            ParserExp::NamedList(name, exp) => format!("{}+={}", name, exp.pretty_print(f)),
+            ParserExp::Override(exp) => format!("={}", exp.pretty_print(f)),
+            ParserExp::OverrideList(exp) => format!("+={}", exp.pretty_print(f)),
 
-            ParserElem::Group(exp) => {
+            ParserExp::Group(exp) => {
                 let exp_str = exp.pretty_print(f);
                 if exp_str.lines().count() <= 1 {
                     format!("({})", exp_str)
@@ -79,21 +79,21 @@ impl ParserElem {
                     f.take()
                 }
             }
-            ParserElem::SkipGroup(exp) => {
+            ParserExp::SkipGroup(exp) => {
                 format!("(?:{})", exp.pretty_print(f))
             }
 
-            ParserElem::Lookahead(exp) => {
+            ParserExp::Lookahead(exp) => {
                 format!("&{}", exp.pretty_print(f))
             }
-            ParserElem::NegativeLookahead(exp) => {
+            ParserExp::NegativeLookahead(exp) => {
                 format!("!{}", exp.pretty_print(f))
             }
-            ParserElem::SkipTo(exp) => {
+            ParserExp::SkipTo(exp) => {
                 format!("->{}", exp.pretty_print(f))
             }
 
-            ParserElem::Sequence(sequence) => {
+            ParserExp::Sequence(sequence) => {
                 let pretty = sequence
                     .iter()
                     .map(|s| s.pretty_print(f))
@@ -104,8 +104,8 @@ impl ParserElem {
                 }
                 pretty.join(" ")
             }
-            ParserElem::Alt(exp) => exp.to_string(),
-            ParserElem::Choice(options) => {
+            ParserExp::Alt(exp) => exp.to_string(),
+            ParserExp::Choice(options) => {
                 let mut pretty = options
                     .iter()
                     .map(|o| format!("| {}", o.pretty_print(f)))
@@ -124,26 +124,26 @@ impl ParserElem {
                     .collect::<Vec<_>>();
                 pretty.join(" | ")
             }
-            ParserElem::Optional(exp) => {
+            ParserExp::Optional(exp) => {
                 format!("[{}]", exp.pretty_print(f))
             }
-            ParserElem::Closure(exp) => {
+            ParserExp::Closure(exp) => {
                 format!("{{{}}}*", exp.pretty_print(f))
             }
-            ParserElem::PositiveClosure(exp) => {
+            ParserExp::PositiveClosure(exp) => {
                 format!("{{{}}}+", exp.pretty_print(f))
             }
 
-            ParserElem::Join { exp, sep } => {
+            ParserExp::Join { exp, sep } => {
                 format!("{}%{{{}}}*", sep.pretty_print(f), exp.pretty_print(f))
             }
-            ParserElem::PositiveJoin { exp, sep } => {
+            ParserExp::PositiveJoin { exp, sep } => {
                 format!("{}%{{{}}}+", sep.pretty_print(f), exp.pretty_print(f))
             }
-            ParserElem::Gather { exp, sep } => {
+            ParserExp::Gather { exp, sep } => {
                 format!("{}.{{{}}}*", sep.pretty_print(f), exp.pretty_print(f))
             }
-            ParserElem::PositiveGather { exp, sep } => {
+            ParserExp::PositiveGather { exp, sep } => {
                 format!("{}.{{{}}}+", sep.pretty_print(f), exp.pretty_print(f))
             }
         }

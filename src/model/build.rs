@@ -1,211 +1,211 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::elements::{Element, ParserElem};
+use super::exp::{Exp, ParserExp};
 
 #[inline]
-pub fn cut() -> Element {
-    Element {
-        parser: ParserElem::Cut,
-    }
-}
-
-#[inline]
-pub fn void() -> Element {
-    Element {
-        parser: ParserElem::Void,
+pub fn cut() -> Exp {
+    Exp {
+        exp: ParserExp::Cut,
     }
 }
 
 #[inline]
-pub fn fail() -> Element {
-    Element {
-        parser: ParserElem::Fail,
+pub fn void() -> Exp {
+    Exp {
+        exp: ParserExp::Void,
     }
 }
 
 #[inline]
-pub fn dot() -> Element {
-    Element {
-        parser: ParserElem::Dot,
+pub fn fail() -> Exp {
+    Exp {
+        exp: ParserExp::Fail,
     }
 }
 
 #[inline]
-pub fn eof() -> Element {
-    Element {
-        parser: ParserElem::Eof,
+pub fn dot() -> Exp {
+    Exp {
+        exp: ParserExp::Dot,
     }
 }
 
-pub fn call(name: &str, exp: Element) -> Element {
-    Element {
-        parser: ParserElem::Call(name.into(), exp.into()),
+#[inline]
+pub fn eof() -> Exp {
+    Exp {
+        exp: ParserExp::Eof,
     }
 }
 
-pub fn token(name: &str) -> Element {
-    Element {
-        parser: ParserElem::Token(name.into()),
+pub fn call(name: &str, exp: Exp) -> Exp {
+    Exp {
+        exp: ParserExp::Call(name.into(), exp.into()),
     }
 }
 
-pub fn constant(value: &str) -> Element {
-    Element {
-        parser: ParserElem::Constant(value.into()),
+pub fn token(name: &str) -> Exp {
+    Exp {
+        exp: ParserExp::Token(name.into()),
     }
 }
 
-pub fn alert(msg: &str, code: u8) -> Element {
-    Element {
-        parser: ParserElem::Alert(msg.into(), code),
+pub fn constant(value: &str) -> Exp {
+    Exp {
+        exp: ParserExp::Constant(value.into()),
     }
 }
 
-pub fn named(name: &str, model: Element) -> Element {
-    Element {
-        parser: ParserElem::Named(name.into(), model.into()),
+pub fn alert(msg: &str, code: u8) -> Exp {
+    Exp {
+        exp: ParserExp::Alert(msg.into(), code),
     }
 }
 
-pub fn named_list(name: &str, model: Element) -> Element {
-    Element {
-        parser: ParserElem::NamedList(name.into(), model.into()),
+pub fn named(name: &str, model: Exp) -> Exp {
+    Exp {
+        exp: ParserExp::Named(name.into(), model.into()),
     }
 }
 
-pub fn override_node(model: Element) -> Element {
-    Element {
-        parser: ParserElem::Override(model.into()),
+pub fn named_list(name: &str, model: Exp) -> Exp {
+    Exp {
+        exp: ParserExp::NamedList(name.into(), model.into()),
     }
 }
 
-pub fn override_list(model: Element) -> Element {
-    Element {
-        parser: ParserElem::OverrideList(model.into()),
+pub fn override_node(model: Exp) -> Exp {
+    Exp {
+        exp: ParserExp::Override(model.into()),
     }
 }
 
-pub fn group(model: Element) -> Element {
-    Element {
-        parser: ParserElem::Group(model.into()),
+pub fn override_list(model: Exp) -> Exp {
+    Exp {
+        exp: ParserExp::OverrideList(model.into()),
     }
 }
 
-pub fn skip_group(model: Element) -> Element {
-    Element {
-        parser: ParserElem::SkipGroup(model.into()),
+pub fn group(model: Exp) -> Exp {
+    Exp {
+        exp: ParserExp::Group(model.into()),
     }
 }
 
-pub fn lookahead(model: Element) -> Element {
-    Element {
-        parser: ParserElem::Lookahead(model.into()),
+pub fn skip_group(model: Exp) -> Exp {
+    Exp {
+        exp: ParserExp::SkipGroup(model.into()),
     }
 }
 
-pub fn negative_lookahead(model: Element) -> Element {
-    Element {
-        parser: ParserElem::NegativeLookahead(model.into()),
+pub fn lookahead(model: Exp) -> Exp {
+    Exp {
+        exp: ParserExp::Lookahead(model.into()),
     }
 }
 
-pub fn skip_to(model: Element) -> Element {
-    Element {
-        parser: ParserElem::SkipTo(model.into()),
+pub fn negative_lookahead(model: Exp) -> Exp {
+    Exp {
+        exp: ParserExp::NegativeLookahead(model.into()),
     }
 }
 
-pub fn sequence(models: Vec<Element>) -> Element {
-    Element {
-        parser: ParserElem::Sequence(models.into_boxed_slice()),
+pub fn skip_to(model: Exp) -> Exp {
+    Exp {
+        exp: ParserExp::SkipTo(model.into()),
     }
 }
 
-pub fn choice(models: Vec<Element>) -> Element {
-    Element {
-        parser: ParserElem::Choice(models.into_boxed_slice()),
+pub fn sequence(models: Vec<Exp>) -> Exp {
+    Exp {
+        exp: ParserExp::Sequence(models.into_boxed_slice()),
     }
 }
 
-pub fn optional(model: Element) -> Element {
-    Element {
-        parser: ParserElem::Optional(model.into()),
+pub fn choice(models: Vec<Exp>) -> Exp {
+    Exp {
+        exp: ParserExp::Choice(models.into_boxed_slice()),
     }
 }
 
-pub fn closure(model: Element) -> Element {
-    Element {
-        parser: ParserElem::Closure(model.into()),
+pub fn optional(model: Exp) -> Exp {
+    Exp {
+        exp: ParserExp::Optional(model.into()),
     }
 }
 
-pub fn positive_closure(model: Element) -> Element {
-    Element {
-        parser: ParserElem::PositiveClosure(model.into()),
+pub fn closure(model: Exp) -> Exp {
+    Exp {
+        exp: ParserExp::Closure(model.into()),
     }
 }
 
-pub fn join(exp: Element, sep: Element) -> Element {
-    Element {
-        parser: ParserElem::Join {
+pub fn positive_closure(model: Exp) -> Exp {
+    Exp {
+        exp: ParserExp::PositiveClosure(model.into()),
+    }
+}
+
+pub fn join(exp: Exp, sep: Exp) -> Exp {
+    Exp {
+        exp: ParserExp::Join {
             exp: exp.into(),
             sep: sep.into(),
         },
     }
 }
 
-pub fn positive_join(exp: Element, sep: Element) -> Element {
-    Element {
-        parser: ParserElem::PositiveJoin {
+pub fn positive_join(exp: Exp, sep: Exp) -> Exp {
+    Exp {
+        exp: ParserExp::PositiveJoin {
             exp: exp.into(),
             sep: sep.into(),
         },
     }
 }
 
-pub fn gather(exp: Element, sep: Element) -> Element {
-    Element {
-        parser: ParserElem::Gather {
+pub fn gather(exp: Exp, sep: Exp) -> Exp {
+    Exp {
+        exp: ParserExp::Gather {
             exp: exp.into(),
             sep: sep.into(),
         },
     }
 }
 
-pub fn positive_gather(exp: Element, sep: Element) -> Element {
-    Element {
-        parser: ParserElem::PositiveGather {
+pub fn positive_gather(exp: Exp, sep: Exp) -> Exp {
+    Exp {
+        exp: ParserExp::PositiveGather {
             exp: exp.into(),
             sep: sep.into(),
         },
     }
 }
 
-impl Element {
+impl Exp {
     #[inline]
     pub fn alt(exp: Self) -> Self {
         Self {
-            parser: ParserElem::Alt(exp.into()),
+            exp: ParserExp::Alt(exp.into()),
         }
     }
 
     #[inline]
     pub fn pattern(pattern: &str) -> Self {
         Self {
-            parser: ParserElem::Pattern(pattern.into()),
+            exp: ParserExp::Pattern(pattern.into()),
         }
     }
     #[inline]
     pub fn nil() -> Self {
         Self {
-            parser: ParserElem::Nil,
+            exp: ParserExp::Nil,
         }
     }
 
     pub fn rule_include(name: &str, exp: Self) -> Self {
         Self {
-            parser: ParserElem::RuleInclude {
+            exp: ParserExp::RuleInclude {
                 name: name.into(),
                 exp: exp.into(),
             },
@@ -215,149 +215,149 @@ impl Element {
     #[inline]
     pub fn cut() -> Self {
         Self {
-            parser: ParserElem::Cut,
+            exp: ParserExp::Cut,
         }
     }
 
     #[inline]
     pub fn void() -> Self {
         Self {
-            parser: ParserElem::Void,
+            exp: ParserExp::Void,
         }
     }
 
     #[inline]
     pub fn fail() -> Self {
         Self {
-            parser: ParserElem::Fail,
+            exp: ParserExp::Fail,
         }
     }
 
     #[inline]
     pub fn dot() -> Self {
         Self {
-            parser: ParserElem::Dot,
+            exp: ParserExp::Dot,
         }
     }
 
     #[inline]
     pub fn eof() -> Self {
         Self {
-            parser: ParserElem::Eof,
+            exp: ParserExp::Eof,
         }
     }
 
     pub fn call(name: &str, exp: Self) -> Self {
         Self {
-            parser: ParserElem::Call(name.into(), exp.into()),
+            exp: ParserExp::Call(name.into(), exp.into()),
         }
     }
 
     pub fn token(name: &str) -> Self {
         Self {
-            parser: ParserElem::Token(name.into()),
+            exp: ParserExp::Token(name.into()),
         }
     }
 
     pub fn constant(value: &str) -> Self {
         Self {
-            parser: ParserElem::Constant(value.into()),
+            exp: ParserExp::Constant(value.into()),
         }
     }
 
     pub fn alert(msg: &str, code: u8) -> Self {
         Self {
-            parser: ParserElem::Alert(msg.into(), code),
+            exp: ParserExp::Alert(msg.into(), code),
         }
     }
 
     pub fn named(name: &str, model: Self) -> Self {
         Self {
-            parser: ParserElem::Named(name.into(), model.into()),
+            exp: ParserExp::Named(name.into(), model.into()),
         }
     }
 
     pub fn named_list(name: &str, model: Self) -> Self {
         Self {
-            parser: ParserElem::NamedList(name.into(), model.into()),
+            exp: ParserExp::NamedList(name.into(), model.into()),
         }
     }
 
     pub fn override_node(model: Self) -> Self {
         Self {
-            parser: ParserElem::Override(model.into()),
+            exp: ParserExp::Override(model.into()),
         }
     }
 
     pub fn override_list(model: Self) -> Self {
         Self {
-            parser: ParserElem::OverrideList(model.into()),
+            exp: ParserExp::OverrideList(model.into()),
         }
     }
 
     pub fn group(model: Self) -> Self {
         Self {
-            parser: ParserElem::Group(model.into()),
+            exp: ParserExp::Group(model.into()),
         }
     }
 
     pub fn skip_group(model: Self) -> Self {
         Self {
-            parser: ParserElem::SkipGroup(model.into()),
+            exp: ParserExp::SkipGroup(model.into()),
         }
     }
 
     pub fn lookahead(model: Self) -> Self {
         Self {
-            parser: ParserElem::Lookahead(model.into()),
+            exp: ParserExp::Lookahead(model.into()),
         }
     }
 
     pub fn negative_lookahead(model: Self) -> Self {
         Self {
-            parser: ParserElem::NegativeLookahead(model.into()),
+            exp: ParserExp::NegativeLookahead(model.into()),
         }
     }
 
     pub fn skip_to(model: Self) -> Self {
         Self {
-            parser: ParserElem::SkipTo(model.into()),
+            exp: ParserExp::SkipTo(model.into()),
         }
     }
 
     pub fn sequence(models: Vec<Self>) -> Self {
         Self {
-            parser: ParserElem::Sequence(models.into_boxed_slice()),
+            exp: ParserExp::Sequence(models.into_boxed_slice()),
         }
     }
 
     pub fn choice(models: Vec<Self>) -> Self {
         Self {
-            parser: ParserElem::Choice(models.into_boxed_slice()),
+            exp: ParserExp::Choice(models.into_boxed_slice()),
         }
     }
 
     pub fn optional(model: Self) -> Self {
         Self {
-            parser: ParserElem::Optional(model.into()),
+            exp: ParserExp::Optional(model.into()),
         }
     }
 
     pub fn closure(model: Self) -> Self {
         Self {
-            parser: ParserElem::Closure(model.into()),
+            exp: ParserExp::Closure(model.into()),
         }
     }
 
     pub fn positive_closure(model: Self) -> Self {
         Self {
-            parser: ParserElem::PositiveClosure(model.into()),
+            exp: ParserExp::PositiveClosure(model.into()),
         }
     }
 
     pub fn join(exp: Self, sep: Self) -> Self {
         Self {
-            parser: ParserElem::Join {
+            exp: ParserExp::Join {
                 exp: exp.into(),
                 sep: sep.into(),
             },
@@ -366,7 +366,7 @@ impl Element {
 
     pub fn positive_join(exp: Self, sep: Self) -> Self {
         Self {
-            parser: ParserElem::PositiveJoin {
+            exp: ParserExp::PositiveJoin {
                 exp: exp.into(),
                 sep: sep.into(),
             },
@@ -375,7 +375,7 @@ impl Element {
 
     pub fn gather(exp: Self, sep: Self) -> Self {
         Self {
-            parser: ParserElem::Gather {
+            exp: ParserExp::Gather {
                 exp: exp.into(),
                 sep: sep.into(),
             },
@@ -384,7 +384,7 @@ impl Element {
 
     pub fn positive_gather(exp: Self, sep: Self) -> Self {
         Self {
-            parser: ParserElem::PositiveGather {
+            exp: ParserExp::PositiveGather {
                 exp: exp.into(),
                 sep: sep.into(),
             },

@@ -1,20 +1,20 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::elements::{Element, ParserElem};
 use super::parser::S;
+use super::exp::{Exp, ParserExp};
 use crate::state::Ctx;
 use crate::trees::Tree;
 
-impl ParserElem {
-    pub fn skip_exp<C: Ctx>(ctx: C, exp: &Element) -> C {
+impl ParserExp {
+    pub fn skip_exp<C: Ctx>(ctx: C, exp: &Exp) -> C {
         match exp.parse(ctx.clone()) {
             Ok(S(new_ctx, _)) => new_ctx,
             Err(_) => ctx,
         }
     }
 
-    pub fn add_exp<C: Ctx>(ctx: C, exp: &Element, res: &mut Vec<Tree>) -> Result<C, C> {
+    pub fn add_exp<C: Ctx>(ctx: C, exp: &Exp, res: &mut Vec<Tree>) -> Result<C, C> {
         match exp.parse(ctx.clone()) {
             Ok(S(new_ctx, tree)) => {
                 res.push(tree);
@@ -24,7 +24,7 @@ impl ParserElem {
         }
     }
 
-    pub fn repeat<C: Ctx>(mut ctx: C, exp: &Element, res: &mut Vec<Tree>) -> C {
+    pub fn repeat<C: Ctx>(mut ctx: C, exp: &Exp, res: &mut Vec<Tree>) -> C {
         loop {
             match Self::add_exp(ctx.clone(), exp, res) {
                 Ok(new_ctx) => ctx = new_ctx,
@@ -35,8 +35,8 @@ impl ParserElem {
 
     pub fn repeat_with_pre<C: Ctx>(
         mut ctx: C,
-        exp: &Element,
-        pre: &Element,
+        exp: &Exp,
+        pre: &Exp,
         res: &mut Vec<Tree>,
         keep_pre: bool,
     ) -> C {
