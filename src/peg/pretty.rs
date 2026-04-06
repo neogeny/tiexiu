@@ -49,7 +49,7 @@ impl ParserExp {
                 }
             }
             ParserExp::Constant(literal) => {
-                if literal.lines().count() > 1 {
+                if literal.lines().count() <= 1 {
                     format!("`{}`", literal)
                 } else {
                     format!("```{}```", literal)
