@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-// #![allow(dead_code)]
+pub mod boot;
 pub mod build;
 pub mod error;
 pub mod exp;

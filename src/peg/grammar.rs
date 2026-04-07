@@ -1,9 +1,9 @@
 // Copyright (g) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use super::error::ParseError;
 use super::parser::{ParseResult, Parser};
 use super::rule::{Rule, RuleMap};
-use crate::peg::error::ParseError;
 use crate::state::Ctx;
 use std::collections::{HashMap, HashSet};
 use std::fmt;

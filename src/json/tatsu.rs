@@ -80,7 +80,7 @@ pub enum TatSuModel {
         name: String,
         // exp: Option<Box<TatSuModel>>, // HERE
     },
-    Void {},
+    Void,
     Cut,
     EOF,
     Optional {
@@ -153,6 +153,7 @@ mod tests {
         path.push("grammar");
         path.push("tatsu.json");
 
+        println!("{}", path.to_str().unwrap());
         let original_json =
             fs::read_to_string(&path).expect("Unable to read original grammar file");
 

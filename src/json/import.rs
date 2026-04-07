@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::tatsu::TatSuModel;
+use crate::json::tatsu::TatSuModel;
 use crate::peg::exp::{ERef, Exp};
 use crate::peg::grammar::Grammar;
 use crate::peg::rule::{Rule, RuleInfo};
@@ -125,7 +125,7 @@ impl From<TatSuModel> for Exp {
             // --- Core Terminals ---
             TatSuModel::Cut => Exp::cut(),
             TatSuModel::EOF => Exp::eof(),
-            TatSuModel::Void { .. } => Exp::void(),
+            TatSuModel::Void => Exp::void(),
 
             // --- Calls and Tokens ---
             TatSuModel::Call { name, .. } => Exp::call(name.as_str(), Exp::nil()),
@@ -180,7 +180,8 @@ mod tests {
 
     #[test]
     fn test_grammar_from_json() {
-        let json = std::fs::read_to_string("grammar/calc.json").expect("calc.json missing");
+        let filename = "grammar/calc.json";
+        let json = std::fs::read_to_string(filename).expect("calc.json missing");
         println!("CALC FROM JSON");
         println!("{:#}", json);
 

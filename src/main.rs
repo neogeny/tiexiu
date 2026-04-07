@@ -1,17 +1,18 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
-
 use tiexiu::input::StrCursor;
 use tiexiu::peg::{Exp, Grammar, S};
 use tiexiu::state::strctx::StrCtx;
 use tiexiu::ui::cli;
 
+#[allow(dead_code)]
 fn scope() -> (Exp, Exp) {
     let a = Exp::token("a");
     let b = Exp::token("b");
     (a, b)
 }
 
+#[allow(dead_code)]
 fn test_build() {
     let (a, b) = scope();
     let c = Exp::token("c");
@@ -31,8 +32,6 @@ fn test_build() {
 }
 
 fn main() {
-    let bootg = Grammar::boot().unwrap();
-    println!("{}", bootg);
-    test_build();
+    // test_build();
     cli::cli();
 }

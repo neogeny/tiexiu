@@ -16,8 +16,8 @@ pub type Str = Box<str>;
 
 #[derive(Debug, Clone)]
 pub struct Exp {
-    pub(super) kind: ExpKind,
-    pub(super) lookahead: Box<[Str]>,
+    pub kind: ExpKind,
+    pub lookahead: Box<[Str]>,
 }
 
 #[derive(Debug, Clone)]

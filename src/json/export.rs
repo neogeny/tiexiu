@@ -1,115 +1,208 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::trees::{KeyValue, Tree, TreeTags};
+use crate::json::tatsu::TatSuModel;
+use crate::peg::exp::{Exp, ExpKind};
+use crate::peg::grammar::Grammar;
 use std::collections::HashMap;
-use std::ops::Deref;
 
-#[cfg(feature = "serde_json")]
-use serde::{Deserialize, Serialize};
-#[cfg(feature = "serde_json")]
-use serde_json::Value;
+// impl Grammar {
+//     pub fn from_json(json: &str) -> Result<Self, Box<dyn std::error::Error>> {
+//         let mut deserializer = serde_json::Deserializer::from_str(json);
+//
+//         let model: TatSuModel =
+//             serde_path_to_error::deserialize(&mut deserializer).map_err(|err| {
+//                 format!("JSON error at {}: {}", err.path(), err)
+//             })?;
+//
+//         let grammar = Self::try_from(model)?;
+//         Ok(grammar)
+//     }
+// }
 
-#[derive(Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "serde_json", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde_json", serde(untagged))]
-pub enum Json {
-    Null,
-    Bool(bool),
-    Number(f64),
-    String(String),
-    Array(Vec<Json>),
-    Object(HashMap<String, Json>),
-}
+impl TryFrom<Grammar> for TatSuModel {
+    type Error = String;
 
-pub trait ToJson {
-    fn to_json(&self) -> Json;
-}
+    fn try_from(grammar: Grammar) -> Result<Self, Self::Error> {
+        let rules: Vec<TatSuModel> = grammar
+            .rulemap
+            .values()
+            .map(|r| {
+                let rule = r;
+                TatSuModel::Rule {
+                    name: rule.info.name.clone().into(),
+                    params: rule.info.params.iter().map(|p| p.clone().into()).collect(),
+                    exp: Box::new(TatSuModel::from(rule.exp.clone())),
+                    is_name: rule.is_name,
+                    is_tokn: rule.is_tokn,
+                    no_memo: rule.no_memo,
+                    is_memo: rule.is_memo,
+                    is_lrec: rule.is_lrec,
+                }
+            })
+            .collect();
 
-impl ToJson for TreeTags {
-    fn to_json(&self) -> Json {
-        let mut map = HashMap::new();
-        for (name, tree) in &self.tags {
-            map.insert(name.deref().into(), tree.to_json());
-        }
-        Json::Object(map)
+        let directives: HashMap<String, serde_json::Value> = grammar
+            .directives
+            .iter()
+            .map(|(k, v)| (k.clone(), serde_json::Value::String(v.into())))
+            .collect();
+
+        Ok(TatSuModel::Grammar {
+            name: grammar.name.as_str().into(),
+            rules,
+            directives,
+            keywords: grammar.keywords,
+            analyzed: grammar.analyzed,
+        })
     }
 }
 
-impl ToJson for Tree {
-    fn to_json(&self) -> Json {
-        match self {
-            Tree::Nil | Tree::Bottom | Tree::Stump => Json::Null,
-            Tree::Leaf(s) => Json::String(s.deref().to_string()),
-            Tree::Branches(v) => Json::Array(v.iter().map(|c| c.to_json()).collect()),
-            Tree::Tag(keyval) | Tree::BranchingTag(keyval) => {
-                let KeyValue(name, tree) = keyval.deref();
-                let mut map = HashMap::new();
-                map.insert(name.to_string(), tree.to_json());
-                Json::Object(map)
-            }
-            Tree::Root(tree) | Tree::BranchingRoot(tree) => tree.to_json(),
-            Tree::TreeTags(tags) => tags.to_json(),
-            Tree::Pruned(info, s) => {
-                let params = Json::Array(
-                    info.params
-                        .iter()
-                        .map(|c| Json::String(c.deref().into()))
-                        .collect(),
-                );
-                let mut map: HashMap<String, Json> = HashMap::new();
-                map.insert("name".into(), Json::String(info.name.to_string()));
-                map.insert("params".into(), params);
-                map.insert("tree".into(), s.to_json());
-                Json::Object(map)
-            }
+impl From<Exp> for TatSuModel {
+    fn from(exp: Exp) -> Self {
+        match exp.kind {
+            ExpKind::Nil => TatSuModel::Void,
+            ExpKind::Cut => TatSuModel::Cut,
+            ExpKind::Void => TatSuModel::Void,
+            ExpKind::Eof => TatSuModel::EOF,
+            ExpKind::Dot => TatSuModel::Pattern {
+                pattern: ".".to_string(),
+            },
+            ExpKind::Call(name, _) => TatSuModel::Call { name: name.into() },
+            ExpKind::Token(s) => TatSuModel::Token { token: s.into() },
+            ExpKind::Pattern(s) => TatSuModel::Pattern { pattern: s.into() },
+            ExpKind::Constant(s) => TatSuModel::Constant {
+                literal: serde_json::Value::String(s.into()),
+            },
+            ExpKind::Alert(s, level) => TatSuModel::Alert {
+                literal: serde_json::Value::String(s.into()),
+                level,
+            },
+            ExpKind::Named(name, exp) => TatSuModel::Named {
+                name: name.into(),
+                exp: Box::new(TatSuModel::from(*exp)),
+            },
+            ExpKind::NamedList(name, exp) => TatSuModel::NamedList {
+                name: name.into(),
+                exp: Box::new(TatSuModel::from(*exp)),
+            },
+            ExpKind::Override(exp) => TatSuModel::Override {
+                exp: Box::new(TatSuModel::from(*exp)),
+            },
+            ExpKind::OverrideList(exp) => TatSuModel::OverrideList {
+                exp: Box::new(TatSuModel::from(*exp)),
+            },
+            ExpKind::Group(exp) => TatSuModel::Group {
+                exp: Box::new(TatSuModel::from(*exp)),
+            },
+            ExpKind::SkipGroup(exp) => TatSuModel::SkipGroup {
+                exp: Box::new(TatSuModel::from(*exp)),
+            },
+            ExpKind::Lookahead(exp) => TatSuModel::Lookahead {
+                exp: Box::new(TatSuModel::from(*exp)),
+            },
+            ExpKind::NegativeLookahead(exp) => TatSuModel::NegativeLookahead {
+                exp: Box::new(TatSuModel::from(*exp)),
+            },
+            ExpKind::SkipTo(exp) => TatSuModel::SkipTo {
+                exp: Box::new(TatSuModel::from(*exp)),
+            },
+            ExpKind::Sequence(sequence) => TatSuModel::Sequence {
+                sequence: sequence
+                    .iter()
+                    .map(|r| TatSuModel::from(r.clone()))
+                    .collect(),
+            },
+            ExpKind::Choice(options) => TatSuModel::Choice {
+                options: options
+                    .iter()
+                    .map(|r| TatSuModel::from(r.clone()))
+                    .collect(),
+            },
+            ExpKind::Alt(exp) => TatSuModel::Option {
+                exp: Box::new(TatSuModel::from(*exp)),
+            },
+            ExpKind::Optional(exp) => TatSuModel::Optional {
+                exp: Box::new(TatSuModel::from(*exp)),
+            },
+            ExpKind::Closure(exp) => TatSuModel::Closure {
+                exp: Box::new(TatSuModel::from(*exp)),
+            },
+            ExpKind::PositiveClosure(exp) => TatSuModel::PositiveClosure {
+                exp: Box::new(TatSuModel::from(*exp)),
+            },
+            ExpKind::Join { exp, sep } => TatSuModel::Join {
+                exp: Box::new(TatSuModel::from(*exp)),
+                sep: Box::new(TatSuModel::from(*sep)),
+            },
+            ExpKind::PositiveJoin { exp, sep } => TatSuModel::PositiveJoin {
+                exp: Box::new(TatSuModel::from(*exp)),
+                sep: Box::new(TatSuModel::from(*sep)),
+            },
+            ExpKind::Gather { exp, sep } => TatSuModel::Gather {
+                exp: Box::new(TatSuModel::from(*exp)),
+                sep: Box::new(TatSuModel::from(*sep)),
+            },
+            ExpKind::PositiveGather { exp, sep } => TatSuModel::PositiveGather {
+                exp: Box::new(TatSuModel::from(*exp)),
+                sep: Box::new(TatSuModel::from(*sep)),
+            },
+            ExpKind::RuleInclude { name, exp } => TatSuModel::RuleInclude {
+                name: name.into(),
+                exp: Box::new(TatSuModel::from(*exp)),
+            },
+            _ => unreachable!("Conversion for variant not implemented"),
         }
     }
 }
 
-impl Json {
-    pub fn to_serde(&self) -> Option<Value> {
-        #[cfg(not(feature = "serde_json"))]
-        {
-            None
-        }
-
-        #[cfg(feature = "serde_json")]
-        {
-            serde_json::to_value(self).ok()
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_cst_to_json_export() {
-        // Create a simple Cst structure
-        let token = Tree::Leaf(Box::from("hello"));
-        let list = Tree::Branches(Box::new([token]));
-
-        // 1. Test Internal Json Conversion
-        let json_node = list.to_json();
-        if let Json::Array(items) = &json_node {
-            assert_eq!(items.len(), 1);
-            if let Json::String(s) = &items[0] {
-                assert_eq!(s, "hello");
-            } else {
-                panic!("Expected Json::String");
-            }
-        } else {
-            panic!("Expected Json::Array");
-        }
-
-        // 2. Test Serde Integration (if feature is on)
-        #[cfg(all(feature = "serde", feature = "serde_json"))]
-        {
-            let serde_val = json_node.to_serde().expect("Conversion failed");
-            assert!(serde_val.is_array());
-            assert_eq!(serde_val[0], "hello");
-        }
-    }
-}
+// impl From<TatSuModel> for Exp {
+//     fn from(model: TatSuModel) -> Self {
+//         match model {
+//             TatSuModel::Grammar { .. } | TatSuModel::Rule { .. } => {
+//                 unreachable!("Container types cannot be nested inside expressions.");
+//             }
+//             TatSuModel::RuleInclude { name, exp } => Exp::rule_include(&name, (*exp).into()),
+//             TatSuModel::LeftJoin { .. } | TatSuModel::RightJoin { .. } => {
+//                 unreachable!("Join types not implemented")
+//             }
+//             TatSuModel::Cut => Exp::cut(),
+//             TatSuModel::EOF => Exp::eof(),
+//             TatSuModel::Void { .. } => Exp::void(),
+//             TatSuModel::Call { name, .. } => Exp::call(name.as_str(), Exp::nil()),
+//             TatSuModel::Token { token } => Exp::token(token.as_str()),
+//             TatSuModel::Pattern { pattern } => Exp::pattern(pattern.as_str()),
+//             TatSuModel::Constant { literal } => Exp::constant(literal.as_str().unwrap_or("")),
+//             TatSuModel::Alert { literal, level } => Exp::alert(literal.as_str().unwrap(), level),
+//             TatSuModel::Group { exp } => Exp::group((*exp).into()),
+//             TatSuModel::Optional { exp } => Exp::optional((*exp).into()),
+//             TatSuModel::Option { exp } => Exp::alt((*exp).into()),
+//             TatSuModel::Closure { exp } => Exp::closure((*exp).into()),
+//             TatSuModel::PositiveClosure { exp } => Exp::positive_closure((*exp).into()),
+//             TatSuModel::Lookahead { exp } => Exp::lookahead((*exp).into()),
+//             TatSuModel::NegativeLookahead { exp } => Exp::negative_lookahead((*exp).into()),
+//             TatSuModel::SkipTo { exp } => Exp::skip_to((*exp).into()),
+//             TatSuModel::Sequence { sequence } => {
+//                 let exprs: Vec<Exp> = sequence.into_iter().map(|m| m.into()).collect();
+//                 Exp::sequence(exprs.as_slice().into())
+//             }
+//             TatSuModel::Choice { options } => {
+//                 let exprs: Vec<Exp> = options.into_iter().map(|m| m.into()).collect();
+//                 Exp::choice(exprs.as_slice().into())
+//             }
+//             TatSuModel::Join { exp, sep } => Exp::join((*exp).into(), (*sep).into()),
+//             TatSuModel::PositiveJoin { exp, sep } => {
+//                 Exp::positive_join((*exp).into(), (*sep).into())
+//             }
+//             TatSuModel::Gather { exp, sep } => Exp::gather((*exp).into(), (*sep).into()),
+//             TatSuModel::PositiveGather { exp, sep } => {
+//                 Exp::positive_gather((*exp).into(), (*sep).into())
+//             }
+//             TatSuModel::Named { name, exp } => Exp::named(name.as_str(), (*exp).into()),
+//             TatSuModel::NamedList { name, exp } => Exp::named_list(name.as_str(), (*exp).into()),
+//             TatSuModel::Override { exp } => Exp::override_node((*exp).into()),
+//             TatSuModel::OverrideList { exp } => Exp::override_list((*exp).into()),
+//             TatSuModel::SkipGroup { exp } => Exp::skip_group((*exp).into()),
+//         }
+//     }
+// }
