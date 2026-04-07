@@ -196,9 +196,8 @@ where
                                 return Err(f);
                             }
 
-                            match furthest {
-                                Some(ref prev) if f.mark >= prev.mark => {}
-                                _ => furthest = Some(f),
+                            if furthest.as_ref().is_none_or(|prev| f.mark > prev.mark) {
+                                furthest = Some(f);
                             }
                         }
                     }
@@ -289,5 +288,34 @@ where
                 Ok(S(new_ctx, Tree::from(res)))
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::input::StrCursor;
+    use crate::peg::Rule;
+    use crate::state::strctx::StrCtx;
+
+    #[test]
+    fn choice_keeps_furthest_failure() {
+        let grammar = crate::peg::Grammar::new(
+            "test",
+            &[Rule::new(
+                "start",
+                &[],
+                Exp::choice(vec![
+                    Exp::sequence(vec![Exp::token("a"), Exp::token("b")]),
+                    Exp::sequence(vec![Exp::token("a"), Exp::token("c"), Exp::token("d")]),
+                ]),
+            )],
+        );
+        let ctx = StrCtx::new(StrCursor::new("acx"), &grammar);
+
+        let err = grammar.parse(ctx).unwrap_err();
+
+        assert_eq!(err.mark, 2);
+        assert_eq!(err.error, ParseError::ExpectedToken("d".into()));
     }
 }
