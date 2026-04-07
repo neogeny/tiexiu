@@ -1,10 +1,14 @@
+// Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
 use crate::trees::{KeyValue, Tree, TreeTags};
 use std::fmt;
+use std::ops::Deref;
 
 impl fmt::Display for TreeTags {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // Collect and sort keys for a stable, predictable string
-        let mut keys: Vec<&String> = self.tags.keys().collect();
+        let mut keys: Vec<&str> = self.tags.keys().map(|k| k.deref()).collect();
         keys.sort();
 
         write!(f, "{{")?;
@@ -29,14 +33,14 @@ impl fmt::Display for Tree {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Leaf(s) => write!(f, "\"{}\"", s),
-            Self::LeafTag(kv) | Self::NodeTag(kv) => write!(f, "{}", kv),
-            Self::RootLeaf(v) => write!(f, "!{}", v),
-            Self::RootNode(v) => write!(f, "!!{}", v),
-            Self::Tags(tags) => write!(f, "{}", tags),
+            Self::Tag(kv) | Self::BranchingTag(kv) => write!(f, "{}", kv),
+            Self::Root(v) => write!(f, "!{}", v),
+            Self::BranchingRoot(v) => write!(f, "!!{}", v),
+            Self::TreeTags(tags) => write!(f, "{}", tags),
             Self::Stump => write!(f, "()"),
             Self::Nil => write!(f, "∅"),
             Self::Bottom => write!(f, "⊥"),
-            Self::Node(items) => {
+            Self::Branches(items) => {
                 write!(f, "[")?;
                 for (i, item) in items.iter().enumerate() {
                     if i > 0 {
@@ -56,20 +60,20 @@ impl fmt::Display for Tree {
 
 #[cfg(test)]
 mod tests {
-    use crate::trees::{KeyValue, PruneInfo, Tree, TreeTags};
-    use std::collections::HashMap;
+    use crate::trees::{KeyValue, PruneInfo, TagMap, Tree, TreeTags};
+    use indexmap::IndexMap;
     use std::rc::Rc;
 
     #[test]
     fn test_tree_tags_display() {
-        let mut tags_map = HashMap::new();
-        tags_map.insert("key1".to_string(), Tree::Leaf("value1".into()));
-        tags_map.insert("key2".to_string(), Tree::Leaf("value2".into()));
+        let mut tags_map = TagMap::new();
+        tags_map.insert("key1".into(), Tree::Leaf("value1".into()));
+        tags_map.insert("key2".into(), Tree::Leaf("value2".into()));
         let tags = TreeTags { tags: tags_map };
         assert_eq!(tags.to_string(), "{key1: \"value1\", key2: \"value2\"}");
 
         let tags_empty = TreeTags {
-            tags: HashMap::new(),
+            tags: IndexMap::new(),
         };
         assert_eq!(tags_empty.to_string(), "{}");
     }
@@ -87,35 +91,33 @@ mod tests {
 
         // LeafTag
         let kv_leaf = KeyValue("tag".into(), Tree::Leaf("leaf_val".into()));
-        assert_eq!(
-            Tree::LeafTag(kv_leaf.into()).to_string(),
-            "«tag=\"leaf_val\"»"
-        );
+        assert_eq!(Tree::Tag(kv_leaf.into()).to_string(), "«tag=\"leaf_val\"»");
 
         // NodeTag
         let kv_node = KeyValue("node".into(), Tree::Leaf("node_val".into()));
         assert_eq!(
-            Tree::NodeTag(kv_node.into()).to_string(),
+            Tree::BranchingTag(kv_node.into()).to_string(),
             "«node=\"node_val\"»"
         );
 
         // RootLeaf
         assert_eq!(
-            Tree::RootLeaf(Tree::Leaf("root".into()).into()).to_string(),
+            Tree::Root(Tree::Leaf("root".into()).into()).to_string(),
             "!\"root\""
         );
 
         // RootNode
         assert_eq!(
-            Tree::RootNode(Tree::Node(vec![Tree::Leaf("item".into())].into()).into()).to_string(),
+            Tree::BranchingRoot(Tree::Branches(vec![Tree::Leaf("item".into())].into()).into())
+                .to_string(),
             "!![\"item\"]"
         );
 
         // Tags
-        let mut tags_map = HashMap::new();
-        tags_map.insert("a".to_string(), Tree::Leaf("1".into()));
+        let mut tags_map = TagMap::new();
+        tags_map.insert("a".into(), Tree::Leaf("1".into()));
         let tags = TreeTags { tags: tags_map };
-        assert_eq!(Tree::Tags(tags.into()).to_string(), "{a: \"1\"}");
+        assert_eq!(Tree::TreeTags(tags.into()).to_string(), "{a: \"1\"}");
 
         // Stump
         assert_eq!(Tree::Stump.to_string(), "()");
@@ -127,11 +129,11 @@ mod tests {
         assert_eq!(Tree::Bottom.to_string(), "⊥");
 
         // Node
-        let node = Tree::Node(
+        let node = Tree::Branches(
             vec![
                 Tree::Leaf("a".into()),
                 Tree::Leaf("b".into()),
-                Tree::Node(vec![Tree::Leaf("c".into())].into()),
+                Tree::Branches(vec![Tree::Leaf("c".into())].into()),
             ]
             .into(),
         );

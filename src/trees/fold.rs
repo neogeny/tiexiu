@@ -15,7 +15,7 @@ impl<O> Translates<O> for Tree {
     fn translate_with<T: Translator<O> + ?Sized>(&self, trans: &mut T) -> O {
         match &self {
             Tree::Nil | Tree::Bottom | Tree::Stump => trans.translate(self, &[]),
-            Tree::Node(nodes) => {
+            Tree::Branches(nodes) => {
                 let outputs = nodes
                     .iter()
                     .map(|branch| branch.translate_with(trans))

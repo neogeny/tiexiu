@@ -145,11 +145,11 @@ where
                 err => err,
             },
             Self::Override(exp) => match exp.parse(ctx) {
-                Ok(S(ctx, tree)) => Ok(S(ctx, Tree::RootLeaf(Box::new(tree)))),
+                Ok(S(ctx, tree)) => Ok(S(ctx, Tree::root(tree))),
                 err => err,
             },
             Self::OverrideList(exp) => match exp.parse(ctx) {
-                Ok(S(ctx, tree)) => Ok(S(ctx, Tree::RootNode(Box::new(tree)))),
+                Ok(S(ctx, tree)) => Ok(S(ctx, Tree::branching_root(tree))),
                 err => err,
             },
             Self::Group(exp) => exp.parse(ctx),

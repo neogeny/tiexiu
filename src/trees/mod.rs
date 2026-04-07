@@ -1,4 +1,5 @@
 // #![allow(dead_code)]
+pub mod build;
 pub mod fmt;
 pub mod fold;
 pub mod tags;

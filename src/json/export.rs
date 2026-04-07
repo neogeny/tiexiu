@@ -30,7 +30,7 @@ impl ToJson for TreeTags {
     fn to_json(&self) -> Json {
         let mut map = HashMap::new();
         for (name, tree) in &self.tags {
-            map.insert(name.clone(), tree.to_json());
+            map.insert(name.deref().into(), tree.to_json());
         }
         Json::Object(map)
     }
@@ -41,15 +41,15 @@ impl ToJson for Tree {
         match self {
             Tree::Nil | Tree::Bottom | Tree::Stump => Json::Null,
             Tree::Leaf(s) => Json::String(s.deref().to_string()),
-            Tree::Node(v) => Json::Array(v.iter().map(|c| c.to_json()).collect()),
-            Tree::LeafTag(keyval) | Tree::NodeTag(keyval) => {
+            Tree::Branches(v) => Json::Array(v.iter().map(|c| c.to_json()).collect()),
+            Tree::Tag(keyval) | Tree::BranchingTag(keyval) => {
                 let KeyValue(name, tree) = keyval.deref();
                 let mut map = HashMap::new();
                 map.insert(name.to_string(), tree.to_json());
                 Json::Object(map)
             }
-            Tree::RootLeaf(tree) | Tree::RootNode(tree) => tree.to_json(),
-            Tree::Tags(tags) => tags.to_json(),
+            Tree::Root(tree) | Tree::BranchingRoot(tree) => tree.to_json(),
+            Tree::TreeTags(tags) => tags.to_json(),
             Tree::Pruned(info, s) => {
                 let params = Json::Array(
                     info.params
@@ -89,7 +89,7 @@ mod tests {
     fn test_cst_to_json_export() {
         // Create a simple Cst structure
         let token = Tree::Leaf(Box::from("hello"));
-        let list = Tree::Node(Box::new([token]));
+        let list = Tree::Branches(Box::new([token]));
 
         // 1. Test Internal Json Conversion
         let json_node = list.to_json();

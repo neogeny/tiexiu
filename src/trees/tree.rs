@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+pub use super::build;
 use super::tags::TreeTags;
-use std::ops::Add;
 use std::ops::Deref;
 use std::rc::Rc;
 
@@ -23,73 +23,68 @@ pub type PruneInfoRef = Rc<PruneInfo>;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Tree {
-    Stump,
-    Leaf(Box<str>),                  // 16 bytes
-    Node(Box<[Tree]>),               // 16 bytes
-    Tags(Box<TreeTags>),             // 8 bytes
-    Pruned(PruneInfoRef, Box<Tree>), // 16 bytes)
-
-    LeafTag(Box<KeyValue>), // 8 bytes
-    NodeTag(Box<KeyValue>), // 8 bytes
-    RootLeaf(Box<Tree>),    // 8 bytes
-    RootNode(Box<Tree>),    // 8 bytes
-
-    Bottom,
     Nil,
-}
+    Bottom,
 
-impl Add for Tree {
-    type Output = Self;
+    Stump,
+    Leaf(Box<str>),
+    Branches(Box<[Tree]>),
 
-    fn add(self, node: Self) -> Self {
-        self.add_leaf(node)
-    }
+    Tag(Box<KeyValue>),
+    BranchingTag(Box<KeyValue>),
+
+    Root(Box<Tree>),
+    BranchingRoot(Box<Tree>),
+
+    TreeTags(Box<TreeTags>),
+
+    Pruned(PruneInfoRef, Box<Tree>),
 }
 
 impl From<Vec<Tree>> for Tree {
     fn from(v: Vec<Tree>) -> Self {
-        Tree::Node(v.into_boxed_slice())
+        Tree::Branches(v.into_boxed_slice())
     }
 }
 
 impl<const N: usize> From<[Tree; N]> for Tree {
     fn from(arr: [Tree; N]) -> Self {
-        Tree::Node(arr.into())
+        Tree::Branches(arr.into())
     }
 }
 
 impl Tree {
     pub fn named(key: &str, value: Tree) -> Self {
-        Tree::LeafTag(Box::new(keyval(key, value)))
+        Tree::tag(key, value)
     }
 
     pub fn named_list(key: &str, value: Tree) -> Self {
-        Tree::NodeTag(Box::new(keyval(key, value)))
+        Tree::branching_tag(key, value)
     }
 
-    fn add_leaf(self, node: Self) -> Self {
+    pub fn add_leaf(self, node: Self) -> Self {
         match (self, node) {
             (Self::Nil, n) => n,
             (s, Self::Nil) => s,
-            (Self::Node(list), node) => {
+            (Self::Branches(list), node) => {
                 let mut v = list.into_vec();
                 v.push(node);
-                Self::Node(v.into_boxed_slice())
+                Self::Branches(v.into_boxed_slice())
             }
-            (s, n) => Self::Node(vec![s, n].into_boxed_slice()),
+            (s, n) => Self::Branches(vec![s, n].into_boxed_slice()),
         }
     }
 
-    pub fn add_node(self, node: Self) -> Self {
+    pub fn add_branching(self, node: Self) -> Self {
         match (self, node) {
-            (Self::Nil, n) => Self::Node(vec![n].into_boxed_slice()),
+            (Self::Nil, n) => Self::Branches(vec![n].into_boxed_slice()),
             (s, Self::Nil) => s,
-            (Self::Node(list), n) => {
+            (Self::Branches(list), n) => {
                 let mut v = list.into_vec();
                 v.push(n);
-                Self::Node(v.into_boxed_slice())
+                Self::Branches(v.into_boxed_slice())
             }
-            (s, n) => Self::Node(vec![s, n].into_boxed_slice()),
+            (s, n) => Self::Branches(vec![s, n].into_boxed_slice()),
         }
     }
 
@@ -97,20 +92,20 @@ impl Tree {
         match (self, node) {
             (Self::Nil, n) => n,
             (s, Self::Nil) => s,
-            (Self::Node(l1), Self::Node(l2)) => {
+            (Self::Branches(l1), Self::Branches(l2)) => {
                 let mut v = l1.into_vec();
                 v.extend(l2.into_vec());
-                Self::Node(v.into_boxed_slice())
+                Self::Branches(v.into_boxed_slice())
             }
-            (Self::Node(l1), n) => {
+            (Self::Branches(l1), n) => {
                 let mut v = l1.into_vec();
                 v.push(n);
-                Self::Node(v.into_boxed_slice())
+                Self::Branches(v.into_boxed_slice())
             }
-            (s, Self::Node(l2)) => {
+            (s, Self::Branches(l2)) => {
                 let mut v = vec![s];
                 v.extend(l2.into_vec());
-                Self::Node(v.into_boxed_slice())
+                Self::Branches(v.into_boxed_slice())
             }
             (s, n) => s.add_leaf(n),
         }
@@ -122,7 +117,7 @@ impl Tree {
         if root != Tree::Nil {
             root
         } else if !tags.is_empty() {
-            Tree::Tags(tags.into())
+            Tree::TreeTags(tags.into())
         } else {
             tree
         }
@@ -134,7 +129,7 @@ impl Tree {
         let mut tree = Tree::Nil;
 
         match self {
-            Tree::Node(elements) => {
+            Tree::Branches(elements) => {
                 for node in elements {
                     let (child_tags, child_root, child_cst) = node._trim();
 
@@ -143,16 +138,16 @@ impl Tree {
                     tree = tree.join_nodes(child_cst);
                 }
             }
-            Tree::LeafTag(keyval) => {
+            Tree::Tag(keyval) => {
                 let KeyValue(name, val) = keyval.deref();
                 tags.set(name, val.clone());
             }
-            Tree::NodeTag(keyval) => {
+            Tree::BranchingTag(keyval) => {
                 let KeyValue(name, val) = keyval.deref();
                 tags.set_list(name, val.clone());
             }
-            Tree::RootLeaf(val) => root = root.add_leaf(*val),
-            Tree::RootNode(val) => root = root.add_node(*val),
+            Tree::Root(val) => root = root.add_leaf(*val),
+            Tree::BranchingRoot(val) => root = root.add_branching(*val),
             Tree::Nil => {}
             other => tree = tree.join_nodes(other),
         }
@@ -163,11 +158,11 @@ impl Tree {
     pub fn width(&self) -> usize {
         match self {
             Tree::Leaf(text) => text.len(),
-            Tree::RootLeaf(inner) | Tree::RootNode(inner) => inner.width(),
+            Tree::Root(inner) | Tree::BranchingRoot(inner) => inner.width(),
             Tree::Stump | Tree::Nil | Tree::Bottom => 0,
-            Tree::Node(items) => items.iter().map(|item| item.width()).sum(),
-            Tree::Tags(tags) => tags.tags.values().map(|node| node.width()).sum(),
-            Tree::LeafTag(pair) | Tree::NodeTag(pair) => {
+            Tree::Branches(items) => items.iter().map(|item| item.width()).sum(),
+            Tree::TreeTags(tags) => tags.tags.values().map(|node| node.width()).sum(),
+            Tree::Tag(pair) | Tree::BranchingTag(pair) => {
                 let KeyValue(_, val) = &**pair;
                 val.width()
             }
@@ -191,7 +186,7 @@ mod tests {
 
     #[test]
     fn test_node_nil_removal() {
-        let raw = Tree::Node([Tree::Nil, Tree::Bottom, Tree::Nil].into());
+        let raw = Tree::Branches([Tree::Nil, Tree::Bottom, Tree::Nil].into());
         let result = raw.trimmed();
 
         // result = tree_closed(Bottom)
@@ -200,7 +195,7 @@ mod tests {
 
     #[test]
     fn test_node_nil_removal_to_bottom() {
-        let raw = Tree::Node([Tree::Nil, Tree::Bottom, Tree::Nil].into());
+        let raw = Tree::Branches([Tree::Nil, Tree::Bottom, Tree::Nil].into());
         let result = raw.trimmed();
 
         // If tree_closed is identity for non-lists, this is just Bottom
@@ -209,10 +204,10 @@ mod tests {
 
     #[test]
     fn test_node_nil_removal_to_list() {
-        let raw = Tree::Node([Tree::Bottom, Tree::Nil, Tree::Bottom].into());
+        let raw = Tree::Branches([Tree::Bottom, Tree::Nil, Tree::Bottom].into());
         let result = raw.trimmed();
 
-        if let Tree::Node(v) = result {
+        if let Tree::Branches(v) = result {
             assert_eq!(v.len(), 2); // Nil is gone, only the two Bottoms remain
             assert_eq!(v[0], Tree::Bottom);
             assert_eq!(v[1], Tree::Bottom);
@@ -224,7 +219,7 @@ mod tests {
     #[test]
     fn test_node_nil_purging_preserves_count() {
         // Input: List([Nil, Bottom, Nil])
-        let raw = Tree::Node([Tree::Nil, Tree::Bottom, Tree::Nil].into());
+        let raw = Tree::Branches([Tree::Nil, Tree::Bottom, Tree::Nil].into());
         let result = raw.trimmed();
 
         // Since it's effectively Bottom, and Bottom isn't a list,
