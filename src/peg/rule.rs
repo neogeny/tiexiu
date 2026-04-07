@@ -81,6 +81,33 @@ impl Rule {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
+    pub fn from_parts(
+        name: String,
+        params: Vec<String>,
+        mut exp: Exp,
+        is_name: bool,
+        is_tokn: bool,
+        no_memo: bool,
+        is_memo: bool,
+        is_lrec: bool,
+    ) -> Self {
+        exp.compute_lookahead();
+        Self {
+            info: RuleInfo {
+                name: name.into(),
+                params: params.into_iter().map(|p| p.into()).collect(),
+            }
+            .into(),
+            exp,
+            is_name,
+            is_tokn,
+            no_memo,
+            is_memo: is_memo && !no_memo,
+            is_lrec,
+        }
+    }
+
     pub fn info(&self) -> RuleInfoRef {
         self.info.clone()
     }

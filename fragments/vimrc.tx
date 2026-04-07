@@ -1,0 +1,5 @@
+" Trigger Continue Chat
+nnoremap <leader>c :action Continue.focusChat<CR>
+
+" Trigger Continue Inline Edit (Cmd+I equivalent)
+vnoremap <leader>e :action Continue.inlineEdit<CR>
