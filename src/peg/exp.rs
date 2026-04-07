@@ -3,6 +3,7 @@
 
 pub use super::build;
 use super::error::ParseError;
+pub use super::lookahead;
 use super::parser::{F, ParseResult, Parser, S};
 use crate::state::Ctx;
 use crate::trees::Tree;

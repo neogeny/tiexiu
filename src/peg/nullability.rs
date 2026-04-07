@@ -61,9 +61,7 @@ impl ExpKind {
 
             // Join/Gather variants
             Self::Join { .. } | Self::Gather { .. } => true, // These can match zero times
-            Self::PositiveJoin { exp, .. } | Self::PositiveGather { exp, .. } => {
-                exp.is_nullable()
-            }
+            Self::PositiveJoin { exp, .. } | Self::PositiveGather { exp, .. } => exp.is_nullable(),
 
             // Special cases
             Self::SkipTo(_) => false, // SkipTo must find a match to succeed

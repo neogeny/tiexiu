@@ -1,7 +1,8 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::{Exp, ParseResult, Parser, S};
+use super::exp::Exp;
+use super::{ParseResult, Parser, S};
 use crate::state::Ctx;
 use crate::trees::Tree;
 use crate::trees::tree::{PruneInfo, PruneInfoRef};
@@ -61,7 +62,8 @@ impl fmt::Display for Rule {
 }
 
 impl Rule {
-    pub fn new(name: &str, params: &[String], rhs: Exp) -> Self {
+    pub fn new(name: &str, params: &[String], mut exp: Exp) -> Self {
+        exp.compute_lookahead();
         Self {
             info: RuleInfo {
                 name: name.into(),
@@ -69,7 +71,7 @@ impl Rule {
             }
             .into(),
 
-            exp: rhs,
+            exp,
 
             is_name: false,
             is_tokn: false,

@@ -6,12 +6,10 @@ use super::exp::{Exp, ExpKind};
 impl Exp {
     #[inline]
     pub fn new(exp: ExpKind) -> Self {
-        let mut exp = Self {
+        Self {
             kind: exp,
             lookahead: [].into(),
-        };
-        exp.compute_lookahead();
-        exp
+        }
     }
 
     #[inline]
