@@ -88,13 +88,13 @@ pub fn cli() -> Result<(), Error> {
 
     match cli.command {
         Commands::Boot { pretty, json } => {
-            let bootg = Grammar::boot().map_err(Error::BootGrammar)?;
+            let bootg = Grammar::boot()?;
             if pretty {
                 pygmentize(&bootg.to_string(), "ebnf", use_color);
                 return Ok(());
             }
             if json {
-                let model: TatSuModel = bootg.clone().try_into().map_err(Error::Export)?;
+                let model: TatSuModel = bootg.clone().try_into()?;
                 let json_str = serde_json::to_string_pretty(&model)?;
 
                 pygmentize(&json_str, "json", use_color);

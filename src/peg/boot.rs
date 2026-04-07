@@ -1,13 +1,14 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::json::error::ImportError;
 use crate::peg::grammar::Grammar;
 
 pub const TATSU_GRAMMAR_JSON: &str = include_str!("../../grammar/tatsu.json");
 
 impl Grammar {
     /// Loads the internal TatSu grammar embedded in the binary.
-    pub fn boot() -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn boot() -> Result<Self, ImportError> {
         Self::from_json(TATSU_GRAMMAR_JSON)
     }
 }
@@ -17,7 +18,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_grammar_bootstrap() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_grammar_bootstrap() -> Result<(), ImportError> {
         println!("{}", TATSU_GRAMMAR_JSON);
         let grammar = Grammar::boot()?;
 

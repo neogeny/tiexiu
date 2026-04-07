@@ -16,7 +16,7 @@ impl TryFrom<TatSuModel> for ERef {
 }
 
 impl Grammar {
-    pub fn from_json(json: &str) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn from_json(json: &str) -> Result<Self, ImportError> {
         #[cfg(debug_assertions)]
         {
             let value: serde_json::Value = serde_json::from_str(json).map_err(ImportError::from)?;
