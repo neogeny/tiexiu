@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::error::Error;
+use crate::json::boot::boot_grammar;
 use crate::json::tatsu::TatSuModel;
-use crate::peg::Grammar;
 use clap::builder::styling::{AnsiColor, Styles};
 use clap::{Parser, Subcommand};
 use owo_colors;
@@ -88,7 +88,7 @@ pub fn cli() -> Result<(), Error> {
 
     match cli.command {
         Commands::Boot { pretty, json } => {
-            let bootg = Grammar::boot()?;
+            let bootg = boot_grammar()?;
             if pretty {
                 pygmentize(&bootg.to_string(), "ebnf", use_color);
                 return Ok(());
