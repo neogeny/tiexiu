@@ -62,12 +62,12 @@ impl fmt::Display for Rule {
 }
 
 impl Rule {
-    pub fn new(name: &str, params: &[String], mut exp: Exp) -> Self {
+    pub fn new(name: &str, params: &[&str], mut exp: Exp) -> Self {
         exp.compute_lookahead();
         Self {
             info: RuleInfo {
                 name: name.into(),
-                params: params.iter().map(|p| p.as_str().into()).collect(),
+                params: params.iter().map(|p| (*p).into()).collect(),
             }
             .into(),
 
