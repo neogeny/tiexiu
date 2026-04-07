@@ -8,13 +8,14 @@ pub mod exp;
 pub mod fold;
 pub mod grammar;
 pub mod leftrec;
+pub mod lookahead;
 pub mod nullability;
 pub mod parser;
 pub mod pretty;
 pub mod repeat;
 pub mod rule;
 
-pub use exp::{Exp, ParserExp};
+pub use exp::{Exp, ExpKind};
 pub use grammar::Grammar;
 pub use parser::{F, ParseResult, Parser, S};
 pub use rule::Rule;

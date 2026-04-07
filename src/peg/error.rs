@@ -31,7 +31,7 @@ pub enum ParseError {
 
     /// Corresponds to Self::Choice fallback
     #[error("No viable option")]
-    NoViableOption,
+    NoViableOption(Box<[Box<str>]>),
 
     /// Corresponds memos that are Tree::Bottom
     #[error("Failed parsing '{0}'")]

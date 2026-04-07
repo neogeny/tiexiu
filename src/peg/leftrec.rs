@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::{Exp, Grammar};
-use crate::peg::exp::ParserExp;
+use crate::peg::exp::ExpKind;
 use std::collections::HashMap;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -46,7 +46,7 @@ impl<'a> Analyzer<'a> {
         // Since we are traversing Elements, we check if this element is a "Call"
         // to treat it like the start of a Rule logic.
         let mut is_rule: bool = false;
-        if let ParserExp::Call(name, _) = &node.exp
+        if let ExpKind::Call(name, _) = &node.kind
             && self
                 .grammar
                 .rulemap
@@ -71,7 +71,7 @@ impl<'a> Analyzer<'a> {
 
             if child_state == State::Cutoff && child_depth > *self.depth_stack.last().unwrap() {
                 // This is a cycle. We need to mark the rule and turn off memoization.
-                if let ParserExp::Call(target_name, _) = &child.exp {
+                if let ExpKind::Call(target_name, _) = &child.kind {
                     self.grammar.mark_as_lrec(target_name);
 
                     // Python: child_rules = (n for n in node_depth if isinstance(n, Rule))

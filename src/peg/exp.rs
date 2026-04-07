@@ -15,11 +15,12 @@ pub type Str = Box<str>;
 
 #[derive(Debug, Clone)]
 pub struct Exp {
-    pub(super) exp: ParserExp,
+    pub(super) kind: ExpKind,
+    pub(super) lookahead: Box<[Box<str>]>,
 }
 
 #[derive(Debug, Clone)]
-pub enum ParserExp {
+pub enum ExpKind {
     Nil,
     Cut,
     Void,
@@ -66,30 +67,15 @@ impl Exp {
     }
 }
 
-impl ParserExp {
-    pub fn parse<C: Ctx>(&self, ctx: C) -> ParseResult<C> {
-        <Self as Parser<C>>::parse(self, ctx)
-    }
-}
-
 impl<C> Parser<C> for Exp
 where
     C: Ctx,
 {
-    fn parse(&self, ctx: C) -> ParseResult<C> {
-        self.exp.parse(ctx)
-    }
-}
-
-impl<C> Parser<C> for ParserExp
-where
-    C: Ctx,
-{
     fn parse(&self, mut ctx: C) -> ParseResult<C> {
-        match self {
-            Self::Nil => Ok(S(ctx, Tree::Nil)),
-            Self::RuleInclude { .. } => Ok(S(ctx, Tree::Nil)),
-            Self::Call(name, _exp) => match ctx.call(name) {
+        match &self.kind {
+            ExpKind::Nil => Ok(S(ctx, Tree::Nil)),
+            ExpKind::RuleInclude { .. } => Ok(S(ctx, Tree::Nil)),
+            ExpKind::Call(name, _exp) => match ctx.call(name) {
                 Ok(S(mut ctx, tree)) => {
                     ctx.uncut();
                     Ok(S(ctx, tree))
@@ -99,20 +85,20 @@ where
                     Err(f)
                 }
             },
-            Self::Cut => {
+            ExpKind::Cut => {
                 ctx.cut();
                 Ok(S(ctx, Tree::Nil))
             }
-            Self::Void => Ok(S(ctx, Tree::Stump)),
-            Self::Fail => Err(ctx.failure(ParseError::Fail)),
-            Self::Dot => {
+            ExpKind::Void => Ok(S(ctx, Tree::Stump)),
+            ExpKind::Fail => Err(ctx.failure(ParseError::Fail)),
+            ExpKind::Dot => {
                 if ctx.next().is_some() {
                     Ok(S(ctx, Tree::Nil))
                 } else {
                     Err(ctx.failure(ParseError::NoMoreInput))
                 }
             }
-            Self::Eof => {
+            ExpKind::Eof => {
                 if ctx.eof_check() {
                     Ok(S(ctx, Tree::Nil))
                 } else {
@@ -120,56 +106,56 @@ where
                 }
             }
 
-            Self::Token(token) => {
+            ExpKind::Token(token) => {
                 if ctx.token(token) {
                     Ok(S(ctx, Tree::Leaf(token.deref().into())))
                 } else {
                     Err(ctx.failure(ParseError::ExpectedToken(token.deref().into())))
                 }
             }
-            Self::Pattern(pattern) => {
+            ExpKind::Pattern(pattern) => {
                 if let Some(matched) = ctx.pattern(pattern) {
                     Ok(S(ctx, Tree::Leaf(matched.into())))
                 } else {
                     Err(ctx.failure(ParseError::ExpectedPattern(pattern.deref().into())))
                 }
             }
-            Self::Constant(literal) => Ok(S(ctx, Tree::Leaf(literal.deref().into()))),
-            Self::Alert(literal, _) => Ok(S(ctx, Tree::Leaf(literal.deref().into()))),
+            ExpKind::Constant(literal) => Ok(S(ctx, Tree::Leaf(literal.deref().into()))),
+            ExpKind::Alert(literal, _) => Ok(S(ctx, Tree::Leaf(literal.deref().into()))),
 
-            Self::Named(name, exp) => match exp.parse(ctx) {
+            ExpKind::Named(name, exp) => match exp.parse(ctx) {
                 Ok(S(ctx, tree)) => Ok(S(ctx, Tree::named(name, tree))),
                 err => err,
             },
-            Self::NamedList(name, exp) => match exp.parse(ctx) {
+            ExpKind::NamedList(name, exp) => match exp.parse(ctx) {
                 Ok(S(ctx, tree)) => Ok(S(ctx, Tree::named_list(name, tree))),
                 err => err,
             },
-            Self::Override(exp) => match exp.parse(ctx) {
+            ExpKind::Override(exp) => match exp.parse(ctx) {
                 Ok(S(ctx, tree)) => Ok(S(ctx, Tree::root(tree))),
                 err => err,
             },
-            Self::OverrideList(exp) => match exp.parse(ctx) {
+            ExpKind::OverrideList(exp) => match exp.parse(ctx) {
                 Ok(S(ctx, tree)) => Ok(S(ctx, Tree::branching_root(tree))),
                 err => err,
             },
-            Self::Group(exp) => exp.parse(ctx),
-            Self::SkipGroup(exp) => {
+            ExpKind::Group(exp) => exp.parse(ctx),
+            ExpKind::SkipGroup(exp) => {
                 let S(new_ctx, _) = exp.parse(ctx)?;
                 Ok(S(new_ctx, Tree::Nil))
             }
-            Self::Lookahead(exp) => {
+            ExpKind::Lookahead(exp) => {
                 let _ = exp.parse(ctx.clone())?;
                 Ok(S(ctx, Tree::Nil))
             }
-            Self::NegativeLookahead(exp) => {
+            ExpKind::NegativeLookahead(exp) => {
                 if let Ok(S(_, _)) = exp.parse(ctx.clone()) {
                     Err(ctx.failure(ParseError::UnexpectedLookahead))
                 } else {
                     Ok(S(ctx, Tree::Nil))
                 }
             }
-            Self::SkipTo(exp) => loop {
+            ExpKind::SkipTo(exp) => loop {
                 match exp.parse(ctx.clone()) {
                     Err(f) => {
                         if !ctx.dot() {
@@ -180,7 +166,7 @@ where
                 }
             },
 
-            Self::Sequence(sequence) => {
+            ExpKind::Sequence(sequence) => {
                 let mut results = Vec::new();
                 for exp in sequence.iter() {
                     match exp.parse(ctx) {
@@ -193,8 +179,8 @@ where
                 }
                 Ok(S(ctx, Tree::from(results)))
             }
-            Self::Alt(exp) => exp.parse(ctx),
-            Self::Choice(options) => {
+            ExpKind::Alt(exp) => exp.parse(ctx),
+            ExpKind::Choice(options) => {
                 let mut furthest: Option<F> = None;
 
                 for option in options.iter() {
@@ -216,10 +202,12 @@ where
                         }
                     }
                 }
-                Err(furthest.unwrap_or(ctx.failure(ParseError::NoViableOption)))
+                Err(furthest.unwrap_or(
+                    ctx.failure(ParseError::NoViableOption(self.lookahead.clone().unwrap())),
+                ))
             }
 
-            Self::Optional(exp) => match exp.parse(ctx.clone()) {
+            ExpKind::Optional(exp) => match exp.parse(ctx.clone()) {
                 Ok(S(new_ctx, tree)) => Ok(S(new_ctx, tree)),
                 Err(mut f) => {
                     // If the expression committed with a cut, we cannot be optional.
@@ -233,12 +221,12 @@ where
                 }
             },
 
-            Self::Closure(exp) => {
+            ExpKind::Closure(exp) => {
                 let mut res = Vec::new();
                 let new_ctx = Self::repeat(ctx, exp, &mut res);
                 Ok(S(new_ctx, Tree::from(res)))
             }
-            Self::PositiveClosure(exp) => {
+            ExpKind::PositiveClosure(exp) => {
                 let mut res: Vec<Tree> = Vec::new();
                 match exp.parse(ctx) {
                     Ok(S(new_ctx, tree)) => {
@@ -251,7 +239,7 @@ where
                 let new_ctx = Self::repeat(ctx, exp, &mut res);
                 Ok(S(new_ctx, Tree::from(res)))
             }
-            Self::Join { exp, sep } => {
+            ExpKind::Join { exp, sep } => {
                 let mut res: Vec<Tree> = Vec::new();
 
                 match Self::add_exp(ctx, exp, &mut res) {
@@ -262,7 +250,7 @@ where
                     Err(err_ctx) => Ok(S(err_ctx, Tree::from(res))),
                 }
             }
-            Self::PositiveJoin { exp, sep } => {
+            ExpKind::PositiveJoin { exp, sep } => {
                 let mut res: Vec<Tree> = Vec::new();
 
                 match exp.parse(ctx) {
@@ -276,7 +264,7 @@ where
                 let new_ctx = Self::repeat_with_pre(ctx, exp, sep, &mut res, true);
                 Ok(S(new_ctx, Tree::from(res)))
             }
-            Self::Gather { exp, sep } => {
+            ExpKind::Gather { exp, sep } => {
                 let mut res: Vec<Tree> = Vec::new();
                 match Self::add_exp(ctx, exp, &mut res) {
                     Ok(new_ctx) => {
@@ -286,7 +274,7 @@ where
                     Err(err_ctx) => Ok(S(err_ctx, Tree::from(res))),
                 }
             }
-            Self::PositiveGather { exp, sep } => {
+            ExpKind::PositiveGather { exp, sep } => {
                 let mut res: Vec<Tree> = Vec::new();
 
                 match exp.parse(ctx) {

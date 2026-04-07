@@ -1,12 +1,12 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::exp::{Exp, ParserExp};
+use super::exp::Exp;
 use super::parser::S;
 use crate::state::Ctx;
 use crate::trees::Tree;
 
-impl ParserExp {
+impl Exp {
     pub fn skip_exp<C: Ctx>(ctx: C, exp: &Exp) -> C {
         match exp.parse(ctx.clone()) {
             Ok(S(new_ctx, _)) => new_ctx,
@@ -74,11 +74,11 @@ mod tests {
     fn test_skip_exp() {
         let ctx = setup("abc");
         let exp = Exp::token("abc");
-        let new_ctx = ParserExp::skip_exp(ctx.clone(), &exp);
+        let new_ctx = Exp::skip_exp(ctx.clone(), &exp);
         assert_eq!(new_ctx.cursor().mark(), 3);
 
         let ctx = setup("def");
-        let new_ctx = ParserExp::skip_exp(ctx.clone(), &exp);
+        let new_ctx = Exp::skip_exp(ctx.clone(), &exp);
         assert_eq!(new_ctx.cursor().mark(), 0);
     }
 
@@ -87,7 +87,7 @@ mod tests {
         let ctx = setup("abc");
         let exp = Exp::token("abc");
         let mut res = Vec::new();
-        let result = ParserExp::add_exp(ctx, &exp, &mut res);
+        let result = Exp::add_exp(ctx, &exp, &mut res);
         assert!(result.is_ok());
         assert_eq!(res.len(), 1);
         assert_eq!(result.unwrap().cursor().mark(), 3);
@@ -98,7 +98,7 @@ mod tests {
         let ctx = setup("abcabcabc");
         let exp = Exp::token("abc");
         let mut res = Vec::new();
-        let final_ctx = ParserExp::repeat(ctx, &exp, &mut res);
+        let final_ctx = Exp::repeat(ctx, &exp, &mut res);
         assert_eq!(res.len(), 3);
         assert_eq!(final_ctx.cursor().mark(), 9);
     }
@@ -109,7 +109,7 @@ mod tests {
         let exp = Exp::token("abc");
         let pre = Exp::token(",");
         let mut res = Vec::new();
-        let final_ctx = ParserExp::repeat_with_pre(ctx, &exp, &pre, &mut res, true);
+        let final_ctx = Exp::repeat_with_pre(ctx, &exp, &pre, &mut res, true);
         assert_eq!(res.len(), 4); // [",", "abc", ",", "abc"]
         assert_eq!(final_ctx.cursor().mark(), 8);
     }
@@ -120,7 +120,7 @@ mod tests {
         let exp = Exp::token("abc");
         let pre = Exp::token(",");
         let mut res = Vec::new();
-        let final_ctx = ParserExp::repeat_with_pre(ctx, &exp, &pre, &mut res, false);
+        let final_ctx = Exp::repeat_with_pre(ctx, &exp, &pre, &mut res, false);
         assert_eq!(res.len(), 2); // ["abc", "abc"]
         assert_eq!(final_ctx.cursor().mark(), 8);
     }
