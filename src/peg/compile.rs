@@ -4,160 +4,245 @@
 use super::{Exp, Grammar, Rule};
 use crate::trees::{Tree, TreeMap};
 use std::collections::{HashMap, HashSet};
+use thiserror::Error;
+
+pub type CompileResult<T> = Result<T, CompileError>;
+
+#[derive(Debug, Error, Clone, PartialEq)]
+pub enum CompileError {
+    #[error("expected {0} to be a Tree::Node")]
+    ExpectedNode(&'static str),
+
+    #[error("expected {0} to contain a Tree::Map")]
+    ExpectedNodeMap(&'static str),
+
+    #[error("expected {0} to be Tree::Text")]
+    ExpectedText(&'static str),
+
+    #[error("expected {0} to be Tree::List")]
+    ExpectedList(&'static str),
+
+    #[error("expected {0} to be Tree::List or Tree::Nil")]
+    ExpectedListOrNil(&'static str),
+
+    #[error("expected {0} to be Tree::Text or Tree::Nil")]
+    ExpectedTextOrNil(&'static str),
+
+    #[error("expected {context} to contain key '{key}'")]
+    MissingKey {
+        context: &'static str,
+        key: &'static str,
+    },
+
+    #[error("expected {0}")]
+    ExpectedField(&'static str),
+
+    #[error("expected {expected}, found '{found}'")]
+    UnexpectedNodeName {
+        expected: &'static str,
+        found: Box<str>,
+    },
+
+    #[error("{0} is not implemented")]
+    NotImplemented(&'static str),
+
+    #[error("compile_rhs() does not support node '{0}'")]
+    UnsupportedRhs(Box<str>),
+}
 
 #[derive(Debug, Default)]
 pub struct GrammarCompiler;
 
 impl GrammarCompiler {
-    fn compile_rules(&self, trees: &[Tree]) -> Vec<Rule> {
+    fn compile_rules(&self, trees: &[Tree]) -> CompileResult<Vec<Rule>> {
         trees.iter().map(|tree| self.compile_rule(tree)).collect()
     }
 
-    fn node_map<'a>(&self, tree: &'a Tree, expected: &'static str) -> (&'a str, &'a TreeMap) {
+    fn node_map<'a>(
+        &self,
+        tree: &'a Tree,
+        expected: &'static str,
+    ) -> CompileResult<(&'a str, &'a TreeMap)> {
         let Tree::Node { info, tree } = tree else {
-            panic!("expected {expected} to be a Tree::Node");
+            return Err(CompileError::ExpectedNode(expected));
         };
         let Tree::Map(map) = tree.as_ref() else {
-            panic!("expected {expected} to contain a Tree::Map");
+            return Err(CompileError::ExpectedNodeMap(expected));
         };
-        (info.name.as_ref(), map.as_ref())
+        Ok((info.name.as_ref(), map.as_ref()))
     }
 
-    fn text<'a>(&self, tree: &'a Tree, expected: &'static str) -> &'a str {
+    fn text<'a>(&self, tree: &'a Tree, expected: &'static str) -> CompileResult<&'a str> {
         let Tree::Text(text) = tree else {
-            panic!("expected {expected} to be Tree::Text");
+            return Err(CompileError::ExpectedText(expected));
         };
-        text.as_ref()
+        Ok(text.as_ref())
     }
 
-    fn expect_keys(&self, treemap: &TreeMap, expected: &[&str], context: &'static str) {
+    fn expect_keys(
+        &self,
+        treemap: &TreeMap,
+        expected: &[&'static str],
+        context: &'static str,
+    ) -> CompileResult<()> {
         for key in expected {
-            assert!(
-                treemap.get(key).is_some(),
-                "expected {context} to contain key '{key}'"
-            );
+            if treemap.get(key).is_none() {
+                return Err(CompileError::MissingKey { context, key });
+            }
         }
+        Ok(())
     }
 
-    fn field<'a>(&self, treemap: &'a TreeMap, key: &'static str) -> &'a Tree {
+    fn field<'a>(&self, treemap: &'a TreeMap, key: &'static str) -> CompileResult<&'a Tree> {
         let Some(tree) = treemap.get(key) else {
-            panic!("expected {key}");
+            return Err(CompileError::ExpectedField(key));
         };
-        tree
+        Ok(tree)
     }
 
-    fn text_field<'a>(&self, treemap: &'a TreeMap, key: &'static str) -> &'a str {
-        self.text(self.field(treemap, key), key)
+    fn text_field<'a>(&self, treemap: &'a TreeMap, key: &'static str) -> CompileResult<&'a str> {
+        self.text(self.field(treemap, key)?, key)
     }
 
-    fn list_field<'a>(&self, treemap: &'a TreeMap, key: &'static str) -> &'a [Tree] {
-        self.list(self.field(treemap, key), key)
+    fn list_field<'a>(&self, treemap: &'a TreeMap, key: &'static str) -> CompileResult<&'a [Tree]> {
+        self.list(self.field(treemap, key)?, key)
     }
 
-    fn rhs_field(&self, treemap: &TreeMap, key: &'static str) -> Exp {
-        self.compile_rhs(self.field(treemap, key))
+    fn rhs_field(&self, treemap: &TreeMap, key: &'static str) -> CompileResult<Exp> {
+        self.compile_rhs(self.field(treemap, key)?)
     }
 
-    fn rhs_list(&self, treemap: &TreeMap, key: &'static str) -> Vec<Exp> {
-        self.list_field(treemap, key)
+    fn rhs_list(&self, treemap: &TreeMap, key: &'static str) -> CompileResult<Vec<Exp>> {
+        self.list_field(treemap, key)?
             .iter()
             .map(|tree| self.compile_rhs(tree))
             .collect()
     }
 
-    fn list<'a>(&self, tree: &'a Tree, expected: &'static str) -> &'a [Tree] {
+    fn list<'a>(&self, tree: &'a Tree, expected: &'static str) -> CompileResult<&'a [Tree]> {
         let Tree::List(items) = tree else {
-            panic!("expected {expected} to be Tree::List");
+            return Err(CompileError::ExpectedList(expected));
         };
-        items.as_ref()
+        Ok(items.as_ref())
     }
 
-    fn text_list(&self, tree: &Tree, expected: &'static str) -> Vec<String> {
+    fn text_list(&self, tree: &Tree, expected: &'static str) -> CompileResult<Vec<String>> {
         match tree {
-            Tree::Nil => Vec::new(),
+            Tree::Nil => Ok(Vec::new()),
             Tree::List(items) => items
                 .iter()
-                .map(|item| self.text(item, expected).to_string())
+                .map(|item| self.text(item, expected).map(ToString::to_string))
                 .collect(),
-            _ => panic!("expected {expected} to be Tree::List or Tree::Nil"),
+            _ => Err(CompileError::ExpectedListOrNil(expected)),
         }
     }
 
-    fn contains_text(&self, tree: &Tree, expected: &'static str, item: &str) -> bool {
+    fn contains_text(
+        &self,
+        tree: &Tree,
+        expected: &'static str,
+        item: &str,
+    ) -> CompileResult<bool> {
         match tree {
-            Tree::Nil => false,
-            Tree::List(items) => items.iter().any(|entry| self.text(entry, expected) == item),
-            _ => panic!("expected {expected} to be Tree::List or Tree::Nil"),
+            Tree::Nil => Ok(false),
+            Tree::List(items) => {
+                for entry in items.iter() {
+                    if self.text(entry, expected)? == item {
+                        return Ok(true);
+                    }
+                }
+                Ok(false)
+            }
+            _ => Err(CompileError::ExpectedListOrNil(expected)),
         }
     }
 
-    fn bool_text(&self, tree: &Tree, expected: &'static str) -> bool {
+    fn bool_text(&self, tree: &Tree, expected: &'static str) -> CompileResult<bool> {
         match tree {
-            Tree::Text(text) => matches!(text.as_ref(), "True" | "true"),
-            Tree::Nil => false,
-            _ => panic!("expected {expected} to be Tree::Text or Tree::Nil"),
+            Tree::Text(text) => Ok(matches!(text.as_ref(), "True" | "true")),
+            Tree::Nil => Ok(false),
+            _ => Err(CompileError::ExpectedTextOrNil(expected)),
         }
     }
 
-    fn directives(&self, tree: &Tree) -> HashMap<String, String> {
+    fn directives(&self, tree: &Tree) -> CompileResult<HashMap<String, String>> {
         match tree {
-            Tree::Nil => HashMap::new(),
+            Tree::Nil => Ok(HashMap::new()),
             Tree::Map(map) => map
                 .entries
                 .iter()
-                .map(|(key, value)| (key.to_string(), self.text(value, "directive value").into()))
+                .map(|(key, value)| {
+                    self.text(value, "directive value")
+                        .map(|value| (key.to_string(), value.into()))
+                })
                 .collect(),
-            _ => panic!("expected Grammar.directives to be Tree::Map or Tree::Nil"),
+            _ => Err(CompileError::NotImplemented("Grammar.directives shape")),
         }
     }
 
-    fn keywords(&self, tree: &Tree) -> HashSet<String> {
+    fn keywords(&self, tree: &Tree) -> CompileResult<HashSet<String>> {
         match tree {
-            Tree::Nil => HashSet::new(),
+            Tree::Nil => Ok(HashSet::new()),
             Tree::List(items) => items
                 .iter()
-                .map(|item| self.text(item, "keyword").to_string())
+                .map(|item| self.text(item, "keyword").map(ToString::to_string))
                 .collect(),
-            _ => panic!("expected Grammar.keywords to be Tree::List or Tree::Nil"),
+            _ => Err(CompileError::ExpectedListOrNil("keywords")),
         }
     }
 
-    fn rule_name<'a>(&self, tree: &'a Tree) -> &'a str {
-        let (name, treemap) = self.node_map(tree, "rule");
-        assert_eq!(name, "Rule");
+    fn rule_name<'a>(&self, tree: &'a Tree) -> CompileResult<&'a str> {
+        let (name, treemap) = self.node_map(tree, "rule")?;
+        if name != "Rule" {
+            return Err(CompileError::UnexpectedNodeName {
+                expected: "Rule",
+                found: name.into(),
+            });
+        }
         self.text_field(treemap, "name")
     }
 
-    fn bool_flag(&self, treemap: &TreeMap, key: &'static str) -> bool {
+    fn bool_flag(&self, treemap: &TreeMap, key: &'static str) -> CompileResult<bool> {
         treemap
             .get(key)
             .map(|tree| self.bool_text(tree, key))
-            .unwrap_or(false)
+            .transpose()
+            .map(|value| value.unwrap_or(false))
     }
 
-    fn one_of(&self, treemap: &TreeMap, keys: &[&'static str], default: bool) -> bool {
+    fn one_of(
+        &self,
+        treemap: &TreeMap,
+        keys: &[&'static str],
+        default: bool,
+    ) -> CompileResult<bool> {
         keys.iter()
             .find_map(|key| treemap.get(key).map(|tree| self.bool_text(tree, key)))
-            .unwrap_or(default)
+            .transpose()
+            .map(|value| value.unwrap_or(default))
     }
 
-    fn compile_rule_decorators(&self, treemap: &TreeMap) -> (bool, bool) {
-        let decorators = self.field(treemap, "decorators");
+    fn compile_rule_decorators(&self, treemap: &TreeMap) -> CompileResult<(bool, bool)> {
+        let decorators = self.field(treemap, "decorators")?;
 
-        assert!(
-            !self.contains_text(decorators, "decorators", "override"),
-            "override decorator is not implemented"
-        );
+        if self.contains_text(decorators, "decorators", "override")? {
+            return Err(CompileError::NotImplemented("override decorator"));
+        }
 
-        let is_name = self.contains_text(decorators, "decorators", "name")
-            || self.contains_text(decorators, "decorators", "isname");
-        let no_memo = self.contains_text(decorators, "decorators", "nomemo");
+        let is_name = self.contains_text(decorators, "decorators", "name")?
+            || self.contains_text(decorators, "decorators", "isname")?;
+        let no_memo = self.contains_text(decorators, "decorators", "nomemo")?;
 
-        (is_name, no_memo)
+        Ok((is_name, no_memo))
     }
 
-    fn unary(&self, treemap: &TreeMap, key: &'static str, build: fn(Exp) -> Exp) -> Exp {
-        build(self.rhs_field(treemap, key))
+    fn unary(
+        &self,
+        treemap: &TreeMap,
+        key: &'static str,
+        build: fn(Exp) -> Exp,
+    ) -> CompileResult<Exp> {
+        self.rhs_field(treemap, key).map(build)
     }
 
     fn binary(
@@ -166,108 +251,118 @@ impl GrammarCompiler {
         left: &'static str,
         right: &'static str,
         build: fn(Exp, Exp) -> Exp,
-    ) -> Exp {
-        build(
-            self.rhs_field(treemap, left),
-            self.rhs_field(treemap, right),
-        )
+    ) -> CompileResult<Exp> {
+        Ok(build(
+            self.rhs_field(treemap, left)?,
+            self.rhs_field(treemap, right)?,
+        ))
     }
 
-    fn alert(&self, treemap: &TreeMap) -> Exp {
+    fn alert(&self, treemap: &TreeMap) -> CompileResult<Exp> {
         let message = treemap
             .get("message")
             .or_else(|| treemap.get("literal"))
-            .unwrap_or_else(|| panic!("expected message"));
-        let code = self.text_field(treemap, "level").len() as u8;
-        Exp::alert(self.text(message, "message"), code)
+            .ok_or(CompileError::ExpectedField("message"))?;
+        let code = self.text_field(treemap, "level")?.len() as u8;
+        Ok(Exp::alert(self.text(message, "message")?, code))
     }
 
-    pub fn compile_grammar(&self, tree: &Tree) -> Grammar {
-        let (name, treemap) = self.node_map(tree, "grammar");
-        assert_eq!(name, "Grammar");
+    pub fn compile_grammar(&self, tree: &Tree) -> CompileResult<Grammar> {
+        let (name, treemap) = self.node_map(tree, "grammar")?;
+        if name != "Grammar" {
+            return Err(CompileError::UnexpectedNodeName {
+                expected: "Grammar",
+                found: name.into(),
+            });
+        }
         self.expect_keys(
             treemap,
             &["name", "directives", "keywords", "rules"],
             "Grammar",
-        );
+        )?;
 
-        let grammar_name = self.text_field(treemap, "name");
-        let directives = self.directives(self.field(treemap, "directives"));
-        let keywords = self.keywords(self.field(treemap, "keywords"));
-        let rule_trees = self.list_field(treemap, "rules");
-        let rules = self.compile_rules(rule_trees);
+        let grammar_name = self.text_field(treemap, "name")?;
+        let directives = self.directives(self.field(treemap, "directives")?)?;
+        let keywords = self.keywords(self.field(treemap, "keywords")?)?;
+        let rule_trees = self.list_field(treemap, "rules")?;
+        let rules = self.compile_rules(rule_trees)?;
 
         let mut grammar = Grammar::new(grammar_name, &rules);
         grammar.directives = directives;
         grammar.keywords = keywords;
-        grammar
+        Ok(grammar)
     }
 
-    pub fn compile_rule(&self, tree: &Tree) -> Rule {
-        let (name, treemap) = self.node_map(tree, "rule");
-        assert_eq!(name, "Rule");
+    pub fn compile_rule(&self, tree: &Tree) -> CompileResult<Rule> {
+        let (name, treemap) = self.node_map(tree, "rule")?;
+        if name != "Rule" {
+            return Err(CompileError::UnexpectedNodeName {
+                expected: "Rule",
+                found: name.into(),
+            });
+        }
         self.expect_keys(
             treemap,
             &["name", "params", "exp", "decorators", "base", "kwparams"],
             "Rule",
-        );
+        )?;
 
-        let rule_name = self.text_field(treemap, "name").to_string();
-        let params = self.text_list(self.field(treemap, "params"), "params");
-        let exp = self.rhs_field(treemap, "exp");
-        let (decorator_is_name, decorator_no_memo) = self.compile_rule_decorators(treemap);
+        let rule_name = self.text_field(treemap, "name")?.to_string();
+        let params = self.text_list(self.field(treemap, "params")?, "params")?;
+        let exp = self.rhs_field(treemap, "exp")?;
+        let (decorator_is_name, decorator_no_memo) = self.compile_rule_decorators(treemap)?;
 
-        let is_name = self.bool_flag(treemap, "is_name") || decorator_is_name;
-        let is_tokn = self.bool_flag(treemap, "is_tokn");
-        let no_memo = self.bool_flag(treemap, "no_memo") || decorator_no_memo;
-        let is_memo = self.one_of(treemap, &["is_memo", "is_memoizable"], true);
-        let is_lrec = self.one_of(treemap, &["is_lrec", "is_leftrec"], false);
+        let is_name = self.bool_flag(treemap, "is_name")? || decorator_is_name;
+        let is_tokn = self.bool_flag(treemap, "is_tokn")?;
+        let no_memo = self.bool_flag(treemap, "no_memo")? || decorator_no_memo;
+        let is_memo = self.one_of(treemap, &["is_memo", "is_memoizable"], true)?;
+        let is_lrec = self.one_of(treemap, &["is_lrec", "is_leftrec"], false)?;
 
-        assert!(
-            matches!(self.field(treemap, "base"), Tree::Nil),
-            "base rules are not implemented"
-        );
-        assert!(
-            matches!(self.field(treemap, "kwparams"), Tree::Nil | Tree::Map(_)),
-            "kwparams must be empty until implemented"
-        );
-        if let Tree::Map(kwparams) = self.field(treemap, "kwparams") {
-            assert!(kwparams.entries.is_empty(), "kwparams are not implemented");
+        if !matches!(self.field(treemap, "base")?, Tree::Nil) {
+            return Err(CompileError::NotImplemented("base rules"));
         }
 
-        Rule::from_parts(
+        match self.field(treemap, "kwparams")? {
+            Tree::Nil => {}
+            Tree::Map(kwparams) if kwparams.entries.is_empty() => {}
+            Tree::Map(_) => return Err(CompileError::NotImplemented("kwparams")),
+            _ => return Err(CompileError::NotImplemented("kwparams shape")),
+        }
+
+        Ok(Rule::from_parts(
             rule_name, params, exp, is_name, is_tokn, no_memo, is_memo, is_lrec,
-        )
+        ))
     }
 
-    pub fn compile_rhs(&self, tree: &Tree) -> Exp {
-        let (name, treemap) = self.node_map(tree, "expression");
+    pub fn compile_rhs(&self, tree: &Tree) -> CompileResult<Exp> {
+        let (name, treemap) = self.node_map(tree, "expression")?;
 
         match name {
-            "Sequence" => Exp::sequence(self.rhs_list(treemap, "sequence")),
-            "Choice" => Exp::choice(self.rhs_list(treemap, "options")),
-            "Option" => Exp::alt(self.rhs_field(treemap, "exp")),
-            "Call" | "RuleRef" => Exp::call(self.text_field(treemap, "name")),
-            "RuleInclude" => {
-                Exp::rule_include(self.rule_name(self.field(treemap, "rule")), Exp::nil())
-            }
-            "Token" => Exp::token(self.text_field(treemap, "token")),
-            "Pattern" => Exp::pattern(self.text_field(treemap, "pattern")),
-            "Constant" => Exp::constant(self.text_field(treemap, "literal")),
+            "Sequence" => Ok(Exp::sequence(self.rhs_list(treemap, "sequence")?)),
+            "Choice" => Ok(Exp::choice(self.rhs_list(treemap, "options")?)),
+            "Option" => Ok(Exp::alt(self.rhs_field(treemap, "exp")?)),
+            "Call" | "RuleRef" => Ok(Exp::call(self.text_field(treemap, "name")?)),
+            "RuleInclude" => Ok(Exp::rule_include(
+                self.rule_name(self.field(treemap, "rule")?)?,
+                Exp::nil(),
+            )),
+            "Token" => Ok(Exp::token(self.text_field(treemap, "token")?)),
+            "Pattern" => Ok(Exp::pattern(self.text_field(treemap, "pattern")?)),
+            "Constant" => Ok(Exp::constant(self.text_field(treemap, "literal")?)),
             "Alert" => self.alert(treemap),
-            "Cut" => Exp::cut(),
-            "Void" => Exp::void(),
-            "Fail" => Exp::fail(),
-            "Dot" => Exp::dot(),
-            "EOF" => Exp::eof(),
-            "Named" => Exp::named(
-                self.text_field(treemap, "name"),
-                self.rhs_field(treemap, "exp"),
-            ),
-            "NamedList" => Exp::named_list(
-                self.text_field(treemap, "name"),
-                self.rhs_field(treemap, "exp"),
-            ),
+            "Cut" => Ok(Exp::cut()),
+            "Void" => Ok(Exp::void()),
+            "Fail" => Ok(Exp::fail()),
+            "Dot" => Ok(Exp::dot()),
+            "EOF" => Ok(Exp::eof()),
+            "Named" => Ok(Exp::named(
+                self.text_field(treemap, "name")?,
+                self.rhs_field(treemap, "exp")?,
+            )),
+            "NamedList" => Ok(Exp::named_list(
+                self.text_field(treemap, "name")?,
+                self.rhs_field(treemap, "exp")?,
+            )),
             "Override" => self.unary(treemap, "exp", Exp::override_node),
             "OverrideList" => self.unary(treemap, "exp", Exp::override_list),
             "Group" => self.unary(treemap, "exp", Exp::group),
@@ -282,13 +377,13 @@ impl GrammarCompiler {
             "PositiveJoin" => self.binary(treemap, "exp", "sep", Exp::positive_join),
             "Gather" => self.binary(treemap, "exp", "sep", Exp::gather),
             "PositiveGather" => self.binary(treemap, "exp", "sep", Exp::positive_gather),
-            other => panic!("compile_rhs() does not support node '{other}'"),
+            other => Err(CompileError::UnsupportedRhs(other.into())),
         }
     }
 }
 
 impl Grammar {
-    pub fn compile(tree: &Tree) -> Self {
+    pub fn compile(tree: &Tree) -> CompileResult<Self> {
         GrammarCompiler.compile_grammar(tree)
     }
 }
