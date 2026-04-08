@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::trees::{KeyValue, Tree, TreeTags};
+use crate::trees::{KeyValue, Tree, TreeMap};
 use std::collections::HashMap;
 use std::ops::Deref;
 
@@ -26,10 +26,10 @@ pub trait ToJson {
     fn to_json(&self) -> Json;
 }
 
-impl ToJson for TreeTags {
+impl ToJson for TreeMap {
     fn to_json(&self) -> Json {
         let mut map = HashMap::new();
-        for (name, tree) in &self.tags {
+        for (name, tree) in &self.entries {
             map.insert(name.deref().into(), tree.to_json());
         }
         Json::Object(map)
@@ -39,18 +39,18 @@ impl ToJson for TreeTags {
 impl ToJson for Tree {
     fn to_json(&self) -> Json {
         match self {
-            Tree::Nil | Tree::Bottom | Tree::Stump => Json::Null,
-            Tree::Leaf(s) => Json::String(s.deref().to_string()),
-            Tree::Branches(v) => Json::Array(v.iter().map(|c| c.to_json()).collect()),
-            Tree::Tag(keyval) | Tree::BranchingTag(keyval) => {
+            Tree::Nil | Tree::Bottom | Tree::Void => Json::Null,
+            Tree::Text(s) => Json::String(s.deref().to_string()),
+            Tree::List(v) => Json::Array(v.iter().map(|c| c.to_json()).collect()),
+            Tree::Named(keyval) | Tree::NamedAsList(keyval) => {
                 let KeyValue(name, tree) = keyval.deref();
                 let mut map = HashMap::new();
                 map.insert(name.to_string(), tree.to_json());
                 Json::Object(map)
             }
-            Tree::Root(tree) | Tree::BranchingRoot(tree) => tree.to_json(),
-            Tree::TreeTags(tags) => tags.to_json(),
-            Tree::Pruned(info, s) => {
+            Tree::Override(tree) | Tree::OverrideAsList(tree) => tree.to_json(),
+            Tree::Map(tags) => tags.to_json(),
+            Tree::Node { info, tree } => {
                 let params = Json::Array(
                     info.params
                         .iter()
@@ -60,7 +60,7 @@ impl ToJson for Tree {
                 let mut map: HashMap<String, Json> = HashMap::new();
                 map.insert("name".into(), Json::String(info.name.to_string()));
                 map.insert("params".into(), params);
-                map.insert("tree".into(), s.to_json());
+                map.insert("tree".into(), tree.to_json());
                 Json::Object(map)
             }
         }
@@ -88,8 +88,8 @@ mod tests {
     #[test]
     fn test_cst_to_json_export() {
         // Create a simple Cst structure
-        let token = Tree::Leaf(Box::from("hello"));
-        let list = Tree::Branches(Box::new([token]));
+        let token = Tree::Text(Box::from("hello"));
+        let list = Tree::List(Box::new([token]));
 
         // 1. Test Internal Json Conversion
         let json_node = list.to_json();

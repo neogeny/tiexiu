@@ -27,7 +27,7 @@ fn test_build() {
 
     if let Ok(S(_, tree)) = seq.parse(ctx) {
         println!("{}", tree);
-        println!("{}", tree.trimmed());
+        println!("{}", tree.normalized());
     }
 }
 

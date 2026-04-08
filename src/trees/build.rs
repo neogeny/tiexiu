@@ -1,51 +1,54 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::tags::TreeTags;
-use super::tree::{FlagMap, KeyValue, PruneInfo, Tree};
+use super::map::TreeMap;
+use super::tree::{FlagMap, KeyValue, NodeInfo, Tree};
 
 impl Tree {
-    pub fn stump() -> Tree {
-        Self::Stump
+    pub fn void() -> Tree {
+        Self::Void
     }
 
-    pub fn leaf(value: &str) -> Tree {
-        Self::Leaf(value.into())
+    pub fn text(value: &str) -> Tree {
+        Self::Text(value.into())
     }
 
-    pub fn branches(branches: &[Tree]) -> Tree {
-        Self::Branches(branches.into())
+    pub fn list(items: &[Tree]) -> Tree {
+        Self::List(items.into())
     }
 
-    pub fn tags(tags: TreeTags) -> Tree {
-        Self::TreeTags(tags.into())
+    pub fn map(entries: TreeMap) -> Tree {
+        Self::Map(entries.into())
     }
 
-    pub fn tag(key: &str, value: Tree) -> Tree {
+    pub fn named(key: &str, value: Tree) -> Tree {
         let keyval = KeyValue(key.into(), value);
-        Self::Tag(keyval.into())
+        Self::Named(keyval.into())
     }
 
-    pub fn branching_tag(key: &str, value: Tree) -> Tree {
+    pub fn named_as_list(key: &str, value: Tree) -> Tree {
         let keyval = KeyValue(key.into(), value);
-        Self::BranchingTag(keyval.into())
+        Self::NamedAsList(keyval.into())
     }
 
-    pub fn root(tree: Tree) -> Tree {
-        Self::Root(tree.into())
+    pub fn override_with(tree: Tree) -> Tree {
+        Self::Override(tree.into())
     }
 
-    pub fn branching_root(tree: Tree) -> Tree {
-        Self::BranchingRoot(tree.into())
+    pub fn override_as_list(tree: Tree) -> Tree {
+        Self::OverrideAsList(tree.into())
     }
 
-    pub fn pruned(name: &str, params: &[String], tree: Tree) -> Tree {
-        let pi = PruneInfo {
+    pub fn node(name: &str, params: &[String], tree: Tree) -> Tree {
+        let pi = NodeInfo {
             name: name.into(),
             params: params.iter().map(|p| p.as_str().into()).collect(),
             flags: FlagMap::new(),
         };
-        Self::Pruned(pi.into(), tree.into())
+        Self::Node {
+            info: pi.into(),
+            tree: tree.into(),
+        }
     }
 
     pub fn bottom() -> Tree {

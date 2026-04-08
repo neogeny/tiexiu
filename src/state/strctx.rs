@@ -94,7 +94,7 @@ mod tests {
 
         let key = ctx1.key("hello");
 
-        ctx1.memoize(&key, &Tree::Stump);
+        ctx1.memoize(&key, &Tree::Void);
 
         let retrieved = ctx2.memo(&key);
 
@@ -104,7 +104,7 @@ mod tests {
         );
         assert_eq!(
             retrieved.unwrap().tree,
-            Tree::Stump,
+            Tree::Void,
             "Memoization data mismatch between shared contexts"
         );
     }

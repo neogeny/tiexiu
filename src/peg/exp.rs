@@ -107,7 +107,7 @@ where
                 ctx.cut();
                 Ok(S(ctx, Tree::Nil))
             }
-            ExpKind::Void => Ok(S(ctx, Tree::Stump)),
+            ExpKind::Void => Ok(S(ctx, Tree::Void)),
             ExpKind::Fail => Err(ctx.failure(ParseError::Fail)),
             ExpKind::Dot => {
                 if ctx.next().is_some() {
@@ -126,35 +126,35 @@ where
 
             ExpKind::Token(token) => {
                 if ctx.token(token) {
-                    Ok(S(ctx, Tree::Leaf(token.deref().into())))
+                    Ok(S(ctx, Tree::Text(token.deref().into())))
                 } else {
                     Err(ctx.failure(ParseError::ExpectedToken(token.deref().into())))
                 }
             }
             ExpKind::Pattern(pattern) => {
                 if let Some(matched) = ctx.pattern(pattern) {
-                    Ok(S(ctx, Tree::Leaf(matched.into())))
+                    Ok(S(ctx, Tree::Text(matched.into())))
                 } else {
                     Err(ctx.failure(ParseError::ExpectedPattern(pattern.deref().into())))
                 }
             }
-            ExpKind::Constant(literal) => Ok(S(ctx, Tree::Leaf(literal.deref().into()))),
-            ExpKind::Alert(literal, _) => Ok(S(ctx, Tree::Leaf(literal.deref().into()))),
+            ExpKind::Constant(literal) => Ok(S(ctx, Tree::Text(literal.deref().into()))),
+            ExpKind::Alert(literal, _) => Ok(S(ctx, Tree::Text(literal.deref().into()))),
 
             ExpKind::Named(name, exp) => match exp.parse(ctx) {
                 Ok(S(ctx, tree)) => Ok(S(ctx, Tree::named(name, tree))),
                 err => err,
             },
             ExpKind::NamedList(name, exp) => match exp.parse(ctx) {
-                Ok(S(ctx, tree)) => Ok(S(ctx, Tree::named_list(name, tree))),
+                Ok(S(ctx, tree)) => Ok(S(ctx, Tree::named_as_list(name, tree))),
                 err => err,
             },
             ExpKind::Override(exp) => match exp.parse(ctx) {
-                Ok(S(ctx, tree)) => Ok(S(ctx, Tree::root(tree))),
+                Ok(S(ctx, tree)) => Ok(S(ctx, Tree::override_with(tree))),
                 err => err,
             },
             ExpKind::OverrideList(exp) => match exp.parse(ctx) {
-                Ok(S(ctx, tree)) => Ok(S(ctx, Tree::branching_root(tree))),
+                Ok(S(ctx, tree)) => Ok(S(ctx, Tree::override_as_list(tree))),
                 err => err,
             },
             ExpKind::Group(exp) => exp.parse(ctx),

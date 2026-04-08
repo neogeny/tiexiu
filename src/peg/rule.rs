@@ -5,7 +5,7 @@ use super::exp::Exp;
 use super::{ParseResult, Parser, S};
 use crate::state::Ctx;
 use crate::trees::Tree;
-use crate::trees::tree::{FlagMap, PruneInfo, PruneInfoRef};
+use crate::trees::tree::{FlagMap, NodeInfo, NodeInfoRef};
 use std::collections::HashMap;
 use std::fmt;
 use std::rc::Rc;
@@ -16,8 +16,8 @@ pub const FLAG_NO_MEMO: &str = "no_memo";
 pub const FLAG_IS_MEMO: &str = "is_memo";
 pub const FLAG_IS_LREC: &str = "is_lrec";
 
-pub type RuleInfo = PruneInfo;
-pub type RuleInfoRef = PruneInfoRef;
+pub type RuleInfo = NodeInfo;
+pub type RuleInfoRef = NodeInfoRef;
 pub type RuleRef = Rc<Rule>;
 pub type RuleIndex = HashMap<Box<str>, usize>;
 
@@ -36,7 +36,10 @@ where
         match self.exp.parse(ctx) {
             Ok(S(ctx, tree)) => Ok(S(
                 ctx,
-                Tree::Pruned(self.info.clone(), tree.trimmed().into()),
+                Tree::Node {
+                    info: self.info.clone(),
+                    tree: tree.normalized().into(),
+                },
             )),
             err => err,
         }
