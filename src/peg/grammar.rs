@@ -4,6 +4,7 @@
 use super::error::ParseError;
 use super::parser::{ParseResult, Parser};
 use super::rule::{Rule, RuleIndex, RuleRef};
+use crate::peg::ParseError::RuleNotFound;
 use crate::state::Ctx;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
@@ -81,6 +82,7 @@ impl Grammar {
     }
 
     fn parse_at<C: Ctx>(&self, start: &str, ctx: C) -> ParseResult<C> {
+        assert_eq!(start, "start", "parse_at('{}')", start);
         match self.get_rule(start) {
             Ok(rule) => rule.parse(ctx),
             Err(err) => Err(ctx.failure(err)),
@@ -91,14 +93,14 @@ impl Grammar {
         self.index
             .get(name)
             .map(|i| self.rules[*i].as_ref())
-            .ok_or_else(|| ParseError::RuleNotFound(name.into()))
+            .ok_or_else(|| RuleNotFound(name.into()))
     }
 
     pub fn get_rule_ref(&self, name: &str) -> Result<RuleRef, ParseError> {
         self.index
             .get(name)
             .map(|i| self.rules[*i].clone())
-            .ok_or_else(|| ParseError::RuleNotFound(name.into()))
+            .ok_or_else(|| RuleNotFound(name.into()))
     }
 
     pub fn get_rule_at(&self, id: usize) -> Option<&Rule> {
@@ -113,13 +115,13 @@ impl Grammar {
         self.index
             .get(name)
             .copied()
-            .ok_or_else(|| ParseError::RuleNotFound(name.into()))
+            .ok_or_else(|| RuleNotFound(name.into()))
     }
 
     pub fn get_rule_mut(&mut self, name: &str) -> Result<&mut Rule, ParseError> {
         match self.index.get(name).copied() {
             Some(i) => Ok(Rc::make_mut(&mut self.rules[i])),
-            None => Err(ParseError::RuleNotFound(name.into())),
+            None => Err(RuleNotFound(name.into())),
         }
     }
 

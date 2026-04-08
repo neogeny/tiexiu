@@ -37,9 +37,9 @@ impl<'a> Analyzer<'a> {
     fn first_calls(grammar: &Grammar, exp: &Exp) -> Vec<usize> {
         match &exp.kind {
             ExpKind::Call { name, .. } => grammar.get_rule_id(name).into_iter().collect(),
-            ExpKind::RuleInclude { rule, .. } => rule
+            ExpKind::RuleInclude { exp, .. } => exp
                 .as_ref()
-                .map(|rule| Self::first_calls(grammar, &rule.exp))
+                .map(|e| Self::first_calls(grammar, e))
                 .unwrap_or_default(),
 
             ExpKind::Named(_, inner)

@@ -324,10 +324,7 @@ impl GrammarCompiler {
             "Choice" => Ok(Exp::choice(self.rhs_list(m, "options")?)),
             "Option" => Ok(Exp::alt(self.rhs_field(m, "exp")?)),
             "Call" | "RuleRef" => Ok(Exp::call(self.text_field(m, "name")?)),
-            "RuleInclude" => Ok(Exp::rule_include(
-                self.rule_name(self.field(m, "rule")?)?,
-                Exp::nil(),
-            )),
+            "RuleInclude" => Ok(Exp::rule_include(self.rule_name(self.field(m, "rule")?)?)),
             "Token" => Ok(Exp::token(self.text_field(m, "token")?)),
             "Pattern" => Ok(Exp::pattern(self.text_field(m, "pattern")?)),
             "Constant" => Ok(Exp::constant(self.text_field(m, "literal")?)),

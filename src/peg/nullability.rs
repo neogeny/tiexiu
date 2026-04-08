@@ -21,7 +21,7 @@ impl ExpKind {
     pub fn is_nullable(&self) -> bool {
         match &self {
             Self::Nil => true,
-            Self::RuleInclude { rule, .. } => rule.as_ref().is_some_and(|r| r.exp.is_nullable()),
+            Self::RuleInclude { exp, .. } => exp.as_ref().is_some_and(|e| e.is_nullable()),
 
             // Consumes nothing, always succeeds (or affects state only)
             Self::Eof => false,
@@ -77,7 +77,10 @@ impl ExpKind {
     pub fn callable_from(&self) -> Vec<&Exp> {
         match &self {
             Self::Nil => vec![],
-            Self::RuleInclude { rule, .. } => rule.as_ref().map(|r| &r.exp).into_iter().collect(),
+            Self::RuleInclude { exp, .. } => match exp {
+                Some(e) => vec![e],
+                _ => vec![],
+            },
 
             // These don't lead to further rules
             Self::Cut

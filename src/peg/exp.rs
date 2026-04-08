@@ -59,7 +59,7 @@ pub enum ExpKind {
     PositiveJoin { exp: ERef, sep: ERef },
     Gather { exp: ERef, sep: ERef },
     PositiveGather { exp: ERef, sep: ERef },
-    RuleInclude { name: Str, rule: Option<RuleRef> },
+    RuleInclude { name: Str, exp: Option<ERef> },
 }
 
 impl Exp {
@@ -75,33 +75,22 @@ where
     fn parse(&self, mut ctx: C) -> ParseResult<C> {
         match &self.kind {
             ExpKind::Nil => Ok(S(ctx, Tree::Nil)),
-            ExpKind::RuleInclude { name, rule } => match if let Some(rule) = rule {
-                rule.exp.parse(ctx)
-            } else {
-                Err(ctx.failure(ParseError::RuleNotFound(name.clone())))
-            } {
-                Ok(S(mut ctx, tree)) => {
-                    ctx.uncut();
-                    Ok(S(ctx, tree))
-                }
-                Err(mut f) => {
-                    f.uncut();
-                    Err(f)
-                }
+            ExpKind::RuleInclude { name, exp } => match exp {
+                None => Err(ctx.failure(ParseError::RuleNotLinked(name.clone()))),
+                Some(exp) => exp.parse(ctx),
             },
-            ExpKind::Call { name, rule } => match if let Some(rule) = rule {
-                ctx.call_rule(name, rule.as_ref())
-            } else {
-                Err(ctx.failure(ParseError::RuleNotFound(name.clone())))
-            } {
-                Ok(S(mut ctx, tree)) => {
-                    ctx.uncut();
-                    Ok(S(ctx, tree))
-                }
-                Err(mut f) => {
-                    f.uncut();
-                    Err(f)
-                }
+            ExpKind::Call { name, rule } => match rule {
+                None => Err(ctx.failure(ParseError::RuleNotLinked(name.clone()))),
+                Some(rule) => match ctx.call_rule(name, rule.as_ref()) {
+                    Ok(S(mut ctx, tree)) => {
+                        ctx.uncut();
+                        Ok(S(ctx, tree))
+                    }
+                    Err(mut f) => {
+                        f.uncut();
+                        Err(f)
+                    }
+                },
             },
             ExpKind::Cut => {
                 ctx.cut();

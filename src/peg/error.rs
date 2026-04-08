@@ -40,4 +40,8 @@ pub enum ParseError {
     /// Corresponds rule names not in map
     #[error("Rule not found: '{0}'")]
     RuleNotFound(Box<str>),
+
+    /// Corresponds rule names without a Rule reference
+    #[error("Rule not linked: '{0}'")]
+    RuleNotLinked(Box<str>),
 }

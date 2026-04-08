@@ -27,11 +27,10 @@ impl Exp {
         Self::new(ExpKind::Nil)
     }
 
-    pub fn rule_include(name: &str, exp: Self) -> Self {
-        let _ = exp;
+    pub fn rule_include(name: &str) -> Self {
         Self::new(ExpKind::RuleInclude {
             name: name.into(),
-            rule: None,
+            exp: None,
         })
     }
 

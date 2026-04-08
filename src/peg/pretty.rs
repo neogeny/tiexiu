@@ -29,7 +29,7 @@ impl ExpKind {
     fn pretty_print(&self, f: &mut IndentWriter) -> String {
         match &self {
             ExpKind::Nil => "".to_string(),
-            ExpKind::RuleInclude { name, rule: _ } => {
+            ExpKind::RuleInclude { name, exp: _ } => {
                 format!(">{}", name)
             }
             ExpKind::Cut => "~".into(),

@@ -14,10 +14,11 @@ impl Linker for Grammar {
     }
 
     fn link_rule_include(&mut self, exp: &mut Exp) {
-        if let ExpKind::RuleInclude { name, rule } = &mut exp.kind
-            && rule.is_none()
+        if let ExpKind::RuleInclude { name, exp } = &mut exp.kind
+            && exp.is_none()
+            && let Ok(rule) = self.get_rule(name)
         {
-            *rule = self.get_rule_ref(name).ok();
+            *exp = Some(rule.exp.clone().into())
         }
     }
 }

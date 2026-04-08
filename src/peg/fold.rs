@@ -30,19 +30,19 @@ pub trait Linker {
             ExpKind::Call { .. } => self.link_call(exp),
             ExpKind::RuleInclude { .. } => self.link_rule_include(exp),
 
-            ExpKind::Named(_, inner)
-            | ExpKind::NamedList(_, inner)
-            | ExpKind::Override(inner)
-            | ExpKind::OverrideList(inner)
-            | ExpKind::Group(inner)
-            | ExpKind::SkipGroup(inner)
-            | ExpKind::Lookahead(inner)
-            | ExpKind::NegativeLookahead(inner)
-            | ExpKind::SkipTo(inner)
-            | ExpKind::Alt(inner)
-            | ExpKind::Optional(inner)
-            | ExpKind::Closure(inner)
-            | ExpKind::PositiveClosure(inner) => self.walk(inner),
+            ExpKind::Named(_, exp)
+            | ExpKind::NamedList(_, exp)
+            | ExpKind::Override(exp)
+            | ExpKind::OverrideList(exp)
+            | ExpKind::Group(exp)
+            | ExpKind::SkipGroup(exp)
+            | ExpKind::Lookahead(exp)
+            | ExpKind::NegativeLookahead(exp)
+            | ExpKind::SkipTo(exp)
+            | ExpKind::Alt(exp)
+            | ExpKind::Optional(exp)
+            | ExpKind::Closure(exp)
+            | ExpKind::PositiveClosure(exp) => self.walk(exp),
 
             ExpKind::Sequence(items) | ExpKind::Choice(items) => {
                 for item in items.iter_mut() {
@@ -57,17 +57,16 @@ pub trait Linker {
                 self.walk(exp);
                 self.walk(sep);
             }
-
-            ExpKind::Nil
-            | ExpKind::Cut
-            | ExpKind::Void
-            | ExpKind::Fail
-            | ExpKind::Dot
-            | ExpKind::Eof
-            | ExpKind::Token(_)
-            | ExpKind::Pattern(_)
-            | ExpKind::Constant(_)
-            | ExpKind::Alert(_, _) => {}
+            _ => {} // ExpKind::Nil
+                    // | ExpKind::Cut
+                    // | ExpKind::Void
+                    // | ExpKind::Fail
+                    // | ExpKind::Dot
+                    // | ExpKind::Eof
+                    // | ExpKind::Token(_)
+                    // | ExpKind::Pattern(_)
+                    // | ExpKind::Constant(_)
+                    // | ExpKind::Alert(_, _) => {}
         }
     }
 
