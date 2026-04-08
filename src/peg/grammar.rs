@@ -3,7 +3,7 @@
 
 use super::error::ParseError;
 use super::parser::{ParseResult, Parser};
-use super::rule::{Rule, RuleMap};
+use super::rule::{Rule, RuleIndex};
 use crate::state::Ctx;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
@@ -14,7 +14,8 @@ pub struct Grammar {
     pub analyzed: bool,
     pub directives: HashMap<String, String>,
     pub keywords: HashSet<String>,
-    rulemap: RuleMap,
+    rules: Box<[Rule]>,
+    index: RuleIndex,
 }
 
 impl<C> Parser<C> for Grammar
@@ -47,11 +48,11 @@ impl fmt::Display for Grammar {
 
 impl Grammar {
     pub fn new(name: &str, rules: &[Rule]) -> Self {
-        let rulemap = Self::new_rulemap(rules);
         let mut grammar = Self {
             name: name.to_string(),
             analyzed: false,
-            rulemap,
+            rules: rules.into(),
+            index: Self::new_rule_index(rules),
             directives: HashMap::new(),
             keywords: HashSet::new(),
         };
@@ -59,11 +60,11 @@ impl Grammar {
         grammar
     }
 
-    pub fn new_rulemap(rules: &[Rule]) -> RuleMap {
+    pub fn new_rule_index(rules: &[Rule]) -> RuleIndex {
         rules
             .iter()
-            .cloned()
-            .map(|r| (r.info.name.clone(), r))
+            .enumerate()
+            .map(|(i, r)| (r.info.name.clone(), i))
             .collect()
     }
 
@@ -72,32 +73,31 @@ impl Grammar {
     }
 
     fn parse_at<C: Ctx>(&self, start: &str, ctx: C) -> ParseResult<C> {
-        if let Some(rule) = self.rulemap.get(start) {
-            rule.parse(ctx)
-        } else {
-            Err(ctx.failure(ParseError::RuleNotFound(start.into())))
+        match self.get_rule(start) {
+            Ok(rule) => rule.parse(ctx),
+            Err(err) => Err(ctx.failure(err)),
         }
     }
 
     pub fn get_rule(&self, name: &str) -> Result<&Rule, ParseError> {
-        if let Some(rule) = self.rulemap.get(name) {
-            return Ok(rule);
-        }
-        Err(ParseError::RuleNotFound(name.into()))
+        self.index
+            .get(name)
+            .map(|i| &self.rules[*i])
+            .ok_or_else(|| ParseError::RuleNotFound(name.into()))
     }
 
     pub fn get_rule_mut(&mut self, name: &str) -> Result<&mut Rule, ParseError> {
-        if let Some(rule) = self.rulemap.get_mut(name) {
-            return Ok(rule);
-        }
-        Err(ParseError::RuleNotFound(name.into()))
+        self.index
+            .get_mut(name)
+            .map(|i| &mut self.rules[*i])
+            .ok_or_else(|| ParseError::RuleNotFound(name.into()))
     }
 
     pub fn rules(&self) -> impl Iterator<Item = &Rule> {
-        self.rulemap.values()
+        self.rules.iter()
     }
 
     pub fn rules_mut(&mut self) -> impl Iterator<Item = &mut Rule> {
-        self.rulemap.values_mut()
+        self.rules.iter_mut()
     }
 }

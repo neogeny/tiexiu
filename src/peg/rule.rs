@@ -6,7 +6,7 @@ use super::{ParseResult, Parser, S};
 use crate::state::Ctx;
 use crate::trees::Tree;
 use crate::trees::tree::{FlagMap, PruneInfo, PruneInfoRef};
-use indexmap::IndexMap;
+use std::collections::HashMap;
 use std::fmt;
 use std::rc::Rc;
 
@@ -18,7 +18,8 @@ pub const FLAG_IS_LREC: &str = "is_lrec";
 
 pub type RuleInfo = PruneInfo;
 pub type RuleInfoRef = PruneInfoRef;
-pub type RuleMap = IndexMap<Box<str>, Rule>;
+pub type RuleMap = HashMap<Box<str>, Rule>;
+pub type RuleIndex = HashMap<Box<str>, usize>;
 
 #[derive(Debug, Clone)]
 pub struct Rule {
