@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+pub mod api;
 pub mod error;
 pub mod input;
 pub mod json;
@@ -10,6 +11,7 @@ pub mod trees;
 pub mod ui;
 pub mod util;
 
+pub use api::{compile, compile_with, load, parse, parse_with};
 pub use error::{Error, Result};
 
 #[allow(dead_code)]

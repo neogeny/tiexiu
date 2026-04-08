@@ -2,8 +2,12 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::error::Error;
-use crate::json::boot::boot_grammar;
+use crate::input::StrCursor;
+use crate::json::boot::TATSU_GRAMMAR_JSON;
 use crate::json::tatsu::TatSuModel;
+use crate::peg::{Parser as PegParser, S};
+use crate::state::strctx::StrCtx;
+use crate::{compile, load};
 use clap::builder::styling::{AnsiColor, Styles};
 use clap::{Parser, Subcommand};
 use owo_colors;
@@ -88,7 +92,7 @@ pub fn cli() -> Result<(), Error> {
 
     match cli.command {
         Commands::Boot { pretty, json } => {
-            let bootg = boot_grammar()?;
+            let bootg = load(TATSU_GRAMMAR_JSON)?;
             if pretty {
                 pygmentize(&bootg.to_string(), "ebnf", use_color);
                 return Ok(());
@@ -103,15 +107,25 @@ pub fn cli() -> Result<(), Error> {
         Commands::Run {
             grammar, inputs, ..
         } => {
-            println!(
-                "Ready to parse with grammar {}  {}",
-                grammar.as_path().to_str().unwrap(),
-                inputs
-                    .iter()
-                    .map(|p| p.as_path().to_str().unwrap())
-                    .collect::<Vec<_>>()
-                    .join(", "),
-            );
+            let grammar_text = std::fs::read_to_string(&grammar)?;
+            let parser = if grammar
+                .extension()
+                .and_then(|ext| ext.to_str())
+                .is_some_and(|ext| ext.eq_ignore_ascii_case("json"))
+            {
+                load(&grammar_text)?
+            } else {
+                compile(&grammar_text)?
+            };
+
+            for input in inputs {
+                let text = std::fs::read_to_string(&input)?;
+                let ctx = StrCtx::new(StrCursor::new(&text));
+                match parser.parse(ctx) {
+                    Ok(S(_, tree)) => println!("{}", tree.normalized()),
+                    Err(failure) => return Err(Error::from(failure.error)),
+                }
+            }
         }
     }
 

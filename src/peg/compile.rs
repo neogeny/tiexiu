@@ -203,19 +203,13 @@ impl GrammarCompiler {
     }
 
     fn bool_flag(&self, m: &TreeMap, key: &'static str) -> CompileResult<bool> {
-        m
-            .get(key)
+        m.get(key)
             .map(|tree| self.bool_text(tree, key))
             .transpose()
             .map(|value| value.unwrap_or(false))
     }
 
-    fn one_of(
-        &self,
-        m: &TreeMap,
-        keys: &[&'static str],
-        default: bool,
-    ) -> CompileResult<bool> {
+    fn one_of(&self, m: &TreeMap, keys: &[&'static str], default: bool) -> CompileResult<bool> {
         keys.iter()
             .find_map(|key| m.get(key).map(|tree| self.bool_text(tree, key)))
             .transpose()
@@ -236,12 +230,7 @@ impl GrammarCompiler {
         Ok((is_name, no_memo))
     }
 
-    fn unary(
-        &self,
-        m: &TreeMap,
-        key: &'static str,
-        build: fn(Exp) -> Exp,
-    ) -> CompileResult<Exp> {
+    fn unary(&self, m: &TreeMap, key: &'static str, build: fn(Exp) -> Exp) -> CompileResult<Exp> {
         self.rhs_field(m, key).map(build)
     }
 
@@ -252,10 +241,7 @@ impl GrammarCompiler {
         right: &'static str,
         build: fn(Exp, Exp) -> Exp,
     ) -> CompileResult<Exp> {
-        Ok(build(
-            self.rhs_field(m, left)?,
-            self.rhs_field(m, right)?,
-        ))
+        Ok(build(self.rhs_field(m, left)?, self.rhs_field(m, right)?))
     }
 
     fn alert(&self, m: &TreeMap) -> CompileResult<Exp> {
@@ -275,11 +261,7 @@ impl GrammarCompiler {
                 found: name.into(),
             });
         }
-        self.expect_keys(
-            m,
-            &["name", "directives", "keywords", "rules"],
-            "Grammar",
-        )?;
+        self.expect_keys(m, &["name", "directives", "keywords", "rules"], "Grammar")?;
 
         let grammar_name = self.text_field(m, "name")?;
         let directives = self.directives(self.field(m, "directives")?)?;
