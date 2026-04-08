@@ -32,7 +32,7 @@ impl TryFrom<Grammar> for TatSuModel {
                 TatSuModel::Rule {
                     name: rule.info.name.clone().into(),
                     params: rule.info.params.iter().map(|p| p.clone().into()).collect(),
-                    exp: Box::new(TatSuModel::from(rule.exp.clone())),
+                    exp: TatSuModel::from(rule.exp.clone()).into(),
                     is_name: rule.is_identifier(),
                     is_tokn: rule.has_token_flag(),
                     no_memo: rule.has_no_memo_flag(),
@@ -68,7 +68,7 @@ impl From<Exp> for TatSuModel {
             ExpKind::Dot => TatSuModel::Pattern {
                 pattern: ".".to_string(),
             },
-            ExpKind::Call(name, _) => TatSuModel::Call { name: name.into() },
+            ExpKind::Call { name, .. } => TatSuModel::Call { name: name.into() },
             ExpKind::Token(s) => TatSuModel::Token { token: s.into() },
             ExpKind::Pattern(s) => TatSuModel::Pattern { pattern: s.into() },
             ExpKind::Constant(s) => TatSuModel::Constant {
@@ -80,32 +80,32 @@ impl From<Exp> for TatSuModel {
             },
             ExpKind::Named(name, exp) => TatSuModel::Named {
                 name: name.into(),
-                exp: Box::new(TatSuModel::from(*exp)),
+                exp: TatSuModel::from(*exp).into(),
             },
             ExpKind::NamedList(name, exp) => TatSuModel::NamedList {
                 name: name.into(),
-                exp: Box::new(TatSuModel::from(*exp)),
+                exp: TatSuModel::from(*exp).into(),
             },
             ExpKind::Override(exp) => TatSuModel::Override {
-                exp: Box::new(TatSuModel::from(*exp)),
+                exp: TatSuModel::from(*exp).into(),
             },
             ExpKind::OverrideList(exp) => TatSuModel::OverrideList {
-                exp: Box::new(TatSuModel::from(*exp)),
+                exp: TatSuModel::from(*exp).into(),
             },
             ExpKind::Group(exp) => TatSuModel::Group {
-                exp: Box::new(TatSuModel::from(*exp)),
+                exp: TatSuModel::from(*exp).into(),
             },
             ExpKind::SkipGroup(exp) => TatSuModel::SkipGroup {
-                exp: Box::new(TatSuModel::from(*exp)),
+                exp: TatSuModel::from(*exp).into(),
             },
             ExpKind::Lookahead(exp) => TatSuModel::Lookahead {
-                exp: Box::new(TatSuModel::from(*exp)),
+                exp: TatSuModel::from(*exp).into(),
             },
             ExpKind::NegativeLookahead(exp) => TatSuModel::NegativeLookahead {
-                exp: Box::new(TatSuModel::from(*exp)),
+                exp: TatSuModel::from(*exp).into(),
             },
             ExpKind::SkipTo(exp) => TatSuModel::SkipTo {
-                exp: Box::new(TatSuModel::from(*exp)),
+                exp: TatSuModel::from(*exp).into(),
             },
             ExpKind::Sequence(sequence) => TatSuModel::Sequence {
                 sequence: sequence
@@ -120,36 +120,36 @@ impl From<Exp> for TatSuModel {
                     .collect(),
             },
             ExpKind::Alt(exp) => TatSuModel::Option {
-                exp: Box::new(TatSuModel::from(*exp)),
+                exp: TatSuModel::from(*exp).into(),
             },
             ExpKind::Optional(exp) => TatSuModel::Optional {
-                exp: Box::new(TatSuModel::from(*exp)),
+                exp: TatSuModel::from(*exp).into(),
             },
             ExpKind::Closure(exp) => TatSuModel::Closure {
-                exp: Box::new(TatSuModel::from(*exp)),
+                exp: TatSuModel::from(*exp).into(),
             },
             ExpKind::PositiveClosure(exp) => TatSuModel::PositiveClosure {
-                exp: Box::new(TatSuModel::from(*exp)),
+                exp: TatSuModel::from(*exp).into(),
             },
             ExpKind::Join { exp, sep } => TatSuModel::Join {
-                exp: Box::new(TatSuModel::from(*exp)),
-                sep: Box::new(TatSuModel::from(*sep)),
+                exp: TatSuModel::from(*exp).into(),
+                sep: TatSuModel::from(*sep).into(),
             },
             ExpKind::PositiveJoin { exp, sep } => TatSuModel::PositiveJoin {
-                exp: Box::new(TatSuModel::from(*exp)),
-                sep: Box::new(TatSuModel::from(*sep)),
+                exp: TatSuModel::from(*exp).into(),
+                sep: TatSuModel::from(*sep).into(),
             },
             ExpKind::Gather { exp, sep } => TatSuModel::Gather {
-                exp: Box::new(TatSuModel::from(*exp)),
-                sep: Box::new(TatSuModel::from(*sep)),
+                exp: TatSuModel::from(*exp).into(),
+                sep: TatSuModel::from(*sep).into(),
             },
             ExpKind::PositiveGather { exp, sep } => TatSuModel::PositiveGather {
-                exp: Box::new(TatSuModel::from(*exp)),
-                sep: Box::new(TatSuModel::from(*sep)),
+                exp: TatSuModel::from(*exp).into(),
+                sep: TatSuModel::from(*sep).into(),
             },
             ExpKind::RuleInclude { name, exp } => TatSuModel::RuleInclude {
                 name: name.into(),
-                exp: Box::new(TatSuModel::from(*exp)),
+                exp: TatSuModel::from(*exp).into(),
             },
             _ => unreachable!("Conversion for variant not implemented"),
         }
@@ -169,7 +169,7 @@ impl From<Exp> for TatSuModel {
 //             TatSuModel::Cut => Exp::cut(),
 //             TatSuModel::EOF => Exp::eof(),
 //             TatSuModel::Void { .. } => Exp::void(),
-//             TatSuModel::Call { name, .. } => Exp::call(name.as_str(), Exp::nil()),
+//             TatSuModel::Call { name, .. } => Exp::call(name.as_str()),
 //             TatSuModel::Token { token } => Exp::token(token.as_str()),
 //             TatSuModel::Pattern { pattern } => Exp::pattern(pattern.as_str()),
 //             TatSuModel::Constant { literal } => Exp::constant(literal.as_str().unwrap_or("")),

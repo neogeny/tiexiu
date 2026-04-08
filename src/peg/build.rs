@@ -1,7 +1,7 @@
 // copyright (c) 2026 juancarlo añez (apalala@gmail.com)
 // spdx-license-identifier: mit or apache-2.0
 
-use super::exp::{Exp, ExpKind};
+use super::exp::{Exp, ExpKind, UNRESOLVED_CALL_ID};
 
 impl Exp {
     #[inline]
@@ -60,8 +60,11 @@ impl Exp {
     }
 
     #[inline]
-    pub fn call(name: &str, exp: Self) -> Self {
-        Self::new(ExpKind::Call(name.into(), exp.into()))
+    pub fn call(name: &str) -> Self {
+        Self::new(ExpKind::Call {
+            name: name.into(),
+            id: UNRESOLVED_CALL_ID,
+        })
     }
 
     #[inline]

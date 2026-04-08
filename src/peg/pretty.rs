@@ -38,7 +38,7 @@ impl ExpKind {
             ExpKind::Dot => ".".into(),
             ExpKind::Eof => "$".into(),
 
-            ExpKind::Call(name, _exp) => name.to_string(),
+            ExpKind::Call { name, .. } => name.to_string(),
 
             ExpKind::Token(token) => format!("\"{}\"", token),
             ExpKind::Pattern(pattern) => {

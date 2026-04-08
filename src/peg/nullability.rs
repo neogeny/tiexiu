@@ -66,7 +66,7 @@ impl ExpKind {
             // Special cases
             Self::SkipTo(_) => false, // SkipTo must find a match to succeed
 
-            Self::Call(_name, _exp) => {
+            Self::Call { .. } => {
                 // In a stateless walker, you cannot determine this without
                 // looking up the definition of _name in the grammar.
                 false
@@ -91,7 +91,7 @@ impl ExpKind {
             | Self::Alert(..) => vec![],
 
             // NOTE: left recursion detection handles this by resolving by name
-            Self::Call(_, _) => vec![],
+            Self::Call { .. } => vec![],
 
             // Transparent wrappers: return the inner expression
             Self::Group(m)
@@ -149,7 +149,7 @@ impl ExpKind {
             | Self::Alert(..) => vec![],
 
             // NOTE: left recursion detection handles this by resolving by name
-            Self::Call(_, _) => vec![],
+            Self::Call { .. } => vec![],
 
             // Transparent wrappers: return the inner expression
             Self::Group(m)

@@ -74,11 +74,53 @@ pub trait Ctx: Clone + Debug {
         self.grammar().get_rule(name).cloned()
     }
 
+    fn parser_for_id(&self, id: usize) -> Option<Rule> {
+        self.grammar().get_rule_by_id(id).cloned()
+    }
+
     fn call(mut self, name: &str) -> ParseResult<Self> {
         let rule = match self.parser_for(name) {
             Ok(rule) => rule,
             Err(err) => {
                 return Err(self.failure(err));
+            }
+        };
+
+        if !rule.is_token() {
+            self.next_token();
+        }
+
+        let key = self.key(name);
+        if let Some(memo) = self.memo(&key) {
+            return match memo.tree {
+                Tree::Bottom => Err(self.failure(ParseError::FailedParse(name.into()))),
+                _ => {
+                    self.reset(memo.mark);
+                    Ok(S(self, memo.tree))
+                }
+            };
+        }
+
+        if rule.is_left_recursive() {
+            return self.recursive_call(key, &rule);
+        }
+        match rule.parse(self.clone()) {
+            Ok(S(mut ctx, tree)) => {
+                ctx.memoize(&key, &tree);
+                Ok(S(ctx, tree))
+            }
+            Err(f) => {
+                self.memoize(&key, &Tree::Bottom);
+                Err(f)
+            }
+        }
+    }
+
+    fn call_by_id(mut self, id: usize, name: &str) -> ParseResult<Self> {
+        let rule = match self.parser_for_id(id) {
+            Some(rule) => rule,
+            None => {
+                return Err(self.failure(ParseError::RuleNotFound(name.into())));
             }
         };
 

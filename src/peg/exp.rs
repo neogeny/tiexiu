@@ -13,6 +13,7 @@ use std::ops::Deref;
 pub type ERef = Box<Exp>;
 pub type ERefArr = Box<[Exp]>;
 pub type Str = Box<str>;
+pub const UNRESOLVED_CALL_ID: usize = usize::MAX;
 
 #[derive(Debug, Clone)]
 pub struct Exp {
@@ -29,7 +30,7 @@ pub enum ExpKind {
     Dot,
     Eof,
 
-    Call(Str, ERef),
+    Call { name: Str, id: usize },
 
     Token(Str),
     Pattern(Str),
@@ -76,7 +77,11 @@ where
         match &self.kind {
             ExpKind::Nil => Ok(S(ctx, Tree::Nil)),
             ExpKind::RuleInclude { .. } => Ok(S(ctx, Tree::Nil)),
-            ExpKind::Call(name, _exp) => match ctx.call(name) {
+            ExpKind::Call { name, id, .. } => match if *id == UNRESOLVED_CALL_ID {
+                ctx.call(name)
+            } else {
+                ctx.call_by_id(*id, name)
+            } {
                 Ok(S(mut ctx, tree)) => {
                     ctx.uncut();
                     Ok(S(ctx, tree))

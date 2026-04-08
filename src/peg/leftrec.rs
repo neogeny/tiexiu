@@ -46,7 +46,7 @@ impl<'a> Analyzer<'a> {
         // Since we are traversing Elements, we check if this element is a "Call"
         // to treat it like the start of a Rule logic.
         let mut is_rule: bool = false;
-        if let ExpKind::Call(name, _) = &node.kind
+        if let ExpKind::Call { name, .. } = &node.kind
             && self
                 .grammar
                 .get_rule(name)
@@ -70,7 +70,10 @@ impl<'a> Analyzer<'a> {
 
             if child_state == State::Cutoff && child_depth > *self.depth_stack.last().unwrap() {
                 // This is a cycle. We need to mark the rule and turn off memoization.
-                if let ExpKind::Call(target_name, _) = &child.kind {
+                if let ExpKind::Call {
+                    name: target_name, ..
+                } = &child.kind
+                {
                     self.grammar.mark_as_lrec(target_name);
 
                     // Python: child_rules = (n for n in node_depth if isinstance(n, Rule))

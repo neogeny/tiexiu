@@ -69,6 +69,7 @@ impl Grammar {
     }
 
     pub fn initialize(&mut self) {
+        self.link();
         self.mark_left_recursion();
     }
 
@@ -83,6 +84,21 @@ impl Grammar {
         self.index
             .get(name)
             .map(|i| &self.rules[*i])
+            .ok_or_else(|| ParseError::RuleNotFound(name.into()))
+    }
+
+    pub fn get_rule_at(&self, id: usize) -> Option<&Rule> {
+        self.rules.get(id)
+    }
+
+    pub fn get_rule_by_id(&self, id: usize) -> Option<&Rule> {
+        self.get_rule_at(id)
+    }
+
+    pub fn get_rule_id(&self, name: &str) -> Result<usize, ParseError> {
+        self.index
+            .get(name)
+            .copied()
             .ok_or_else(|| ParseError::RuleNotFound(name.into()))
     }
 

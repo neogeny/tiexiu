@@ -119,7 +119,7 @@ impl TryFrom<TatSuModel> for Exp {
             TatSuModel::Void => Ok(Exp::void()),
 
             // --- Calls and Tokens ---
-            TatSuModel::Call { name, .. } => Ok(Exp::call(name.as_str(), Exp::nil())),
+            TatSuModel::Call { name, .. } => Ok(Exp::call(name.as_str())),
             TatSuModel::Token { token } => Ok(Exp::token(token.as_str())),
             TatSuModel::Pattern { pattern } => Ok(Exp::pattern(pattern.as_str())),
             TatSuModel::Constant { literal } => Ok(Exp::constant(literal.as_str().unwrap_or(""))),
