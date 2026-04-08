@@ -79,6 +79,14 @@ impl GrammarCompiler {
         }
     }
 
+    fn contains_text(&self, tree: &Tree, expected: &'static str, item: &str) -> bool {
+        match tree {
+            Tree::Nil => false,
+            Tree::List(items) => items.iter().any(|entry| self.text(entry, expected) == item),
+            _ => panic!("expected {expected} to be Tree::List or Tree::Nil"),
+        }
+    }
+
     fn bool_text(&self, tree: &Tree, expected: &'static str) -> bool {
         match tree {
             Tree::Text(text) => matches!(text.as_ref(), "True" | "true"),
@@ -177,17 +185,29 @@ impl GrammarCompiler {
     pub fn compile_rule(&self, tree: &Tree) -> Rule {
         let (name, treemap) = self.node(tree, "rule");
         assert_eq!(name, "Rule");
-        self.expect_keys(treemap, &["name", "params", "exp"], "Rule");
+        self.expect_keys(
+            treemap,
+            &["name", "params", "exp", "decorators", "base", "kwparams"],
+            "Rule",
+        );
 
         let rule_name = self.text_field(treemap, "name").to_string();
         let params = self.text_list(self.field(treemap, "params"), "params");
+        let decorators = self.field(treemap, "decorators");
 
-        // todo: decorators
+        assert!(
+            !self.contains_text(decorators, "decorators", "override"),
+            "override decorator is not implemented"
+        );
+
         let exp = self.rhs_field(treemap, "exp");
 
-        let is_name = self.bool_flag(treemap, "is_name");
+        let is_name = self.bool_flag(treemap, "is_name")
+            || self.contains_text(decorators, "decorators", "name")
+            || self.contains_text(decorators, "decorators", "isname");
         let is_tokn = self.bool_flag(treemap, "is_tokn");
-        let no_memo = self.bool_flag(treemap, "no_memo");
+        let no_memo =
+            self.bool_flag(treemap, "no_memo") || self.contains_text(decorators, "decorators", "nomemo");
         let is_memo = treemap
             .get("is_memo")
             .or_else(|| treemap.get("is_memoizable"))
@@ -199,8 +219,18 @@ impl GrammarCompiler {
             .map(|tree| self.bool_text(tree, "is_lrec"))
             .unwrap_or(false);
 
-        // todo: base
-        // todo: kwparams
+        assert!(
+            matches!(self.field(treemap, "base"), Tree::Nil),
+            "base rules are not implemented"
+        );
+        assert!(
+            matches!(self.field(treemap, "kwparams"), Tree::Nil | Tree::Map(_)),
+            "kwparams must be empty until implemented"
+        );
+        if let Tree::Map(kwparams) = self.field(treemap, "kwparams") {
+            assert!(kwparams.entries.is_empty(), "kwparams are not implemented");
+        }
+
         Rule::from_parts(
             rule_name, params, exp, is_name, is_tokn, no_memo, is_memo, is_lrec,
         )
