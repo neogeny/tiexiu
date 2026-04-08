@@ -9,7 +9,11 @@ use std::collections::{HashMap, HashSet};
 pub struct GrammarCompiler;
 
 impl GrammarCompiler {
-    fn node<'a>(&self, tree: &'a Tree, expected: &'static str) -> (&'a str, &'a TreeMap) {
+    fn compile_rules(&self, trees: &[Tree]) -> Vec<Rule> {
+        trees.iter().map(|tree| self.compile_rule(tree)).collect()
+    }
+
+    fn node_map<'a>(&self, tree: &'a Tree, expected: &'static str) -> (&'a str, &'a TreeMap) {
         let Tree::Node { info, tree } = tree else {
             panic!("expected {expected} to be a Tree::Node");
         };
@@ -119,7 +123,7 @@ impl GrammarCompiler {
     }
 
     fn rule_name<'a>(&self, tree: &'a Tree) -> &'a str {
-        let (name, treemap) = self.node(tree, "rule");
+        let (name, treemap) = self.node_map(tree, "rule");
         assert_eq!(name, "Rule");
         self.text_field(treemap, "name")
     }
@@ -129,6 +133,27 @@ impl GrammarCompiler {
             .get(key)
             .map(|tree| self.bool_text(tree, key))
             .unwrap_or(false)
+    }
+
+    fn one_of(&self, treemap: &TreeMap, keys: &[&'static str], default: bool) -> bool {
+        keys.iter()
+            .find_map(|key| treemap.get(key).map(|tree| self.bool_text(tree, key)))
+            .unwrap_or(default)
+    }
+
+    fn compile_rule_decorators(&self, treemap: &TreeMap) -> (bool, bool) {
+        let decorators = self.field(treemap, "decorators");
+
+        assert!(
+            !self.contains_text(decorators, "decorators", "override"),
+            "override decorator is not implemented"
+        );
+
+        let is_name = self.contains_text(decorators, "decorators", "name")
+            || self.contains_text(decorators, "decorators", "isname");
+        let no_memo = self.contains_text(decorators, "decorators", "nomemo");
+
+        (is_name, no_memo)
     }
 
     fn unary(&self, treemap: &TreeMap, key: &'static str, build: fn(Exp) -> Exp) -> Exp {
@@ -158,7 +183,7 @@ impl GrammarCompiler {
     }
 
     pub fn compile_grammar(&self, tree: &Tree) -> Grammar {
-        let (name, treemap) = self.node(tree, "grammar");
+        let (name, treemap) = self.node_map(tree, "grammar");
         assert_eq!(name, "Grammar");
         self.expect_keys(
             treemap,
@@ -170,11 +195,7 @@ impl GrammarCompiler {
         let directives = self.directives(self.field(treemap, "directives"));
         let keywords = self.keywords(self.field(treemap, "keywords"));
         let rule_trees = self.list_field(treemap, "rules");
-
-        let mut rules = Vec::with_capacity(rule_trees.len());
-        for rule_tree in rule_trees {
-            rules.push(self.compile_rule(rule_tree));
-        }
+        let rules = self.compile_rules(rule_trees);
 
         let mut grammar = Grammar::new(grammar_name, &rules);
         grammar.directives = directives;
@@ -183,7 +204,7 @@ impl GrammarCompiler {
     }
 
     pub fn compile_rule(&self, tree: &Tree) -> Rule {
-        let (name, treemap) = self.node(tree, "rule");
+        let (name, treemap) = self.node_map(tree, "rule");
         assert_eq!(name, "Rule");
         self.expect_keys(
             treemap,
@@ -193,31 +214,14 @@ impl GrammarCompiler {
 
         let rule_name = self.text_field(treemap, "name").to_string();
         let params = self.text_list(self.field(treemap, "params"), "params");
-        let decorators = self.field(treemap, "decorators");
-
-        assert!(
-            !self.contains_text(decorators, "decorators", "override"),
-            "override decorator is not implemented"
-        );
-
         let exp = self.rhs_field(treemap, "exp");
+        let (decorator_is_name, decorator_no_memo) = self.compile_rule_decorators(treemap);
 
-        let is_name = self.bool_flag(treemap, "is_name")
-            || self.contains_text(decorators, "decorators", "name")
-            || self.contains_text(decorators, "decorators", "isname");
+        let is_name = self.bool_flag(treemap, "is_name") || decorator_is_name;
         let is_tokn = self.bool_flag(treemap, "is_tokn");
-        let no_memo =
-            self.bool_flag(treemap, "no_memo") || self.contains_text(decorators, "decorators", "nomemo");
-        let is_memo = treemap
-            .get("is_memo")
-            .or_else(|| treemap.get("is_memoizable"))
-            .map(|tree| self.bool_text(tree, "is_memo"))
-            .unwrap_or(true);
-        let is_lrec = treemap
-            .get("is_lrec")
-            .or_else(|| treemap.get("is_leftrec"))
-            .map(|tree| self.bool_text(tree, "is_lrec"))
-            .unwrap_or(false);
+        let no_memo = self.bool_flag(treemap, "no_memo") || decorator_no_memo;
+        let is_memo = self.one_of(treemap, &["is_memo", "is_memoizable"], true);
+        let is_lrec = self.one_of(treemap, &["is_lrec", "is_leftrec"], false);
 
         assert!(
             matches!(self.field(treemap, "base"), Tree::Nil),
@@ -237,7 +241,7 @@ impl GrammarCompiler {
     }
 
     pub fn compile_rhs(&self, tree: &Tree) -> Exp {
-        let (name, treemap) = self.node(tree, "expression");
+        let (name, treemap) = self.node_map(tree, "expression");
 
         match name {
             "Sequence" => Exp::sequence(self.rhs_list(treemap, "sequence")),
