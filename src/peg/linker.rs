@@ -1,37 +1,30 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::peg::{Exp, ExpKind, Grammar, Rule};
+use super::error::ParseError;
+use super::{Exp, ExpKind, Grammar, Rule};
 
-pub trait Linked {
-    fn linked(&self) -> Self;
-}
-
-pub trait LinkedWith {
-    fn linked_with(&self, g: &Grammar) -> Self;
-}
-
-impl Linked for Grammar {
-    fn linked(&self) -> Grammar {
+impl Grammar {
+    pub fn crossrefed(&self) -> Result<Grammar, ParseError> {
         let mut rules: Vec<_> = vec![];
         for rule in self.rules() {
-            rules.push(rule.linked_with(self))
+            rules.push(rule.crossrefed(self)?)
         }
-        Grammar::new(self.name.as_str(), rules.as_slice())
+        Ok(Grammar::new(self.name.as_str(), rules.as_slice()))
     }
 }
 
-impl LinkedWith for Rule {
-    fn linked_with(&self, g: &Grammar) -> Rule {
-        Rule {
+impl Rule {
+    pub fn crossrefed(&self, g: &Grammar) -> Result<Rule, ParseError> {
+        Ok(Rule {
             info: self.info.clone(),
-            exp: self.exp.linked_with(g),
-        }
+            exp: self.exp.crossrefed(g)?,
+        })
     }
 }
 
-impl LinkedWith for Exp {
-    fn linked_with(&self, g: &Grammar) -> Exp {
+impl Exp {
+    pub fn crossrefed(&self, g: &Grammar) -> Result<Exp, ParseError> {
         match &self.kind {
             ExpKind::Nil
             | ExpKind::Cut
@@ -42,56 +35,64 @@ impl LinkedWith for Exp {
             | ExpKind::Token(_)
             | ExpKind::Pattern(_)
             | ExpKind::Constant(_)
-            | ExpKind::Alert(_, _) => self.clone(),
+            | ExpKind::Alert(_, _) => Ok(self.clone()),
 
             ExpKind::Call(name, exp) => {
-                let mut exp = exp.linked_with(g);
+                let mut exp = exp.crossrefed(g)?;
                 if matches!(exp.kind, ExpKind::Nil)
                     && let Some(rule) = g.rulemap.get(name)
                 {
-                    exp = rule.exp.linked_with(g);
+                    exp = rule.exp.crossrefed(g)?;
                 }
-                Exp::call(name, exp)
+                Ok(Exp::call(name, exp))
             }
             ExpKind::RuleInclude { name, exp } => {
-                let mut exp = exp.linked_with(g);
+                let mut exp = exp.crossrefed(g)?;
                 if matches!(exp.kind, ExpKind::Nil)
                     && let Some(rule) = g.rulemap.get(name)
                 {
-                    exp = rule.exp.linked_with(g);
+                    exp = rule.exp.crossrefed(g)?;
                 }
-                Exp::rule_include(name, exp)
+                Ok(Exp::rule_include(name, exp))
             }
 
-            ExpKind::Named(name, exp) => Exp::named(name, exp.linked_with(g)),
-            ExpKind::NamedList(name, exp) => Exp::named_list(name, exp.linked_with(g)),
+            ExpKind::Named(name, exp) => Ok(Exp::named(name, exp.crossrefed(g)?)),
+            ExpKind::NamedList(name, exp) => Ok(Exp::named_list(name, exp.crossrefed(g)?)),
 
-            ExpKind::Override(exp) => Exp::override_node(exp.linked_with(g)),
-            ExpKind::OverrideList(exp) => Exp::override_list(exp.linked_with(g)),
-            ExpKind::Group(exp) => Exp::group(exp.linked_with(g)),
-            ExpKind::SkipGroup(exp) => Exp::skip_group(exp.linked_with(g)),
-            ExpKind::Lookahead(exp) => Exp::lookahead(exp.linked_with(g)),
-            ExpKind::NegativeLookahead(exp) => Exp::negative_lookahead(exp.linked_with(g)),
-            ExpKind::SkipTo(exp) => Exp::skip_to(exp.linked_with(g)),
-            ExpKind::Alt(exp) => Exp::alt(exp.linked_with(g)),
-            ExpKind::Optional(exp) => Exp::optional(exp.linked_with(g)),
-            ExpKind::Closure(exp) => Exp::closure(exp.linked_with(g)),
-            ExpKind::PositiveClosure(exp) => Exp::positive_closure(exp.linked_with(g)),
+            ExpKind::Override(exp) => Ok(Exp::override_node(exp.crossrefed(g)?)),
+            ExpKind::OverrideList(exp) => Ok(Exp::override_list(exp.crossrefed(g)?)),
+            ExpKind::Group(exp) => Ok(Exp::group(exp.crossrefed(g)?)),
+            ExpKind::SkipGroup(exp) => Ok(Exp::skip_group(exp.crossrefed(g)?)),
+            ExpKind::Lookahead(exp) => Ok(Exp::lookahead(exp.crossrefed(g)?)),
+            ExpKind::NegativeLookahead(exp) => Ok(Exp::negative_lookahead(exp.crossrefed(g)?)),
+            ExpKind::SkipTo(exp) => Ok(Exp::skip_to(exp.crossrefed(g)?)),
+            ExpKind::Alt(exp) => Ok(Exp::alt(exp.crossrefed(g)?)),
+            ExpKind::Optional(exp) => Ok(Exp::optional(exp.crossrefed(g)?)),
+            ExpKind::Closure(exp) => Ok(Exp::closure(exp.crossrefed(g)?)),
+            ExpKind::PositiveClosure(exp) => Ok(Exp::positive_closure(exp.crossrefed(g)?)),
 
-            ExpKind::Sequence(elements) => {
-                Exp::sequence(elements.iter().map(|e| e.linked_with(g)).collect())
-            }
-            ExpKind::Choice(options) => {
-                Exp::choice(options.iter().map(|e| e.linked_with(g)).collect())
-            }
+            ExpKind::Sequence(elements) => Ok(Exp::sequence(
+                elements
+                    .iter()
+                    .map(|e| e.crossrefed(g))
+                    .collect::<Result<Vec<_>, _>>()?,
+            )),
+            ExpKind::Choice(options) => Ok(Exp::choice(
+                options
+                    .iter()
+                    .map(|e| e.crossrefed(g))
+                    .collect::<Result<Vec<_>, _>>()?,
+            )),
 
-            ExpKind::Join { exp: e, sep: s } => Exp::join(e.linked_with(g), s.linked_with(g)),
+            ExpKind::Join { exp: e, sep: s } => Ok(Exp::join(e.crossrefed(g)?, s.crossrefed(g)?)),
             ExpKind::PositiveJoin { exp: e, sep: s } => {
-                Exp::positive_join(e.linked_with(g), s.linked_with(g))
+                Ok(Exp::positive_join(e.crossrefed(g)?, s.crossrefed(g)?))
             }
-            ExpKind::Gather { exp: e, sep: s } => Exp::gather(e.linked_with(g), s.linked_with(g)),
+            ExpKind::Gather { exp: e, sep: s } => {
+                Ok(Exp::gather(e.crossrefed(g)?, s.crossrefed(g)?))
+            }
             ExpKind::PositiveGather { exp: e, sep: s } => {
-                Exp::positive_gather(e.linked_with(g), s.linked_with(g))
+                Ok(Exp::positive_gather(e.crossrefed(g)?, s.crossrefed(g)?))
             }
         }
     }

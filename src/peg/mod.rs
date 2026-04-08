@@ -15,6 +15,7 @@ pub mod pretty;
 pub mod repeat;
 pub mod rule;
 
+pub use error::ParseError;
 pub use exp::{Exp, ExpKind};
 pub use grammar::Grammar;
 pub use parser::{F, ParseResult, Parser, S};
