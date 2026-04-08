@@ -22,10 +22,11 @@ impl Grammar {
             let value: serde_json::Value = serde_json::from_str(json).map_err(ImportError::from)?;
 
             // Debug: If you suspect the JSON structure is wrong, you can inspect 'value' here.
-            println!(
-                "DEBUG: Raw JSON Root Type: {:?}",
-                value.as_object().map(|_| "Object").unwrap_or("Other")
-            );
+            assert!(value.is_object());
+            // println!(
+            //     "DEBUG: Raw JSON Root Type: {:?}",
+            //     value.as_object().map(|_| "Object").unwrap_or("Other")
+            // );
             // println!("DEBUG: Raw JSON Root Type: {:#}", value);
         }
 
