@@ -18,6 +18,7 @@ exclude = [
 [features]
 # The CLI is now an optional feature, included in default
 default = ["regex", "serde", "serde_json", "cli"]
+transient = ["regex", "serde", "serde_json", "cli"]
 
 # Core features
 regex = ["dep:regex"]

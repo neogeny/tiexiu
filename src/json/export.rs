@@ -26,8 +26,7 @@ impl TryFrom<Grammar> for TatSuModel {
 
     fn try_from(grammar: Grammar) -> Result<Self, Self::Error> {
         let rules: Vec<TatSuModel> = grammar
-            .rulemap
-            .values()
+            .rules()
             .map(|r| {
                 let rule = r;
                 TatSuModel::Rule {

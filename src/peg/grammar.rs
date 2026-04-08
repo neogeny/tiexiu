@@ -14,7 +14,7 @@ pub struct Grammar {
     pub analyzed: bool,
     pub directives: HashMap<String, String>,
     pub keywords: HashSet<String>,
-    pub rulemap: RuleMap,
+    rulemap: RuleMap,
 }
 
 impl<C> Parser<C> for Grammar
@@ -77,6 +77,20 @@ impl Grammar {
         } else {
             Err(ctx.failure(ParseError::RuleNotFound(start.into())))
         }
+    }
+
+    pub fn get_rule(&self, name: &str) -> Result<&Rule, ParseError> {
+        if let Some(rule) = self.rulemap.get(name) {
+            return Ok(rule);
+        }
+        Err(ParseError::RuleNotFound(name.into()))
+    }
+
+    pub fn get_rule_mut(&mut self, name: &str) -> Result<&mut Rule, ParseError> {
+        if let Some(rule) = self.rulemap.get_mut(name) {
+            return Ok(rule);
+        }
+        Err(ParseError::RuleNotFound(name.into()))
     }
 
     pub fn rules(&self) -> impl Iterator<Item = &Rule> {

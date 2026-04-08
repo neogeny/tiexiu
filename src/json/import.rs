@@ -87,13 +87,10 @@ impl TryFrom<TatSuModel> for Grammar {
                     (k.clone(), val_str)
                 })
                 .collect();
-            let mut grammar = Grammar {
-                name: name.as_str().into(),
-                analyzed,
-                rulemap: Grammar::new_rulemap(&rule_vec),
-                directives: str_directives,
-                keywords,
-            };
+            let mut grammar = Grammar::new(name.as_str(), &rule_vec);
+            grammar.analyzed = analyzed;
+            grammar.directives = str_directives;
+            grammar.keywords = keywords;
             grammar.initialize();
             Ok(grammar)
         } else {

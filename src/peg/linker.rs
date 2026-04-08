@@ -27,11 +27,8 @@ impl Exp {
     fn xrefd(&self, name: &str, g: &Grammar) -> Result<Exp, ParseError> {
         let mut exp = self.crossrefed(g)?;
         if matches!(exp.kind, ExpKind::Nil) {
-            if let Some(rule) = g.rulemap.get(name) {
-                exp = rule.exp.crossrefed(g)?;
-            } else {
-                return Err(ParseError::RuleNotFound(name.into()));
-            }
+            let rule = g.get_rule(name)?;
+            exp = rule.exp.crossrefed(g)?;
         }
         Ok(exp)
     }

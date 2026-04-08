@@ -49,9 +49,8 @@ impl<'a> Analyzer<'a> {
         if let ExpKind::Call(name, _) = &node.kind
             && self
                 .grammar
-                .rulemap
-                .get(name)
-                .is_some_and(|r| r.is_left_recursive())
+                .get_rule(name)
+                .is_ok_and(|r| r.is_left_recursive())
         {
             self.depth_stack.push(self.depth as isize);
             is_rule = true;
@@ -116,7 +115,7 @@ impl Grammar {
     }
 
     fn mark_as_lrec(&mut self, name: &str) {
-        if let Some(rule) = self.rulemap.get_mut(name) {
+        if let Ok(rule) = self.get_rule_mut(name) {
             rule.set_left_recursive();
         }
     }
