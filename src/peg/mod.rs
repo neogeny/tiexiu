@@ -7,6 +7,7 @@ pub mod exp;
 pub mod fold;
 pub mod grammar;
 pub mod leftrec;
+pub mod linker;
 pub mod lookahead;
 pub mod nullability;
 pub mod parser;

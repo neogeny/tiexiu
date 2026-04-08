@@ -10,15 +10,15 @@ use indexmap::IndexMap;
 use std::fmt;
 use std::rc::Rc;
 
-pub type RuleInfo = PruneInfo;
-pub type RuleInfoRef = PruneInfoRef;
-pub type RuleMap = IndexMap<Box<str>, Rule>;
-
 pub const FLAG_IS_NAME: &str = "is_name";
 pub const FLAG_IS_TOKN: &str = "is_tokn";
 pub const FLAG_NO_MEMO: &str = "no_memo";
 pub const FLAG_IS_MEMO: &str = "is_memo";
 pub const FLAG_IS_LREC: &str = "is_lrec";
+
+pub type RuleInfo = PruneInfo;
+pub type RuleInfoRef = PruneInfoRef;
+pub type RuleMap = IndexMap<Box<str>, Rule>;
 
 #[derive(Debug, Clone)]
 pub struct Rule {
