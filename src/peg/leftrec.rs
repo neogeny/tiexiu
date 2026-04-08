@@ -60,6 +60,12 @@ impl<'a> Analyzer<'a> {
         self.depth += 1;
 
         // try:
+        if let ExpKind::RuleInclude { name, .. } = &node.kind
+            && let Ok(rule) = self.grammar.get_rule_ref(name)
+        {
+            self.dfs(&rule.exp);
+        }
+
         for child in node.callable_from() {
             self.dfs(child);
 

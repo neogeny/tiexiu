@@ -18,7 +18,7 @@ pub const FLAG_IS_LREC: &str = "is_lrec";
 
 pub type RuleInfo = PruneInfo;
 pub type RuleInfoRef = PruneInfoRef;
-pub type RuleMap = HashMap<Box<str>, Rule>;
+pub type RuleRef = Rc<Rule>;
 pub type RuleIndex = HashMap<Box<str>, usize>;
 
 #[derive(Debug, Clone)]

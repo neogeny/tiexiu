@@ -10,7 +10,6 @@ pub type StrCtx<'c> = CoreCtx<'c, StrCursor<'c>>;
 mod tests {
     use super::*;
     use crate::input::strcursor::StrCursor;
-    use crate::peg::Grammar;
     use crate::state::Ctx;
     use crate::trees::{KeyValue, Tree};
     use std::mem::size_of;
@@ -64,11 +63,10 @@ mod tests {
 
     #[test]
     fn test_cow_behavior() {
-        let grammar = Grammar::default();
         let text = "calculate 1 + 2";
         let cursor: StrCursor = StrCursor::new(text);
 
-        let mut ctx1 = CoreCtx::new(cursor, &grammar);
+        let mut ctx1 = CoreCtx::new(cursor);
 
         ctx1.reset(10);
         assert_eq!(ctx1.cursor().mark(), 10);
@@ -88,10 +86,9 @@ mod tests {
 
     #[test]
     fn test_shared_memoization_semantics() {
-        let grammar = Grammar::default();
         let text = "abc";
         let cursor: StrCursor = StrCursor::new(text);
-        let mut ctx1 = CoreCtx::new(cursor, &grammar);
+        let mut ctx1 = CoreCtx::new(cursor);
 
         let mut ctx2 = ctx1.clone();
 
@@ -114,9 +111,8 @@ mod tests {
 
     #[test]
     fn test_state_isolation_preserves_shared_cache() {
-        let grammar = Grammar::default();
         let cursor: StrCursor = StrCursor::new("abc");
-        let mut ctx1 = CoreCtx::new(cursor, &grammar);
+        let mut ctx1 = CoreCtx::new(cursor);
         let mut ctx2 = ctx1.clone();
 
         ctx2.reset(1);

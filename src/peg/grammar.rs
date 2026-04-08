@@ -3,10 +3,11 @@
 
 use super::error::ParseError;
 use super::parser::{ParseResult, Parser};
-use super::rule::{Rule, RuleIndex};
+use super::rule::{Rule, RuleIndex, RuleRef};
 use crate::state::Ctx;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
+use std::rc::Rc;
 
 #[derive(Debug, Clone)]
 pub struct Grammar {
@@ -14,7 +15,7 @@ pub struct Grammar {
     pub analyzed: bool,
     pub directives: HashMap<String, String>,
     pub keywords: HashSet<String>,
-    rules: Box<[Rule]>,
+    pub(super) rules: Box<[RuleRef]>,
     index: RuleIndex,
 }
 
@@ -48,11 +49,17 @@ impl fmt::Display for Grammar {
 
 impl Grammar {
     pub fn new(name: &str, rules: &[Rule]) -> Self {
+        let rules: Box<[RuleRef]> = rules
+            .iter()
+            .cloned()
+            .map(Into::into)
+            .collect::<Vec<_>>()
+            .into();
         let mut grammar = Self {
             name: name.to_string(),
             analyzed: false,
-            rules: rules.into(),
-            index: Self::new_rule_index(rules),
+            index: Self::new_rule_index(&rules),
+            rules,
             directives: HashMap::new(),
             keywords: HashSet::new(),
         };
@@ -60,7 +67,7 @@ impl Grammar {
         grammar
     }
 
-    pub fn new_rule_index(rules: &[Rule]) -> RuleIndex {
+    pub fn new_rule_index(rules: &[RuleRef]) -> RuleIndex {
         rules
             .iter()
             .enumerate()
@@ -69,8 +76,8 @@ impl Grammar {
     }
 
     pub fn initialize(&mut self) {
-        self.link();
         self.mark_left_recursion();
+        self.link();
     }
 
     fn parse_at<C: Ctx>(&self, start: &str, ctx: C) -> ParseResult<C> {
@@ -83,12 +90,19 @@ impl Grammar {
     pub fn get_rule(&self, name: &str) -> Result<&Rule, ParseError> {
         self.index
             .get(name)
-            .map(|i| &self.rules[*i])
+            .map(|i| self.rules[*i].as_ref())
+            .ok_or_else(|| ParseError::RuleNotFound(name.into()))
+    }
+
+    pub fn get_rule_ref(&self, name: &str) -> Result<RuleRef, ParseError> {
+        self.index
+            .get(name)
+            .map(|i| self.rules[*i].clone())
             .ok_or_else(|| ParseError::RuleNotFound(name.into()))
     }
 
     pub fn get_rule_at(&self, id: usize) -> Option<&Rule> {
-        self.rules.get(id)
+        self.rules.get(id).map(|r| r.as_ref())
     }
 
     pub fn get_rule_by_id(&self, id: usize) -> Option<&Rule> {
@@ -103,17 +117,17 @@ impl Grammar {
     }
 
     pub fn get_rule_mut(&mut self, name: &str) -> Result<&mut Rule, ParseError> {
-        self.index
-            .get_mut(name)
-            .map(|i| &mut self.rules[*i])
-            .ok_or_else(|| ParseError::RuleNotFound(name.into()))
+        match self.index.get(name).copied() {
+            Some(i) => Ok(Rc::make_mut(&mut self.rules[i])),
+            None => Err(ParseError::RuleNotFound(name.into())),
+        }
     }
 
     pub fn rules(&self) -> impl Iterator<Item = &Rule> {
-        self.rules.iter()
+        self.rules.iter().map(|r| r.as_ref())
     }
 
     pub fn rules_mut(&mut self) -> impl Iterator<Item = &mut Rule> {
-        self.rules.iter_mut()
+        self.rules.iter_mut().map(Rc::make_mut)
     }
 }

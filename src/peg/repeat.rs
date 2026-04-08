@@ -67,7 +67,8 @@ mod tests {
 
     fn setup(input: &str) -> CoreCtx<'_, StrCursor<'_>> {
         let grammar = Box::leak(Box::new(Grammar::default()));
-        CoreCtx::new(StrCursor::new(input), grammar)
+        let _ = grammar;
+        CoreCtx::new(StrCursor::new(input))
     }
 
     #[test]

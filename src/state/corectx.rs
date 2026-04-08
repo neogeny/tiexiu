@@ -1,5 +1,4 @@
 use crate::input::Cursor;
-use crate::peg::Grammar;
 use crate::state::Ctx;
 use crate::state::memo::{Key, Memo, MemoCache};
 use crate::trees::Tree;
@@ -18,9 +17,9 @@ pub struct State<U: Cursor> {
 
 #[derive(Clone, Debug)]
 pub struct HeavyState<'c> {
-    pub grammar: &'c Grammar,
     pub memos: MemoCache,
     pub regex: RegexCache,
+    pub marker: std::marker::PhantomData<&'c ()>,
 }
 
 #[derive(Clone, Debug)]
@@ -36,7 +35,7 @@ impl<'c, U> CoreCtx<'c, U>
 where
     U: Cursor + Clone,
 {
-    pub fn new(cursor: U, grammar: &'c Grammar) -> Self {
+    pub fn new(cursor: U) -> Self {
         Self {
             state: State {
                 cursor,
@@ -44,9 +43,9 @@ where
             }
             .into(),
             heavy: RefCell::new(HeavyState {
-                grammar,
                 memos: MemoCache::new(),
                 regex: RegexCache::new(),
+                marker: std::marker::PhantomData,
             })
             .into(),
         }
@@ -72,10 +71,6 @@ impl<'c, U> Ctx for CoreCtx<'c, U>
 where
     U: Cursor + Clone,
 {
-    fn grammar(&self) -> &Grammar {
-        self.heavy.borrow().grammar
-    }
-
     #[inline]
     fn cursor(&self) -> &dyn Cursor {
         &self.state.cursor

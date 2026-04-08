@@ -1,7 +1,7 @@
 // copyright (c) 2026 juancarlo añez (apalala@gmail.com)
 // spdx-license-identifier: mit or apache-2.0
 
-use super::exp::{Exp, ExpKind, UNRESOLVED_CALL_ID};
+use super::exp::{Exp, ExpKind};
 
 impl Exp {
     #[inline]
@@ -28,9 +28,10 @@ impl Exp {
     }
 
     pub fn rule_include(name: &str, exp: Self) -> Self {
+        let _ = exp;
         Self::new(ExpKind::RuleInclude {
             name: name.into(),
-            exp: exp.into(),
+            rule: None,
         })
     }
 
@@ -63,7 +64,7 @@ impl Exp {
     pub fn call(name: &str) -> Self {
         Self::new(ExpKind::Call {
             name: name.into(),
-            id: UNRESOLVED_CALL_ID,
+            rule: None,
         })
     }
 

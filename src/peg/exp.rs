@@ -5,6 +5,7 @@ pub use super::build;
 use super::error::ParseError;
 pub use super::lookahead;
 use super::parser::{F, ParseResult, Parser, S};
+use super::rule::RuleRef;
 use crate::state::Ctx;
 use crate::trees::Tree;
 use std::fmt::Debug;
@@ -13,8 +14,6 @@ use std::ops::Deref;
 pub type ERef = Box<Exp>;
 pub type ERefArr = Box<[Exp]>;
 pub type Str = Box<str>;
-pub const UNRESOLVED_CALL_ID: usize = usize::MAX;
-
 #[derive(Debug, Clone)]
 pub struct Exp {
     pub kind: ExpKind,
@@ -30,7 +29,7 @@ pub enum ExpKind {
     Dot,
     Eof,
 
-    Call { name: Str, id: usize },
+    Call { name: Str, rule: Option<RuleRef> },
 
     Token(Str),
     Pattern(Str),
@@ -60,7 +59,7 @@ pub enum ExpKind {
     PositiveJoin { exp: ERef, sep: ERef },
     Gather { exp: ERef, sep: ERef },
     PositiveGather { exp: ERef, sep: ERef },
-    RuleInclude { name: Str, exp: ERef },
+    RuleInclude { name: Str, rule: Option<RuleRef> },
 }
 
 impl Exp {
@@ -76,11 +75,24 @@ where
     fn parse(&self, mut ctx: C) -> ParseResult<C> {
         match &self.kind {
             ExpKind::Nil => Ok(S(ctx, Tree::Nil)),
-            ExpKind::RuleInclude { .. } => Ok(S(ctx, Tree::Nil)),
-            ExpKind::Call { name, id, .. } => match if *id == UNRESOLVED_CALL_ID {
-                ctx.call(name)
+            ExpKind::RuleInclude { name, rule } => match if let Some(rule) = rule {
+                rule.exp.parse(ctx)
             } else {
-                ctx.call_by_id(*id, name)
+                Err(ctx.failure(ParseError::RuleNotFound(name.clone())))
+            } {
+                Ok(S(mut ctx, tree)) => {
+                    ctx.uncut();
+                    Ok(S(ctx, tree))
+                }
+                Err(mut f) => {
+                    f.uncut();
+                    Err(f)
+                }
+            },
+            ExpKind::Call { name, rule } => match if let Some(rule) = rule {
+                ctx.call_rule(name, rule.as_ref())
+            } else {
+                Err(ctx.failure(ParseError::RuleNotFound(name.clone())))
             } {
                 Ok(S(mut ctx, tree)) => {
                     ctx.uncut();
@@ -316,7 +328,8 @@ mod tests {
                 ]),
             )],
         );
-        let ctx = StrCtx::new(StrCursor::new("acx"), &grammar);
+        let _ = grammar;
+        let ctx = StrCtx::new(StrCursor::new("acx"));
 
         let err = grammar.parse(ctx).unwrap_err();
 
