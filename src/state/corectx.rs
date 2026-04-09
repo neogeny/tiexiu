@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::input::Cursor;
+use crate::peg::parser::TokenList;
 use crate::state::Ctx;
 use crate::state::memo::{Key, Memo, MemoCache};
 use crate::trees::Tree;
@@ -16,6 +17,7 @@ type RegexCache = HashMap<String, Regex>;
 pub struct State<U: Cursor> {
     pub cursor: U,
     pub cutseen: bool,
+    pub callstack: TokenList,
 }
 
 #[derive(Clone, Debug)]
@@ -43,6 +45,7 @@ where
             state: State {
                 cursor,
                 cutseen: false,
+                callstack: TokenList::new(),
             }
             .into(),
             heavy: RefCell::new(HeavyState {
@@ -62,7 +65,6 @@ where
     #[inline]
     fn with_heavy_mut<F, R>(&self, f: F) -> R
     where
-        // We define the closure to take &mut HeavyState
         F: FnOnce(&mut HeavyState<'c>) -> R,
     {
         let mut heavy = self.heavy.borrow_mut();
@@ -82,6 +84,16 @@ where
     #[inline]
     fn cursor_mut(&mut self) -> &mut dyn Cursor {
         &mut self.state_mut().cursor
+    }
+
+    #[inline]
+    fn stack(&self) -> TokenList {
+        self.state.callstack.clone()
+    }
+
+    fn enter(&mut self, name: &str) {
+        let stack = self.state.callstack.clone();
+        self.state_mut().callstack = stack.insert(name);
     }
 
     fn regex(&self, pattern: &str) -> Regex {

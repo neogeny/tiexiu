@@ -7,6 +7,7 @@ use crate::peg::error::ParseError;
 use crate::peg::{F, ParseResult, Rule, S};
 use crate::trees::tree::Tree;
 use crate::util::pyre::Pattern as Regex;
+use crate::util::tokenlist::TokenList;
 use std::fmt::Debug;
 
 pub trait Ctx: Clone + Debug {
@@ -14,8 +15,12 @@ pub trait Ctx: Clone + Debug {
 
     fn cursor_mut(&mut self) -> &mut dyn Cursor;
 
+    fn stack(&self) -> TokenList;
+
+    fn enter(&mut self, name: &str);
+
     fn failure(&self, error: ParseError) -> F {
-        F::new(self.mark(), self.cut_seen(), error)
+        F::new(self.mark(), self.cut_seen(), error, self.stack())
     }
 
     fn eof_check(&mut self) -> bool {
@@ -69,6 +74,8 @@ pub trait Ctx: Clone + Debug {
     fn prune_cache(&mut self);
 
     fn call_rule(mut self, name: &str, rule: &Rule) -> ParseResult<Self> {
+        self.enter(name);
+
         if !rule.is_token() {
             self.next_token();
         }

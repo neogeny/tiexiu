@@ -25,7 +25,7 @@ where
 
     match boot.parse(ctx) {
         Ok(S(_, tree)) => Ok(tree),
-        Err(failure) => Err(Error::from(failure.error)),
+        Err(failure) => Err(failure.into()),
     }
 }
 
@@ -81,6 +81,6 @@ pub fn parse_input(grammar: &Grammar, input: &str) -> Result<Tree> {
 
     match grammar.parse(ctx) {
         Ok(S(_, tree)) => Ok(tree),
-        Err(failure) => Err(Error::from(failure.error)),
+        Err(failure) => Err(failure.into()),
     }
 }
