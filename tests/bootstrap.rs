@@ -39,7 +39,6 @@ mod structure {
     use fixtures::all_rules_linked;
 
     #[test]
-    #[ignore]
     fn has_required_rules() {
         let boot = boot_grammar();
 
@@ -81,7 +80,6 @@ mod structure {
     }
 
     #[test]
-    #[ignore]
     fn all_rules_are_linked() {
         let boot = boot_grammar();
         let issues = all_rules_linked(&boot);
@@ -103,13 +101,15 @@ mod parse_grammar {
     #[test]
     #[ignore]
     fn simple_grammar() {
-        let boot = boot_grammar();
-        let grammar = r#"
-            @@grammar :: Test
+        let tree = tiexiu::api::parse(
+            r#"
+            @@grammar :: Simple
             start: 'hello'
-        "#;
-        let tree = parse_ebnf(&boot, grammar);
+        "#,
+        )
+        .expect("Failed to parse");
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
+        assert!(tree.to_json_string().unwrap().contains("grammar"));
     }
 
     #[test]

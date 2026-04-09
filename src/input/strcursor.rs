@@ -3,7 +3,7 @@
 
 use super::Cursor;
 use super::error::Error;
-use crate::util::re::Regex;
+use crate::util::pyre::Pattern as Regex;
 use std::rc::Rc;
 
 #[derive(Clone, Debug)]
@@ -14,9 +14,9 @@ struct Patterns {
 }
 
 impl Patterns {
-    const DEFAULT_WSP: &'static str = r"^\s+";
-    const DEFAULT_EOL: &'static str = r"^//.*$";
-    const DEFAULT_CMT: &'static str = r"^$";
+    const DEFAULT_WSP: &'static str = r"\s+";
+    const DEFAULT_EOL: &'static str = r"//.*$";
+    const DEFAULT_CMT: &'static str = r"";
 
     fn compile(kind: &'static str, pattern: &str) -> Result<Regex, Error> {
         Regex::new(pattern).map_err(|source| Error::InvalidRegex {
@@ -76,11 +76,11 @@ impl<'a> StrCursor<'a> {
     #[inline]
     fn eat_regex(&mut self, re: &Regex) -> bool {
         let text = &self.text[self.offset..];
-        if let Ok(Some(mat)) = re.find(text)
-            && mat.start() == 0
-        {
-            self.offset += mat.end();
-            return true;
+        if let Some(mat) = re.search(text) {
+            if mat.start(Option::<usize>::None) == 0 {
+                self.offset += mat.end(Option::<usize>::None) as usize;
+                return true;
+            }
         }
         false
     }
@@ -121,17 +121,16 @@ impl<'a> Cursor for StrCursor<'a> {
 
     fn pattern_re(&mut self, re: &Regex) -> Option<String> {
         let text = &self.text[self.offset..];
-        let caps = match re.captures(text) {
-            Ok(Some(c)) => c,
-            _ => return None,
-        };
-        let whole = caps.get(0)?;
-        if whole.start() != 0 {
+        let matches = re.finditer(text);
+        let first = matches.into_iter().next()?;
+        if first.start(Option::<usize>::None) != 0 {
             return None;
         }
 
-        self.offset += whole.end();
-        let matched = caps.get(1).unwrap_or(whole).as_str();
+        self.offset += first.end(Option::<usize>::None) as usize;
+        let matched = first
+            .group(1)
+            .unwrap_or_else(|| first.group(0).unwrap_or(""));
         Some(matched.to_string())
     }
 

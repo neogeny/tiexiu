@@ -19,6 +19,7 @@ impl Exp {
 
     #[inline]
     pub fn pattern(pattern: &str) -> Self {
+        crate::util::pyre::compile(pattern).expect("Invalid regex pattern");
         Self::new(ExpKind::Pattern(pattern.into()))
     }
 

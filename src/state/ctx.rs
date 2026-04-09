@@ -6,7 +6,7 @@ use crate::input::Cursor;
 use crate::peg::error::ParseError;
 use crate::peg::{F, ParseResult, Rule, S};
 use crate::trees::tree::Tree;
-use crate::util::re::Regex;
+use crate::util::pyre::Pattern as Regex;
 use std::fmt::Debug;
 
 pub trait Ctx: Clone + Debug {
@@ -85,7 +85,7 @@ pub trait Ctx: Clone + Debug {
         }
 
         if rule.is_left_recursive() {
-            self.recursive_call(key, rule)
+            self.call_recursive(key, rule)
         } else {
             match rule.parse(self.clone()) {
                 Ok(S(mut ctx, tree)) => {
@@ -100,7 +100,7 @@ pub trait Ctx: Clone + Debug {
         }
     }
 
-    fn recursive_call(mut self, key: Key, rule: &Rule) -> ParseResult<Self> {
+    fn call_recursive(mut self, key: Key, rule: &Rule) -> ParseResult<Self> {
         if !rule.is_left_recursive() {
             panic!("Recursive call on non-LRec rule");
         }

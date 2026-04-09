@@ -47,9 +47,9 @@
             "__class__": "Named",
             "exp": {
               "__class__": "Constant",
-              "literal": "TATSU"
+              "literal": "This is a Constant"
             },
-            "name": "title"
+            "name": "test_constant"
           },
           {
             "__class__": "Closure",
