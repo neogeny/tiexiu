@@ -3,7 +3,7 @@
 
 pub trait Folder<I, O> {
     /// Transforms a single discrete item from the input into the output.
-    fn fold(&mut self, item: &I) -> O;
+    fn fold(&mut self, item: &I, children: &[O]) -> O;
 }
 
 pub trait Folds<I, O> {
