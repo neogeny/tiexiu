@@ -19,8 +19,8 @@ pub trait Ctx: Clone + Debug {
 
     fn enter(&mut self, name: &str);
 
-    fn failure(&self, error: ParseError) -> F {
-        F::new(self.mark(), self.cut_seen(), error, self.stack())
+    fn failure(&self, start: usize, error: ParseError) -> F {
+        F::new(start, self.mark(), self.cut_seen(), error, self.stack())
     }
 
     fn eof_check(&mut self) -> bool {
@@ -74,6 +74,7 @@ pub trait Ctx: Clone + Debug {
     fn prune_cache(&mut self);
 
     fn call_rule(mut self, name: &str, rule: &Rule) -> ParseResult<Self> {
+        let start = self.mark();
         // TODO: self.tracer.trace_entry(self.cursor)
         self.enter(name);
 
@@ -85,7 +86,7 @@ pub trait Ctx: Clone + Debug {
         if let Some(memo) = self.memo(&key) {
             return match memo.tree {
                 // TODO: self.tracer.trace_failure(self.cursor, e)
-                Tree::Bottom => Err(self.failure(ParseError::FailedParse(name.into()))),
+                Tree::Bottom => Err(self.failure(start, ParseError::FailedParse(name.into()))),
                 _ => {
                     self.reset(memo.mark);
                     Ok(S(self, memo.tree))
@@ -151,8 +152,9 @@ pub trait Ctx: Clone + Debug {
             Ok(S(self, tree))
         } else {
             // TODO: self.tracer.trace_failure(self.cursor, e)
-            Err(last_failure
-                .unwrap_or_else(|| self.failure(ParseError::FailedParse(rule.info.name.clone()))))
+            Err(last_failure.unwrap_or_else(|| {
+                self.failure(start_mark, ParseError::FailedParse(rule.info.name.clone()))
+            }))
         }
     }
 }

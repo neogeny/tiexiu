@@ -77,14 +77,15 @@ where
     C: Ctx,
 {
     fn parse(&self, mut ctx: C) -> ParseResult<C> {
+        let start = ctx.mark();
         match &self.kind {
             ExpKind::Nil => Ok(S(ctx, Tree::Nil)),
             ExpKind::RuleInclude { name, exp } => match exp {
-                None => Err(ctx.failure(ParseError::RuleNotLinked(name.clone()))),
+                None => Err(ctx.failure(start, ParseError::RuleNotLinked(name.clone()))),
                 Some(exp) => exp.parse(ctx),
             },
             ExpKind::Call { name, rule } => match rule {
-                None => Err(ctx.failure(ParseError::RuleNotLinked(name.clone()))),
+                None => Err(ctx.failure(start, ParseError::RuleNotLinked(name.clone()))),
                 Some(rule) => match ctx.call_rule(name, rule.as_ref()) {
                     Ok(S(mut ctx, tree)) => {
                         ctx.uncut();
@@ -102,21 +103,21 @@ where
                 Ok(S(ctx, Tree::Nil))
             }
             ExpKind::Void => Ok(S(ctx, Tree::Void)),
-            ExpKind::Fail => Err(ctx.failure(ParseError::Fail)),
+            ExpKind::Fail => Err(ctx.failure(start, ParseError::Fail)),
             ExpKind::Dot => {
                 if ctx.next().is_some() {
                     // TODO: self.tracer.trace_match(self.cursor, c)
                     Ok(S(ctx, Tree::Nil))
                 } else {
                     // TODO: self.tracer.trace_match(self.cursor, c, failed=True)
-                    Err(ctx.failure(ParseError::NoMoreInput))
+                    Err(ctx.failure(start, ParseError::NoMoreInput))
                 }
             }
             ExpKind::Eof => {
                 if ctx.eof_check() {
                     Ok(S(ctx, Tree::Nil))
                 } else {
-                    Err(ctx.failure(ParseError::ExpectingEof))
+                    Err(ctx.failure(start, ParseError::ExpectingEof))
                 }
             }
 
@@ -126,7 +127,7 @@ where
                     Ok(S(ctx, Tree::Text(token.deref().into())))
                 } else {
                     // TODO: self.tracer.trace_match(self.cursor, token, failed=True)
-                    Err(ctx.failure(ParseError::ExpectedToken(token.deref().into())))
+                    Err(ctx.failure(start, ParseError::ExpectedToken(token.deref().into())))
                 }
             }
             ExpKind::Pattern(pattern) => {
@@ -135,7 +136,7 @@ where
                     Ok(S(ctx, Tree::Text(matched.into())))
                 } else {
                     // TODO: self.tracer.trace_match(self.cursor, '', pattern, failed=True)
-                    Err(ctx.failure(ParseError::ExpectedPattern(pattern.deref().into())))
+                    Err(ctx.failure(start, ParseError::ExpectedPattern(pattern.deref().into())))
                 }
             }
             ExpKind::Constant(literal) => Ok(S(ctx, Tree::Text(literal.deref().into()))),
@@ -168,7 +169,7 @@ where
             }
             ExpKind::NegativeLookahead(exp) => {
                 if let Ok(S(_, _)) = exp.parse(ctx.clone()) {
-                    Err(ctx.failure(ParseError::UnexpectedLookahead))
+                    Err(ctx.failure(start, ParseError::UnexpectedLookahead))
                 } else {
                     Ok(S(ctx, Tree::Nil))
                 }
@@ -219,8 +220,9 @@ where
                         }
                     }
                 }
-                Err(furthest
-                    .unwrap_or(ctx.failure(ParseError::NoViableOption(self.lookahead.clone()))))
+                Err(furthest.unwrap_or(
+                    ctx.failure(start, ParseError::NoViableOption(self.lookahead.clone())),
+                ))
             }
 
             ExpKind::Optional(exp) => match exp.parse(ctx.clone()) {

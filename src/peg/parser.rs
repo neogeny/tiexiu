@@ -12,6 +12,7 @@ pub struct S<C: Ctx>(pub C, pub Tree);
 
 #[derive(Debug, Clone)]
 pub struct F {
+    pub start: usize,
     pub mark: usize, // The position where the disaster occurred
     pub cut: bool,
     pub error: ParseError,
@@ -40,8 +41,9 @@ impl std::error::Error for F {
 }
 
 impl F {
-    pub fn new(mark: usize, cut: bool, error: ParseError, stack: TokenList) -> Self {
+    pub fn new(start: usize, mark: usize, cut: bool, error: ParseError, stack: TokenList) -> Self {
         Self {
+            start,
             mark,
             cut,
             error,

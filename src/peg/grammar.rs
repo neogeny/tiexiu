@@ -86,10 +86,11 @@ impl Grammar {
     }
 
     fn parse_at<C: Ctx>(&self, start: &str, ctx: C) -> ParseResult<C> {
+        let start_mark = ctx.mark();
         assert_eq!(start, "start", "parse_at('{}')", start);
         match self.get_rule(start) {
             Ok(rule) => rule.parse(ctx),
-            Err(err) => Err(ctx.failure(err)),
+            Err(err) => Err(ctx.failure(start_mark, err)),
         }
     }
 
