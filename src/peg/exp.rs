@@ -4,7 +4,7 @@
 pub use super::build;
 use super::error::ParseError;
 pub use super::lookahead;
-use super::parser::{F, ParseResult, Parser, S};
+use super::parser::{ParseResult, Parser, F, S};
 use super::rule::RuleRef;
 use crate::state::Ctx;
 use crate::trees::Tree;
@@ -97,6 +97,7 @@ where
                 },
             },
             ExpKind::Cut => {
+                // TODO: self.tracer.trace_cut(self.cursor)
                 ctx.cut();
                 Ok(S(ctx, Tree::Nil))
             }
@@ -104,8 +105,10 @@ where
             ExpKind::Fail => Err(ctx.failure(ParseError::Fail)),
             ExpKind::Dot => {
                 if ctx.next().is_some() {
+                    // TODO: self.tracer.trace_match(self.cursor, c)
                     Ok(S(ctx, Tree::Nil))
                 } else {
+                    // TODO: self.tracer.trace_match(self.cursor, c, failed=True)
                     Err(ctx.failure(ParseError::NoMoreInput))
                 }
             }
@@ -119,15 +122,19 @@ where
 
             ExpKind::Token(token) => {
                 if ctx.token(token) {
+                    // TODO: self.tracer.trace_match(self.cursor, token)
                     Ok(S(ctx, Tree::Text(token.deref().into())))
                 } else {
+                    // TODO: self.tracer.trace_match(self.cursor, token, failed=True)
                     Err(ctx.failure(ParseError::ExpectedToken(token.deref().into())))
                 }
             }
             ExpKind::Pattern(pattern) => {
                 if let Some(matched) = ctx.pattern(pattern) {
+                    // TODO: self.tracer.trace_match(self.cursor, token, pattern)
                     Ok(S(ctx, Tree::Text(matched.into())))
                 } else {
+                    // TODO: self.tracer.trace_match(self.cursor, '', pattern, failed=True)
                     Err(ctx.failure(ParseError::ExpectedPattern(pattern.deref().into())))
                 }
             }

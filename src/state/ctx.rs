@@ -74,6 +74,7 @@ pub trait Ctx: Clone + Debug {
     fn prune_cache(&mut self);
 
     fn call_rule(mut self, name: &str, rule: &Rule) -> ParseResult<Self> {
+        // TODO: self.tracer.trace_entry(self.cursor)
         self.enter(name);
 
         if !rule.is_token() {
@@ -83,6 +84,7 @@ pub trait Ctx: Clone + Debug {
         let key = self.key(name);
         if let Some(memo) = self.memo(&key) {
             return match memo.tree {
+                // TODO: self.tracer.trace_failure(self.cursor, e)
                 Tree::Bottom => Err(self.failure(ParseError::FailedParse(name.into()))),
                 _ => {
                     self.reset(memo.mark);
@@ -96,10 +98,12 @@ pub trait Ctx: Clone + Debug {
         } else {
             match rule.parse(self.clone()) {
                 Ok(S(mut ctx, tree)) => {
+                    // TODO: self.tracer.trace_success(self.cursor)
                     ctx.memoize(&key, &tree);
                     Ok(S(ctx, tree))
                 }
                 Err(f) => {
+                    // TODO: self.tracer.trace_failure(self.cursor, e)
                     self.memoize(&key, &Tree::Bottom);
                     Err(f)
                 }
@@ -108,6 +112,7 @@ pub trait Ctx: Clone + Debug {
     }
 
     fn call_recursive(mut self, key: Key, rule: &Rule) -> ParseResult<Self> {
+        // TODO: self.tracer.trace_recursion(self.cursor)
         if !rule.is_left_recursive() {
             panic!("Recursive call on non-LRec rule");
         }
@@ -142,8 +147,10 @@ pub trait Ctx: Clone + Debug {
         }
 
         if let Some(tree) = best_cst {
+            // TODO: self.tracer.trace_success(self.cursor)
             Ok(S(self, tree))
         } else {
+            // TODO: self.tracer.trace_failure(self.cursor, e)
             Err(last_failure
                 .unwrap_or_else(|| self.failure(ParseError::FailedParse(rule.info.name.clone()))))
         }

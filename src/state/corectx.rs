@@ -132,6 +132,7 @@ where
     }
 
     fn cut(&mut self) {
+        // TODO: self.tracer.trace_cut(self.cursor)
         self.state_mut().cutseen = true;
         self.prune_cache();
     }
