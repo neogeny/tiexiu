@@ -5,6 +5,7 @@ use crate::input::Cursor;
 use crate::peg::parser::TokenList;
 use crate::state::Ctx;
 use crate::state::memo::{Key, Memo, MemoCache};
+use crate::state::trace::{NullTracer, Tracer};
 use crate::trees::Tree;
 use crate::util::pyre::Pattern as Regex;
 use std::cell::RefCell;
@@ -21,24 +22,27 @@ pub struct State<U: Cursor> {
 }
 
 #[derive(Clone, Debug)]
-pub struct HeavyState<'c> {
+pub struct HeavyState<'c, T: Tracer> {
     pub memos: MemoCache,
     pub regex: RegexCache,
+    pub tracer: T,
     pub marker: std::marker::PhantomData<&'c ()>,
 }
 
 #[derive(Clone, Debug)]
-pub struct CoreCtx<'c, U>
+pub struct CoreCtx<'c, U, T: Tracer = NullTracer>
 where
     U: Cursor + Clone,
+    T: Tracer,
 {
     pub state: Rc<State<U>>,
-    pub heavy: Rc<RefCell<HeavyState<'c>>>,
+    pub heavy: Rc<RefCell<HeavyState<'c, T>>>,
 }
 
-impl<'c, U> CoreCtx<'c, U>
+impl<'c, U, T: Tracer> CoreCtx<'c, U, T>
 where
     U: Cursor + Clone,
+    T: Tracer,
 {
     pub fn new(cursor: U) -> Self {
         Self {
@@ -51,6 +55,7 @@ where
             heavy: RefCell::new(HeavyState {
                 memos: MemoCache::new(),
                 regex: RegexCache::new(),
+                tracer: T::default(),
                 marker: std::marker::PhantomData,
             })
             .into(),
@@ -65,7 +70,7 @@ where
     #[inline]
     fn with_heavy_mut<F, R>(&self, f: F) -> R
     where
-        F: FnOnce(&mut HeavyState<'c>) -> R,
+        F: FnOnce(&mut HeavyState<'c, T>) -> R,
     {
         let mut heavy = self.heavy.borrow_mut();
         f(&mut heavy)

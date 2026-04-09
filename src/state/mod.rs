@@ -6,6 +6,7 @@ pub mod ctx;
 pub mod error;
 mod memo;
 pub mod strctx;
+pub mod trace;
 
 pub use ctx::*;
 pub use error::Error;
