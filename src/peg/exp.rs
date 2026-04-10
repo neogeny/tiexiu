@@ -241,8 +241,10 @@ where
 
             ExpKind::Closure(exp) => {
                 let mut res = Vec::new();
-                let new_ctx = Self::repeat(ctx, exp, &mut res);
-                Ok(S(new_ctx, Tree::from(res)))
+                match Self::repeat(ctx, exp, &mut res) {
+                    Ok(S(new_ctx, _)) => Ok(S(new_ctx, Tree::from(res))),
+                    err => err,
+                }
             }
             ExpKind::PositiveClosure(exp) => {
                 let mut res: Vec<Tree> = Vec::new();
@@ -254,18 +256,20 @@ where
                     err => return err,
                 };
 
-                let new_ctx = Self::repeat(ctx, exp, &mut res);
-                Ok(S(new_ctx, Tree::from(res)))
+                match Self::repeat(ctx, exp, &mut res) {
+                    Ok(S(new_ctx, _)) => Ok(S(new_ctx, Tree::from(res))),
+                    err => err,
+                }
             }
             ExpKind::Join { exp, sep } => {
                 let mut res: Vec<Tree> = Vec::new();
 
                 match Self::add_exp(ctx, exp, &mut res) {
-                    Ok(new_ctx) => {
-                        let ctx = Self::repeat_with_pre(new_ctx, exp, sep, &mut res, true);
-                        Ok(S(ctx, Tree::from(res)))
-                    }
-                    Err(err_ctx) => Ok(S(err_ctx, Tree::from(res))),
+                    Ok(new_ctx) => match Self::repeat_with_pre(new_ctx, exp, sep, &mut res, true) {
+                        Ok(S(new_ctx, _)) => Ok(S(new_ctx, Tree::from(res))),
+                        err => err,
+                    },
+                    Err((_actx, f)) => Err(f),
                 }
             }
             ExpKind::PositiveJoin { exp, sep } => {
@@ -279,17 +283,21 @@ where
                     err => return err,
                 };
 
-                let new_ctx = Self::repeat_with_pre(ctx, exp, sep, &mut res, true);
-                Ok(S(new_ctx, Tree::from(res)))
+                match Self::repeat_with_pre(ctx, exp, sep, &mut res, true) {
+                    Ok(S(new_ctx, _)) => Ok(S(new_ctx, Tree::from(res))),
+                    err => err,
+                }
             }
             ExpKind::Gather { exp, sep } => {
                 let mut res: Vec<Tree> = Vec::new();
                 match Self::add_exp(ctx, exp, &mut res) {
                     Ok(new_ctx) => {
-                        let ctx = Self::repeat_with_pre(new_ctx, exp, sep, &mut res, false);
-                        Ok(S(ctx, Tree::from(res)))
+                        match Self::repeat_with_pre(new_ctx, exp, sep, &mut res, false) {
+                            Ok(S(new_ctx, _)) => Ok(S(new_ctx, Tree::from(res))),
+                            err => err,
+                        }
                     }
-                    Err(err_ctx) => Ok(S(err_ctx, Tree::from(res))),
+                    Err((_actx, f)) => Err(f),
                 }
             }
             ExpKind::PositiveGather { exp, sep } => {
@@ -303,8 +311,10 @@ where
                     err => return err,
                 };
 
-                let new_ctx = Self::repeat_with_pre(ctx, exp, sep, &mut res, false);
-                Ok(S(new_ctx, Tree::from(res)))
+                match Self::repeat_with_pre(ctx, exp, sep, &mut res, false) {
+                    Ok(S(new_ctx, _)) => Ok(S(new_ctx, Tree::from(res))),
+                    err => err,
+                }
             }
         }
     }

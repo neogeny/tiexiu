@@ -3,6 +3,7 @@
 
 use super::exp::Exp;
 use super::parser::S;
+use crate::peg::{F, ParseResult};
 use crate::state::Ctx;
 use crate::trees::Tree;
 
@@ -14,23 +15,28 @@ impl Exp {
         }
     }
 
-    pub fn add_exp<C: Ctx>(ctx: C, exp: &Exp, res: &mut Vec<Tree>) -> Result<C, C> {
+    pub fn add_exp<C: Ctx>(ctx: C, exp: &Exp, res: &mut Vec<Tree>) -> Result<C, (C, F)> {
         match exp.parse(ctx.clone()) {
             Ok(S(new_ctx, tree)) => {
                 res.push(tree);
                 Ok(new_ctx)
             }
-            Err(_) => Err(ctx),
+            Err(f) => Err((ctx, f)),
         }
     }
 
-    pub fn repeat<C: Ctx>(mut ctx: C, exp: &Exp, res: &mut Vec<Tree>) -> C {
-        // WARNING
-        // TODO: Cut management needs to be implemented
+    pub fn repeat<C: Ctx>(mut ctx: C, exp: &Exp, res: &mut Vec<Tree>) -> ParseResult<C> {
+        // NOTE: use a Choice pattern because Closure is C -> x C | ∅
         loop {
             match Self::add_exp(ctx.clone(), exp, res) {
                 Ok(new_ctx) => ctx = new_ctx,
-                Err(ctx) => return ctx,
+                Err((ctx, mut f)) => {
+                    if f.cut {
+                        f.uncut();
+                        return Err(f);
+                    }
+                    return Ok(S(ctx, Tree::Nil));
+                }
             }
         }
     }
@@ -41,14 +47,11 @@ impl Exp {
         pre: &Exp,
         res: &mut Vec<Tree>,
         keep_pre: bool,
-    ) -> C {
-        // WARNING
-        // TODO: Cut management needs to be implemented
+    ) -> ParseResult<C> {
+        // NOTE: use a Choice pattern because Closure is C -> x C | ∅
         loop {
             match pre.parse(ctx.clone()) {
-                Err(_) => return ctx,
                 Ok(S(new_ctx, pre_cst)) => match exp.parse(new_ctx) {
-                    Err(_) => return ctx,
                     Ok(S(repeat_ctx, exp_cst)) => {
                         if keep_pre {
                             res.push(pre_cst);
@@ -56,7 +59,15 @@ impl Exp {
                         res.push(exp_cst);
                         ctx = repeat_ctx;
                     }
+                    Err(mut f) => {
+                        if f.cut {
+                            f.uncut();
+                            return Err(f);
+                        }
+                        return Ok(S(ctx, Tree::Nil));
+                    }
                 },
+                Err(_) => return Ok(S(ctx, Tree::Nil)),
             }
         }
     }
@@ -103,9 +114,12 @@ mod tests {
         let ctx = setup("abcabcabc");
         let exp = Exp::token("abc");
         let mut res = Vec::new();
-        let final_ctx = Exp::repeat(ctx, &exp, &mut res);
-        assert_eq!(res.len(), 3);
-        assert_eq!(final_ctx.cursor().mark(), 9);
+        if let Ok(S(final_ctx, _)) = Exp::repeat(ctx, &exp, &mut res) {
+            assert_eq!(res.len(), 3);
+            assert_eq!(final_ctx.cursor().mark(), 9);
+        } else {
+            panic!("repeat  failed")
+        }
     }
 
     #[test]
@@ -114,9 +128,12 @@ mod tests {
         let exp = Exp::token("abc");
         let pre = Exp::token(",");
         let mut res = Vec::new();
-        let final_ctx = Exp::repeat_with_pre(ctx, &exp, &pre, &mut res, true);
-        assert_eq!(res.len(), 4); // [",", "abc", ",", "abc"]
-        assert_eq!(final_ctx.cursor().mark(), 8);
+        if let Ok(S(final_ctx, _)) = Exp::repeat_with_pre(ctx, &exp, &pre, &mut res, true) {
+            assert_eq!(res.len(), 4); // [",", "abc", ",", "abc"]
+            assert_eq!(final_ctx.cursor().mark(), 8);
+        } else {
+            panic!("repeat_with_pre failed")
+        }
     }
 
     #[test]
@@ -125,8 +142,11 @@ mod tests {
         let exp = Exp::token("abc");
         let pre = Exp::token(",");
         let mut res = Vec::new();
-        let final_ctx = Exp::repeat_with_pre(ctx, &exp, &pre, &mut res, false);
-        assert_eq!(res.len(), 2); // ["abc", "abc"]
-        assert_eq!(final_ctx.cursor().mark(), 8);
+        if let Ok(S(final_ctx, _)) = Exp::repeat_with_pre(ctx, &exp, &pre, &mut res, false) {
+            assert_eq!(res.len(), 2); // ["abc", "abc"]
+            assert_eq!(final_ctx.cursor().mark(), 8);
+        } else {
+            panic!("repeat_with_pre failed")
+        }
     }
 }
