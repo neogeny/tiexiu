@@ -9,7 +9,7 @@ default: pre-push
 push: pre-push
     git push
 
-pre-push: clippy fmt test
+pre-push: clippy fmt test book
 
 clippy:
     cargo clippy --all-targets --all-features -- -D warnings
@@ -22,6 +22,10 @@ test:
 
 build:
     cargo build --release
+
+book:
+    mdbook build docs
+    mdbook test docs
 
 clean:
     cargo clean
