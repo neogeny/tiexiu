@@ -5,7 +5,7 @@ fn test_debug_boot_grammar() {
     let boot = tiexiu::json::boot::boot_grammar().expect("Failed to load boot grammar");
     println!("Boot grammar rules:");
     for rule in boot.rules() {
-        println!("  - {}", rule.info.name);
+        println!("  - {}", rule.meta.name);
     }
 
     println!("\nChecking if 'rule' is in index...");

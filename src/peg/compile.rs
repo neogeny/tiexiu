@@ -63,13 +63,13 @@ impl GrammarCompiler {
         tree: &'a Tree,
         expected: &'static str,
     ) -> CompileResult<(&'a str, &'a TreeMap)> {
-        let Tree::Node { info, tree } = tree else {
+        let Tree::Node { meta, tree } = tree else {
             return Err(CompileError::ExpectedNode(expected));
         };
         let Tree::Map(map) = tree.as_ref() else {
             return Err(CompileError::ExpectedNodeMap(expected));
         };
-        Ok((info.name.as_ref(), map.as_ref()))
+        Ok((meta.name.as_ref(), map.as_ref()))
     }
 
     fn text<'a>(&self, tree: &'a Tree, expected: &'static str) -> CompileResult<&'a str> {

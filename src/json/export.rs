@@ -30,8 +30,8 @@ impl TryFrom<Grammar> for TatSuModel {
             .map(|r| {
                 let rule = r;
                 TatSuModel::Rule {
-                    name: rule.info.name.clone().into(),
-                    params: rule.info.params.iter().map(|p| p.clone().into()).collect(),
+                    name: rule.meta.name.clone().into(),
+                    params: rule.meta.params.iter().map(|p| p.clone().into()).collect(),
                     exp: TatSuModel::from(rule.exp.clone()).into(),
                     is_name: rule.is_identifier(),
                     is_tokn: rule.has_token_flag(),

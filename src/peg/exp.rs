@@ -102,7 +102,7 @@ where
                 ctx.cut();
                 Ok(S(ctx, Tree::Nil))
             }
-            ExpKind::Void => Ok(S(ctx, Tree::Void)),
+            ExpKind::Void => Ok(S(ctx, Tree::Nil)),
             ExpKind::Fail => Err(ctx.failure(start, ParseError::Fail)),
             ExpKind::Dot => {
                 if ctx.next().is_some() {

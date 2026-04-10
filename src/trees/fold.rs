@@ -14,7 +14,7 @@ pub trait Translates<O> {
 impl<O> Translates<O> for Tree {
     fn translate_with<T: Translator<O> + ?Sized>(&self, trans: &mut T) -> O {
         match &self {
-            Tree::Nil | Tree::Bottom | Tree::Void => trans.translate(self, &[]),
+            Tree::Nil | Tree::Bottom => trans.translate(self, &[]),
             Tree::List(nodes) => {
                 let outputs = nodes
                     .iter()

@@ -25,6 +25,8 @@ impl Exp {
     }
 
     pub fn repeat<C: Ctx>(mut ctx: C, exp: &Exp, res: &mut Vec<Tree>) -> C {
+        // WARNING
+        // TODO: Cut management needs to be implemented
         loop {
             match Self::add_exp(ctx.clone(), exp, res) {
                 Ok(new_ctx) => ctx = new_ctx,
@@ -40,6 +42,8 @@ impl Exp {
         res: &mut Vec<Tree>,
         keep_pre: bool,
     ) -> C {
+        // WARNING
+        // TODO: Cut management needs to be implemented
         loop {
             match pre.parse(ctx.clone()) {
                 Err(_) => return ctx,

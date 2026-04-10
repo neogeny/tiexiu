@@ -37,7 +37,6 @@ impl fmt::Display for Tree {
             Self::Override(v) => write!(f, "!{}", v),
             Self::OverrideAsList(v) => write!(f, "!!{}", v),
             Self::Map(tags) => write!(f, "{}", tags),
-            Self::Void => write!(f, "()"),
             Self::Nil => write!(f, "∅"),
             Self::Bottom => write!(f, "⊥"),
             Self::List(items) => {
@@ -50,9 +49,9 @@ impl fmt::Display for Tree {
                 }
                 write!(f, "]")
             }
-            Self::Node { info, tree } => {
-                let params = info.params.join(", ");
-                write!(f, "{}[{}]: {}", info.name, params, tree)
+            Self::Node { meta, tree } => {
+                let params = meta.params.join(", ");
+                write!(f, "{}[{}]: {}", meta.name, params, tree)
             }
         }
     }
@@ -60,7 +59,7 @@ impl fmt::Display for Tree {
 
 #[cfg(test)]
 mod tests {
-    use crate::trees::{FlagMap, KeyValue, MapEntries, NodeInfo, Tree, TreeMap};
+    use crate::trees::{FlagMap, KeyValue, MapEntries, NodeMeta, Tree, TreeMap};
     use indexmap::IndexMap;
     use std::rc::Rc;
 
@@ -122,9 +121,6 @@ mod tests {
         let tags = TreeMap { entries: tags_map };
         assert_eq!(Tree::Map(tags.into()).to_string(), "{a: \"1\"}");
 
-        // Stump
-        assert_eq!(Tree::Void.to_string(), "()");
-
         // Nil
         assert_eq!(Tree::Nil.to_string(), "∅");
 
@@ -143,13 +139,13 @@ mod tests {
         assert_eq!(node.to_string(), "[\"a\", \"b\", [\"c\"]]");
 
         // Pruned
-        let prune_info = Rc::new(NodeInfo {
+        let meta = Rc::new(NodeMeta {
             name: "MyRule".into(),
             params: ["param1", "param2"].map(|s| s.into()).into(),
             flags: FlagMap::new(),
         });
         let pruned_tree = Tree::Node {
-            info: prune_info,
+            meta,
             tree: Tree::Text("pruned_content".into()).into(),
         };
         assert_eq!(

@@ -153,7 +153,7 @@ pub trait Ctx: Clone + Debug {
         } else {
             // TODO: self.tracer.trace_failure(self.cursor, e)
             Err(last_failure.unwrap_or_else(|| {
-                self.failure(start_mark, ParseError::FailedParse(rule.info.name.clone()))
+                self.failure(start_mark, ParseError::FailedParse(rule.meta.name.clone()))
             }))
         }
     }

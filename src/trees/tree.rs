@@ -17,32 +17,35 @@ pub fn keyval(name: &str, tree: Tree) -> KeyValue {
 pub type FlagMap = IndexMap<Box<str>, bool>;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct NodeInfo {
+pub struct NodeMeta {
     pub name: Box<str>,
     pub params: Box<[Box<str>]>,
     pub flags: FlagMap,
 }
 
-pub type NodeInfoRef = Rc<NodeInfo>;
+pub type NodeMetaRef = Rc<NodeMeta>;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Tree {
-    Nil,
-    Bottom,
+    Text(Box<str>),    // Tokens or patterns
+    List(Box<[Tree]>), // Sequences of expressions
+    Map(Box<TreeMap>), // A mapping of named elements
 
-    Void,
-    Text(Box<str>),
-    List(Box<[Tree]>),
+    Node {
+        // The result of parsing a rule call
+        meta: NodeMetaRef, // Metadata
+        tree: Box<Tree>,   // The result of parsing a rule
+    },
 
-    Named(Box<KeyValue>),
-    NamedAsList(Box<KeyValue>),
-
-    Override(Box<Tree>),
+    // INTERNAL
+    // The folowing variants do not appear in final trees
+    Nil,                        // Parsing that doesn't consume any input
+    Named(Box<KeyValue>),       // Named elements
+    NamedAsList(Box<KeyValue>), // Named elements forced into a list
+    Override(Box<Tree>),        // Sets the value of the whole expression
     OverrideAsList(Box<Tree>),
 
-    Map(Box<TreeMap>),
-
-    Node { info: NodeInfoRef, tree: Box<Tree> },
+    Bottom, // The marker for failure used in memoization
 }
 
 impl From<Vec<Tree>> for Tree {
@@ -155,14 +158,14 @@ impl Tree {
         match self {
             Tree::Text(text) => text.len(),
             Tree::Override(inner) | Tree::OverrideAsList(inner) => inner.width(),
-            Tree::Void | Tree::Nil | Tree::Bottom => 0,
+            Tree::Nil | Tree::Bottom => 0,
             Tree::List(items) => items.iter().map(|item| item.width()).sum(),
             Tree::Map(tags) => tags.entries.values().map(|node| node.width()).sum(),
             Tree::Named(pair) | Tree::NamedAsList(pair) => {
                 let KeyValue(_, val) = &**pair;
                 val.width()
             }
-            Tree::Node { info: _, tree } => tree.width(),
+            Tree::Node { meta: _, tree } => tree.width(),
         }
     }
 }

@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::trees::{FlagMap, KeyValue, NodeInfo, Tree, TreeMap};
+use crate::trees::{FlagMap, KeyValue, NodeMeta, Tree, TreeMap};
 use serde_json::{Map, Value};
 
 #[derive(Debug, thiserror::Error)]
@@ -30,7 +30,6 @@ impl Tree {
         match self {
             Tree::Nil => tagged("Nil", []),
             Tree::Bottom => tagged("Bottom", []),
-            Tree::Void => tagged("Void", []),
             Tree::Text(text) => tagged("Text", [("text", Value::String(text.to_string()))]),
             Tree::List(items) => tagged(
                 "List",
@@ -46,10 +45,10 @@ impl Tree {
                 tagged("OverrideAsList", [("tree", tree.as_ref().to_json_value())])
             }
             Tree::Map(m) => tagged("Map", [("entries", map_entries_value(m))]),
-            Tree::Node { info, tree } => tagged(
+            Tree::Node { meta, tree } => tagged(
                 "Node",
                 [
-                    ("info", node_info_value(info)),
+                    ("meta", node_meta_value(meta)),
                     ("tree", tree.as_ref().to_json_value()),
                 ],
             ),
@@ -67,7 +66,7 @@ impl Tree {
         match kind {
             "Nil" => Ok(Tree::Nil),
             "Bottom" => Ok(Tree::Bottom),
-            "Void" => Ok(Tree::Void),
+            "Void" => Ok(Tree::Nil),
             "Text" => Ok(Tree::Text(
                 expect_string(field(object, "text")?, "text")?.into(),
             )),
@@ -90,7 +89,7 @@ impl Tree {
                 map_from_entries(field(object, "entries")?)?.into(),
             )),
             "Node" => Ok(Tree::Node {
-                info: node_info_from_value(field(object, "info")?)?.into(),
+                meta: node_meta_from_value(field(object, "meta")?)?.into(),
                 tree: Tree::from_json_value(field(object, "tree")?)?.into(),
             }),
             other => Err(TreeJsonError::UnknownVariant(other.to_string())),
@@ -141,21 +140,21 @@ fn map_entries_value(m: &TreeMap) -> Value {
     )
 }
 
-fn node_info_value(info: &NodeInfo) -> Value {
+fn node_meta_value(meta: &NodeMeta) -> Value {
     tagged(
-        "NodeInfo",
+        "NodeMeta",
         [
-            ("name", Value::String(info.name.to_string())),
+            ("name", Value::String(meta.name.to_string())),
             (
                 "params",
                 Value::Array(
-                    info.params
+                    meta.params
                         .iter()
                         .map(|param| Value::String(param.to_string()))
                         .collect(),
                 ),
             ),
-            ("flags", flag_entries_value(&info.flags)),
+            ("flags", flag_entries_value(&meta.flags)),
         ],
     )
 }
@@ -194,8 +193,8 @@ fn map_from_entries(value: &Value) -> Result<TreeMap, TreeJsonError> {
     Ok(m)
 }
 
-fn node_info_from_value(value: &Value) -> Result<NodeInfo, TreeJsonError> {
-    let object = expect_object(value, "info")?;
+fn node_meta_from_value(value: &Value) -> Result<NodeMeta, TreeJsonError> {
+    let object = expect_object(value, "meta")?;
     let name = expect_string(field(object, "name")?, "name")?;
     let params = expect_array(field(object, "params")?, "params")?
         .iter()
@@ -203,7 +202,7 @@ fn node_info_from_value(value: &Value) -> Result<NodeInfo, TreeJsonError> {
         .collect::<Result<Vec<Box<str>>, _>>()?;
     let flags = flags_from_value(field(object, "flags")?)?;
 
-    Ok(NodeInfo {
+    Ok(NodeMeta {
         name: name.into(),
         params: params.into(),
         flags,
@@ -269,7 +268,7 @@ mod tests {
         m.insert_as_list("items", Tree::Text("b".into()));
 
         let tree = Tree::Node {
-            info: NodeInfo {
+            meta: NodeMeta {
                 name: "Rule".into(),
                 params: ["p"].map(Into::into).into(),
                 flags: [("is_name".into(), true), ("no_memo".into(), false)]

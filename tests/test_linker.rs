@@ -10,7 +10,7 @@ pub fn check_exp_for_unlinked(exp: &Exp, path: &str, grammar: &Grammar) {
                 match grammar.get_rule(name) {
                     Ok(r) => println!(
                         "    BUT '{}' exists in grammar as rule '{}'",
-                        name, r.info.name
+                        name, r.meta.name
                     ),
                     Err(_) => println!("    AND '{}' does NOT exist in grammar", name),
                 }
@@ -55,7 +55,7 @@ pub fn check_exp_for_unlinked(exp: &Exp, path: &str, grammar: &Grammar) {
             if exp.is_none() {
                 println!("  {}: RuleInclude '{}' is NOT resolved", path, ri_name);
                 match grammar.get_rule(ri_name) {
-                    Ok(r) => println!("    Rule '{}' exists in grammar", r.info.name),
+                    Ok(r) => println!("    Rule '{}' exists in grammar", r.meta.name),
                     Err(_) => println!("    AND '{}' does NOT exist in grammar", ri_name),
                 }
             }
@@ -73,7 +73,7 @@ fn test_linker_debug() {
 
     println!("Rules in boot grammar:");
     for rule in boot.rules() {
-        println!("  - {}", rule.info.name);
+        println!("  - {}", rule.meta.name);
     }
 
     println!("\n=== Checking key rules for linking issues ===\n");
