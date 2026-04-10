@@ -15,7 +15,7 @@ pub struct Fail {
     pub start: usize,
     pub mark: usize, // The position where the disaster occurred
     pub cut: bool,
-    pub error: ParseError,
+    pub source: ParseError,
     pub callstack: TokenList,
 }
 
@@ -28,7 +28,7 @@ pub trait Parser<C: Ctx>: Debug {
 impl std::fmt::Display for Fail {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         // Use the three-liner style you prefer
-        write!(f, "{} at {}: {}", self.error, self.mark, self.callstack)
+        write!(f, "{} at {}: {}", self.source, self.mark, self.callstack)
     }
 }
 
@@ -36,7 +36,7 @@ impl std::error::Error for Fail {
     // source() is optional since ParseError is the cause,
     // but this is the "Rust Way" for chained errors.
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        Some(&self.error)
+        Some(&self.source)
     }
 }
 
@@ -46,7 +46,7 @@ impl Fail {
             start,
             mark,
             cut,
-            error,
+            source: error,
             callstack: stack,
         }
     }

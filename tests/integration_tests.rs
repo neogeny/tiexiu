@@ -17,7 +17,7 @@ fn parse_input(grammar: &Grammar, input: &str) -> tiexiu::trees::Tree {
     let ctx = CoreCtx::new(cursor);
     match grammar.parse(ctx) {
         Ok(s) => s.1,
-        Err(f) => panic!("Failed to parse at mark {}: {:?}", f.mark, f.error),
+        Err(f) => panic!("Failed to parse at mark {}: {:?}", f.mark, f.source),
     }
 }
 
@@ -744,7 +744,7 @@ mod input_positions {
                 // Verify we're at the end of input
                 assert!(ctx.cursor().at_end(), "Should be at end of input");
             }
-            Err(f) => panic!("Parsing should succeed: {:?}", f.error),
+            Err(f) => panic!("Parsing should succeed: {:?}", f.source),
         }
     }
 

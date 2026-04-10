@@ -106,7 +106,7 @@ fn test_linker_debug() {
         Err(failure) => {
             println!("FAILED: {:?}", failure);
             println!("Error at mark: {}", failure.mark);
-            println!("Error message: {:?}", failure.error);
+            println!("Error message: {:?}", failure.source);
             panic!("Parsing failed");
         }
     }

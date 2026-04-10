@@ -346,6 +346,6 @@ mod tests {
         let err = grammar.parse(ctx).unwrap_err();
 
         assert_eq!(err.mark, 2);
-        assert_eq!(err.error, ParseError::ExpectedToken("d".into()));
+        assert_eq!(err.source, ParseError::ExpectedToken("d".into()));
     }
 }

@@ -19,8 +19,8 @@ pub trait Ctx: Clone + Debug {
 
     fn enter(&mut self, name: &str);
 
-    fn failure(&self, start: usize, error: ParseError) -> Fail {
-        Fail::new(start, self.mark(), self.cut_seen(), error, self.stack())
+    fn failure(&self, start: usize, source: ParseError) -> Fail {
+        Fail::new(start, self.mark(), self.cut_seen(), source, self.stack())
     }
 
     fn eof_check(&mut self) -> bool {

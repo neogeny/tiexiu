@@ -26,7 +26,7 @@ fn parse_input(grammar: &Grammar, input: &str) -> tiexiu::trees::Tree {
     let ctx = CoreCtx::new(cursor);
     match grammar.parse(ctx) {
         Ok(s) => s.1,
-        Err(f) => panic!("Failed to parse at mark {}: {:?}", f.mark, f.error),
+        Err(f) => panic!("Failed to parse at mark {}: {:?}", f.mark, f.source),
     }
 }
 

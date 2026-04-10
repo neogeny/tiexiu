@@ -13,7 +13,7 @@ pub fn parse_ebnf(grammar: &Grammar, text: &str) -> tiexiu::trees::Tree {
     let ctx = CoreCtx::new(cursor);
     match grammar.parse(ctx) {
         Ok(s) => s.1,
-        Err(f) => panic!("Failed to parse EBNF at mark {}: {:?}", f.mark, f.error),
+        Err(f) => panic!("Failed to parse EBNF at mark {}: {:?}", f.mark, f.source),
     }
 }
 
