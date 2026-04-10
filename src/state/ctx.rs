@@ -4,7 +4,7 @@
 use super::memo::{Key, Memo, MemoCache};
 use crate::input::Cursor;
 use crate::peg::error::ParseError;
-use crate::peg::{F, ParseResult, Rule, S};
+use crate::peg::{Fail, ParseResult, Rule, Succ};
 use crate::trees::tree::Tree;
 use crate::util::pyre::Pattern as Regex;
 use crate::util::tokenlist::TokenList;
@@ -19,8 +19,8 @@ pub trait Ctx: Clone + Debug {
 
     fn enter(&mut self, name: &str);
 
-    fn failure(&self, start: usize, error: ParseError) -> F {
-        F::new(start, self.mark(), self.cut_seen(), error, self.stack())
+    fn failure(&self, start: usize, error: ParseError) -> Fail {
+        Fail::new(start, self.mark(), self.cut_seen(), error, self.stack())
     }
 
     fn eof_check(&mut self) -> bool {
@@ -89,7 +89,7 @@ pub trait Ctx: Clone + Debug {
                 Tree::Bottom => Err(self.failure(start, ParseError::FailedParse(name.into()))),
                 _ => {
                     self.reset(memo.mark);
-                    Ok(S(self, memo.tree))
+                    Ok(Succ(self, memo.tree))
                 }
             };
         }
@@ -98,10 +98,10 @@ pub trait Ctx: Clone + Debug {
             self.call_recursive(key, rule)
         } else {
             match rule.parse(self.clone()) {
-                Ok(S(mut ctx, tree)) => {
+                Ok(Succ(mut ctx, tree)) => {
                     // TODO: self.tracer.trace_success(self.cursor)
                     ctx.memoize(&key, &tree);
-                    Ok(S(ctx, tree))
+                    Ok(Succ(ctx, tree))
                 }
                 Err(f) => {
                     // TODO: self.tracer.trace_failure(self.cursor, e)
@@ -122,7 +122,7 @@ pub trait Ctx: Clone + Debug {
         let start_mark = self.mark();
         let mut best_cst: Option<Tree> = None;
         let mut high_water_mark = start_mark;
-        let mut last_failure: Option<F> = None;
+        let mut last_failure: Option<Fail> = None;
 
         loop {
             let mut ctx = self.clone();
@@ -133,7 +133,7 @@ pub trait Ctx: Clone + Debug {
                     last_failure = Some(f);
                     break;
                 }
-                Ok(S(mut ctx, tree)) => {
+                Ok(Succ(mut ctx, tree)) => {
                     let mark = ctx.mark();
                     if mark < high_water_mark {
                         break;
@@ -149,7 +149,7 @@ pub trait Ctx: Clone + Debug {
 
         if let Some(tree) = best_cst {
             // TODO: self.tracer.trace_success(self.cursor)
-            Ok(S(self, tree))
+            Ok(Succ(self, tree))
         } else {
             // TODO: self.tracer.trace_failure(self.cursor, e)
             Err(last_failure.unwrap_or_else(|| {

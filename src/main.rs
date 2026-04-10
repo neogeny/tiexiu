@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 use tiexiu::input::StrCursor;
-use tiexiu::peg::{Exp, Grammar, S};
+use tiexiu::peg::{Exp, Grammar, Succ};
 use tiexiu::state::strctx::StrCtx;
 use tiexiu::ui::cli;
 
@@ -25,7 +25,7 @@ fn test_build() {
     let _grammar = Grammar::new("test", &[]);
     let ctx = StrCtx::new(cur);
 
-    if let Ok(S(_, tree)) = seq.parse(ctx) {
+    if let Ok(Succ(_, tree)) = seq.parse(ctx) {
         println!("{}", tree);
         println!("{}", tree.normalized());
     }

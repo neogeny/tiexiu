@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::exp::Exp;
-use super::{ParseResult, Parser, S};
+use super::{ParseResult, Parser, Succ};
 use crate::state::Ctx;
 use crate::trees::Tree;
 use crate::trees::tree::{FlagMap, NodeMeta, NodeMetaRef};
@@ -34,7 +34,7 @@ where
 {
     fn parse(&self, ctx: C) -> ParseResult<C> {
         match self.exp.parse(ctx) {
-            Ok(S(ctx, tree)) => Ok(S(
+            Ok(Succ(ctx, tree)) => Ok(Succ(
                 ctx,
                 Tree::Node {
                     meta: self.meta.clone(),

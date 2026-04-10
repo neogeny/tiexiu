@@ -8,10 +8,10 @@ pub use crate::util::tokenlist::TokenList;
 use std::fmt::Debug;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct S<C: Ctx>(pub C, pub Tree);
+pub struct Succ<C: Ctx>(pub C, pub Tree);
 
 #[derive(Debug, Clone)]
-pub struct F {
+pub struct Fail {
     pub start: usize,
     pub mark: usize, // The position where the disaster occurred
     pub cut: bool,
@@ -19,20 +19,20 @@ pub struct F {
     pub callstack: TokenList,
 }
 
-pub type ParseResult<C> = Result<S<C>, F>;
+pub type ParseResult<C> = Result<Succ<C>, Fail>;
 
 pub trait Parser<C: Ctx>: Debug {
     fn parse(&self, ctx: C) -> ParseResult<C>;
 }
 
-impl std::fmt::Display for F {
+impl std::fmt::Display for Fail {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         // Use the three-liner style you prefer
         write!(f, "{} at {}: {}", self.error, self.mark, self.callstack)
     }
 }
 
-impl std::error::Error for F {
+impl std::error::Error for Fail {
     // source() is optional since ParseError is the cause,
     // but this is the "Rust Way" for chained errors.
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
@@ -40,7 +40,7 @@ impl std::error::Error for F {
     }
 }
 
-impl F {
+impl Fail {
     pub fn new(start: usize, mark: usize, cut: bool, error: ParseError, stack: TokenList) -> Self {
         Self {
             start,
@@ -60,7 +60,7 @@ impl F {
     }
 }
 
-impl<C: Ctx> S<C> {
+impl<C: Ctx> Succ<C> {
     #[inline]
     pub fn ctx(self) -> C {
         self.0

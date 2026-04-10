@@ -3,7 +3,7 @@
 
 use crate::json::error::ImportError;
 use crate::json::tree::TreeJsonError;
-use crate::peg::{CompileError, F, ParseError};
+use crate::peg::{CompileError, Fail, ParseError};
 use thiserror::Error;
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -20,7 +20,7 @@ pub enum Error {
     Compile(#[from] CompileError),
 
     #[error("parse failed: {0}")]
-    ParseFailure(#[from] F),
+    ParseFailure(#[from] Fail),
 
     #[error("parse failed: {0}")]
     ParseError(#[from] ParseError),

@@ -4,7 +4,7 @@
 use crate::input::Cursor;
 use crate::input::StrCursor;
 use crate::json::boot::boot_grammar;
-use crate::peg::{Grammar, S};
+use crate::peg::{Grammar, Succ};
 use crate::state::corectx::CoreCtx;
 use crate::trees::Tree;
 use crate::util::indent::unindent;
@@ -24,7 +24,7 @@ where
     let ctx = CoreCtx::new(cursor);
 
     match boot.parse(ctx) {
-        Ok(S(_, tree)) => Ok(tree),
+        Ok(Succ(_, tree)) => Ok(tree),
         Err(failure) => Err(failure.into()),
     }
 }
@@ -80,7 +80,7 @@ pub fn parse_input(grammar: &Grammar, input: &str) -> Result<Tree> {
     let ctx = CoreCtx::new(cursor);
 
     match grammar.parse(ctx) {
-        Ok(S(_, tree)) => Ok(tree),
+        Ok(Succ(_, tree)) => Ok(tree),
         Err(failure) => Err(failure.into()),
     }
 }

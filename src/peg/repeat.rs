@@ -2,22 +2,22 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::exp::Exp;
-use super::parser::S;
-use crate::peg::{F, ParseResult};
+use super::parser::Succ;
+use crate::peg::{Fail, ParseResult};
 use crate::state::Ctx;
 use crate::trees::Tree;
 
 impl Exp {
     pub fn skip_exp<C: Ctx>(ctx: C, exp: &Exp) -> C {
         match exp.parse(ctx.clone()) {
-            Ok(S(new_ctx, _)) => new_ctx,
+            Ok(Succ(new_ctx, _)) => new_ctx,
             Err(_) => ctx,
         }
     }
 
-    pub fn add_exp<C: Ctx>(ctx: C, exp: &Exp, res: &mut Vec<Tree>) -> Result<C, (C, F)> {
+    pub fn add_exp<C: Ctx>(ctx: C, exp: &Exp, res: &mut Vec<Tree>) -> Result<C, (C, Fail)> {
         match exp.parse(ctx.clone()) {
-            Ok(S(new_ctx, tree)) => {
+            Ok(Succ(new_ctx, tree)) => {
                 res.push(tree);
                 Ok(new_ctx)
             }
@@ -35,7 +35,7 @@ impl Exp {
                         f.uncut();
                         return Err(f);
                     }
-                    return Ok(S(ctx, Tree::Nil));
+                    return Ok(Succ(ctx, Tree::Nil));
                 }
             }
         }
@@ -51,8 +51,8 @@ impl Exp {
         // NOTE: use a Choice pattern because Closure is C -> x C | ∅
         loop {
             match pre.parse(ctx.clone()) {
-                Ok(S(new_ctx, pre_cst)) => match exp.parse(new_ctx) {
-                    Ok(S(repeat_ctx, exp_cst)) => {
+                Ok(Succ(new_ctx, pre_cst)) => match exp.parse(new_ctx) {
+                    Ok(Succ(repeat_ctx, exp_cst)) => {
                         if keep_pre {
                             res.push(pre_cst);
                         }
@@ -64,10 +64,10 @@ impl Exp {
                             f.uncut();
                             return Err(f);
                         }
-                        return Ok(S(ctx, Tree::Nil));
+                        return Ok(Succ(ctx, Tree::Nil));
                     }
                 },
-                Err(_) => return Ok(S(ctx, Tree::Nil)),
+                Err(_) => return Ok(Succ(ctx, Tree::Nil)),
             }
         }
     }
@@ -114,7 +114,7 @@ mod tests {
         let ctx = setup("abcabcabc");
         let exp = Exp::token("abc");
         let mut res = Vec::new();
-        if let Ok(S(final_ctx, _)) = Exp::repeat(ctx, &exp, &mut res) {
+        if let Ok(Succ(final_ctx, _)) = Exp::repeat(ctx, &exp, &mut res) {
             assert_eq!(res.len(), 3);
             assert_eq!(final_ctx.cursor().mark(), 9);
         } else {
@@ -128,7 +128,7 @@ mod tests {
         let exp = Exp::token("abc");
         let pre = Exp::token(",");
         let mut res = Vec::new();
-        if let Ok(S(final_ctx, _)) = Exp::repeat_with_pre(ctx, &exp, &pre, &mut res, true) {
+        if let Ok(Succ(final_ctx, _)) = Exp::repeat_with_pre(ctx, &exp, &pre, &mut res, true) {
             assert_eq!(res.len(), 4); // [",", "abc", ",", "abc"]
             assert_eq!(final_ctx.cursor().mark(), 8);
         } else {
@@ -142,7 +142,7 @@ mod tests {
         let exp = Exp::token("abc");
         let pre = Exp::token(",");
         let mut res = Vec::new();
-        if let Ok(S(final_ctx, _)) = Exp::repeat_with_pre(ctx, &exp, &pre, &mut res, false) {
+        if let Ok(Succ(final_ctx, _)) = Exp::repeat_with_pre(ctx, &exp, &pre, &mut res, false) {
             assert_eq!(res.len(), 2); // ["abc", "abc"]
             assert_eq!(final_ctx.cursor().mark(), 8);
         } else {
