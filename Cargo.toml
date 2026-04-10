@@ -28,7 +28,13 @@ serde_json = [
     "dep:serde_path_to_error",
 ]
 
-cli = ["dep:clap", "dep:syntect", "dep:owo-colors", "dep:bunt"]
+cli = [
+    "dep:clap",
+    "dep:syntect",
+    "dep:owo-colors",
+    "dep:bunt",
+    "dep:termcolor",
+]
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"], optional = true }
@@ -43,6 +49,7 @@ clap = { version = "4.6", features = ["derive"], optional = true }
 syntect = { version = "5.3.0", optional = true }
 owo-colors = { version = "4.0", optional = true, features = ["supports-colors"] }
 bunt = { version = "0.2", optional = true }
+termcolor = { version = "1.4.1", optional = true }
 
 pyo3 = { version = "0.28", features = ["extension-module"] }
 

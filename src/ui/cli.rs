@@ -3,10 +3,12 @@
 
 use crate::Result;
 use crate::api::{boot_grammar_json, boot_grammar_pretty, compile, load, parse_input};
+use clap;
 use clap::builder::styling::{AnsiColor, Styles};
 use clap::{Parser, Subcommand};
 use owo_colors;
 use std::path::PathBuf;
+use termcolor;
 
 fn cli_styles() -> Styles {
     Styles::styled()
@@ -21,7 +23,8 @@ fn cli_styles() -> Styles {
     author,
     version,
     about,
-    styles = cli_styles()
+    styles = cli_styles(),
+    color = cli_color_strategy() // Hook into clap's internal color logic
 )]
 /// TieXiu: A high-performance PEG engine for TatSu grammars.
 pub struct Cli {
@@ -69,15 +72,7 @@ pub enum Commands {
 pub fn cli() -> Result<()> {
     let cli = Cli::parse();
 
-    let use_color = match cli.color {
-        clap::ColorChoice::Always => true,
-        clap::ColorChoice::Never => false,
-        clap::ColorChoice::Auto => std::io::IsTerminal::is_terminal(&std::io::stdout()),
-    };
-
-    if !use_color {
-        owo_colors::set_override(false);
-    }
+    let use_color = configure_color(cli.color);
 
     match cli.command {
         Commands::Boot { pretty, json } => {
@@ -116,6 +111,32 @@ pub fn cli() -> Result<()> {
     }
 
     Ok(())
+}
+
+// Optional: Tells clap which global color setting to use for its own help text
+fn cli_color_strategy() -> clap::ColorChoice {
+    // You can pull from env here if you want clap to be smart before parsing
+    clap::ColorChoice::Auto
+}
+
+fn configure_color(color: clap::ColorChoice) -> bool {
+    let use_color = match color {
+        clap::ColorChoice::Always => true,
+        clap::ColorChoice::Never => false,
+        clap::ColorChoice::Auto => {
+            std::io::IsTerminal::is_terminal(&std::io::stdout())
+                && std::io::IsTerminal::is_terminal(&std::io::stderr())
+        }
+    };
+    if !use_color {
+        // unsafe {
+        //     std::env::set_var("NO_COLOR", "1");
+        // }
+        owo_colors::set_override(false);
+        bunt::set_stderr_color_choice(termcolor::ColorChoice::Never);
+        bunt::set_stdout_color_choice(termcolor::ColorChoice::Never);
+    }
+    use_color
 }
 
 pub fn pygmentize(content: &str, extension: &str, use_color: bool) {
