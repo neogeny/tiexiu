@@ -1,7 +1,6 @@
-// #![allow(dead_code)]
-pub mod build;
+mod build;
 pub mod error;
-pub mod fmt;
+mod fmt;
 pub mod fold;
 pub mod map;
 pub mod tree;

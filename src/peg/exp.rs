@@ -1,9 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-pub use super::build;
 use super::error::ParseError;
-pub use super::lookahead;
 use super::parser::{Fail, ParseResult, Parser, Succ};
 use super::rule::RuleRef;
 use crate::state::Ctx;

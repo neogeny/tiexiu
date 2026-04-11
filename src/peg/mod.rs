@@ -1,19 +1,19 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-pub mod build;
-pub mod compile;
+mod build;
+mod compile;
 pub mod error;
 pub mod exp;
 pub mod fold;
 pub mod grammar;
-pub mod leftrec;
+mod leftrec;
 pub mod linker;
-pub mod lookahead;
-pub mod nullability;
+mod lookahead;
+mod nullability;
 pub mod parser;
-pub mod pretty;
-pub mod repeat;
+mod pretty;
+mod repeat;
 pub mod rule;
 
 pub use compile::{CompileError, CompileResult, GrammarCompiler};

@@ -88,8 +88,8 @@ impl<C: Ctx> Succ<C> {
 
 #[cfg(test)]
 mod tests {
-    use crate::state::StrCtx;
     use super::*;
+    use crate::state::StrCtx;
 
     const TARGET: usize = 64;
 
@@ -98,7 +98,7 @@ mod tests {
         let size = size_of::<Succ<StrCtx>>();
         assert!(size <= TARGET, "Succ size is {} > {} bytes", size, TARGET);
     }
-    
+
     #[test]
     fn test_fail_size() {
         let size = size_of::<Fail>();

@@ -4,12 +4,14 @@
 shell := "xonsh"
 set shell := [shell, "-c"]
 
-default: pre-push
+default: check
+
+check: clippy fmt test
 
 push: pre-push
     git push
 
-pre-push: clippy fmt test book
+pre-push: clean book clippy fmt test
 
 clippy:
     cargo clippy --all-targets --all-features -- -D warnings
