@@ -1,6 +1,7 @@
 # Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 # SPDX-License-Identifier: MIT OR Apache-2.0
 
+self := "TieXiu"
 shell := "xonsh"
 set shell := [shell, "-c"]
 
@@ -30,7 +31,7 @@ book:
     mdbook test docs
 
 clean:
-    cargo clean
+    cargo clean -p {{self}}
 
 bench:
     cargo bench
