@@ -60,22 +60,19 @@ pub enum ExpKind {
     RuleInclude { name: Str, exp: Option<ERef> },
 }
 
-impl Exp {
-    pub fn parse<C: Ctx>(&self, ctx: C) -> ParseResult<C> {
-        <Self as Parser<C>>::parse(self, ctx)
-    }
-
-    pub fn link<L: super::linker::Linker + ?Sized>(&mut self, linker: &mut L) {
-        linker.link(self);
+impl<C: Ctx> Parser<C> for Exp {
+    fn parse(&self, ctx: C) -> ParseResult<C> {
+        self.parse(ctx)
     }
 }
 
-impl<C> Parser<C> for Exp
-where
-    C: Ctx,
-{
+impl Exp {
+    pub fn link<L: super::linker::Linker + ?Sized>(&mut self, linker: &mut L) {
+        linker.link(self);
+    }
+
     // #[track_caller]
-    fn parse(&self, mut ctx: C) -> ParseResult<C> {
+    pub fn parse<C: Ctx>(&self, mut ctx: C) -> ParseResult<C> {
         let start = ctx.mark();
         let was_cut = ctx.cut_seen();
         match &self.kind {
