@@ -108,12 +108,19 @@ impl Pattern {
                         .unwrap_or_default()
                 } else if caps.len() == 2 {
                     // Single capturing group: return that group's text (empty string if missing)
-                    let g = caps.get(1).map(|m| m.as_str().to_string()).unwrap_or_default();
+                    let g = caps
+                        .get(1)
+                        .map(|m| m.as_str().to_string())
+                        .unwrap_or_default();
                     vec![g]
                 } else {
                     // Multiple capturing groups: return each group's text (1..len)
                     (1..caps.len())
-                        .map(|i| caps.get(i).map(|m| m.as_str().to_string()).unwrap_or_default())
+                        .map(|i| {
+                            caps.get(i)
+                                .map(|m| m.as_str().to_string())
+                                .unwrap_or_default()
+                        })
                         .collect()
                 }
             })
@@ -218,3 +225,121 @@ impl<'a> Match<'a> {
             .unwrap_or((0, 0))
     }
 }
+
+use crate::util::pyre::traits as traits_impl;
+
+impl<'a> traits_impl::Match<'a> for Match<'a> {
+    fn group(&self, group: usize) -> Option<&'a str> {
+        Match::group(self, group)
+    }
+
+    fn groups(&self) -> Vec<Option<&'a str>> {
+        Match::groups(self)
+    }
+
+    fn start(&self, group: Option<usize>) -> isize {
+        Match::start(self, group)
+    }
+
+    fn end(&self, group: Option<usize>) -> isize {
+        Match::end(self, group)
+    }
+
+    fn span(&self, group: Option<usize>) -> (usize, usize) {
+        Match::span(self, group)
+    }
+}
+
+impl<'a> traits_impl::Pattern<'a> for Pattern {
+    type Match = Match<'a>;
+    type Error = Error;
+
+    fn search(&self, text: &'a str) -> Option<Self::Match> {
+        self.search(text)
+    }
+
+    fn match_(&self, text: &'a str) -> Option<Self::Match> {
+        self.match_(text)
+    }
+
+    fn fullmatch(&self, text: &'a str) -> Option<Self::Match> {
+        self.fullmatch(text)
+    }
+
+    fn split(&self, text: &str, maxsplit: Option<usize>) -> Vec<String> {
+        self.split(text, maxsplit)
+    }
+
+    fn findall(&self, text: &str) -> Vec<Vec<String>> {
+        self.findall(text)
+    }
+
+    fn finditer(&self, text: &'a str) -> Vec<Self::Match> {
+        self.finditer(text)
+    }
+
+    fn sub(&self, repl: &str, text: &str, count: Option<usize>) -> String {
+        self.sub(repl, text, count)
+    }
+
+    fn subn(&self, repl: &str, text: &str, count: Option<usize>) -> (String, usize) {
+        self.subn(repl, text, count)
+    }
+
+    fn pattern(&self) -> &str {
+        self.pattern()
+    }
+}
+
+pub fn compile(pattern: &str) -> Result<Pattern, Error> {
+    Pattern::new(pattern)
+}
+
+pub fn searchi<'a>(pattern: &str, text: &'a str) -> Option<Match<'a>> {
+    Pattern::new(pattern).ok()?.search(text)
+}
+
+pub fn match_<'a>(pattern: &str, text: &'a str) -> Option<Match<'a>> {
+    Pattern::new(pattern).ok()?.match_(text)
+}
+
+pub fn fullmatch<'a>(pattern: &str, text: &'a str) -> Option<Match<'a>> {
+    Pattern::new(pattern).ok()?.fullmatch(text)
+}
+
+pub fn split(pattern: &str, text: &str, maxsplit: Option<usize>) -> Vec<String> {
+    match Pattern::new(pattern) {
+        Ok(p) => p.split(text, maxsplit),
+        Err(_) => vec![text.to_string()],
+    }
+}
+
+pub fn findall(pattern: &str, text: &str) -> Vec<Vec<String>> {
+    match Pattern::new(pattern) {
+        Ok(p) => p.findall(text),
+        Err(_) => vec![],
+    }
+}
+
+pub fn finditer<'a>(pattern: &str, text: &'a str) -> Vec<Match<'a>> {
+    match Pattern::new(pattern) {
+        Ok(p) => p.finditer(text),
+        Err(_) => vec![],
+    }
+}
+
+pub fn sub(pattern: &str, repl: &str, text: &str, count: Option<usize>) -> String {
+    match Pattern::new(pattern) {
+        Ok(p) => p.sub(repl, text, count),
+        Err(_) => text.to_string(),
+    }
+}
+
+pub fn subn(pattern: &str, repl: &str, text: &str, count: Option<usize>) -> (String, usize) {
+    match Pattern::new(pattern) {
+        Ok(p) => p.subn(repl, text, count),
+        Err(_) => (text.to_string(), 0),
+    }
+}
+
+pub fn purge() {}

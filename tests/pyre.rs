@@ -21,7 +21,10 @@ fn test_search_and_positions() {
 fn test_split_and_subn() {
     let p = Pattern::new(r",").unwrap();
     let parts = p.split("a,b,c", None);
-    assert_eq!(parts, vec!["a".to_string(), "b".to_string(), "c".to_string()]);
+    assert_eq!(
+        parts,
+        vec!["a".to_string(), "b".to_string(), "c".to_string()]
+    );
 
     let sp = Pattern::new(r"\s+").unwrap();
     let (res, count) = sp.subn(" ", "a   b  c", None);
@@ -34,9 +37,11 @@ fn test_findall_behavior() {
     let p = Pattern::new(r"(\d+)-(\w+)").unwrap();
     // current implementation returns the first capture group when groups>1
     let found = p.findall("123-abc 456-def");
-    assert_eq!(found, vec![
-        vec!["123".to_string(), "abc".to_string()],
-        vec!["456".to_string(), "def".to_string()],
-    ]);
+    assert_eq!(
+        found,
+        vec![
+            vec!["123".to_string(), "abc".to_string()],
+            vec!["456".to_string(), "def".to_string()],
+        ]
+    );
 }
-

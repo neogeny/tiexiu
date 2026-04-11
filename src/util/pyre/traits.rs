@@ -4,14 +4,15 @@
 //! Traits that define the pyre Pattern and Match interfaces.
 //! These traits mirror the Python `re` module API.
 
-pub trait Pattern<'a, M: Match<'a>>: Clone {
+pub trait Pattern<'a>: Clone {
+    type Match: Match<'a>;
     type Error: std::error::Error;
 
-    fn search(&self, text: &'a str) -> Option<M>;
+    fn search(&self, text: &'a str) -> Option<Self::Match>;
 
-    fn match_(&self, text: &'a str) -> Option<M>;
+    fn match_(&self, text: &'a str) -> Option<Self::Match>;
 
-    fn fullmatch(&self, text: &'a str) -> Option<M>;
+    fn fullmatch(&self, text: &'a str) -> Option<Self::Match>;
 
     fn split(&self, text: &str, maxsplit: Option<usize>) -> Vec<String>;
 
@@ -23,7 +24,7 @@ pub trait Pattern<'a, M: Match<'a>>: Clone {
     /// non-participating groups), matching Python's `re.findall` semantics.
     fn findall(&self, text: &str) -> Vec<Vec<String>>;
 
-    fn finditer(&self, text: &'a str) -> Vec<M>;
+    fn finditer(&self, text: &'a str) -> Vec<Self::Match>;
 
     fn sub(&self, repl: &str, text: &str, count: Option<usize>) -> String;
 
