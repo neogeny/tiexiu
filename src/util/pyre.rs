@@ -8,6 +8,7 @@
 //!
 //! The implementation currently relies on the fancy_regex crate
 
+use fancy_regex;
 use fancy_regex::{Captures, Match as FMatch, Regex};
 use thiserror::Error;
 
@@ -28,7 +29,6 @@ pub struct Match<'a> {
     haystack: &'a str,
     groups: Vec<Option<std::ops::Range<usize>>>,
 }
-
 
 pub fn compile(pattern: &str) -> Result<Pattern, Error> {
     Pattern::new(pattern)
@@ -63,7 +63,7 @@ pub fn findall(pattern: &str, text: &str) -> Vec<String> {
 pub fn finditer<'a>(pattern: &str, text: &'a str) -> Vec<Match<'a>> {
     match Pattern::new(pattern) {
         Ok(p) => p.finditer(text),
-        Err(_) => vec![].into(),
+        Err(_) => vec![],
     }
 }
 
@@ -81,22 +81,10 @@ pub fn subn(pattern: &str, repl: &str, text: &str, count: Option<usize>) -> (Str
     }
 }
 
-pub fn escape(pattern: &str) -> String {
-    let mut result = String::new();
-    for c in pattern.chars() {
-        match c {
-            '\\' | '^' | '$' | '.' | '|' | '?' | '*' | '+' | '(' | ')' | '[' | ']' | '{' | '}'
-            | '"' => {
-                result.push('\\');
-                result.push(c);
-            }
-            _ => result.push(c),
-        }
-    }
-    result
-}
-
 pub fn purge() {}
+
+// note: re-export
+pub use fancy_regex::escape;
 
 impl Pattern {
     pub fn new(pattern: &str) -> Result<Self, Error> {
@@ -182,7 +170,8 @@ impl Pattern {
                 caps_result
                     .ok()
                     .map(|caps| create_match_from_captures(text, &caps))
-            }).collect()
+            })
+            .collect()
     }
 
     pub fn sub(&self, repl: &str, text: &str, count: Option<usize>) -> String {
@@ -219,10 +208,7 @@ impl Pattern {
 
 fn create_match<'a>(haystack: &'a str, m: &FMatch) -> Match<'a> {
     let groups = vec![Some(0..m.end())];
-    Match {
-        haystack,
-        groups,
-    }
+    Match { haystack, groups }
 }
 
 fn create_match_from_captures<'a>(haystack: &'a str, caps: &Captures) -> Match<'a> {
@@ -230,10 +216,7 @@ fn create_match_from_captures<'a>(haystack: &'a str, caps: &Captures) -> Match<'
         .iter()
         .map(|opt| opt.map(|m| m.start()..m.end()))
         .collect();
-    Match {
-        haystack,
-        groups,
-    }
+    Match { haystack, groups }
 }
 
 impl<'a> Match<'a> {

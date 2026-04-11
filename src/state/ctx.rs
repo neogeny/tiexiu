@@ -6,7 +6,7 @@ use crate::input::Cursor;
 use crate::peg::error::ParseError;
 use crate::peg::{Fail, ParseResult, Rule, Succ};
 use crate::trees::tree::Tree;
-use crate::util::pyre::Pattern;
+use crate::util::pyre::{Pattern, escape};
 use crate::util::tokenlist::TokenList;
 use std::fmt::Debug;
 
@@ -39,8 +39,15 @@ pub trait Ctx: Clone + Debug {
     fn get_pattern(&self, pattern: &str) -> Pattern;
 
     fn match_token(&mut self, token: &str) -> bool {
-        self.next_token();
-        self.cursor_mut().match_token(token)
+        // WARNING: this may belong in Cursor, but the Ctx chain holds the regex caching
+        let escaped = escape(token);
+        if *escaped == *token {
+            let bound = format!(r"{}\b", token);
+            self.match_pattern(bound.as_str()).is_some()
+        } else {
+            self.next_token();
+            self.cursor_mut().match_token(token)
+        }
     }
 
     fn match_pattern(&mut self, pattern: &str) -> Option<String> {
