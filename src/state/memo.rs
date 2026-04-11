@@ -59,3 +59,78 @@ impl MemoCache {
         self.memos.retain(|key, _| key.mark >= cutpoint);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::trees::Tree;
+
+    #[test]
+    fn new_cache_is_empty() {
+        let mut cache = MemoCache::new();
+        let key = MemoCache::key(0, "rule");
+        assert!(cache.memo(&key).is_none());
+    }
+
+    #[test]
+    fn memoize_and_retrieve() {
+        let mut cache = MemoCache::new();
+        let key = MemoCache::key(0, "rule");
+        let tree = Tree::Text("test".into());
+
+        cache.memoize(&key, &tree, 5);
+
+        let result = cache.memo(&key);
+        assert!(result.is_some());
+        assert_eq!(result.unwrap().tree, tree);
+    }
+
+    #[test]
+    fn memoize_multiple_rules() {
+        let mut cache = MemoCache::new();
+        let key1 = MemoCache::key(0, "rule1");
+        let key2 = MemoCache::key(0, "rule2");
+        let tree1 = Tree::Text("a".into());
+        let tree2 = Tree::Text("b".into());
+
+        cache.memoize(&key1, &tree1, 1);
+        cache.memoize(&key2, &tree2, 2);
+
+        assert_eq!(cache.memo(&key1).unwrap().tree, tree1);
+        assert_eq!(cache.memo(&key2).unwrap().tree, tree2);
+    }
+
+    #[test]
+    fn prune_keeps_after_cutpoint() {
+        let mut cache = MemoCache::new();
+        let key = MemoCache::key(5, "rule");
+        let tree = Tree::Text("test".into());
+
+        cache.memoize(&key, &tree, 5);
+        cache.prune(5);
+
+        assert!(cache.memo(&key).is_some());
+    }
+
+    #[test]
+    fn prune_removes_before_cutpoint() {
+        let mut cache = MemoCache::new();
+        let key = MemoCache::key(3, "rule");
+        let tree = Tree::Text("test".into());
+
+        cache.memoize(&key, &tree, 3);
+        cache.prune(5);
+
+        assert!(cache.memo(&key).is_none());
+    }
+
+    #[test]
+    fn key_equality() {
+        let key1 = MemoCache::key(0, "rule");
+        let key2 = MemoCache::key(0, "rule");
+        let key3 = MemoCache::key(1, "rule");
+
+        assert_eq!(key1, key2);
+        assert_ne!(key1, key3);
+    }
+}

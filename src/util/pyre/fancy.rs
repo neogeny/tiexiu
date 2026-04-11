@@ -343,3 +343,157 @@ pub fn subn(pattern: &str, repl: &str, text: &str, count: Option<usize>) -> (Str
 }
 
 pub fn purge() {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn pattern_new_valid() {
+        let p = Pattern::new(r"\d+");
+        assert!(p.is_ok());
+    }
+
+    #[test]
+    fn pattern_new_invalid() {
+        let p = Pattern::new(r"[");
+        assert!(p.is_err());
+    }
+
+    #[test]
+    fn pattern_search_found() {
+        let p = Pattern::new(r"\d+").unwrap();
+        let m = p.search("abc123def");
+        assert!(m.is_some());
+        assert_eq!(m.unwrap().group(0), Some("123"));
+    }
+
+    #[test]
+    fn pattern_search_not_found() {
+        let p = Pattern::new(r"\d+").unwrap();
+        let m = p.search("abcdef");
+        assert!(m.is_none());
+    }
+
+    #[test]
+    fn pattern_match_at_start() {
+        let p = Pattern::new(r"\d+").unwrap();
+        let m = p.match_("123abc");
+        assert!(m.is_some());
+    }
+
+    #[test]
+    fn pattern_match_not_at_start() {
+        let p = Pattern::new(r"\d+").unwrap();
+        let m = p.match_("abc123");
+        assert!(m.is_none());
+    }
+
+    #[test]
+    fn pattern_fullmatch() {
+        let p = Pattern::new(r"\d+").unwrap();
+        let m = p.fullmatch("123");
+        assert!(m.is_some());
+    }
+
+    #[test]
+    fn pattern_fullmatch_not_full() {
+        let p = Pattern::new(r"\d+").unwrap();
+        let m = p.fullmatch("123abc");
+        assert!(m.is_none());
+    }
+
+    #[test]
+    fn pattern_split() {
+        let p = Pattern::new(r":").unwrap();
+        let result = p.split("a:b:c", None);
+        assert_eq!(result, vec!["a", "b", "c"]);
+    }
+
+    #[test]
+    fn pattern_split_with_maxsplit() {
+        let p = Pattern::new(r":").unwrap();
+        let result = p.split("a:b:c", Some(1));
+        assert_eq!(result, vec!["a", "b:c"]);
+    }
+
+    #[test]
+    fn pattern_findall() {
+        let p = Pattern::new(r"\d").unwrap();
+        let result = p.findall("1a2b3");
+        assert_eq!(result, vec![vec!["1".to_string()], vec!["2".to_string()], vec!["3".to_string()]]);
+    }
+
+    #[test]
+    fn pattern_finditer() {
+        let p = Pattern::new(r"\d").unwrap();
+        let results = p.finditer("1a2b3");
+        assert_eq!(results.len(), 3);
+    }
+
+    #[test]
+    fn pattern_sub() {
+        let p = Pattern::new(r"\d").unwrap();
+        let result = p.sub("X", "1a2b3", None);
+        assert_eq!(result, "XaXbX");
+    }
+
+    #[test]
+    fn pattern_subn() {
+        let p = Pattern::new(r"\d").unwrap();
+        let (result, count) = p.subn("X", "1a2b3", None);
+        assert_eq!(result, "XaXbX");
+        assert_eq!(count, 3);
+    }
+
+    #[test]
+    fn pattern_sub_with_count() {
+        let p = Pattern::new(r"\d").unwrap();
+        let result = p.sub("X", "1a2b3", Some(1));
+        assert_eq!(result, "Xa2b3");
+    }
+
+    #[test]
+    fn match_group() {
+        let p = Pattern::new(r"(?P<digit>\d)").unwrap();
+        let m = p.search("1abc").unwrap();
+        assert_eq!(m.group(0), Some("1"));
+    }
+
+    #[test]
+    fn match_groups() {
+        let p = Pattern::new(r"(\d)(\d)").unwrap();
+        let m = p.search("12").unwrap();
+        let groups = m.groups();
+        // groups includes full match at index 0
+        assert!(!groups.is_empty());
+    }
+
+    #[test]
+    fn match_start() {
+        let p = Pattern::new(r"\d+").unwrap();
+        let m = p.search("abc123").unwrap();
+        assert_eq!(m.start(None), 3);
+    }
+
+    #[test]
+    fn match_end() {
+        let p = Pattern::new(r"\d+").unwrap();
+        let m = p.search("abc123").unwrap();
+        assert_eq!(m.end(None), 6);
+    }
+
+    #[test]
+    fn match_span() {
+        let p = Pattern::new(r"\d+").unwrap();
+        let m = p.search("abc123").unwrap();
+        assert_eq!(m.span(None), (3, 6));
+    }
+
+    #[test]
+    fn escape_special_chars() {
+        let result = escape(r"[]{}()\");
+        assert!(result.contains('['));
+        assert!(result.contains('\\'));
+    }
+}

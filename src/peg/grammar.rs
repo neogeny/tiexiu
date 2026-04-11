@@ -138,3 +138,45 @@ impl Grammar {
         self.rules.iter_mut().map(Rc::make_mut)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::peg::rule::Rule;
+    use crate::peg::Exp;
+
+    #[test]
+    fn new_grammar() {
+        let grammar = Grammar::new("Test", &[]);
+        assert_eq!(grammar.name, "Test");
+    }
+
+    #[test]
+    fn grammar_with_rules() {
+        let exp = Exp::nil();
+        let rule = Rule::new("start", &[], exp);
+        let grammar = Grammar::new("Test", &[rule]);
+        let count = grammar.rules().count();
+        assert_eq!(count, 1);
+    }
+
+    #[test]
+    fn get_rule() {
+        let exp = Exp::nil();
+        let rule = Rule::new("start", &[], exp.clone());
+        let grammar = Grammar::new("Test", &[rule]);
+        assert!(grammar.get_rule("start").is_ok());
+    }
+
+    #[test]
+    fn get_rule_not_found() {
+        let grammar = Grammar::new("Test", &[]);
+        assert!(grammar.get_rule("missing").is_err());
+    }
+
+    #[test]
+    fn grammar_not_analyzed() {
+        let grammar = Grammar::new("Test", &[]);
+        assert!(!grammar.analyzed);
+    }
+}

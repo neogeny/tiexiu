@@ -195,3 +195,134 @@ impl ExpKind {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn nil_nullable() {
+        let exp = Exp::nil();
+        assert!(exp.is_nullable());
+    }
+
+    #[test]
+    fn token_not_nullable() {
+        let exp = Exp::token("a");
+        assert!(!exp.is_nullable());
+    }
+
+    #[test]
+    fn fail_not_nullable() {
+        let exp = Exp::fail();
+        assert!(!exp.is_nullable());
+    }
+
+    #[test]
+    fn dot_not_nullable() {
+        let exp = Exp::dot();
+        assert!(!exp.is_nullable());
+    }
+
+    #[test]
+    fn optional_nullable() {
+        let exp = Exp::optional(Exp::token("a"));
+        assert!(exp.is_nullable());
+    }
+
+    #[test]
+    fn closure_nullable() {
+        let exp = Exp::closure(Exp::token("a"));
+        assert!(exp.is_nullable());
+    }
+
+    #[test]
+    fn positive_closure_not_nullable() {
+        let exp = Exp::positive_closure(Exp::token("a"));
+        assert!(!exp.is_nullable());
+    }
+
+    #[test]
+    fn pattern_nullable() {
+        let exp = Exp::pattern(r"a*");
+        assert!(exp.is_nullable());
+    }
+
+    #[test]
+    fn pattern_not_nullable() {
+        let exp = Exp::pattern(r"a+");
+        assert!(!exp.is_nullable());
+    }
+
+    #[test]
+    fn sequence_all_nullable() {
+        let exp = Exp::sequence(vec![Exp::nil(), Exp::optional(Exp::token("a"))]);
+        assert!(exp.is_nullable());
+    }
+
+    #[test]
+    fn sequence_not_nullable() {
+        let exp = Exp::sequence(vec![Exp::token("a"), Exp::token("b")]);
+        assert!(!exp.is_nullable());
+    }
+
+    #[test]
+    fn choice_nullable() {
+        let exp = Exp::choice(vec![Exp::nil(), Exp::token("a")]);
+        assert!(exp.is_nullable());
+    }
+
+    #[test]
+    fn choice_not_nullable() {
+        let exp = Exp::choice(vec![Exp::token("a"), Exp::token("b")]);
+        assert!(!exp.is_nullable());
+    }
+
+    #[test]
+    fn lookahead_nullable() {
+        let exp = Exp::lookahead(Exp::token("a"));
+        assert!(exp.is_nullable());
+    }
+
+    #[test]
+    fn negative_lookahead_nullable() {
+        let exp = Exp::negative_lookahead(Exp::token("a"));
+        assert!(exp.is_nullable());
+    }
+
+    #[test]
+    fn cut_nullable() {
+        let exp = Exp::cut();
+        assert!(exp.is_nullable());
+    }
+
+    #[test]
+    fn void_nullable() {
+        let exp = Exp::void();
+        assert!(exp.is_nullable());
+    }
+
+    #[test]
+    fn constant_nullable() {
+        let exp = Exp::constant("test");
+        assert!(exp.is_nullable());
+    }
+
+    #[test]
+    fn eof_not_nullable() {
+        let exp = Exp::eof();
+        assert!(!exp.is_nullable());
+    }
+
+    #[test]
+    fn join_nullable() {
+        let exp = Exp::join(Exp::token(","), Exp::token("a"));
+        assert!(exp.is_nullable());
+    }
+
+    #[test]
+    fn positive_join_not_nullable() {
+        let exp = Exp::positive_join(Exp::token(","), Exp::token("a"));
+        assert!(!exp.is_nullable());
+    }
+}

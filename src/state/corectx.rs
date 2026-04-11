@@ -3,9 +3,9 @@
 
 use crate::input::Cursor;
 use crate::peg::parser::TokenList;
-use crate::state::Ctx;
 use crate::state::memo::{Key, Memo, MemoCache};
 use crate::state::trace::{NullTracer, Tracer};
+use crate::state::Ctx;
 use crate::trees::Tree;
 use crate::util::pyre::Pattern;
 use std::cell::RefCell;
@@ -141,5 +141,53 @@ where
     fn prune_cache(&mut self) {
         let cutpoint = self.mark();
         self.with_heavy_mut(|heavy| heavy.memos.prune(cutpoint));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::input::StrCursor;
+
+    #[test]
+    fn new_context() {
+        let cursor = StrCursor::new("test");
+        let ctx = CoreCtx::new(cursor);
+
+        assert!(!ctx.cut_seen());
+    }
+
+    #[test]
+    fn enter_rule() {
+        let cursor = StrCursor::new("test");
+        let mut ctx = CoreCtx::new(cursor);
+
+        ctx.enter("rule");
+
+        let stack = ctx.stack();
+        assert!(stack.to_vec().contains(&"rule".to_string()));
+    }
+
+    #[test]
+    fn cut_and_uncut() {
+        let cursor = StrCursor::new("test");
+        let mut ctx = CoreCtx::new(cursor);
+
+        ctx.setcut();
+        assert!(ctx.cut_seen());
+
+        ctx.uncut();
+        assert!(!ctx.cut_seen());
+    }
+
+    #[test]
+    fn get_pattern_caches() {
+        let cursor = StrCursor::new("test");
+        let ctx = CoreCtx::new(cursor);
+
+        let p1 = ctx.get_pattern(r"\d+");
+        let p2 = ctx.get_pattern(r"\d+");
+
+        assert_eq!(p1.pattern(), p2.pattern());
     }
 }

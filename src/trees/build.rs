@@ -55,3 +55,38 @@ impl Tree {
         Self::Nil
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn text_tree() {
+        let t = Tree::text("hello");
+        assert_eq!(t.to_string(), "hello");
+    }
+
+    #[test]
+    fn list_tree() {
+        let t = Tree::list(&[Tree::text("a"), Tree::text("b")]);
+        assert!(matches!(t, Tree::List(_)));
+    }
+
+    #[test]
+    fn named_tree() {
+        let t = Tree::named("key", Tree::text("value"));
+        assert!(matches!(t, Tree::Named(_)));
+    }
+
+    #[test]
+    fn nil_tree() {
+        let t = Tree::nil();
+        assert_eq!(t.to_string(), "∅");
+    }
+
+    #[test]
+    fn bottom_tree() {
+        let t = Tree::bottom();
+        assert_eq!(t.to_string(), "⊥");
+    }
+}

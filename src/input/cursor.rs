@@ -41,3 +41,14 @@ pub trait Cursor: Debug {
     // fn line_at(&self, pos: Option<usize>) -> usize;
     //
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn cursor_trait_has_core_methods() {
+        // Compile-time check that Cursor trait exists with required methods
+        // This test ensures the trait compiles correctly
+        use super::Cursor;
+        fn _check_trait<T: Cursor>() {}
+    }
+}

@@ -32,7 +32,7 @@ impl fmt::Display for KeyValue {
 impl fmt::Display for Tree {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Text(s) => write!(f, "\"{}\"", s),
+            Self::Text(s) => write!(f, "{}", s),
             Self::Named(kv) | Self::NamedAsList(kv) => write!(f, "{}", kv),
             Self::Override(v) => write!(f, "!{}", v),
             Self::OverrideAsList(v) => write!(f, "!!{}", v),
@@ -69,7 +69,7 @@ mod tests {
         tags_map.insert("key1".into(), Tree::Text("value1".into()));
         tags_map.insert("key2".into(), Tree::Text("value2".into()));
         let tags = TreeMap { entries: tags_map };
-        assert_eq!(tags.to_string(), "{key1: \"value1\", key2: \"value2\"}");
+        assert_eq!(tags.to_string(), "{key1: value1, key2: value2}");
 
         let tags_empty = TreeMap {
             entries: IndexMap::new(),
@@ -80,46 +80,43 @@ mod tests {
     #[test]
     fn test_key_value_display() {
         let kv = KeyValue("name".into(), Tree::Text("value".into()));
-        assert_eq!(kv.to_string(), "«name=\"value\"»");
+        assert_eq!(kv.to_string(), "«name=value»");
     }
 
     #[test]
     fn test_tree_display() {
         // Leaf
-        assert_eq!(Tree::Text("hello".into()).to_string(), "\"hello\"");
+        assert_eq!(Tree::Text("hello".into()).to_string(), "hello");
 
         // LeafTag
         let kv_leaf = KeyValue("tag".into(), Tree::Text("leaf_val".into()));
-        assert_eq!(
-            Tree::Named(kv_leaf.into()).to_string(),
-            "«tag=\"leaf_val\"»"
-        );
+        assert_eq!(Tree::Named(kv_leaf.into()).to_string(), "«tag=leaf_val»");
 
         // NodeTag
         let kv_node = KeyValue("node".into(), Tree::Text("node_val".into()));
         assert_eq!(
             Tree::NamedAsList(kv_node.into()).to_string(),
-            "«node=\"node_val\"»"
+            "«node=node_val»"
         );
 
         // RootLeaf
         assert_eq!(
             Tree::Override(Tree::Text("root".into()).into()).to_string(),
-            "!\"root\""
+            "!root"
         );
 
         // RootNode
         assert_eq!(
             Tree::OverrideAsList(Tree::List(vec![Tree::Text("item".into())].into()).into())
                 .to_string(),
-            "!![\"item\"]"
+            "!![item]"
         );
 
         // Tags
         let mut tags_map = MapEntries::new();
         tags_map.insert("a".into(), Tree::Text("1".into()));
         let tags = TreeMap { entries: tags_map };
-        assert_eq!(Tree::Map(tags.into()).to_string(), "{a: \"1\"}");
+        assert_eq!(Tree::Map(tags.into()).to_string(), "{a: 1}");
 
         // Nil
         assert_eq!(Tree::Nil.to_string(), "∅");
@@ -136,7 +133,7 @@ mod tests {
             ]
             .into(),
         );
-        assert_eq!(node.to_string(), "[\"a\", \"b\", [\"c\"]]");
+        assert_eq!(node.to_string(), "[a, b, [c]]");
 
         // Pruned
         let meta = Rc::new(NodeMeta {
@@ -150,7 +147,7 @@ mod tests {
         };
         assert_eq!(
             pruned_tree.to_string(),
-            "MyRule[param1, param2]: \"pruned_content\""
+            "MyRule[param1, param2]: pruned_content"
         );
     }
 }
