@@ -43,7 +43,7 @@ impl ExpKind {
                 // true if it CAN match the empty string (is nullable)
                 pyre::compile(pattern)
                     .ok()
-                    .and_then(|re| re.search(""))
+                    .and_then(|re| re.match_(""))
                     .is_some()
             }
 
