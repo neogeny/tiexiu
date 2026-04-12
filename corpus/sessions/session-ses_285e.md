@@ -187,7 +187,7 @@ Now let me also remove the tracing from exp.rs and strcursor.rs, and run the tes
 **Input:**
 ```json
 {
-  "filePath": "/Users/apalala/art/tiexiu/src/peg/exp.rs",
+  "filePath": "/Users/apalala/art/tiexiu/src/peg/export",
   "oldString": "            ExpKind::Token(token) => {\n                eprintln!(\"Exp::Token '{}' at mark {}\", token, start);\n                if ctx.token(token) {",
   "newString": "            ExpKind::Token(token) => {\n                if ctx.token(token) {"
 }
@@ -405,7 +405,7 @@ The test needs to create fresh tokens. Let me fix it:
 **Input:**
 ```json
 {
-  "filePath": "/Users/apalala/art/tiexiu/src/peg/exp.rs",
+  "filePath": "/Users/apalala/art/tiexiu/src/peg/export",
   "offset": 340,
   "limit": 40
 }
@@ -511,7 +511,7 @@ I should check if there's memoization happening in the parse logic that could be
 ```json
 {
   "pattern": "fn parse.*ctx.*C.*Ctx.*ParseResult",
-  "path": "/Users/apalala/art/tiexiu/src/peg/exp.rs"
+  "path": "/Users/apalala/art/tiexiu/src/peg/export"
 }
 ```
 
@@ -534,7 +534,7 @@ Let me search for the Parser trait and sequence implementation.
 ```json
 {
   "pattern": "Sequence",
-  "path": "/Users/apalala/art/tiexiu/src/peg/exp.rs"
+  "path": "/Users/apalala/art/tiexiu/src/peg/export"
 }
 ```
 
@@ -559,7 +559,7 @@ Let me look at the Sequence implementation:
 **Input:**
 ```json
 {
-  "filePath": "/Users/apalala/art/tiexiu/src/peg/exp.rs",
+  "filePath": "/Users/apalala/art/tiexiu/src/peg/export",
   "offset": 185,
   "limit": 30
 }
@@ -669,7 +669,7 @@ Let me add tracing at the start of Exp::parse:
 **Input:**
 ```json
 {
-  "filePath": "/Users/apalala/art/tiexiu/src/peg/exp.rs",
+  "filePath": "/Users/apalala/art/tiexiu/src/peg/export",
   "offset": 73,
   "limit": 20
 }
@@ -720,7 +720,7 @@ Let me add tracing to see what's happening:
 **Input:**
 ```json
 {
-  "filePath": "/Users/apalala/art/tiexiu/src/peg/exp.rs",
+  "filePath": "/Users/apalala/art/tiexiu/src/peg/export",
   "oldString": "impl<C> Parser<C> for Exp\nwhere\n    C: Ctx,\n{\n    // #[track_caller]\n    fn parse(&self, mut ctx: C) -> ParseResult<C> {\n        let start = ctx.mark();",
   "newString": "impl<C> Parser<C> for Exp\nwhere\n    C: Ctx,\n{\n    // #[track_caller]\n    fn parse(&self, mut ctx: C) -> ParseResult<C> {\n        let start = ctx.mark();\n        eprintln!(\"Exp::parse start={}, kind={:?}\", start, self.kind);"
 }
@@ -956,7 +956,7 @@ Now "ab" works. I need to update all test inputs to not have spaces:
 **Input:**
 ```json
 {
-  "filePath": "/Users/apalala/art/tiexiu/src/peg/exp.rs",
+  "filePath": "/Users/apalala/art/tiexiu/src/peg/export",
   "offset": 354,
   "limit": 45
 }
@@ -1032,7 +1032,7 @@ I need to update all test inputs to not have spaces:
 **Input:**
 ```json
 {
-  "filePath": "/Users/apalala/art/tiexiu/src/peg/exp.rs",
+  "filePath": "/Users/apalala/art/tiexiu/src/peg/export",
   "oldString": "\n        let result1_err = exp1.parse(StrCtx::new(StrCursor::new(\"a c x\")));\n        println!(\"exp1 on 'a c x': {:?}\", result1_err);\n        let err1 = result1_err.unwrap_err();\n        assert_eq!(err1.mark, 2);\n        assert_eq!(err1.source, ParseError::ExpectedToken(\"b\".into()).into());\n\n        let exp2 = Exp::sequence(vec![Exp::token(\"a\"), Exp::token(\"c\"), Exp::token(\"d\")]);\n        let result2_ok = exp2.parse(StrCtx::new(StrCursor::new(\"a c d\")));\n        println!(\"exp2 on 'a c d': {:?}\", result2_ok);\n        assert!(result2_ok.is_ok(), \"sequence 2 should succeed on 'a c d'\");\n\n        let result2_err = exp2.parse(StrCtx::new(StrCursor::new(\"a c x\")));\n        println!(\"exp2 on 'a c x': {:?}\", result2_err);\n        let err2 = result2_err.unwrap_err();\n        assert_eq!(err2.mark, 4);\n        assert_eq!(err2.source, ParseError::ExpectedToken(\"d\".into()).into());\n\n        let exp = Exp::choice(vec![exp1, exp2]);\n        let ctx = StrCtx::new(StrCursor::new(\"a c x\"));\n\n        let result = exp.parse(ctx);\n        println!(\"choice on 'a c x': {:?}\", result);\n        let err = result.unwrap_err();\n\n        assert_eq!(err.mark, 4);",
   "newString": "\n        let result1_err = exp1.parse(StrCtx::new(StrCursor::new(\"ax\")));\n        println!(\"exp1 on 'ax': {:?}\", result1_err);\n        let err1 = result1_err.unwrap_err();\n        assert_eq!(err1.mark, 1);\n        assert_eq!(err1.source, ParseError::ExpectedToken(\"b\".into()).into());\n\n        let exp2 = Exp::sequence(vec![Exp::token(\"a\"), Exp::token(\"c\"), Exp::token(\"d\")]);\n        let result2_ok = exp2.parse(StrCtx::new(StrCursor::new(\"acd\")));\n        println!(\"exp2 on 'acd': {:?}\", result2_ok);\n        assert!(result2_ok.is_ok(), \"sequence 2 should succeed on 'acd'\");\n\n        let result2_err = exp2.parse(StrCtx::new(StrCursor::new(\"acx\")));\n        println!(\"exp2 on 'acx': {:?}\", result2_err);\n        let err2 = result2_err.unwrap_err();\n        assert_eq!(err2.mark, 2);\n        assert_eq!(err2.source, ParseError::ExpectedToken(\"d\".into()).into());\n\n        let exp = Exp::choice(vec![exp1, exp2]);\n        let ctx = StrCtx::new(StrCursor::new(\"acx\"));\n\n        let result = exp.parse(ctx);\n        println!(\"choice on 'acx': {:?}\", result);\n        let err = result.unwrap_err();\n\n        assert_eq!(err.mark, 2);"
 }
@@ -1513,7 +1513,7 @@ Now let me also remove the debug tracing from exp.rs and run the test:
 **Input:**
 ```json
 {
-  "filePath": "/Users/apalala/art/tiexiu/src/peg/exp.rs",
+  "filePath": "/Users/apalala/art/tiexiu/src/peg/export",
   "oldString": "impl<C> Parser<C> for Exp\nwhere\n    C: Ctx,\n{\n    // #[track_caller]\n    fn parse(&self, mut ctx: C) -> ParseResult<C> {\n        let start = ctx.mark();\n        eprintln!(\"Exp::parse start={}, kind={:?}\", start, self.kind);",
   "newString": "impl<C> Parser<C> for Exp\nwhere\n    C: Ctx,\n{\n    // #[track_caller]\n    fn parse(&self, mut ctx: C) -> ParseResult<C> {\n        let start = ctx.mark();"
 }
@@ -1624,7 +1624,7 @@ All 49 tests pass. Let me clean up the debug statements in the test:
 **Input:**
 ```json
 {
-  "filePath": "/Users/apalala/art/tiexiu/src/peg/exp.rs",
+  "filePath": "/Users/apalala/art/tiexiu/src/peg/export",
   "offset": 340,
   "limit": 50
 }
@@ -2703,7 +2703,7 @@ Let me revert the test inputs back to spaced strings:
 **Input:**
 ```json
 {
-  "filePath": "/Users/apalala/art/tiexiu/src/peg/exp.rs",
+  "filePath": "/Users/apalala/art/tiexiu/src/peg/export",
   "offset": 340,
   "limit": 45
 }
@@ -2809,7 +2809,7 @@ Let me restore the spaced inputs and keep `Ctx::token()` without `next_token()`:
 **Input:**
 ```json
 {
-  "filePath": "/Users/apalala/art/tiexiu/src/peg/exp.rs",
+  "filePath": "/Users/apalala/art/tiexiu/src/peg/export",
   "oldString": "    #[test]\n    fn choice_keeps_furthest_failure() {\n        let token_a = Exp::token(\"a\");\n        let cursor = StrCursor::new(\"a\");\n        println!(\"cursor on 'a': {:?}\", cursor);\n        let result_a = token_a.parse(StrCtx::new(cursor));\n        println!(\"token('a') on 'a': {:?}\", result_a);\n        assert!(result_a.is_ok(), \"token('a') should match 'a'\");\n\n        let exp1 = Exp::sequence(vec![Exp::token(\"a\"), Exp::token(\"b\")]);\n        let result1_ok = exp1.parse(StrCtx::new(StrCursor::new(\"ab\")));\n        println!(\"exp1 on 'ab': {:?}\", result1_ok);\n        assert!(result1_ok.is_ok(), \"sequence 1 should succeed on 'ab'\");\n\n        let result1_err = exp1.parse(StrCtx::new(StrCursor::new(\"ax\")));\n        println!(\"exp1 on 'ax': {:?}\", result1_err);\n        let err1 = result1_err.unwrap_err();\n        assert_eq!(err1.mark, 1);\n        assert_eq!(err1.source, ParseError::ExpectedToken(\"b\".into()).into());\n\n        let exp2 = Exp::sequence(vec![Exp::token(\"a\"), Exp::token(\"c\"), Exp::token(\"d\")]);\n        let result2_ok = exp2.parse(StrCtx::new(StrCursor::new(\"acd\")));\n        println!(\"exp2 on 'acd': {:?}\", result2_ok);\n        assert!(result2_ok.is_ok(), \"sequence 2 should succeed on 'acd'\");\n\n        let result2_err = exp2.parse(StrCtx::new(StrCursor::new(\"acx\")));\n        println!(\"exp2 on 'acx': {:?}\", result2_err);\n        let err2 = result2_err.unwrap_err();\n        assert_eq!(err2.mark, 2);\n        assert_eq!(err2.source, ParseError::ExpectedToken(\"d\".into()).into());\n\n        let exp = Exp::choice(vec![exp1, exp2]);\n        let ctx = StrCtx::new(StrCursor::new(\"acx\"));\n\n        let result = exp.parse(ctx);\n        println!(\"choice on 'acx': {:?}\", result);\n        let err = result.unwrap_err();\n\n        assert_eq!(err.mark, 2);\n        assert_eq!(err.source, ParseError::ExpectedToken(\"d\".into()).into());\n    }",
   "newString": "    #[test]\n    fn choice_keeps_furthest_failure() {\n        let token_a = Exp::token(\"a\");\n        let cursor = StrCursor::new(\"a\");\n        println!(\"cursor on 'a': {:?}\", cursor);\n        let result_a = token_a.parse(StrCtx::new(cursor));\n        println!(\"token('a') on 'a': {:?}\", result_a);\n        assert!(result_a.is_ok(), \"token('a') should match 'a'\");\n\n        let exp1 = Exp::sequence(vec![Exp::token(\"a\"), Exp::token(\"b\")]);\n        let result1_ok = exp1.parse(StrCtx::new(StrCursor::new(\"a b\")));\n        println!(\"exp1 on 'a b': {:?}\", result1_ok);\n        assert!(result1_ok.is_ok(), \"sequence 1 should succeed on 'a b'\");\n\n        let result1_err = exp1.parse(StrCtx::new(StrCursor::new(\"a c x\")));\n        println!(\"exp1 on 'a c x': {:?}\", result1_err);\n        let err1 = result1_err.unwrap_err();\n        assert_eq!(err1.mark, 2);\n        assert_eq!(err1.source, ParseError::ExpectedToken(\"b\".into()).into());\n\n        let exp2 = Exp::sequence(vec![Exp::token(\"a\"), Exp::token(\"c\"), Exp::token(\"d\")]);\n        let result2_ok = exp2.parse(StrCtx::new(StrCursor::new(\"a c d\")));\n        println!(\"exp2 on 'a c d': {:?}\", result2_ok);\n        assert!(result2_ok.is_ok(), \"sequence 2 should succeed on 'a c d'\");\n\n        let result2_err = exp2.parse(StrCtx::new(StrCursor::new(\"a c x\")));\n        println!(\"exp2 on 'a c x': {:?}\", result2_err);\n        let err2 = result2_err.unwrap_err();\n        assert_eq!(err2.mark, 4);\n        assert_eq!(err2.source, ParseError::ExpectedToken(\"d\".into()).into());\n\n        let exp = Exp::choice(vec![exp1, exp2]);\n        let ctx = StrCtx::new(StrCursor::new(\"a c x\"));\n\n        let result = exp.parse(ctx);\n        println!(\"choice on 'a c x': {:?}\", result);\n        let err = result.unwrap_err();\n\n        assert_eq!(err.mark, 4);\n        assert_eq!(err.source, ParseError::ExpectedToken(\"d\".into()).into());\n    }"
 }
