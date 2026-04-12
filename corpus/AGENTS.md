@@ -6,11 +6,25 @@ TieXiu is a Rust port of TatSu PEG parser generator with Python bindings via PyO
 
 ## Rules
 
-- AI Agents will study `README.md`, `SYNTAX.md`, `./tatsu/README.rst` and all the `*.rst` documents in `./tatsu/docs/` to gain context about the projects.
-- AI Agents will study all the files belonging to the current Rust project to understand its structure and semantics.
-- AI Agents will study the Python source code for TatSu found in the modules under `./tatsu/tatsu/` and `./tatsu/tests/` to understand the background of the TieXiu project and its goals.
-- AI Agents will read and study all the files under `./corpus/sessions/` to gain
+* AI Agents will study `README.md`, `SYNTAX.md`, `./tatsu/README.rst` and all the
+  `*.rst` documents in `./tatsu/docs/` to gain context about the projects.
+
+* AI Agents will study all the files belonging to the current Rust project to understand its structure and semantics.
+
+* AI Agents will study the Python source code for TatSu found in the modules under `./tatsu/tatsu/` and `./tatsu/tests/` to understand the background of the TieXiu project and its goals.
+
+* AI Agents will read and study all the files under `./corpus/sessions/` to gain
   context from previous work sessions.
+
+* AI Agents will not use text modification tools like `sed` or awk to modify program
+  code. If done, the tool will be pointed to specific files, one by one, and
+  never run then over a directory of a glob pattern.
+
+* AI Agents will learn to use `ast-grep` by experimentation and by studying the
+  documentation available at https://ast-grep.github.io
+
+* AI Agents will follow strictly the rules describe in `./corpus/RULES.md`
+
 
 ## Dev Commands
 

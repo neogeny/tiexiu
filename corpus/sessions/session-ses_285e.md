@@ -542,7 +542,7 @@ Let me search for the Parser trait and sequence implementation.
 ```
 Found 2 matches
 /Users/apalala/art/tiexiu/src/peg/exp.rs:
-  Line 49:     Sequence(ERefArr),
+  Line 49:     Sequence(ExpRefArr),
   Line 188:             ExpKind::Sequence(sequence) => {
 ```
 
