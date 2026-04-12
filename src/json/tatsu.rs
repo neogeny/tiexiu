@@ -25,7 +25,7 @@ pub enum TatSuModel {
         directives: std::collections::HashMap<String, serde_json::Value>,
         // #[serde(default, skip_serializing_if = "Vec::is_empty")]
         keywords: std::collections::HashSet<String>,
-        
+
         #[serde(default = "default_false")]
         analyzed: bool,
     },
