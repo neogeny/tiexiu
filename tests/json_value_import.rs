@@ -17,7 +17,7 @@ fn test_grammar_from_json() {
 #[test]
 fn test_grammar_from_serde_value() {
     let value: Value = serde_json::from_str(CALC_JSON).expect("Failed to parse JSON");
-    let grammar = Grammar::from_serde_value(&value).expect("Failed to convert");
+    let grammar = Grammar::from_serde_json_value(&value).expect("Failed to convert");
     assert_eq!(grammar.name, "CALC");
 }
 
@@ -25,7 +25,7 @@ fn test_grammar_from_serde_value() {
 fn test_grammar_from_json_error_reporting() {
     let value: Value =
         serde_json::from_str(RULE_INCLUDE_NO_NAME_JSON).expect("Failed to parse JSON");
-    let result = Grammar::from_serde_value(&value);
+    let result = Grammar::from_serde_json_value(&value);
 
     match result {
         Ok(g) => {

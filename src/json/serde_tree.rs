@@ -26,7 +26,17 @@ pub enum TreeJsonError {
 }
 
 impl Tree {
-    pub fn to_json_value(&self) -> Value {
+    pub fn to_json_string(&self) -> Result<String, serde_json::Error> {
+        serde_json::to_string_pretty(&self.to_serde_json_value())
+    }
+
+    pub fn from_serde_json_str(json: &str) -> Result<Self, TreeJsonError> {
+        let value: Value = serde_json::from_str(json)
+            .map_err(|_| TreeJsonError::ExpectedObject("tree JSON document"))?;
+        Self::from_serde_json_value(&value)
+    }
+    
+    pub fn to_serde_json_value(&self) -> Value {
         match self {
             Tree::Nil => tagged("Nil", []),
             Tree::Bottom => tagged("Bottom", []),
@@ -35,31 +45,27 @@ impl Tree {
                 "List",
                 [(
                     "items",
-                    Value::Array(items.iter().map(Tree::to_json_value).collect()),
+                    Value::Array(items.iter().map(Tree::to_serde_json_value).collect()),
                 )],
             ),
             Tree::Named(keyval) => named_value("Named", keyval),
             Tree::NamedAsList(keyval) => named_value("NamedAsList", keyval),
-            Tree::Override(tree) => tagged("Override", [("tree", tree.as_ref().to_json_value())]),
+            Tree::Override(tree) => tagged("Override", [("tree", tree.as_ref().to_serde_json_value())]),
             Tree::OverrideAsList(tree) => {
-                tagged("OverrideAsList", [("tree", tree.as_ref().to_json_value())])
+                tagged("OverrideAsList", [("tree", tree.as_ref().to_serde_json_value())])
             }
             Tree::Map(m) => tagged("Map", [("entries", map_entries_value(m))]),
             Tree::Node { meta, tree } => tagged(
                 "Node",
                 [
                     ("meta", node_meta_value(meta)),
-                    ("tree", tree.as_ref().to_json_value()),
+                    ("tree", tree.as_ref().to_serde_json_value()),
                 ],
             ),
         }
     }
-
-    pub fn to_json_string(&self) -> Result<String, serde_json::Error> {
-        serde_json::to_string_pretty(&self.to_json_value())
-    }
-
-    pub fn from_json_value(value: &Value) -> Result<Self, TreeJsonError> {
+    
+    pub fn from_serde_json_value(value: &Value) -> Result<Self, TreeJsonError> {
         let object = expect_object(value, "tree")?;
         let kind = expect_string(field(object, "type")?, "type")?;
 
@@ -73,33 +79,27 @@ impl Tree {
             "List" => Ok(Tree::List(
                 expect_array(field(object, "items")?, "items")?
                     .iter()
-                    .map(Tree::from_json_value)
+                    .map(Tree::from_serde_json_value)
                     .collect::<Result<Vec<_>, _>>()?
                     .into(),
             )),
             "Named" => Ok(Tree::Named(named_keyval(object)?.into())),
             "NamedAsList" => Ok(Tree::NamedAsList(named_keyval(object)?.into())),
             "Override" => Ok(Tree::Override(
-                Tree::from_json_value(field(object, "tree")?)?.into(),
+                Tree::from_serde_json_value(field(object, "tree")?)?.into(),
             )),
             "OverrideAsList" => Ok(Tree::OverrideAsList(
-                Tree::from_json_value(field(object, "tree")?)?.into(),
+                Tree::from_serde_json_value(field(object, "tree")?)?.into(),
             )),
             "Map" => Ok(Tree::Map(
                 map_from_entries(field(object, "entries")?)?.into(),
             )),
             "Node" => Ok(Tree::Node {
                 meta: node_meta_from_value(field(object, "meta")?)?.into(),
-                tree: Tree::from_json_value(field(object, "tree")?)?.into(),
+                tree: Tree::from_serde_json_value(field(object, "tree")?)?.into(),
             }),
             other => Err(TreeJsonError::UnknownVariant(other.to_string())),
         }
-    }
-
-    pub fn from_json_str(json: &str) -> Result<Self, TreeJsonError> {
-        let value: Value = serde_json::from_str(json)
-            .map_err(|_| TreeJsonError::ExpectedObject("tree JSON document"))?;
-        Self::from_json_value(&value)
     }
 }
 
@@ -118,7 +118,7 @@ fn named_value(kind: &str, keyval: &KeyValue) -> Value {
         kind,
         [
             ("name", Value::String(name.to_string())),
-            ("tree", tree.to_json_value()),
+            ("tree", tree.to_serde_json_value()),
         ],
     )
 }
@@ -132,7 +132,7 @@ fn map_entries_value(m: &TreeMap) -> Value {
                     "Entry",
                     [
                         ("key", Value::String(key.to_string())),
-                        ("value", value.to_json_value()),
+                        ("value", value.to_serde_json_value()),
                     ],
                 )
             })
@@ -178,7 +178,7 @@ fn flag_entries_value(flags: &FlagMap) -> Value {
 
 fn named_keyval(object: &Map<String, Value>) -> Result<KeyValue, TreeJsonError> {
     let name = expect_string(field(object, "name")?, "name")?;
-    let tree = Tree::from_json_value(field(object, "tree")?)?;
+    let tree = Tree::from_serde_json_value(field(object, "tree")?)?;
     Ok(KeyValue(name.into(), tree))
 }
 
@@ -187,7 +187,7 @@ fn map_from_entries(value: &Value) -> Result<TreeMap, TreeJsonError> {
     for entry in expect_array(value, "entries")? {
         let object = expect_object(entry, "entry")?;
         let key = expect_string(field(object, "key")?, "key")?;
-        let tree = Tree::from_json_value(field(object, "value")?)?;
+        let tree = Tree::from_serde_json_value(field(object, "value")?)?;
         m.entries.insert(key.into(), tree);
     }
     Ok(m)
@@ -279,8 +279,8 @@ mod tests {
             tree: Tree::Map(m.into()).into(),
         };
 
-        let value = tree.to_json_value();
-        let round_tripped = Tree::from_json_value(&value).unwrap();
+        let value = tree.to_serde_json_value();
+        let round_tripped = Tree::from_serde_json_value(&value).unwrap();
         assert_eq!(round_tripped, tree);
     }
 }

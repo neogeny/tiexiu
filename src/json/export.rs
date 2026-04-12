@@ -6,10 +6,50 @@
 //! This module serializes Grammar to serde_json::Value,
 //! allowing easy tweaking of the output before final serialization.
 
-use crate::peg::exp::{ERef, Exp, ExpKind};
+use crate::peg::exp::{Exp, ExpKind};
 use crate::peg::grammar::Grammar;
 use crate::peg::rule::Rule;
 use serde_json::{Map, Value};
+use super::error::{JsonError, Result};
+
+
+pub trait ToJson  {
+    fn to_serde_value(&self) -> Value;
+
+    fn to_json_string(&self) -> Result<String> {
+        match serde_json::to_string_pretty(&self.to_serde_value()) {
+            Ok(s) => Ok(s),
+            Err(e) => Err(JsonError::Json(e)),
+        }
+    }
+
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.to_json_string() {
+            Ok(json) => write!(f, "{}", json),
+            Err(_) => Err(std::fmt::Error)
+        }
+    }
+}
+
+impl ToJson for Grammar {
+    fn to_serde_value(&self) -> Value {
+        Grammar::to_serde_value(self)
+    }
+}
+
+impl ToJson for Rule {
+    fn to_serde_value(&self) -> Value {
+        Rule::to_serde_value(self)
+    }
+
+}
+
+impl ToJson for Exp {
+    fn to_serde_value(&self) -> Value {
+        Exp::to_serde_value(self)
+    }
+
+}
 
 impl Grammar {
     pub fn to_serde_value(&self) -> Value {
@@ -219,7 +259,7 @@ mod tests {
     fn test_grammar_to_serde_value() {
         let json_str = std::fs::read_to_string("grammar/tatsu.json").expect("tatsu.json missing");
         let value: Value = serde_json::from_str(&json_str).expect("Failed to parse JSON");
-        let grammar = Grammar::from_serde_value(&value).expect("Failed to convert");
+        let grammar = Grammar::from_serde_json_value(&value).expect("Failed to convert");
         let output = grammar.to_serde_value();
 
         assert!(output.is_object());

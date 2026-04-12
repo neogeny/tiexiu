@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::error as liberror;
-use crate::json::error::ImportError;
+use crate::json::error::JsonError;
 use crate::peg::{CompileError, ParseError};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("JSON import/export failed: {0}")]
-    JsonModel(#[from] ImportError),
+    JsonModel(#[from] JsonError),
 
     #[error("failed to serialize JSON output: {0}")]
     Json(#[from] serde_json::Error),

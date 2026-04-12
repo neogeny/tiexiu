@@ -1,14 +1,14 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::json::error::ImportError;
+use crate::json::error::JsonError;
 use crate::json::tatsu::TatSuModel;
 use crate::peg::exp::{ERef, Exp};
 use crate::peg::grammar::Grammar;
 use crate::peg::rule::Rule;
 
 impl TryFrom<TatSuModel> for ERef {
-    type Error = ImportError;
+    type Error = JsonError;
 
     fn try_from(model: TatSuModel) -> Result<Self, Self::Error> {
         Ok(ERef::new(Exp::try_from(model)?))
@@ -16,10 +16,10 @@ impl TryFrom<TatSuModel> for ERef {
 }
 
 impl Grammar {
-    pub fn serde_from_json(json: &str) -> Result<Self, ImportError> {
+    pub fn serde_from_json(json: &str) -> Result<Self, JsonError> {
         #[cfg(debug_assertions)]
         {
-            let value: serde_json::Value = serde_json::from_str(json).map_err(ImportError::from)?;
+            let value: serde_json::Value = serde_json::from_str(json).map_err(JsonError::from)?;
 
             // Debug: If you suspect the JSON structure is wrong, you can inspect 'value' here.
             assert!(value.is_object());
@@ -34,7 +34,7 @@ impl Grammar {
         let mut deserializer = serde_json::Deserializer::from_str(json);
 
         let model: TatSuModel = serde_path_to_error::deserialize(&mut deserializer)
-            .map_err(|err| ImportError::JsonPath(err.path().to_string(), err.into_inner()))?;
+            .map_err(|err| JsonError::JsonPath(err.path().to_string(), err.into_inner()))?;
 
         #[cfg(debug_assertions)]
         println!("{:?}", model);
@@ -45,7 +45,7 @@ impl Grammar {
 }
 
 impl TryFrom<TatSuModel> for Grammar {
-    type Error = ImportError;
+    type Error = JsonError;
 
     fn try_from(model: TatSuModel) -> Result<Self, Self::Error> {
         if let TatSuModel::Grammar {
@@ -95,25 +95,25 @@ impl TryFrom<TatSuModel> for Grammar {
             grammar.initialize();
             Ok(grammar)
         } else {
-            Err(ImportError::InvalidRoot)
+            Err(JsonError::InvalidRoot)
         }
     }
 }
 
 impl TryFrom<TatSuModel> for Exp {
-    type Error = ImportError;
+    type Error = JsonError;
 
     fn try_from(model: TatSuModel) -> Result<Self, Self::Error> {
         match model {
             TatSuModel::Grammar { .. } | TatSuModel::Rule { .. } => {
-                Err(ImportError::UnsupportedModel(format!("{:?}", model)))
+                Err(JsonError::UnsupportedModel(format!("{:?}", model)))
             }
             TatSuModel::RuleInclude { name, exp } => {
                 let inner_exp = Exp::try_from(*exp)?;
                 Ok(Exp::rule_include_with(&name, inner_exp))
             }
-            TatSuModel::LeftJoin { .. } => Err(ImportError::UnsupportedModel("LeftJoin".into())),
-            TatSuModel::RightJoin { .. } => Err(ImportError::UnsupportedModel("RightJoin".into())),
+            TatSuModel::LeftJoin { .. } => Err(JsonError::UnsupportedModel("LeftJoin".into())),
+            TatSuModel::RightJoin { .. } => Err(JsonError::UnsupportedModel("RightJoin".into())),
 
             // --- Core Terminals ---
             TatSuModel::Cut => Ok(Exp::cut()),
@@ -145,12 +145,12 @@ impl TryFrom<TatSuModel> for Exp {
 
             // --- N-ary Operators ---
             TatSuModel::Sequence { sequence } => {
-                let exprs: Result<Vec<Exp>, ImportError> =
+                let exprs: Result<Vec<Exp>, JsonError> =
                     sequence.into_iter().map(Exp::try_from).collect();
                 Ok(Exp::sequence(exprs?.as_slice().into()))
             }
             TatSuModel::Choice { options } => {
-                let exprs: Result<Vec<Exp>, ImportError> =
+                let exprs: Result<Vec<Exp>, JsonError> =
                     options.into_iter().map(Exp::try_from).collect();
                 Ok(Exp::choice(exprs?.as_slice().into()))
             }

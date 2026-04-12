@@ -3,7 +3,7 @@
 
 use crate::input::Cursor;
 use crate::input::StrCursor;
-use crate::json::boot::boot_grammar;
+use crate::json::{boot_grammar, ToJson};
 use crate::peg::{Grammar, Succ};
 use crate::state::corectx::CoreCtx;
 use crate::trees::Tree;
@@ -43,7 +43,7 @@ pub fn load(json: &str) -> Result<Grammar> {
 }
 
 pub fn load_tree(json: &str) -> Result<Tree> {
-    Tree::from_json_str(json).map_err(Error::from)
+    Tree::from_serde_json_str(json).map_err(Error::from)
 }
 
 pub fn pretty(grammar: &str) -> Result<String> {
@@ -61,8 +61,10 @@ pub fn load_boot() -> Result<Grammar> {
 
 pub fn boot_grammar_json() -> Result<String> {
     let boot = boot_grammar()?;
-    let model: crate::json::tatsu::TatSuModel = boot.clone().try_into()?;
-    Ok(serde_json::to_string_pretty(&model)?)
+    match boot.to_json_string() {
+        Ok(s) => Ok(s),
+        Err(e) => Err(e.into()),
+    }
 }
 
 pub fn boot_grammar_pretty() -> Result<String> {

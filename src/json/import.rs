@@ -6,7 +6,7 @@
 //! This module translates serde_json::Value directly to Grammar,
 //! bypassing the TatSuModel deserializer which fails on modified JSON.
 
-use crate::json::error::ImportError;
+use crate::json::error::JsonError;
 use crate::peg::exp::Exp;
 use crate::peg::grammar::Grammar;
 use crate::peg::rule::Rule;
@@ -35,22 +35,22 @@ impl JsonSerializationHelper {
         }
     }
 
-    fn get_obj(&self) -> Result<&serde_json::Map<String, Value>, ImportError> {
+    fn get_obj(&self) -> Result<&serde_json::Map<String, Value>, JsonError> {
         self.value
             .as_object()
             .ok_or_else(|| self.error("Expected object"))
     }
 
-    fn error(&self, msg: &str) -> ImportError {
+    fn error(&self, msg: &str) -> JsonError {
         let path_str = self.path.join(" -> ");
         if path_str.is_empty() {
-            ImportError::Other(msg.into())
+            JsonError::Other(msg.into())
         } else {
-            ImportError::Other(format!("{} at {}", msg, path_str))
+            JsonError::Other(format!("{} at {}", msg, path_str))
         }
     }
 
-    fn get_class(&self) -> Result<String, ImportError> {
+    fn get_class(&self) -> Result<String, JsonError> {
         if let Ok(obj) = self.get_obj() {
             obj.get("__class__")
                 .and_then(|v| v.as_str())
@@ -61,7 +61,7 @@ impl JsonSerializationHelper {
         }
     }
 
-    fn get_string(&self, field: &str) -> Result<String, ImportError> {
+    fn get_string(&self, field: &str) -> Result<String, JsonError> {
         if let Ok(obj) = self.get_obj() {
             obj.get(field)
                 .and_then(|v| v.as_str())
@@ -72,7 +72,7 @@ impl JsonSerializationHelper {
         }
     }
 
-    fn get_nested(&self, field: &str) -> Result<JsonSerializationHelper, ImportError> {
+    fn get_nested(&self, field: &str) -> Result<JsonSerializationHelper, JsonError> {
         let obj = self.get_obj()?;
         let value = obj
             .get(field)
@@ -99,7 +99,7 @@ impl JsonSerializationHelper {
         }
     }
 
-    fn get_array(&self, field: &str) -> Result<Vec<JsonSerializationHelper>, ImportError> {
+    fn get_array(&self, field: &str) -> Result<Vec<JsonSerializationHelper>, JsonError> {
         if let Ok(obj) = self.get_obj()
             && let Some(arr) = obj.get(field).and_then(|v: &Value| v.as_array()) 
         {
@@ -149,7 +149,7 @@ impl JsonSerializationHelper {
 }
 
 impl Grammar {
-    pub fn from_serde_value(value: &Value) -> Result<Self, ImportError> {
+    pub fn from_serde_json_value(value: &Value) -> Result<Self, JsonError> {
         let path = JsonSerializationHelper::new(value.clone());
         let class = path.get_class()?;
 
@@ -165,8 +165,8 @@ impl Grammar {
             .iter()
             .enumerate()
             .map(|(i, f)| {
-                Rule::from_serde_value_with_path(f.clone())
-                    .map_err(|e| ImportError::InvalidField(format!("rules[{}]: {}", i, e)))
+                Rule::from_serde_json_with_path(f.clone())
+                    .map_err(|e| JsonError::InvalidField(format!("rules[{}]: {}", i, e)))
             })
             .collect();
 
@@ -195,7 +195,7 @@ impl Grammar {
 
     fn parse_directives(
         directives: Option<&Value>,
-    ) -> Result<std::collections::HashMap<String, String>, ImportError> {
+    ) -> Result<std::collections::HashMap<String, String>, JsonError> {
         let mut result = std::collections::HashMap::new();
         if let Some(Value::Object(obj)) = directives {
             for (k, v) in obj {
@@ -213,12 +213,12 @@ impl Grammar {
 }
 
 impl Rule {
-    pub fn from_serde_value(value: &Value) -> Result<Self, ImportError> {
+    pub fn from_serde_json_value(value: &Value) -> Result<Self, JsonError> {
         let path = JsonSerializationHelper::new(value.clone());
-        Self::from_serde_value_with_path(path)
+        Self::from_serde_json_with_path(path)
     }
 
-    pub fn from_serde_value_with_path(path: JsonSerializationHelper) -> Result<Self, ImportError> {
+    pub fn from_serde_json_with_path(path: JsonSerializationHelper) -> Result<Self, JsonError> {
         let class = path.get_class()?;
 
         if class != "Rule" {
@@ -226,7 +226,7 @@ impl Rule {
         }
 
         let name = path.get_string("name")?;
-        let rhs = Exp::from_serde_value_with_path(path.get_nested("exp")?)?;
+        let rhs = Exp::from_serde_json_with_path(path.get_nested("exp")?)?;
 
         let params = path
             .get_obj()
@@ -254,12 +254,12 @@ impl Rule {
 }
 
 impl Exp {
-    pub fn from_serde_value(value: &Value) -> Result<Self, ImportError> {
+    pub fn from_serde_json_value(value: &Value) -> Result<Self, JsonError> {
         let path = JsonSerializationHelper::new(value.clone());
-        Self::from_serde_value_with_path(path)
+        Self::from_serde_json_with_path(path)
     }
 
-    pub fn from_serde_value_with_path(path: JsonSerializationHelper) -> Result<Self, ImportError> {
+    pub fn from_serde_json_with_path(path: JsonSerializationHelper) -> Result<Self, JsonError> {
         let class = path.get_class()?;
 
         match class.as_str() {
@@ -267,7 +267,7 @@ impl Exp {
                 let items = path.get_array("sequence")?;
                 let exprs: Result<Vec<_>, _> = items
                     .iter()
-                    .map(|f| Exp::from_serde_value_with_path(f.clone()))
+                    .map(|f| Exp::from_serde_json_with_path(f.clone()))
                     .collect();
                 Ok(Exp::sequence(exprs?.as_slice().into()))
             }
@@ -275,18 +275,18 @@ impl Exp {
                 let items = path.get_array("options")?;
                 let exprs: Result<Vec<_>, _> = items
                     .iter()
-                    .map(|f| Exp::from_serde_value_with_path(f.clone()))
+                    .map(|f| Exp::from_serde_json_with_path(f.clone()))
                     .collect();
                 Ok(Exp::choice(exprs?.as_slice().into()))
             }
-            "Option" => Ok(Exp::alt(Exp::from_serde_value_with_path(path.get_nested("exp")?)?)),
+            "Option" => Ok(Exp::alt(Exp::from_serde_json_with_path(path.get_nested("exp")?)?)),
             "Named" => Ok(Exp::named(
                 &path.get_string("name")?,
-                Exp::from_serde_value_with_path(path.get_nested("exp")?)?,
+                Exp::from_serde_json_with_path(path.get_nested("exp")?)?,
             )),
             "NamedList" => Ok(Exp::named_list(
                 &path.get_string("name")?,
-                Exp::from_serde_value_with_path(path.get_nested("exp")?)?,
+                Exp::from_serde_json_with_path(path.get_nested("exp")?)?,
             )),
             "Call" => Ok(Exp::call(&path.get_string("name")?)),
             "Token" => Ok(Exp::token(&path.get_string("token")?)),
@@ -296,39 +296,39 @@ impl Exp {
                 path.opt_str("literal").unwrap_or(""),
                 path.opt_u64("level").unwrap_or(0) as u8,
             )),
-            "Group" => Ok(Exp::group(Exp::from_serde_value_with_path(path.get_nested("exp")?)?)),
-            "Optional" => Ok(Exp::optional(Exp::from_serde_value_with_path(path.get_nested("exp")?)?)),
-            "Closure" => Ok(Exp::closure(Exp::from_serde_value_with_path(path.get_nested("exp")?)?)),
-            "PositiveClosure" => Ok(Exp::positive_closure(Exp::from_serde_value_with_path(
+            "Group" => Ok(Exp::group(Exp::from_serde_json_with_path(path.get_nested("exp")?)?)),
+            "Optional" => Ok(Exp::optional(Exp::from_serde_json_with_path(path.get_nested("exp")?)?)),
+            "Closure" => Ok(Exp::closure(Exp::from_serde_json_with_path(path.get_nested("exp")?)?)),
+            "PositiveClosure" => Ok(Exp::positive_closure(Exp::from_serde_json_with_path(
                 path.get_nested("exp")?,
             )?)),
-            "Lookahead" => Ok(Exp::lookahead(Exp::from_serde_value_with_path(path.get_nested("exp")?)?)),
-            "NegativeLookahead" => Ok(Exp::negative_lookahead(Exp::from_serde_value_with_path(
+            "Lookahead" => Ok(Exp::lookahead(Exp::from_serde_json_with_path(path.get_nested("exp")?)?)),
+            "NegativeLookahead" => Ok(Exp::negative_lookahead(Exp::from_serde_json_with_path(
                 path.get_nested("exp")?,
             )?)),
-            "SkipGroup" => Ok(Exp::skip_group(Exp::from_serde_value_with_path(path.get_nested("exp")?)?)),
-            "SkipTo" => Ok(Exp::skip_to(Exp::from_serde_value_with_path(path.get_nested("exp")?)?)),
-            "Override" => Ok(Exp::override_node(Exp::from_serde_value(
+            "SkipGroup" => Ok(Exp::skip_group(Exp::from_serde_json_with_path(path.get_nested("exp")?)?)),
+            "SkipTo" => Ok(Exp::skip_to(Exp::from_serde_json_with_path(path.get_nested("exp")?)?)),
+            "Override" => Ok(Exp::override_node(Exp::from_serde_json_value(
                 &path.get_nested("exp")?.value,
             )?)),
-            "OverrideList" => Ok(Exp::override_list(Exp::from_serde_value(
+            "OverrideList" => Ok(Exp::override_list(Exp::from_serde_json_value(
                 &path.get_nested("exp")?.value,
             )?)),
             "Join" => Ok(Exp::join(
-                Exp::from_serde_value_with_path(path.get_nested("exp")?)?,
-                Exp::from_serde_value_with_path(path.get_nested("sep")?)?,
+                Exp::from_serde_json_with_path(path.get_nested("exp")?)?,
+                Exp::from_serde_json_with_path(path.get_nested("sep")?)?,
             )),
             "PositiveJoin" => Ok(Exp::positive_join(
-                Exp::from_serde_value_with_path(path.get_nested("exp")?)?,
-                Exp::from_serde_value_with_path(path.get_nested("sep")?)?,
+                Exp::from_serde_json_with_path(path.get_nested("exp")?)?,
+                Exp::from_serde_json_with_path(path.get_nested("sep")?)?,
             )),
             "Gather" => Ok(Exp::gather(
-                Exp::from_serde_value_with_path(path.get_nested("exp")?)?,
-                Exp::from_serde_value_with_path(path.get_nested("sep")?)?,
+                Exp::from_serde_json_with_path(path.get_nested("exp")?)?,
+                Exp::from_serde_json_with_path(path.get_nested("sep")?)?,
             )),
             "PositiveGather" => Ok(Exp::positive_gather(
-                Exp::from_serde_value_with_path(path.get_nested("exp")?)?,
-                Exp::from_serde_value_with_path(path.get_nested("sep")?)?,
+                Exp::from_serde_json_with_path(path.get_nested("exp")?)?,
+                Exp::from_serde_json_with_path(path.get_nested("sep")?)?,
             )),
             "RuleInclude" => {
                 let name = path.get_string("name")?;
@@ -340,7 +340,7 @@ impl Exp {
                         if v.is_null() {
                             None
                         } else {
-                            Some(Exp::from_serde_value(v))
+                            Some(Exp::from_serde_json_value(v))
                         }
                     });
                 match exp {
@@ -365,7 +365,7 @@ mod tests {
     fn test_grammar_from_serde_value_tatsu() {
         let json_str = std::fs::read_to_string("grammar/tatsu.json").expect("tatsu.json missing");
         let value: Value = serde_json::from_str(&json_str).expect("Failed to parse JSON");
-        let grammar = Grammar::from_serde_value(&value).expect("Failed to convert");
+        let grammar = Grammar::from_serde_json_value(&value).expect("Failed to convert");
         assert_eq!(grammar.name, "TatSu");
         let rule_count = grammar.rules().count();
         assert!(rule_count > 0, "Expected rules, got {}", rule_count);
@@ -375,7 +375,7 @@ mod tests {
     fn test_grammar_from_serde_value_calc() {
         let json_str = std::fs::read_to_string("grammar/calc.json").expect("calc.json missing");
         let value: Value = serde_json::from_str(&json_str).expect("Failed to parse JSON");
-        let grammar = Grammar::from_serde_value(&value).expect("Failed to convert");
+        let grammar = Grammar::from_serde_json_value(&value).expect("Failed to convert");
         assert_eq!(grammar.name, "CALC");
     }
 }

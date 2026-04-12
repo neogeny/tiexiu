@@ -3,13 +3,18 @@
 
 use thiserror::Error;
 
+pub type Result<T> = std::result::Result<T, JsonError>;
+
 #[derive(Debug, Error)]
-pub enum ImportError {
-    #[error("JSON error at {0}: {1}")]
+pub enum JsonError {
+    #[error("JSON Import error at {0}: {1}")]
     JsonPath(String, #[source] serde_json::Error),
 
     #[error("JSON error: {0}")]
     Json(#[from] serde_json::Error),
+
+    #[error("JSON Export error: {0}")]
+    JsonExport(#[from] std::fmt::Error),
 
     #[error("Root node must be a Grammar")]
     InvalidRoot,
@@ -24,8 +29,8 @@ pub enum ImportError {
     Other(String),
 }
 
-impl From<String> for ImportError {
+impl From<String> for JsonError {
     fn from(s: String) -> Self {
-        ImportError::Other(s)
+        JsonError::Other(s)
     }
 }

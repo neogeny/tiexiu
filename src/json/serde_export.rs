@@ -1,14 +1,14 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::json::error::ImportError;
+use crate::json::error::JsonError;
 use crate::json::tatsu::TatSuModel;
 use crate::peg::exp::{Exp, ExpKind};
 use crate::peg::grammar::Grammar;
 use std::collections::HashMap;
 
 impl TryFrom<Grammar> for TatSuModel {
-    type Error = ImportError;
+    type Error = JsonError;
 
     fn try_from(grammar: Grammar) -> Result<Self, Self::Error> {
         let rules: Vec<TatSuModel> = grammar

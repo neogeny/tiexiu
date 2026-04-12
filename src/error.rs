@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::json::error::ImportError;
-use crate::json::tree::TreeJsonError;
+use crate::json::error::JsonError;
+use crate::json::serde_tree::TreeJsonError;
 use crate::peg::{CompileError, Fail, ParseError};
 use thiserror::Error;
 
@@ -11,7 +11,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("JSON import/export failed: {0}")]
-    JsonModel(#[from] ImportError),
+    JsonModel(#[from] JsonError),
 
     #[error("tree JSON mapping failed: {0}")]
     TreeJson(#[from] TreeJsonError),
