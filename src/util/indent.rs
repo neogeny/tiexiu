@@ -4,7 +4,7 @@ use std::fmt::Write;
 
 const BLACK_LEN: usize = 88;
 
-pub fn unindent(text: &str) -> String {
+pub fn unindent(text: &str) -> Box<str> {
     let lines: Vec<&str> = text.lines().collect();
 
     let min_indent = lines
@@ -24,7 +24,7 @@ pub fn unindent(text: &str) -> String {
         }
     }
 
-    buf.trim().to_string()
+    buf.trim().into()
 }
 
 pub struct IndentWriter {
