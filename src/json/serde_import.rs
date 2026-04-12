@@ -16,8 +16,8 @@ impl TryFrom<TatSuModel> for ERef {
 }
 
 impl Grammar {
-    pub fn from_json(json: &str) -> Result<Self, ImportError> {
-        // #[cfg(debug_assertions)]
+    pub fn serde_from_json(json: &str) -> Result<Self, ImportError> {
+        #[cfg(debug_assertions)]
         {
             let value: serde_json::Value = serde_json::from_str(json).map_err(ImportError::from)?;
 
@@ -192,6 +192,6 @@ mod tests {
         println!("CALC FROM JSON");
         println!("{:#}", json);
 
-        let _grammar = Grammar::from_json(&json).unwrap();
+        let _grammar = Grammar::serde_from_json(&json).unwrap();
     }
 }

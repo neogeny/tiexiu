@@ -39,7 +39,7 @@ where
 }
 
 pub fn load(json: &str) -> Result<Grammar> {
-    Ok(Grammar::from_json(json)?)
+    Ok(Grammar::serde_from_json(json)?)
 }
 
 pub fn load_tree(json: &str) -> Result<Tree> {

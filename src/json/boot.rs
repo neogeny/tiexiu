@@ -8,7 +8,7 @@ pub const TATSU_GRAMMAR_JSON: &str = include_str!("../../grammar/tatsu.json");
 
 /// Loads the embedded TatSu grammar from its JSON representation.
 pub fn boot_grammar() -> Result<Grammar, ImportError> {
-    Grammar::from_json(TATSU_GRAMMAR_JSON)
+    Grammar::serde_from_json(TATSU_GRAMMAR_JSON)
 }
 
 #[cfg(test)]
