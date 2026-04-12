@@ -8,6 +8,7 @@ use crate::state::trace::{NullTracer, Tracer};
 use crate::state::Ctx;
 use crate::trees::Tree;
 use crate::util::pyre::Pattern;
+use std::borrow::Cow;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -35,7 +36,7 @@ where
     U: Cursor + Clone,
     T: Tracer,
 {
-    pub state: Rc<State<U>>,
+    pub state: Cow<'c, Box<State<U>>>,
     pub heavy: Rc<RefCell<HeavyState<'c, T>>>,
 }
 
@@ -46,25 +47,24 @@ where
 {
     pub fn new(cursor: U) -> Self {
         Self {
-            state: State {
+            state: Cow::Owned(
+                State {
                 cursor,
                 cutseen: false,
                 callstack: TokenList::new(),
-            }
-            .into(),
-            heavy: RefCell::new(HeavyState {
+            }.into()),
+            heavy: Rc::new(RefCell::new(HeavyState {
                 memos: MemoCache::new(),
                 patterns: PatternCache::new(),
                 tracer: T::default(),
                 marker: std::marker::PhantomData,
-            })
-            .into(),
+            })),
         }
     }
 
     #[inline]
     fn state_mut(&mut self) -> &mut State<U> {
-        Rc::make_mut(&mut self.state)
+        self.state.to_mut()
     }
 
     #[inline]

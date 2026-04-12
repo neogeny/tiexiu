@@ -19,7 +19,7 @@ pub trait Ctx: Clone + Debug {
 
     fn enter(&mut self, name: &str);
 
-    #[track_caller]
+    // #[track_caller]
     fn failure(&self, start: usize, source: ParseError) -> Fail {
         Fail::new(start, self.mark(), self.cut_seen(), source, self.stack())
     }
