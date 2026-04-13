@@ -6,7 +6,6 @@ use crate::api::{boot_grammar_json, boot_grammar_pretty, compile, load, parse_in
 use clap;
 use clap::builder::styling::{AnsiColor, Styles};
 use clap::{Parser, Subcommand};
-use owo_colors;
 use std::path::PathBuf;
 use termcolor;
 
@@ -129,12 +128,6 @@ fn configure_color(color: clap::ColorChoice) -> bool {
         }
     };
     if !use_color {
-        // unsafe {
-        //     std::env::set_var("NO_COLOR", "1");
-        // }
-        owo_colors::set_override(false);
-        bunt::set_stderr_color_choice(termcolor::ColorChoice::Never);
-        bunt::set_stdout_color_choice(termcolor::ColorChoice::Never);
     }
     use_color
 }
