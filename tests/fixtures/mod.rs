@@ -1,3 +1,3 @@
-pub mod fixtures;
+pub mod data;
 
-pub use fixtures::*;
+pub use data::*;
