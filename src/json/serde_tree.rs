@@ -41,7 +41,7 @@ impl Tree {
             Tree::Nil => tagged("Nil", []),
             Tree::Bottom => tagged("Bottom", []),
             Tree::Text(text) => tagged("Text", [("text", Value::String(text.to_string()))]),
-            Tree::List(items) => tagged(
+            Tree::List(items) | Tree::Closed(items) => tagged(
                 "List",
                 [(
                     "items",
