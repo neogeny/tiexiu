@@ -55,7 +55,15 @@ impl TokenList {
         }
     }
 
-    pub fn head(&self) -> Option<&str> {
+    pub fn tail(&self) -> Option<&TokenList> {
+        match self {
+            TokenList::Cons(_, cdr) => Some(cdr),
+            TokenList::Atom(_) => None,
+            TokenList::Nil => None,
+        }
+    }
+
+    pub fn first(&self) -> Option<&str> {
         let mut current = self;
         loop {
             match current {
@@ -66,13 +74,25 @@ impl TokenList {
         }
     }
 
-    pub fn to_vec(&self) -> Vec<String> {
+    pub fn last(&self) -> Option<&str> {
+        let mut current = self;
+        loop {
+            match current {
+                TokenList::Atom(a) => return Some(a),
+                TokenList::Cons(_, cdr) => current = cdr,
+                TokenList::Nil => return None,
+            }
+        }
+    }
+
+
+    pub fn to_vec(&self) -> Vec<&str> {
         let mut atoms = Vec::new();
         let mut stack = vec![self];
 
         while let Some(current) = stack.pop() {
             match current {
-                TokenList::Atom(a) => atoms.push(a.to_string()),
+                TokenList::Atom(a) => atoms.push(&**a),
                 TokenList::Cons(car, cdr) => {
                     stack.push(cdr);
                     stack.push(car);
