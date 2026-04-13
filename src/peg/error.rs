@@ -10,27 +10,27 @@ pub enum ParseError {
     Fail,
 
     /// Corresponds to Self::Dot (No more input)
-    #[error("No more input")]
+    #[error("no more input")]
     NoMoreInput,
 
     /// Corresponds to Self::Eof
-    #[error("Expecting EOF/EOT")]
+    #[error("expecting EOF/EOT")]
     ExpectingEof,
 
     /// Corresponds to Self::Token
-    #[error("Expecting '{0}'")]
+    #[error("{0}")]
     ExpectedToken(Box<str>),
 
     /// Corresponds to Self::Pattern
-    #[error("Expecting '{0}'")]
+    #[error("{0}")]
     ExpectedPattern(Box<str>),
 
     /// Corresponds to Self::NegativeLookahead
-    #[error("Not expecting: ???")]
-    UnexpectedLookahead,
+    #[error("!{0}")]
+    NotExpecting(Box<str>),
 
     /// Corresponds to Self::Choice fallback
-    #[error("No viable option")]
+    #[error("no viable option")]
     NoViableOption(Box<[Box<str>]>),
 
     /// Corresponds memos that are Tree::Bottom
