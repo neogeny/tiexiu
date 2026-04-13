@@ -3,7 +3,7 @@
 
 use crate::input::Cursor;
 use crate::input::StrCursor;
-use crate::json::{boot_grammar, ToJson};
+use crate::json::{ToJson, boot_grammar};
 use crate::peg::{Grammar, Succ};
 use crate::state::corectx::CoreCtx;
 use crate::trees::Tree;
@@ -18,7 +18,8 @@ where
     U: Cursor + Clone,
 {
     let boot = boot_grammar()?;
-    let ctx = CoreCtx::new(cursor);
+    let mut ctx = CoreCtx::new(cursor);
+    ctx.set_trace(true);
 
     match boot.parse(ctx) {
         Ok(Succ(_, tree)) => Ok(tree),
