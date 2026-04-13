@@ -5,3 +5,6 @@ pub mod fold;
 pub mod indent;
 pub mod pyre;
 pub mod tokenlist;
+pub mod finally;
+
+pub use finally::finally;
