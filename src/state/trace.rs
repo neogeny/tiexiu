@@ -1,9 +1,10 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::peg::{Nope, ParseError};
-use std::fmt::Debug;
 use super::CtxI;
+use crate::peg::ParseError;
+use console::style;
+use std::fmt::Debug;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct NullTracer {}
@@ -15,7 +16,7 @@ impl Tracer for NullTracer {}
 
 impl Tracer for ConsoleTracer {
     fn trace(&self, msg: &str) {
-        eprintln!("{}", msg);
+        println!("{}", msg);
     }
 }
 
@@ -38,24 +39,30 @@ pub trait Tracer: Debug {
     }
 
     fn trace_event(&self, ctx: &dyn CtxI, event: Event, msg: &str) {
-        let event_symbol = match event {
-            Event::Entry => "↙",
-            Event::Success => "≡",
-            Event::Failure => "≢",
-            Event::Recursion => "⟲",
-            Event::Cut => "⚔",
-            Event::Match =>  "≡",
-            Event::NoMatch => "≢",
-        };
-
-        let lookahead = ctx.cursor().lookahead();
-        let callstack = ctx.callstack().to_string();
-        let mark = ctx.cursor().mark();
+        console::set_colors_enabled(true);
+        let event_symbol: String = match event {
+            Event::Entry => style("↙").yellow(),
+            Event::Success => style("≡").green(),
+            Event::Failure => style("≢").red(),
+            Event::Recursion => style("⟲").blue(),
+            Event::Cut => style("⚔").yellow(),
+            Event::Match => style("≡").green(),
+            Event::NoMatch => style("≢").red(),
+        }
+        .to_string();
+        let lookahead = ctx.cursor().lookahead().replace(" ", "·");
+        let callstack = style(
+            ctx.callstack()
+                .to_vec()
+                .join(style("←").green().to_string().as_str()),
+        )
+        .white()
+        .bold();
+        let (line, col) = ctx.cursor().pos();
+        let pos = style(format!("[{line}][{col}]→")).black().bright();
         let source = "";
 
-
-        let msg = format!("{event_symbol}{callstack}{source}{mark}\n{lookahead\
-        }");
+        let msg = format!("{event_symbol}{msg} {callstack}{source}\n{pos}{lookahead}");
         self.trace(msg.as_str());
     }
 
@@ -67,8 +74,8 @@ pub trait Tracer: Debug {
         self.trace_event(ctx, Event::Success, "");
     }
 
-    fn trace_failure(&self, ctx: &dyn CtxI, error: ParseError) {
-        let errstr = format!("{}", error);
+    fn trace_failure(&self, ctx: &dyn CtxI, error: &ParseError) {
+        let errstr = format!(" {}", style(error).red());
         self.trace_event(ctx, Event::Failure, &errstr);
     }
 
@@ -80,14 +87,15 @@ pub trait Tracer: Debug {
         self.trace_event(ctx, Event::Cut, "");
     }
 
-    fn trace_match(&self, ctx: &dyn CtxI, token: &str, name:&str) {
-        let msg = format!("'{token}'/{name}/");
-        self.trace_event(ctx, Event::Match, &msg)
-
+    fn trace_match(&self, ctx: &dyn CtxI, token: &str, name: &str) -> bool {
+        let msg = style(format!("'{token}'/{name}/")).green().to_string();
+        self.trace_event(ctx, Event::Match, &msg);
+        true
     }
 
-    fn trace_no_match(&self, ctx: &dyn CtxI, name: &str) {
-        let msg = format!("'/{name}/");
-        self.trace_event(ctx, Event::NoMatch, &msg)
+    fn trace_no_match(&self, ctx: &dyn CtxI, name: &str) -> bool {
+        let msg = style(format!("'/{name}/")).red().to_string();
+        self.trace_event(ctx, Event::NoMatch, &msg);
+        false
     }
 }
