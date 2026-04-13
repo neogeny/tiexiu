@@ -20,7 +20,7 @@ clippy:
 fmt:
     cargo fmt --all
 
-test:
+test: fmt clippy
     cargo nextest run
 
 build:
