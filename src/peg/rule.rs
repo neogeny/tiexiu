@@ -5,7 +5,7 @@ use super::exp::Exp;
 use super::{ParseResult, Parser, Succ};
 use crate::state::Ctx;
 use crate::trees::Tree;
-use crate::trees::tree::{FlagMap, NodeMeta, NodeMetaRef};
+use crate::trees::tree::{FlagMap, NodeMeta};
 use std::collections::HashMap;
 use std::fmt;
 use std::rc::Rc;
@@ -17,13 +17,12 @@ pub const FLAG_IS_MEMO: &str = "is_memo";
 pub const FLAG_IS_LREC: &str = "is_lrec";
 
 pub type RuleMeta = NodeMeta;
-pub type RuleMetaRef = NodeMetaRef;
 pub type RuleRef = Rc<Rule>;
 pub type RuleIndex = HashMap<Box<str>, usize>;
 
 #[derive(Debug, Clone)]
 pub struct Rule {
-    pub meta: RuleMetaRef,
+    pub meta: Rc<NodeMeta>,
     pub exp: Exp,
     // kwparams: dict[str, Any] = field(default_factory=dict)
 }
