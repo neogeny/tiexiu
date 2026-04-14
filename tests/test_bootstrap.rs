@@ -101,7 +101,7 @@ mod parse_grammar {
     #[test]
     #[ignore]
     fn simple_grammar() {
-        let tree = tiexiu::api::parse(
+        let tree = tiexiu::api::parse_grammar(
             r#"
             @@grammar :: Simple
             start: 'hello'

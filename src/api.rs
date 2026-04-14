@@ -9,16 +9,16 @@ use crate::state::corectx::CoreCtx;
 use crate::trees::Tree;
 use crate::{Error, Result};
 
-pub fn parse(grammar: &str) -> Result<Tree> {
-    parse_with(StrCursor::new(grammar))
+pub fn parse_grammar(grammar: &str) -> Result<Tree> {
+    parse_grammar_with(StrCursor::new(grammar))
 }
 
-pub fn parse_as_json(grammar: &str) -> Result<String> {
-    let tree = parse(grammar)?;
+pub fn parse_grammar_as_json(grammar: &str) -> Result<String> {
+    let tree = parse_grammar(grammar)?;
     tree.to_json_string().map_err(Error::from)
 }
 
-pub fn parse_with<U>(cursor: U) -> Result<Tree>
+pub fn parse_grammar_with<U>(cursor: U) -> Result<Tree>
 where
     U: Cursor + Clone,
 {
@@ -32,11 +32,11 @@ where
     }
 }
 
-pub fn parse_with_as_json<U>(cursor: U) -> Result<String>
+pub fn parse_grammar_with_as_json<U>(cursor: U) -> Result<String>
 where
     U: Cursor + Clone,
 {
-    let tree = parse_with(cursor)?;
+    let tree = parse_grammar_with(cursor)?;
     tree.to_json_string().map_err(Error::from)
 }
 
@@ -44,7 +44,7 @@ pub fn compile(grammar: &str) -> Result<Grammar> {
     compile_with(StrCursor::new(grammar))
 }
 
-pub fn compile_as_json(grammar: &str) -> Result<String> {
+pub fn compile_to_json(grammar: &str) -> Result<String> {
     let compiled = compile(grammar)?;
     compiled.to_json_string().map_err(Error::from)
 }
@@ -53,7 +53,7 @@ pub fn compile_with<U>(cursor: U) -> Result<Grammar>
 where
     U: Cursor + Clone,
 {
-    let tree = parse_with(cursor)?;
+    let tree = parse_grammar_with(cursor)?;
     Ok(Grammar::compile(&tree)?)
 }
 
@@ -118,8 +118,8 @@ pub fn boot_grammar_pretty() -> Result<String> {
     Ok(boot.to_string())
 }
 
-pub fn parse_input(parser: &Grammar, input: &str) -> Result<Tree> {
-    let cursor = StrCursor::new(input);
+pub fn parse_input(parser: &Grammar, text: &str) -> Result<Tree> {
+    let cursor = StrCursor::new(text);
     let ctx = CoreCtx::new(cursor);
 
     match parser.parse(ctx) {
@@ -128,7 +128,17 @@ pub fn parse_input(parser: &Grammar, input: &str) -> Result<Tree> {
     }
 }
 
-pub fn parse_input_to_json(parser: &Grammar, input: &str) -> Result<String> {
-    let tree = parse_input(parser, input)?;
+pub fn parse_input_to_json(parser: &Grammar, text: &str) -> Result<String> {
+    let tree = parse_input(parser, text)?;
     tree.to_json_string().map_err(Error::from)
+}
+
+pub fn parse(grammar: &str, text: &str) -> Result<Tree> {
+    let parser = compile(grammar)?;
+    parse_input(&parser, text)
+}
+
+pub fn parse_to_json(grammar: &str, text: &str) -> Result<String> {
+    let parser = compile(grammar)?;
+    parse_input_to_json(&parser, text)
 }
