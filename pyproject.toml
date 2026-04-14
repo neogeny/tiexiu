@@ -34,8 +34,9 @@ Issues = "https://github.com/neogeny/tiexiu/issues"
 [tool.maturin]
 features = ["pyo3/extension-module"]
 module-name = "tiexiu.tiexiu"
+python-source = "python"
 
 [dependency-groups]
 dev = [
-    "maturin>=1.12.6",
+    "maturin>=1.13.1",
 ]
