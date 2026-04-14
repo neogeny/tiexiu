@@ -72,11 +72,8 @@ rule[Rule]:
     ENDRULE
     ~
 
-ENDRULE: &UNINDENTED | EMPTYLINE [';'] | $ | ';'
-
-UNINDENTED: /(?=\s*(?:\r?\n|\r)[^\s])/
-
-EMPTYLINE: /(?:\s*(?:\r?\n|\r)){2,}/
+ENDRULE:
+    /\s*[;]|(?=\s*(?:\r?\n|\r)\S)|(?:\s*(?:\r?\n|\r)){2,}[;]?/ |  $ | ';'
 
 decorator: '@' !'@' ~ =('override' | 'name' | 'isname' | 'nomemo')
 
@@ -247,16 +244,14 @@ dot[Dot]: '/./'
 
 pattern[Pattern]: regex
 
-regex: REGEX | '?' =STRING | deprecated_regex
+regex: deprecated_regex | !'?/' ( REGEX | '?' =STRING)
 
 REGEX: ?"(?ms)/((?:[^/\\]|\\/|\\.)*)/" ~
 
-deprecated_regex: =?"(?ms)\?/((?:[^/\\]|\\/|\\.)*)/\?" ~ ^^`deprecated regex syntax`
+deprecated_regex: '?/' ~ =?"(?ms)((?:[^/\\]|\\/|\\.)*)" ~ '/?'
 
 boolean[bool]: 'True' | 'False'
 
 null: 'None'
 
 eof[EOF]: '$' ~
-
-

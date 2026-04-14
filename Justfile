@@ -44,3 +44,7 @@ run:
 
 @shell:
     {{shell}} --version
+
+
+pytest:
+    uv run pytest -vv

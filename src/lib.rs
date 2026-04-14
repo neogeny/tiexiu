@@ -23,7 +23,8 @@ mod tiexiu {
     use super::python::api;
     use pyo3::prelude::*;
 
-    fn _tiexiu(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    #[pymodule_init]
+    fn init(m: &Bound<'_, PyModule>) -> PyResult<()> {
         m.add_function(wrap_pyfunction!(api::parse_grammar, m)?)?;
         m.add_function(wrap_pyfunction!(api::parse_grammar_to_json, m)?)?;
         m.add_function(wrap_pyfunction!(api::compile_to_json, m)?)?;
