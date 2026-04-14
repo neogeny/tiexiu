@@ -1,12 +1,17 @@
-use std::ops::Index;
 use std::fmt;
+use std::ops::Index;
 use std::str::FromStr;
+
+/// Python-style falsy values for string-based configuration.
+pub const FALSY_VALUES: &[&str] = &["false", "0", "no", "none", ""];
+
+pub type CfgA<'c> = &'c [(&'c str, &'c str)];
 
 /// A lightweight, read-only configuration view (Transient).
 /// Use this for per-call options where the caller owns the data.
 #[derive(Copy, Clone)]
 pub struct Cfg<'a> {
-    pairs: &'a [(&'a str, &'a str)],
+    pairs: CfgA<'a>,
 }
 
 impl<'a> Cfg<'a> {
@@ -30,10 +35,7 @@ impl<'a> Cfg<'a> {
         self.pairs
             .iter()
             .find(|(k, _)| *k == key)
-            .map(|(_, v)| {
-                let v_lower = v.to_lowercase();
-                !(v_lower == "false" || v_lower == "0" || v_lower == "no" || v_lower == "none" || v_lower.is_empty())
-            })
+            .map(|(_, v)| !v.is_empty() && !FALSY_VALUES.contains(&v.to_lowercase().as_str()))
             .unwrap_or(false)
     }
 
@@ -57,10 +59,7 @@ impl CfgStorage for Box<[(Box<str>, Box<str>)]> {
     fn is_enabled(&self, key: &str) -> bool {
         self.iter()
             .find(|(k, _)| k.as_ref() == key)
-            .map(|(_, v)| {
-                let v_lower = v.to_lowercase();
-                !(v_lower == "false" || v_lower == "0" || v_lower == "no" || v_lower == "none" || v_lower.is_empty())
-            })
+            .map(|(_, v)| !v.is_empty() && !FALSY_VALUES.contains(&v.to_lowercase().as_str()))
             .unwrap_or(false)
     }
 
@@ -75,13 +74,19 @@ impl CfgStorage for Box<[(Box<str>, Box<str>)]> {
 impl<'a> Index<&str> for Cfg<'a> {
     type Output = str;
     fn index(&self, key: &str) -> &Self::Output {
-        self.pairs.iter().find(|(k, _)| *k == key).map(|(_, v)| *v).unwrap_or("")
+        self.pairs
+            .iter()
+            .find(|(k, _)| *k == key)
+            .map(|(_, v)| *v)
+            .unwrap_or("")
     }
 }
 
 impl<'a> fmt::Debug for Cfg<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_map().entries(self.pairs.iter().map(|&(k, v)| (k, v))).finish()
+        f.debug_map()
+            .entries(self.pairs.iter().map(|&(k, v)| (k, v)))
+            .finish()
     }
 }
 
