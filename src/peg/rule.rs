@@ -6,7 +6,7 @@ use super::{ParseResult, Parser, Succ};
 use crate::state::Ctx;
 use crate::trees::Tree;
 use crate::trees::tree::FlagMap;
-use std::collections::HashMap;
+use indexmap::IndexMap;
 use std::fmt;
 use std::rc::Rc;
 
@@ -17,15 +17,15 @@ pub const FLAG_IS_MEMO: &str = "is_memo";
 pub const FLAG_IS_LREC: &str = "is_lrec";
 
 pub type RuleRef = Rc<Rule>;
-pub type RuleIndex = HashMap<Box<str>, usize>;
+pub type RuleIndex = IndexMap<Box<str>, usize>;
 
 #[derive(Debug, Clone)]
 pub struct Rule {
     pub name: Box<str>,
     pub params: Box<[Box<str>]>,
+    // kwparams: dict[str, Any] = field(default_factory=dict)
     pub flags: FlagMap,
     pub exp: Exp,
-    // kwparams: dict[str, Any] = field(default_factory=dict)
 }
 
 impl<C> Parser<C> for Rule
@@ -78,11 +78,11 @@ impl Rule {
         self.flags.insert(key.into(), value);
     }
 
-    pub fn new(name: &str, params: &[&str], mut exp: Exp) -> Self {
+    pub fn new(name: &str, params: &[Box<str>], mut exp: Exp) -> Self {
         exp.compute_lookahead();
         Self {
             name: name.into(),
-            params: params.iter().map(|p| (*p).into()).collect(),
+            params: params.into(),
             flags: Self::make_flags(false, false, false, true, false),
             exp,
         }
