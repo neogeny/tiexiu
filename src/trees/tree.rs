@@ -109,8 +109,10 @@ impl Tree {
 
     pub fn closed(self) -> Self {
         match self {
-            Tree::List(items) => Tree::Closed(items),
-            other => other,
+            Tree::List(items) => {
+                Tree::Closed(items.into_iter().map(|item| item.normalized()).collect())
+            }
+            _ => self,
         }
     }
 
@@ -167,11 +169,11 @@ impl Tree {
         let (tags, root, tree) = self._normalize();
 
         if root != Tree::Nil {
-            root.closed()
+            root
         } else if !tags.is_empty() {
             Tree::Map(tags.into())
         } else {
-            tree.closed()
+            tree
         }
     }
 
@@ -257,9 +259,9 @@ mod tests {
     #[test]
     fn test_node_nil_removal_to_list() {
         let raw = Tree::List([Tree::Bottom, Tree::Nil, Tree::Bottom].into());
-        let result = raw.normalized();
+        let result = raw.normalized(); // normalize doesn't close
 
-        if let Tree::Closed(v) = result {
+        if let Tree::List(v) = result {
             assert_eq!(v.len(), 2); // Nil is gone, only the two Bottoms remain
             assert_eq!(v[0], Tree::Bottom);
             assert_eq!(v[1], Tree::Bottom);

@@ -38,7 +38,7 @@ impl Tree {
     pub fn node(typename: &str, tree: Tree) -> Tree {
         Self::Node {
             typename: typename.into(),
-            tree: tree.into(),
+            tree: tree.normalized().into(),
         }
     }
 
