@@ -5,7 +5,7 @@ fn pykwargs_to_cfg(kwargs: &Bound<'_, PyDict>) -> Vec<(&'static str, &'static st
     let mut cfg: Vec<(&'static str, &'static str)> = Vec::new();
     for (key, value) in kwargs.iter() {
         let key_str: String = key.extract().unwrap_or_default();
-        let value_str: String = value.extract().unwrap_or_default();
+        let value_str = value.str().map(|s| s.to_string()).unwrap_or_default();
         let key_boxed = Box::leak(key_str.into_boxed_str());
         let value_boxed = Box::leak(value_str.into_boxed_str());
         cfg.push((key_boxed, value_boxed));
@@ -14,8 +14,9 @@ fn pykwargs_to_cfg(kwargs: &Bound<'_, PyDict>) -> Vec<(&'static str, &'static st
 }
 
 #[pyfunction]
-pub fn parse_grammar(grammar: &str, kwargs: Option<Bound<'_, PyDict>>) -> PyResult<Py<PyAny>> {
-    let cfg = if let Some(ref k) = kwargs {
+#[pyo3(signature = (grammar, **kwargs))]
+pub fn parse_grammar(grammar: &str, kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<Py<PyAny>> {
+    let cfg = if let Some(k) = kwargs {
         pykwargs_to_cfg(k)
     } else {
         Vec::new()
@@ -26,8 +27,12 @@ pub fn parse_grammar(grammar: &str, kwargs: Option<Bound<'_, PyDict>>) -> PyResu
 }
 
 #[pyfunction]
-pub fn parse_grammar_to_json(grammar: &str, kwargs: Option<Bound<'_, PyDict>>) -> PyResult<String> {
-    let cfg = if let Some(ref k) = kwargs {
+#[pyo3(signature = (grammar, **kwargs))]
+pub fn parse_grammar_to_json(
+    grammar: &str,
+    kwargs: Option<&Bound<'_, PyDict>>,
+) -> PyResult<String> {
+    let cfg = if let Some(k) = kwargs {
         pykwargs_to_cfg(k)
     } else {
         Vec::new()
@@ -38,8 +43,9 @@ pub fn parse_grammar_to_json(grammar: &str, kwargs: Option<Bound<'_, PyDict>>) -
 }
 
 #[pyfunction]
-pub fn compile_to_json(grammar: &str, kwargs: Option<Bound<'_, PyDict>>) -> PyResult<String> {
-    let cfg = if let Some(ref k) = kwargs {
+#[pyo3(signature = (grammar, **kwargs))]
+pub fn compile_to_json(grammar: &str, kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<String> {
+    let cfg = if let Some(k) = kwargs {
         pykwargs_to_cfg(k)
     } else {
         Vec::new()
@@ -50,8 +56,9 @@ pub fn compile_to_json(grammar: &str, kwargs: Option<Bound<'_, PyDict>>) -> PyRe
 }
 
 #[pyfunction]
-pub fn pretty(grammar: &str, kwargs: Option<Bound<'_, PyDict>>) -> PyResult<String> {
-    let cfg = if let Some(ref k) = kwargs {
+#[pyo3(signature = (grammar, **kwargs))]
+pub fn pretty(grammar: &str, kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<String> {
+    let cfg = if let Some(k) = kwargs {
         pykwargs_to_cfg(k)
     } else {
         Vec::new()
@@ -62,8 +69,9 @@ pub fn pretty(grammar: &str, kwargs: Option<Bound<'_, PyDict>>) -> PyResult<Stri
 }
 
 #[pyfunction]
-pub fn load_boot_as_json(kwargs: Option<Bound<'_, PyDict>>) -> PyResult<String> {
-    let cfg = if let Some(ref k) = kwargs {
+#[pyo3(signature = (**kwargs))]
+pub fn load_boot_as_json(kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<String> {
+    let cfg = if let Some(k) = kwargs {
         pykwargs_to_cfg(k)
     } else {
         Vec::new()
@@ -74,8 +82,9 @@ pub fn load_boot_as_json(kwargs: Option<Bound<'_, PyDict>>) -> PyResult<String> 
 }
 
 #[pyfunction]
-pub fn boot_grammar_as_json(kwargs: Option<Bound<'_, PyDict>>) -> PyResult<String> {
-    let cfg = if let Some(ref k) = kwargs {
+#[pyo3(signature = (**kwargs))]
+pub fn boot_grammar_as_json(kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<String> {
+    let cfg = if let Some(k) = kwargs {
         pykwargs_to_cfg(k)
     } else {
         Vec::new()
@@ -86,8 +95,9 @@ pub fn boot_grammar_as_json(kwargs: Option<Bound<'_, PyDict>>) -> PyResult<Strin
 }
 
 #[pyfunction]
-pub fn parse(grammar: &str, text: &str, kwargs: Option<Bound<'_, PyDict>>) -> PyResult<Py<PyAny>> {
-    let cfg = if let Some(ref k) = kwargs {
+#[pyo3(signature = (grammar, text, **kwargs))]
+pub fn parse(grammar: &str, text: &str, kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<Py<PyAny>> {
+    let cfg = if let Some(k) = kwargs {
         pykwargs_to_cfg(k)
     } else {
         Vec::new()
@@ -98,12 +108,13 @@ pub fn parse(grammar: &str, text: &str, kwargs: Option<Bound<'_, PyDict>>) -> Py
 }
 
 #[pyfunction]
+#[pyo3(signature = (grammar, text, **kwargs))]
 pub fn parse_to_json(
     grammar: &str,
     text: &str,
-    kwargs: Option<Bound<'_, PyDict>>,
+    kwargs: Option<&Bound<'_, PyDict>>,
 ) -> PyResult<String> {
-    let cfg = if let Some(ref k) = kwargs {
+    let cfg = if let Some(k) = kwargs {
         pykwargs_to_cfg(k)
     } else {
         Vec::new()
