@@ -27,7 +27,7 @@ fn test_update_ast() {
         start = 'test' $ ;
     "#;
 
-    let _model = compile(grammar).expect("Failed to compile");
+    let _model = compile(grammar, &[]).expect("Failed to compile");
 }
 
 #[test]
@@ -42,7 +42,7 @@ fn test_ast_assignment() {
         ff = @+: {"a"}* @+: {"b"}* $ ;
     "#;
 
-    let _model = compile(grammar).expect("Failed to compile");
+    let _model = compile(grammar, &[]).expect("Failed to compile");
 }
 
 #[test]
@@ -52,7 +52,7 @@ fn test_optional_closure() {
         start = foo+:"x" foo:{"y"}* {foo:"z"}* ;
     "#;
 
-    let model = compile(grammar).expect("Failed to compile");
+    let model = compile(grammar, &[]).expect("Failed to compile");
     let _ast = parse_input(&model, "xyyzz");
 }
 
@@ -63,7 +63,7 @@ fn test_optional_sequence() {
         start = '1' ['2' '3'] '4' $ ;
     "#;
 
-    let model = compile(grammar).expect("Failed to compile");
+    let model = compile(grammar, &[]).expect("Failed to compile");
     let _ast = parse_input(&model, "1234");
 }
 
@@ -74,7 +74,7 @@ fn test_group_ast() {
         start = '1' ('2' '3') '4' $ ;
     "#;
 
-    let model = compile(grammar).expect("Failed to compile");
+    let model = compile(grammar, &[]).expect("Failed to compile");
     let _ast = parse_input(&model, "1234");
 }
 
@@ -86,5 +86,5 @@ fn test_partial_options() {
         a = 'A' !('A'|'B') ;
     "#;
 
-    let _model = compile(grammar).expect("Failed to compile");
+    let _model = compile(grammar, &[]).expect("Failed to compile");
 }

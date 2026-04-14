@@ -13,7 +13,7 @@ use crate::api::compile;
 // ============================================================================
 
 const INPUT: &str = "1d3";
-const OUTPUT: &[(&str, &str)] = &[("number_of_dice", "1"), ("sides", "3")];
+const OUTPUT: CfgA = &[("number_of_dice", "1"), ("sides", "3")];
 
 const GRAMMAR: &str = r#"
     start = expression $;

@@ -11,7 +11,7 @@ fn test_missing_rule() {
         block = test ;
     "#;
 
-    let _result = tiexiu::api::compile(grammar);
+    let _result = tiexiu::api::compile(grammar, &[]);
 }
 
 #[test]

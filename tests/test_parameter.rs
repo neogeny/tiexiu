@@ -10,5 +10,5 @@ fn test_keyword_params() {
         start = rule[param] ;
         rule[:param] = 'test' ;
     "#;
-    let _result = tiexiu::api::compile(grammar);
+    let _result = tiexiu::api::compile(grammar, &[]);
 }

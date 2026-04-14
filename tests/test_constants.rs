@@ -10,5 +10,5 @@ fn test_constant_interpolation() {
         start = a:number b: number i:`"seen: {a}, {b}"` $ ;
         number = /\d+/ ;
     "#;
-    let _result = tiexiu::api::compile(grammar);
+    let _result = tiexiu::api::compile(grammar, &[]);
 }

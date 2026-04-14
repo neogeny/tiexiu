@@ -9,5 +9,5 @@ fn test_positive_join() {
     let grammar = r#"
         start = ','%{'x' 'y'}+ ;
     "#;
-    let _result = tiexiu::api::compile(grammar);
+    let _result = tiexiu::api::compile(grammar, &[]);
 }

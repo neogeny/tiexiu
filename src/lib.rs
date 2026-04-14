@@ -6,18 +6,22 @@ pub mod error;
 pub mod input;
 pub mod json;
 pub mod peg;
-pub mod python;
 pub mod state;
 pub mod trees;
 pub mod ui;
 pub mod util;
-pub use error::{Error, Result};
 
 pub use api::{compile, parse};
+pub use error::{Error, Result};
 
+#[cfg(feature = "pyo3")]
+pub mod python;
+
+#[cfg(feature = "pyo3")]
 #[allow(dead_code)]
 use pyo3::prelude::*;
 
+#[cfg(feature = "pyo3")]
 #[pymodule]
 mod tiexiu {
     use super::python::api;

@@ -66,14 +66,21 @@ impl Tree {
         }
     }
 
-    pub fn value_list(&self) -> Box<[Box<str>]> {
+    pub fn value_list(&self) -> Box<[Tree]> {
         match self {
-            Tree::List(items) | Tree::Closed(items) => items
-                .iter()
-                .map(|item| item.value())
-                .collect::<Vec<_>>()
-                .into_boxed_slice(),
+            Tree::List(items) | Tree::Closed(items) => items.clone(),
             _ => [].into(),
+        }
+    }
+
+    pub fn value_str_list(&self) -> Box<[Box<str>]> {
+        self.value_list().iter().map(|t| t.value()).collect()
+    }
+
+    pub fn value_map(&self) -> Option<&TreeMap> {
+        match self {
+            Tree::Map(map) => Some(map),
+            _ => None,
         }
     }
 
@@ -90,10 +97,14 @@ impl Tree {
             .unwrap_or_else(|| "".into())
     }
 
-    pub fn get_list(&self, key: &str) -> Box<[Box<str>]> {
+    pub fn get_list(&self, key: &str) -> Box<[Tree]> {
         self.get(key)
-            .map(|n| n.value_list())
+            .map(|n| n.value_list().clone())
             .unwrap_or_else(|| [].into())
+    }
+
+    pub fn get_str_list(&self, key: &str) -> Box<[Box<str>]> {
+        self.get_list(key).iter().map(|t| t.value()).collect()
     }
 
     pub fn closed(self) -> Self {

@@ -25,7 +25,8 @@ where
     C: Ctx,
 {
     fn parse(&self, ctx: C) -> ParseResult<C> {
-        self.parse_at("start", ctx)
+        let name = self.rules[0].name.clone();
+        self.parse_at(&name, ctx)
     }
 }
 

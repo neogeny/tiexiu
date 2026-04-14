@@ -10,5 +10,5 @@ fn test_skip_to() {
         start = 'x' ab $ ;
         ab = 'a' 'b' | -> 'b' ;
     "#;
-    let _result = tiexiu::api::compile(grammar);
+    let _result = tiexiu::api::compile(grammar, &[]);
 }

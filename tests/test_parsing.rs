@@ -26,7 +26,7 @@ fn test_include() {
         item = /\w+/ ;
     "#;
 
-    let result = compile(grammar);
+    let result = compile(grammar, &[]);
     assert!(
         result.is_err(),
         "Expected error for @@include, got success: {:?}",
@@ -44,7 +44,7 @@ fn test_multiple_include() {
         item = /\w+/ ;
     "#;
 
-    let _result = compile(grammar);
+    let _result = compile(grammar, &[]);
     // assert!(result.is_err());
 }
 
@@ -55,8 +55,8 @@ fn test_escape_sequences() {
         start = 'hello\nworld' $ ;
     "#;
 
-    let _model =
-        compile(grammar).expect("Failed to compile (escape sequences in tokens not supported)");
+    let _model = compile(grammar, &[])
+        .expect("Failed to compile (escape sequences in tokens not supported)");
 }
 
 // ============================================================================
@@ -73,7 +73,7 @@ fn test_start() {
         false = 'test' @:`False` $;
     "#;
 
-    let _model = compile(grammar).expect("Failed to compile grammar");
+    let _model = compile(grammar, &[]).expect("Failed to compile grammar");
 }
 
 // ============================================================================
@@ -89,7 +89,7 @@ fn test_skip_whitespace() {
         id = /[a-z]+/ ;
     "#;
 
-    let _model = compile(grammar).expect("Failed to compile");
+    let _model = compile(grammar, &[]).expect("Failed to compile");
 }
 
 #[test]
@@ -100,7 +100,7 @@ fn test_node_parseinfo() {
         start = 'test' $ ;
     "#;
 
-    let _model = compile(grammar).expect("Failed to compile");
+    let _model = compile(grammar, &[]).expect("Failed to compile");
 }
 
 #[test]
@@ -111,7 +111,7 @@ fn test_parseinfo_directive() {
         start = 'test' $ ;
     "#;
 
-    let _model = compile(grammar).expect("Failed to compile");
+    let _model = compile(grammar, &[]).expect("Failed to compile");
 }
 
 #[test]
@@ -122,7 +122,7 @@ fn test_parseinfo_false_directive() {
         start = 'test' $ ;
     "#;
 
-    let _model = compile(grammar).expect("Failed to compile");
+    let _model = compile(grammar, &[]).expect("Failed to compile");
 }
 
 #[test]
@@ -141,6 +141,6 @@ fn test_cut_scope() {
         two = `something` ;
     "#;
 
-    let _model = compile(grammar).expect("Failed to compile");
+    let _model = compile(grammar, &[]).expect("Failed to compile");
     // let _ast = parse_input(&model, "abc");
 }

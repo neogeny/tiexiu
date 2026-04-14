@@ -10,5 +10,5 @@ fn test_keywords_in_rule_names() {
         start = whitespace ;
         whitespace = ' ' ;
     "#;
-    let _result = tiexiu::api::compile(grammar);
+    let _result = tiexiu::api::compile(grammar, &[]);
 }

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::{Exp, Grammar, Rule};
-use crate::trees::{Tree, TreeMap};
+use crate::trees::{FlagMap, Tree, TreeMap};
 use indexmap::IndexMap;
 use thiserror::Error;
 
@@ -49,14 +49,12 @@ pub enum CompileError {
     #[error("{0} is not implemented")]
     NotImplemented(&'static str),
 
-    #[error("compile_rhs() does not support node '{0}'")]
-    UnsupportedRhs(Box<str>),
+    #[error("Unknown expression type '{0}'")]
+    UnknownExpressionType(Box<str>),
 }
 
 #[derive(Debug, Default)]
-pub struct GrammarCompiler {
-    pub rulemap: IndexMap<Box<str>, Rule>,
-}
+pub struct GrammarCompiler {}
 
 fn parse_node(node: &Tree) -> CompileResult<(Box<str>, &Tree)> {
     let Tree::Node { typename, tree } = node else {
@@ -97,14 +95,19 @@ fn map_get<'m>(map: &'m Tree, context: &'static str, key: &'static str) -> Compi
     }
 }
 
+fn map_get_default(map: &Tree, key: &'static str, default: &'static str) -> Box<str> {
+    match map.get(key) {
+        Some(node) => node.value(),
+        None => default.into(),
+    }
+}
+
 impl GrammarCompiler {
     pub fn new() -> GrammarCompiler {
-        GrammarCompiler {
-            rulemap: IndexMap::new(),
-        }
+        GrammarCompiler {}
     }
 
-    pub fn compile_grammar(&self, tree: &Tree) -> CompileResult<Grammar> {
+    pub fn compile_grammar(&mut self, tree: &Tree) -> CompileResult<Grammar> {
         // NOTE:
         //  If we get called then the `Tree` is not any generic `Tree` but one
         //  produced by parsing a grammar description written in the TieXiu/TatSu
@@ -120,43 +123,104 @@ impl GrammarCompiler {
         //  and that too can be verified
 
         let map = parse_node_check(tree, "Grammar")?;
-        let rules = map_get(map, "Grammar", "rules")?;
+        eprintln!("GRAMMAR {:?}", map);
+
+        let rule_trees = map_get(map, "Grammar", "rules")?.value_list();
+
+        let mut rulemap: IndexMap<Box<str>, Rule> = IndexMap::new();
+        for rtree in rule_trees {
+            let rule = self.compile_rule(&rtree)?;
+            eprintln!("{:?}", &rule);
+            rulemap.insert(rule.name.clone(), rule);
+        }
+
+        let rules: Vec<Rule> = rulemap.into_iter().map(|(_, r)| r).collect();
         eprintln!("{:?}", rules);
-        // let rule_trees = parse_list(rules_node)?;
-        // panic!("SEE THE TREE");
-        // if *meta.name != *"Grammar" {
-        //     return Err(CompileError::UnexpectedNodeName {
-        //         expected: "Grammar",
-        //         found: meta.into(),
-        //     });
-        // }
-        // self.expect_keys(m, &["name", "directives", "keywords", "rules"], "Grammar")?;
-        //
-        // let grammar_name = self.text_field(m, "name")?;
+        let name = map_get_default(map, "name", "grammar");
+        let grammar = Grammar::new(&name, rules.as_slice());
+
         // let directives = self.directives(self.field(m, "directives")?)?;
         // let keywords = self.keywords(self.field(m, "keywords")?)?;
-        // let rule_trees = self.list_field(m, "rules")?;
-        // let rules = self.compile_rules(rule_trees)?;
-
-        let grammar = Grammar::new("GRAMMAR", &[]);
         // grammar.directives = directives;
         // grammar.keywords = keywords;
         Ok(grammar)
     }
 
-    pub fn compile_rule(&self, _tree: &Tree) -> CompileResult<Rule> {
-        // let (_meta, tree) = parse_node_check(tree, "rule", "Rule")?;
-        // let map = parse_map(tree)?;
-        // let name = map_get(map, "rule", "name")?;
-        // let params = map_get(map, "rule", "params")?;
-        // let body = map_get(map, "rule", "body")?;
-        Ok(Rule::new("rule", &[], Exp::nil()))
+    pub fn compile_rule(&self, tree: &Tree) -> CompileResult<Rule> {
+        let ctx = "Rule";
+        let map = parse_node_check(tree, ctx)?;
+        eprintln!("RULE {:?}", map);
+        let name = map_get(map, ctx, "name")?.value();
+
+        // let decorators = map_get(map, ctx, "decorators")?.value_map();
+        let _flags = FlagMap::new();
+        let exp = self.parse_exp(map_get(map, ctx, "exp")?)?;
+        let params = match map_get(map, ctx, "params") {
+            Err(_) => [].into(),
+            Ok(p) => p.value_str_list(),
+        };
+        Ok(Rule::new(&name, &params, exp))
+    }
+
+    pub fn parse_exp(&self, tree: &Tree) -> CompileResult<Exp> {
+        let (typename, tree) = parse_node(tree)?;
+        eprintln!("EXP {} {:?}", typename, tree);
+        let exp: Exp = match &*typename {
+            "Alert" => Exp::nil(),
+            "BasedRule" => Exp::nil(),
+            "Box" => Exp::nil(),
+            "Call" => Exp::nil(),
+            "Choice" => Exp::nil(),
+            "Closure" => Exp::nil(),
+            "Comment" => Exp::nil(),
+            "Constant" => Exp::nil(),
+            "Cut" => Exp::nil(),
+            "Dot" => Exp::nil(),
+            "EOF" => Exp::nil(),
+            "EOLComment" => Exp::nil(),
+            "EmptyClosure" => Exp::nil(),
+            "Fail" => Exp::nil(),
+            "Gather" => Exp::nil(),
+            "Grammar" => Exp::nil(),
+            "GrammarSemantics" => Exp::nil(),
+            "Group" => Exp::nil(),
+            "Join" => Exp::nil(),
+            "LeftJoin" => Exp::nil(),
+            "Lookahead" => Exp::nil(),
+            "Model" => Exp::nil(),
+            "ModelContext" => Exp::nil(),
+            "NULL" => Exp::nil(),
+            "Named" => Exp::nil(),
+            "NamedBox" => Exp::nil(),
+            "NamedList" => Exp::nil(),
+            "NegativeLookahead" => Exp::nil(),
+            "Option" => Exp::nil(),
+            "Optional" => Exp::nil(),
+            "Override" => Exp::nil(),
+            "OverrideList" => Exp::nil(),
+            "Pattern" => Exp::nil(),
+            "Patterns" => Exp::nil(),
+            "PositiveClosure" => Exp::nil(),
+            "PositiveGather" => Exp::nil(),
+            "PositiveJoin" => Exp::nil(),
+            "RightJoin" => Exp::nil(),
+            "Rule" => Exp::nil(),
+            "RuleInclude" => Exp::nil(),
+            "Sequence" => Exp::nil(),
+            "SkipGroup" => Exp::nil(),
+            "SkipTo" => Exp::nil(),
+            "Synth" => Exp::nil(),
+            "Token" => Exp::token(&map_get(tree, "exp", "token")?.value()),
+            "Void" => Exp::nil(),
+            _ => return Err(CompileError::UnknownExpressionType(typename)),
+        };
+        Ok(exp)
     }
 }
 
 impl Grammar {
     pub fn compile(tree: &Tree) -> CompileResult<Self> {
-        let compiler = GrammarCompiler::new();
+        let mut compiler = GrammarCompiler::new();
         compiler.compile_grammar(tree)
     }
 }

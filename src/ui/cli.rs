@@ -75,12 +75,12 @@ pub fn cli() -> Result<()> {
     match cli.command {
         Commands::Boot { pretty, json } => {
             if pretty {
-                let pretty_str = boot_grammar_pretty()?;
+                let pretty_str = boot_grammar_pretty(&[])?;
                 pygmentize(&pretty_str, "ebnf", use_color);
                 return Ok(());
             }
             if json {
-                let json_str = boot_grammar_json()?;
+                let json_str = boot_grammar_json(&[])?;
                 pygmentize(&json_str, "json", use_color);
             }
         }
@@ -93,14 +93,14 @@ pub fn cli() -> Result<()> {
                 .and_then(|ext| ext.to_str())
                 .is_some_and(|ext| ext.eq_ignore_ascii_case("json"))
             {
-                load(&grammar_text)?
+                load(&grammar_text, &[])?
             } else {
-                compile(&grammar_text)?
+                compile(&grammar_text, &[])?
             };
 
             for input in inputs {
                 let text = std::fs::read_to_string(&input)?;
-                match parse_input(&parser, &text) {
+                match parse_input(&parser, &text, &[]) {
                     Ok(tree) => println!("{}", tree.normalized()),
                     Err(e) => return Err(e),
                 }

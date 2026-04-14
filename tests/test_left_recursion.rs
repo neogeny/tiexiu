@@ -11,5 +11,5 @@ fn test_direct_left_recursion() {
         expr = expr '+' term | term ;
         term = /\d+/ ;
     "#;
-    let _result = tiexiu::api::compile(grammar);
+    let _result = tiexiu::api::compile(grammar, &[]);
 }

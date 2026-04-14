@@ -10,5 +10,5 @@ fn test_semantics_not_class() {
         start::sum = {number}+ $ ;
         number::int = /\d+/ ;
     "#;
-    let _result = tiexiu::api::compile(grammar);
+    let _result = tiexiu::api::compile(grammar, &[]);
 }

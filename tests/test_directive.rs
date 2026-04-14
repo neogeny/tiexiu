@@ -10,5 +10,5 @@ fn test_whitespace_directive() {
         @@whitespace :: /[\t ]+/
         test = "test" $;
     "#;
-    let _result = tiexiu::api::compile(grammar);
+    let _result = tiexiu::api::compile(grammar, &[]);
 }

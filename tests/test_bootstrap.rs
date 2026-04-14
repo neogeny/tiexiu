@@ -13,7 +13,7 @@ use tiexiu::peg::Grammar;
 use tiexiu::state::corectx::CoreCtx;
 
 fn compile(grammar_text: &str) -> Grammar {
-    tiexiu::compile(grammar_text).expect("Failed to compile grammar")
+    tiexiu::compile(grammar_text, &[]).expect("Failed to compile grammar")
 }
 
 fn parse(grammar_text: &str) -> tiexiu::trees::Tree {
@@ -106,6 +106,7 @@ mod parse_grammar {
             @@grammar :: Simple
             start: 'hello'
         "#,
+            &[],
         )
         .expect("Failed to parse");
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));

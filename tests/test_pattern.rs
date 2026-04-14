@@ -10,5 +10,5 @@ fn test_patterns_with_newlines() {
         @@whitespace :: /[ \t]/
         start = /\w+/ $ ;
     "#;
-    let _result = tiexiu::api::compile(grammar);
+    let _result = tiexiu::api::compile(grammar, &[]);
 }

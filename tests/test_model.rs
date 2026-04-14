@@ -29,7 +29,7 @@ fn test_children() {
         term = 'x' ;
     "#;
 
-    let _model = compile(grammar).expect("Failed to compile");
+    let _model = compile(grammar, &[]).expect("Failed to compile");
 }
 
 #[test]
@@ -39,5 +39,5 @@ fn test_node_kwargs() {
         start = 'value' ;
     "#;
 
-    let _model = compile(grammar).expect("Failed to compile");
+    let _model = compile(grammar, &[]).expect("Failed to compile");
 }

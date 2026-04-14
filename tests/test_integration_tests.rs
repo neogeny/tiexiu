@@ -9,7 +9,7 @@ use tiexiu::state::CtxI;
 use tiexiu::state::corectx::CoreCtx;
 
 fn compile(grammar_text: &str) -> Grammar {
-    tiexiu::compile(grammar_text).expect("Failed to compile grammar")
+    tiexiu::compile(grammar_text, &[]).expect("Failed to compile grammar")
 }
 
 fn parse_input(grammar: &Grammar, input: &str) -> tiexiu::trees::Tree {
