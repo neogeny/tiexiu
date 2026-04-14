@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::map::TreeMap;
+use crate::peg::rule::NodeMeta;
 use indexmap::IndexMap;
 use std::ops::Deref;
 use std::rc::Rc;
@@ -14,23 +15,6 @@ pub fn keyval(name: &str, tree: Tree) -> KeyValue {
 }
 
 pub type FlagMap = IndexMap<Box<str>, bool>;
-
-#[derive(Debug, Default, Clone, PartialEq)]
-pub struct NodeMeta {
-    pub name: Box<str>,
-    pub params: Box<[Box<str>]>,
-    pub flags: FlagMap,
-}
-
-impl NodeMeta {
-    pub fn new(name: &str, params: &[Box<str>]) -> Self {
-        Self {
-            name: name.into(),
-            params: params.into(),
-            ..Default::default()
-        }
-    }
-}
 
 pub type NodeMetaRef = Rc<NodeMeta>;
 

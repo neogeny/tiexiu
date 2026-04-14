@@ -204,7 +204,7 @@ pub trait Ctx: CtxI + Clone + Debug {
             Ok(Succ(self, tree))
         } else {
             let nope = last_failure.unwrap_or_else(|| {
-                self.failure(start_mark, ParseError::FailedParse(rule.meta.name.clone()))
+                self.failure(start_mark, ParseError::FailedParse(rule.name.clone()))
             });
             self.tracer().trace_failure(&self, &nope.source);
             Err(nope)

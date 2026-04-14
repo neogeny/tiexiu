@@ -80,7 +80,7 @@ pub fn all_rules_linked(grammar: &Grammar) -> Vec<String> {
     for rule in grammar.rules() {
         issues.extend(find_unlinked_calls(
             &rule.exp,
-            &format!("rule '{}'", rule.meta.name),
+            &format!("rule '{}'", rule.name),
         ));
     }
     issues

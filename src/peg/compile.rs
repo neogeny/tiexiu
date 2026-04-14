@@ -65,10 +65,7 @@ fn parse_node(node: &Tree) -> CompileResult<(Box<str>, &Tree)> {
     Ok((typename.clone(), tree))
 }
 
-fn parse_node_check<'n>(
-    node: &'n Tree,
-    typename: &'static str,
-) -> CompileResult<(Box<str>, &'n Tree)> {
+fn parse_node_check<'n>(node: &'n Tree, typename: &'static str) -> CompileResult<&'n Tree> {
     let (name, tree) = parse_node(node)?;
     if *name != *typename {
         return Err(CompileError::UnexpectedNodeName {
@@ -76,7 +73,7 @@ fn parse_node_check<'n>(
             found: name.clone(),
         });
     }
-    Ok((name, tree))
+    Ok(tree)
 }
 
 fn _parse_map(node: &Tree) -> CompileResult<&TreeMap> {
@@ -93,11 +90,7 @@ fn _parse_list(node: &Tree) -> CompileResult<&[Tree]> {
     }
 }
 
-fn _map_get<'m>(
-    map: &'m TreeMap,
-    context: &'static str,
-    key: &'static str,
-) -> CompileResult<&'m Tree> {
+fn map_get<'m>(map: &'m Tree, context: &'static str, key: &'static str) -> CompileResult<&'m Tree> {
     match map.get(key) {
         Some(node) => Ok(node),
         None => Err(CompileError::MissingKey { context, key }),
@@ -126,11 +119,9 @@ impl GrammarCompiler {
         //  Some `Tree::Node` have an associated node type in `node.meta.params[0]`
         //  and that too can be verified
 
-        eprintln!("{:?}", tree);
-        let (_, tree) = parse_node_check(tree, "start")?;
-        let (_meta, _tree) = parse_node_check(tree, "Grammar")?;
-        // let map = parse_map(tree)?;
-        // let rules_node = map_get(map, "grammar", "rules")?;
+        let map = parse_node_check(tree, "Grammar")?;
+        let rules = map_get(map, "Grammar", "rules")?;
+        eprintln!("{:?}", rules);
         // let rule_trees = parse_list(rules_node)?;
         // panic!("SEE THE TREE");
         // if *meta.name != *"Grammar" {

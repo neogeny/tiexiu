@@ -641,7 +641,7 @@ mod grammar_structure {
             rule2: 'c'
         "#;
         let grammar = compile(grammar);
-        let rule_names: Vec<_> = grammar.rules().map(|r| &*r.meta.name).collect();
+        let rule_names: Vec<_> = grammar.rules().map(|r| &*r.name).collect();
         assert!(rule_names.contains(&"start"));
         assert!(rule_names.contains(&"rule1"));
         assert!(rule_names.contains(&"rule2"));

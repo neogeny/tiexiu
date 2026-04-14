@@ -72,7 +72,7 @@ impl Grammar {
         rules
             .iter()
             .enumerate()
-            .map(|(i, r)| (r.meta.name.clone(), i))
+            .map(|(i, r)| (r.name.clone(), i))
             .collect()
     }
 

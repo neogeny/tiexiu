@@ -82,12 +82,11 @@ impl Rule {
         let mut obj = Map::new();
 
         obj.insert("__class__".into(), Value::String("Rule".into()));
-        obj.insert("name".into(), Value::String(self.meta.name.to_string()));
+        obj.insert("name".into(), Value::String(self.name.to_string()));
 
         obj.insert("exp".into(), self.exp.to_serde_value());
 
         let params: Vec<Value> = self
-            .meta
             .params
             .iter()
             .map(|p| Value::String(p.to_string()))

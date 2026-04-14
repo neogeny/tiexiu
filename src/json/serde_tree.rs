@@ -1,7 +1,8 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::trees::{FlagMap, KeyValue, NodeMeta, Tree, TreeMap};
+use crate::peg::rule::NodeMeta;
+use crate::trees::{FlagMap, KeyValue, Tree, TreeMap};
 use serde_json::{Map, Value};
 
 #[derive(Debug, thiserror::Error)]

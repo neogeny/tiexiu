@@ -5,7 +5,7 @@ use super::exp::Exp;
 use super::{ParseResult, Parser, Succ};
 use crate::state::Ctx;
 use crate::trees::Tree;
-use crate::trees::tree::{FlagMap, NodeMeta};
+use crate::trees::tree::FlagMap;
 use std::collections::HashMap;
 use std::fmt;
 use std::rc::Rc;
@@ -22,7 +22,9 @@ pub type RuleIndex = HashMap<Box<str>, usize>;
 
 #[derive(Debug, Clone)]
 pub struct Rule {
-    pub meta: Rc<NodeMeta>,
+    pub name: Box<str>,
+    pub params: Box<[Box<str>]>,
+    pub flags: FlagMap,
     pub exp: Exp,
     // kwparams: dict[str, Any] = field(default_factory=dict)
 }
@@ -39,8 +41,8 @@ where
 impl fmt::Display for Rule {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut params_str = String::new();
-        if !self.meta.params.is_empty() {
-            params_str = format!("[{}]", self.meta.params.join(", "));
+        if !self.params.is_empty() {
+            params_str = format!("[{}]", self.params.join(", "));
         }
         let rhs_str = self.exp.to_string();
         let start_str = if rhs_str.lines().count() <= 1 {
@@ -48,11 +50,7 @@ impl fmt::Display for Rule {
         } else {
             ""
         };
-        write!(
-            f,
-            "{}{}:{}{}",
-            self.meta.name, params_str, start_str, rhs_str
-        )
+        write!(f, "{}{}:{}{}", self.name, params_str, start_str, rhs_str)
     }
 }
 
@@ -74,23 +72,19 @@ impl Rule {
     }
 
     fn flag(&self, key: &str) -> bool {
-        self.meta.flags.get(key).copied().unwrap_or(false)
+        self.flags.get(key).copied().unwrap_or(false)
     }
 
     fn set_flag(&mut self, key: &'static str, value: bool) {
-        Rc::make_mut(&mut self.meta).flags.insert(key.into(), value);
+        self.flags.insert(key.into(), value);
     }
 
     pub fn new(name: &str, params: &[&str], mut exp: Exp) -> Self {
         exp.compute_lookahead();
         Self {
-            meta: RuleMeta {
-                name: name.into(),
-                params: params.iter().map(|p| (*p).into()).collect(),
-                flags: Self::make_flags(false, false, false, true, false),
-            }
-            .into(),
-
+            name: name.into(),
+            params: params.iter().map(|p| (*p).into()).collect(),
+            flags: Self::make_flags(false, false, false, true, false),
             exp,
         }
     }
@@ -108,12 +102,9 @@ impl Rule {
     ) -> Self {
         exp.compute_lookahead();
         Self {
-            meta: RuleMeta {
-                name: name.into(),
-                params: params.into_iter().map(|p| p.into()).collect(),
-                flags: Self::make_flags(is_name, is_tokn, no_memo, is_memo, is_lrec),
-            }
-            .into(),
+            name: name.into(),
+            params: params.into_iter().map(|p| p.into()).collect(),
+            flags: Self::make_flags(is_name, is_tokn, no_memo, is_memo, is_lrec),
             exp,
         }
     }
@@ -123,11 +114,11 @@ impl Rule {
         match self.exp.parse(ctx) {
             Ok(Succ(ctx, tree)) => Ok(Succ(
                 ctx,
-                if self.meta.params.is_empty() {
+                if self.params.is_empty() {
                     tree
                 } else {
                     Tree::Node {
-                        typename: self.meta.params[0].clone(),
+                        typename: self.params[0].clone(),
                         tree: tree.normalized().into(),
                     }
                 },
@@ -167,7 +158,6 @@ impl Rule {
     pub fn is_token(&self) -> bool {
         self.has_token_flag()
             || self
-                .meta
                 .name
                 .chars()
                 .find(|&c| c != '_')
