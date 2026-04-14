@@ -8,7 +8,7 @@ impl Exp {
     pub fn new(exp: ExpKind) -> Self {
         Self {
             kind: exp,
-            lookahead: [].into(),
+            la: [].into(),
         }
     }
 

@@ -108,20 +108,6 @@ impl GrammarCompiler {
     }
 
     pub fn compile_grammar(&mut self, tree: &Tree) -> CompileResult<Grammar> {
-        // NOTE:
-        //  If we get called then the `Tree` is not any generic `Tree` but one
-        //  produced by parsing a grammar description written in the TieXiu/TatSu
-        //  variant of EBNF they accept.
-        //  _
-        //  We know the exact structure of the `Tree` so we'll parse it top down
-        //  validating the expected node type at each step.
-        //  _
-        //  All nodes of type `Tree::Node` are produced by a rule in the meta-grammar
-        //  so it's possible to dispatch by the rule name in `node.meta.name`.
-        //  _
-        //  Some `Tree::Node` have an associated node type in `node.meta.params[0]`
-        //  and that too can be verified
-
         let map = parse_node_check(tree, "Grammar")?;
         eprintln!("GRAMMAR {:?}", map);
 
@@ -139,10 +125,6 @@ impl GrammarCompiler {
         let name = map_get_default(map, "name", "grammar");
         let grammar = Grammar::new(&name, rules.as_slice());
 
-        // let directives = self.directives(self.field(m, "directives")?)?;
-        // let keywords = self.keywords(self.field(m, "keywords")?)?;
-        // grammar.directives = directives;
-        // grammar.keywords = keywords;
         Ok(grammar)
     }
 
@@ -152,7 +134,6 @@ impl GrammarCompiler {
         eprintln!("RULE {:?}", map);
         let name = map_get(map, ctx, "name")?.value();
 
-        // let decorators = map_get(map, ctx, "decorators")?.value_map();
         let _flags = FlagMap::new();
         let exp = self.parse_exp(map_get(map, ctx, "exp")?)?;
         let params = match map_get(map, ctx, "params") {
@@ -166,52 +147,138 @@ impl GrammarCompiler {
         let (typename, tree) = parse_node(tree)?;
         eprintln!("EXP {} {:?}", typename, tree);
         let exp: Exp = match &*typename {
-            "Alert" => Exp::nil(),
+            "Alert" => Exp::alert(&map_get(tree, "exp", "msg")?.value(), 0),
             "BasedRule" => Exp::nil(),
             "Box" => Exp::nil(),
-            "Call" => Exp::nil(),
-            "Choice" => Exp::nil(),
-            "Closure" => Exp::nil(),
+            "Call" => Exp::call(&tree.value()),
+            "Choice" => {
+                let items = tree.get_list("tree");
+                let exps: Vec<Exp> = items
+                    .iter()
+                    .map(|t| self.parse_exp(t))
+                    .collect::<CompileResult<_>>()?;
+                Exp::choice(exps)
+            }
+            "Closure" => {
+                let inner = map_get(tree, "exp", "exp")?;
+                Exp::closure(self.parse_exp(inner)?)
+            }
             "Comment" => Exp::nil(),
-            "Constant" => Exp::nil(),
-            "Cut" => Exp::nil(),
-            "Dot" => Exp::nil(),
-            "EOF" => Exp::nil(),
+            "Constant" => Exp::constant(&tree.value()),
+            "Cut" => Exp::cut(),
+            "Dot" => Exp::dot(),
+            "EOF" => Exp::eof(),
             "EOLComment" => Exp::nil(),
-            "EmptyClosure" => Exp::nil(),
-            "Fail" => Exp::nil(),
-            "Gather" => Exp::nil(),
+            "EmptyClosure" => Exp::closure(Exp::nil()),
+            "Fail" => Exp::fail(),
+            "Gather" => {
+                let exp = map_get(tree, "exp", "exp")?;
+                let sep = map_get(tree, "exp", "sep")?;
+                Exp::gather(self.parse_exp(exp)?, self.parse_exp(sep)?)
+            }
             "Grammar" => Exp::nil(),
             "GrammarSemantics" => Exp::nil(),
-            "Group" => Exp::nil(),
-            "Join" => Exp::nil(),
+            "Group" => {
+                let inner = map_get(tree, "exp", "exp")?;
+                Exp::group(self.parse_exp(inner)?)
+            }
+            "Join" => {
+                let exp = map_get(tree, "exp", "exp")?;
+                let sep = map_get(tree, "exp", "sep")?;
+                Exp::join(self.parse_exp(exp)?, self.parse_exp(sep)?)
+            }
             "LeftJoin" => Exp::nil(),
-            "Lookahead" => Exp::nil(),
+            "Lookahead" => {
+                let inner = map_get(tree, "exp", "exp")?;
+                Exp::lookahead(self.parse_exp(inner)?)
+            }
             "Model" => Exp::nil(),
             "ModelContext" => Exp::nil(),
             "NULL" => Exp::nil(),
-            "Named" => Exp::nil(),
+            "Named" => {
+                let name = map_get(tree, "exp", "name")?.value();
+                let inner = map_get(tree, "exp", "exp")?;
+                Exp::named(&name, self.parse_exp(inner)?)
+            }
             "NamedBox" => Exp::nil(),
-            "NamedList" => Exp::nil(),
-            "NegativeLookahead" => Exp::nil(),
-            "Option" => Exp::nil(),
-            "Optional" => Exp::nil(),
+            "NamedList" => {
+                let name = map_get(tree, "exp", "name")?.value();
+                let inner = map_get(tree, "exp", "exp")?;
+                Exp::named_list(&name, self.parse_exp(inner)?)
+            }
+            "NegativeLookahead" => {
+                let inner = map_get(tree, "exp", "exp")?;
+                Exp::negative_lookahead(self.parse_exp(inner)?)
+            }
+            "Option" => {
+                let items = tree.get_list("tree");
+                let exps: Vec<Exp> = items
+                    .iter()
+                    .map(|t| self.parse_exp(t))
+                    .collect::<CompileResult<_>>()?;
+                Exp::choice(exps)
+            }
+            "Optional" => {
+                let inner = map_get(tree, "exp", "exp")?;
+                Exp::optional(self.parse_exp(inner)?)
+            }
             "Override" => Exp::nil(),
             "OverrideList" => Exp::nil(),
-            "Pattern" => Exp::nil(),
-            "Patterns" => Exp::nil(),
-            "PositiveClosure" => Exp::nil(),
-            "PositiveGather" => Exp::nil(),
-            "PositiveJoin" => Exp::nil(),
+            "Pattern" => {
+                let inner = map_get(tree, "exp", "exp")?;
+                Exp::pattern(&inner.value())
+            }
+            "Patterns" => {
+                let items = tree.get_list("tree");
+                let exps: Vec<Exp> = items
+                    .iter()
+                    .map(|t| self.parse_exp(t))
+                    .collect::<CompileResult<_>>()?;
+                if exps.len() == 1 {
+                    exps.into_iter().next().unwrap()
+                } else {
+                    Exp::choice(exps)
+                }
+            }
+            "PositiveClosure" => {
+                let inner = map_get(tree, "exp", "exp")?;
+                Exp::positive_closure(self.parse_exp(inner)?)
+            }
+            "PositiveGather" => {
+                let exp = map_get(tree, "exp", "exp")?;
+                let sep = map_get(tree, "exp", "sep")?;
+                Exp::positive_gather(self.parse_exp(exp)?, self.parse_exp(sep)?)
+            }
+            "PositiveJoin" => {
+                let exp = map_get(tree, "exp", "exp")?;
+                let sep = map_get(tree, "exp", "sep")?;
+                Exp::positive_join(self.parse_exp(exp)?, self.parse_exp(sep)?)
+            }
             "RightJoin" => Exp::nil(),
             "Rule" => Exp::nil(),
-            "RuleInclude" => Exp::nil(),
-            "Sequence" => Exp::nil(),
-            "SkipGroup" => Exp::nil(),
-            "SkipTo" => Exp::nil(),
+            "RuleInclude" => {
+                let name = map_get(tree, "exp", "name")?.value();
+                Exp::rule_include(&name)
+            }
+            "Sequence" => {
+                let items = tree.value_list();
+                let exps: Vec<Exp> = items
+                    .iter()
+                    .map(|t| self.parse_exp(t))
+                    .collect::<CompileResult<_>>()?;
+                Exp::sequence(exps)
+            }
+            "SkipGroup" => {
+                let inner = map_get(tree, "exp", "exp")?;
+                Exp::skip_group(self.parse_exp(inner)?)
+            }
+            "SkipTo" => {
+                let inner = map_get(tree, "exp", "exp")?;
+                Exp::skip_to(self.parse_exp(inner)?)
+            }
             "Synth" => Exp::nil(),
-            "Token" => Exp::token(&map_get(tree, "exp", "token")?.value()),
-            "Void" => Exp::nil(),
+            "Token" => Exp::token(&tree.value()),
+            "Void" => Exp::void(),
             _ => return Err(CompileError::UnknownExpressionType(typename)),
         };
         Ok(exp)

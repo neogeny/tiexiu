@@ -16,7 +16,7 @@ pub type Str = Box<str>;
 #[derive(Debug, Clone)]
 pub struct Exp {
     pub kind: ExpKind,
-    pub lookahead: Box<[Str]>,
+    pub la: Box<[Str]>, // the lookahead set
 }
 
 #[derive(Debug, Clone)]
@@ -73,7 +73,7 @@ impl Exp {
     }
 
     pub fn lookahead_str(&self) -> Box<str> {
-        self.lookahead
+        self.la
             .iter()
             .map(|s| &**s) // Deref Box<str> to &str
             .collect::<Vec<_>>() // Join needs a slice
@@ -226,9 +226,8 @@ impl Exp {
                         }
                     }
                 }
-                Err(furthest.unwrap_or(
-                    ctx.failure(start, ParseError::NoViableOption(self.lookahead.clone())),
-                ))
+                Err(furthest
+                    .unwrap_or(ctx.failure(start, ParseError::NoViableOption(self.la.clone()))))
             }
 
             ExpKind::Optional(exp) => {

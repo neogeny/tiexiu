@@ -3,9 +3,9 @@
 
 //! Tests translated from TatSu's grammar/syntax_test.py
 
-use tiexiu::api::compile;
+use tiexiu::api::{compile, parse_grammar};
 use tiexiu::input::StrCursor;
-use tiexiu::peg::Grammar;
+use tiexiu::peg::{ExpKind, Grammar};
 use tiexiu::state::corectx::CoreCtx;
 
 fn parse_input(grammar: &Grammar, input: &str) -> tiexiu::trees::Tree {
@@ -27,7 +27,37 @@ fn test_update_ast() {
         start = 'test' $ ;
     "#;
 
-    let _model = compile(grammar, &[]).expect("Failed to compile");
+    let tree = parse_grammar(grammar, &[]);
+    eprintln!("{:?}", tree);
+    let parser = compile(grammar, &[]).expect("Failed to compile");
+
+    assert_eq!(parser.name, "grammar");
+    assert!(!parser.analyzed);
+    assert!(parser.directives.is_empty());
+    assert!(parser.keywords.is_empty());
+
+    for rule in parser.rules() {
+        assert_eq!(&*rule.name, "start");
+        match &rule.exp.kind {
+            ExpKind::Sequence(exps) => {
+                assert_eq!(exps.len(), 2);
+                for (i, e) in exps.iter().enumerate() {
+                    match (i, &e.kind) {
+                        (0, ExpKind::Token(tok)) => {
+                            assert_eq!(tok.as_ref(), "test");
+                            let la: Vec<&str> = e.la.iter().map(|s| s.as_ref()).collect();
+                            assert_eq!(la.as_slice(), &["test"]);
+                        }
+                        (1, ExpKind::Eof) => {
+                            assert!(e.la.is_empty());
+                        }
+                        _ => panic!("Unexpected exp at {}: {:?}", i, e.kind),
+                    }
+                }
+            }
+            other => panic!("Expected Sequence, got {:?}", other),
+        }
+    }
 }
 
 #[test]
