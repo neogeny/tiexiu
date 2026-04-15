@@ -35,7 +35,6 @@ fn test_include() {
 }
 
 #[test]
-#[ignore = "TODO: evaluate - multiple include directive not implemented"]
 fn test_multiple_include() {
     let grammar = r#"
         @@include :: "a.ebnf"
@@ -49,7 +48,6 @@ fn test_multiple_include() {
 }
 
 #[test]
-#[ignore = "TODO: FEATURE - escape sequences in tokens not processed (\n not recognized as newline)"]
 fn test_escape_sequences() {
     let grammar = r#"
         start = 'hello\nworld' $ ;
@@ -102,7 +100,7 @@ fn test_node_parseinfo() {
 }
 
 #[test]
-#[ignore = "TODO: BUG - user grammar parses as TatSu bootstrap"]
+#[ignore]
 fn test_parseinfo_directive() {
     let grammar = r#"
         @@parseinfo :: True

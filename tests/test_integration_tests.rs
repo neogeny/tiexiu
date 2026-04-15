@@ -9,6 +9,8 @@ use tiexiu::state::CtxI;
 use tiexiu::state::corectx::CoreCtx;
 
 fn compile(grammar_text: &str) -> Grammar {
+    let tree = tiexiu::parse_grammar(grammar_text, &[]).expect("Failed to parse grammar");
+    eprintln!("TREE\n{:?}", tree);
     tiexiu::compile(grammar_text, &[]).expect("Failed to compile grammar")
 }
 
@@ -29,7 +31,6 @@ mod basic_grammar {
     use super::*;
 
     #[test]
-    #[ignore]
     fn simple_grammar() {
         let grammar = r#"
             @@grammar :: Test

@@ -11,7 +11,7 @@ pub mod trees;
 pub mod ui;
 pub mod util;
 
-pub use api::{compile, parse};
+pub use api::*;
 pub use error::{Error, Result};
 
 #[cfg(feature = "pyo3")]
