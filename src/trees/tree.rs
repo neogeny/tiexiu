@@ -3,13 +3,12 @@
 
 use super::map::TreeMap;
 use indexmap::IndexMap;
-use std::ops::Deref;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct KeyValue(pub Box<str>, pub Tree);
+pub struct KeyValue(pub Box<str>, pub Box<Tree>);
 
 pub fn keyval(name: &str, tree: Tree) -> KeyValue {
-    KeyValue(name.into(), tree.clone())
+    KeyValue(name.into(), tree.into())
 }
 
 pub type FlagMap = IndexMap<Box<str>, bool>;
@@ -29,10 +28,10 @@ pub enum Tree {
 
     // INTERNAL
     // The folowing variants do not appear in final trees
-    Nil,                        // Parsing that doesn't consume any input
-    Named(Box<KeyValue>),       // Named elements
-    NamedAsList(Box<KeyValue>), // Named elements forced into a list
-    Override(Box<Tree>),        // Sets the value of the whole expression
+    Nil,                   // Parsing that doesn't consume any input
+    Named(KeyValue),       // Named elements
+    NamedAsList(KeyValue), // Named elements forced into a list
+    Override(Box<Tree>),   // Sets the value of the whole expression
     OverrideAsList(Box<Tree>),
 
     Bottom, // The marker for failure used in memoization
@@ -174,39 +173,39 @@ impl Tree {
     }
 
     pub fn normalized(self) -> Tree {
-        let (tags, root, tree) = self._normalize();
+        let (map, root, tree) = self._normalize();
 
         if root != Tree::Nil {
             root
-        } else if !tags.is_empty() {
-            Tree::Map(tags.into())
+        } else if !map.is_empty() {
+            Tree::Map(map.into())
         } else {
             tree
         }
     }
 
     fn _normalize(self) -> (TreeMap, Tree, Tree) {
-        let mut tags = TreeMap::new();
+        let mut map = TreeMap::new();
         let mut root = Tree::Nil;
         let mut tree = Tree::Nil;
 
         match self {
             Tree::List(elements) => {
                 for node in elements {
-                    let (child_tags, child_root, child_cst) = node._normalize();
+                    let (child_map, child_root, child_cst) = node._normalize();
 
-                    tags.update(&child_tags);
+                    map.update(&child_map);
                     root = root.merge(child_root);
                     tree = tree.merge(child_cst);
                 }
             }
             Tree::Named(keyval) => {
-                let KeyValue(name, val) = keyval.deref();
-                tags.insert(name, val.clone());
+                let KeyValue(name, val) = keyval;
+                map.insert(&name, *val);
             }
             Tree::NamedAsList(keyval) => {
-                let KeyValue(name, val) = keyval.deref();
-                tags.insert_as_list(name, val.clone());
+                let KeyValue(name, val) = keyval;
+                map.insert_as_list(&name, *val);
             }
             Tree::Override(val) => root = root.append(*val),
             Tree::OverrideAsList(val) => root = root.append_as_list(*val),
@@ -214,7 +213,7 @@ impl Tree {
             other => tree = tree.merge(other),
         }
 
-        (tags, root, tree)
+        (map, root, tree)
     }
 
     pub fn width(&self) -> usize {
@@ -223,9 +222,9 @@ impl Tree {
             Tree::Override(inner) | Tree::OverrideAsList(inner) => inner.width(),
             Tree::Nil | Tree::Bottom => 0,
             Tree::List(items) | Tree::Closed(items) => items.iter().map(|item| item.width()).sum(),
-            Tree::Map(tags) => tags.entries.values().map(|node| node.width()).sum(),
+            Tree::Map(map) => map.entries.values().map(|node| node.width()).sum(),
             Tree::Named(pair) | Tree::NamedAsList(pair) => {
-                let KeyValue(_, val) = &**pair;
+                let KeyValue(_, val) = pair;
                 val.width()
             }
             Tree::Node { typename: _, tree } => tree.width(),
@@ -244,6 +243,11 @@ mod tests {
         let size = size_of::<Tree>();
         // 24 bytes: Box (8) + Rc (8) + bool/padding (8)
         assert!(size <= TARGET, "Cst size is {} > {} bytes", size, TARGET);
+    }
+    #[test]
+    fn test_keyval_size() {
+        let size = size_of::<KeyValue>();
+        assert!(size <= TARGET, "KeyVal size is {} > {} bytes", size, TARGET);
     }
 
     #[test]

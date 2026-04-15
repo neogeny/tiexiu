@@ -32,8 +32,8 @@ impl<O> Translates<O> for Tree {
                             Tree::Named(
                                 KeyValue(
                                     k.clone(),
-                                    v.clone()
-                                ) .into()
+                                    v.clone().into()
+                                )
                             )
                         .translate_with(trans)
                     )

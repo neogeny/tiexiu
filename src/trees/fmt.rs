@@ -36,7 +36,7 @@ impl fmt::Display for Tree {
             Self::Named(kv) | Self::NamedAsList(kv) => write!(f, "{}", kv),
             Self::Override(v) => write!(f, "!{}", v),
             Self::OverrideAsList(v) => write!(f, "!!{}", v),
-            Self::Map(tags) => write!(f, "{}", tags),
+            Self::Map(map) => write!(f, "{}", map),
             Self::Nil => write!(f, "∅"),
             Self::Bottom => write!(f, "⊥"),
             Self::List(items) | Self::Closed(items) => {
@@ -62,22 +62,22 @@ mod tests {
     use indexmap::IndexMap;
 
     #[test]
-    fn test_tree_tags_display() {
-        let mut tags_map = MapEntries::new();
-        tags_map.insert("key1".into(), Tree::Text("value1".into()));
-        tags_map.insert("key2".into(), Tree::Text("value2".into()));
-        let tags = TreeMap { entries: tags_map };
-        assert_eq!(tags.to_string(), "{key1: value1, key2: value2}");
+    fn test_treemap_display() {
+        let mut map = MapEntries::new();
+        map.insert("key1".into(), Tree::Text("value1".into()));
+        map.insert("key2".into(), Tree::Text("value2".into()));
+        let map = TreeMap { entries: map };
+        assert_eq!(map.to_string(), "{key1: value1, key2: value2}");
 
-        let tags_empty = TreeMap {
+        let empty_map = TreeMap {
             entries: IndexMap::new(),
         };
-        assert_eq!(tags_empty.to_string(), "{}");
+        assert_eq!(empty_map.to_string(), "{}");
     }
 
     #[test]
     fn test_key_value_display() {
-        let kv = KeyValue("name".into(), Tree::Text("value".into()));
+        let kv = KeyValue("name".into(), Tree::Text("value".into()).into());
         assert_eq!(kv.to_string(), "«name=value»");
     }
 
@@ -87,15 +87,12 @@ mod tests {
         assert_eq!(Tree::Text("hello".into()).to_string(), "hello");
 
         // LeafTag
-        let kv_leaf = KeyValue("tag".into(), Tree::Text("leaf_val".into()));
-        assert_eq!(Tree::Named(kv_leaf.into()).to_string(), "«tag=leaf_val»");
+        let kv_leaf = KeyValue("tag".into(), Tree::Text("leaf_val".into()).into());
+        assert_eq!(Tree::Named(kv_leaf).to_string(), "«tag=leaf_val»");
 
         // NodeTag
-        let kv_node = KeyValue("node".into(), Tree::Text("node_val".into()));
-        assert_eq!(
-            Tree::NamedAsList(kv_node.into()).to_string(),
-            "«node=node_val»"
-        );
+        let kv_node = KeyValue("node".into(), Tree::Text("node_val".into()).into());
+        assert_eq!(Tree::NamedAsList(kv_node).to_string(), "«node=node_val»");
 
         // RootLeaf
         assert_eq!(
@@ -111,10 +108,10 @@ mod tests {
         );
 
         // Tags
-        let mut tags_map = MapEntries::new();
-        tags_map.insert("a".into(), Tree::Text("1".into()));
-        let tags = TreeMap { entries: tags_map };
-        assert_eq!(Tree::Map(tags.into()).to_string(), "{a: 1}");
+        let mut map = MapEntries::new();
+        map.insert("a".into(), Tree::Text("1".into()));
+        let map = TreeMap { entries: map };
+        assert_eq!(Tree::Map(map.into()).to_string(), "{a: 1}");
 
         // Nil
         assert_eq!(Tree::Nil.to_string(), "∅");

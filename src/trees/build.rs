@@ -18,13 +18,13 @@ impl Tree {
     }
 
     pub fn named(key: &str, value: Tree) -> Tree {
-        let keyval = KeyValue(key.into(), value);
-        Self::Named(keyval.into())
+        let keyval = KeyValue(key.into(), value.into());
+        Self::Named(keyval)
     }
 
     pub fn named_as_list(key: &str, value: Tree) -> Tree {
-        let keyval = KeyValue(key.into(), value);
-        Self::NamedAsList(keyval.into())
+        let keyval = KeyValue(key.into(), value.into());
+        Self::NamedAsList(keyval)
     }
 
     pub fn override_with(tree: Tree) -> Tree {
