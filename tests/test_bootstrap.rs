@@ -13,7 +13,8 @@ use tiexiu::peg::Grammar;
 use tiexiu::state::corectx::CoreCtx;
 
 fn compile(grammar_text: &str) -> Grammar {
-    tiexiu::compile(grammar_text, &[]).expect("Failed to compile grammar")
+    tiexiu::compile(grammar_text, &[("trace", "1")])
+        .expect("Failed to compile grammar")
 }
 
 fn parse(grammar_text: &str) -> tiexiu::trees::Tree {
@@ -521,7 +522,7 @@ mod round_trips {
     }
 
     #[test]
-    fn pretty_print_round_trip() {
+    fn pretty_print_roundtrip() {
         let grammar_text = r#"
             @@grammar :: Pretty
             start: 'a' | 'b'
