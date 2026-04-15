@@ -2732,14 +2732,14 @@
             "__class__": "Option",
             "exp": {
               "__class__": "Call",
-              "name": "pattern"
+              "name": "dot"
             }
           },
           {
             "__class__": "Option",
             "exp": {
               "__class__": "Call",
-              "name": "dot"
+              "name": "pattern"
             }
           },
           {
