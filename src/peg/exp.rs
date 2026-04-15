@@ -69,10 +69,6 @@ impl<C: Ctx> Parser<C> for Exp {
 }
 
 impl Exp {
-    pub fn link<L: super::linker::Linker + ?Sized>(&mut self, linker: &mut L) {
-        linker.link(self);
-    }
-
     pub fn lookahead_str(&self) -> Box<str> {
         self.la
             .iter()

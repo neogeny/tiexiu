@@ -3,7 +3,7 @@
 
 use super::error::ParseError;
 use super::parser::{ParseResult, Parser};
-use super::rule::{Rule, RuleRef};
+use super::rule::{Rule, RuleMap, RuleRef};
 use crate::peg::ParseError::RuleNotFound;
 use crate::state::Ctx;
 use indexmap::IndexMap;
@@ -17,7 +17,7 @@ pub struct Grammar {
     pub analyzed: bool,
     pub directives: HashMap<String, String>,
     pub keywords: HashSet<String>,
-    pub rules: IndexMap<Box<str>, RuleRef>,
+    pub rules: RuleMap,
 }
 
 impl<C> Parser<C> for Grammar

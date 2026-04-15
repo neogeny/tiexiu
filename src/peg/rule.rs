@@ -18,6 +18,7 @@ pub const FLAG_IS_LREC: &str = "is_lrec";
 
 pub type RuleRef = Rc<Rule>;
 pub type RuleIndex = IndexMap<Box<str>, usize>;
+pub type RuleMap = IndexMap<Box<str>, RuleRef>;
 
 #[derive(Debug, Clone)]
 pub struct Rule {
