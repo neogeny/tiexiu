@@ -17,7 +17,6 @@ pub fn parse_ebnf(grammar: &Grammar, text: &str) -> tiexiu::trees::Tree {
     }
 }
 
-#[allow(dead_code)]
 pub fn parse_with_boot(_grammar: &Grammar, text: &str) -> tiexiu::trees::Tree {
     let boot = boot_grammar();
     parse_ebnf(&boot, text)

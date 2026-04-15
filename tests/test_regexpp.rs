@@ -3,7 +3,7 @@
 
 //! Tests for regexpp
 
-use tiexiu::util::pyre::regexpp::regexpp as r;
+use tiexiu::util::pyre::pattern::regexpp as r;
 
 #[test]
 fn test_regexpp_simple() {
