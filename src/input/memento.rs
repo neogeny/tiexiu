@@ -3,16 +3,16 @@ use std::fmt;
 
 pub struct Memento {
     /// The specific error message (e.g., "expected semicolon")
-    msg: Box<str>,
+    pub msg: Box<str>,
     /// Absolute line number and content of captured lines
-    window: Box<[(usize, Box<str>)]>,
+    pub window: Box<[(usize, Box<str>)]>,
     /// (Absolute Line, Absolute Column) - 1-indexed
-    abs_start: (usize, usize),
+    pub abs_start: (usize, usize),
     /// (Absolute Line, Absolute Column) - 1-indexed
-    abs_mark: (usize, usize),
+    pub abs_mark: (usize, usize),
     /// Indices within the `window` slice for annotation
-    rel_start_idx: usize,
-    rel_mark_idx: usize,
+    pub rel_start_idx: usize,
+    pub rel_mark_idx: usize,
 }
 
 impl Memento {
@@ -88,7 +88,7 @@ impl Memento {
 
             // If this is the 'mark' line, render the caret and the specific message
             if idx == self.rel_mark_idx {
-                let padding = " ".repeat(self.abs_mark.1.saturating_sub(1));
+                let padding = " ".repeat(self.abs_mark.1);
                 writeln!(
                     f,
                     "   {} {}{} {}",
