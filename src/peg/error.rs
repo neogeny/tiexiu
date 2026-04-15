@@ -44,7 +44,7 @@ pub enum ParseError {
     /// Corresponds rule names without a Rule reference
     #[error("Rule not linked: '{0}'")]
     RuleNotLinked(Box<str>),
-    
+
     #[error("There are no rules in the grammar")]
     NoRulesInGrammar,
 }

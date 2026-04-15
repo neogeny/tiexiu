@@ -119,15 +119,14 @@ impl GrammarCompiler {
 
         let rules: Vec<Rule> = rulemap.into_iter().map(|(_, r)| r).collect();
         let name = map_get_default(map, "name", "__COMPILED__");
-        
+
         if let Ok(_directive_tree) = map_get(map, "Grammar", "directives") {
             unimplemented!();
         }
-        
+
         if let Ok(_keywords_tree) = map_get(map, "Grammar", "keywords") {
             unimplemented!();
         }
-
 
         let grammar = Grammar::new(&name, rules.as_slice());
         Ok(grammar)

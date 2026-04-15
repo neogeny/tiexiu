@@ -84,7 +84,7 @@ impl Grammar {
 
     pub fn start_rule(&self) -> Result<&Rule, ParseError> {
         if self.rules.is_empty() {
-            return Err(ParseError::NoRulesInGrammar)
+            return Err(ParseError::NoRulesInGrammar);
         }
         let start = "start";
         self.index
