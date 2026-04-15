@@ -1,6 +1,6 @@
-use std::fmt;
 use std::ops::Index;
 use std::str::FromStr;
+use std::{env, fmt};
 
 pub type CfgA<'c> = &'c [(&'c str, &'c str)];
 
@@ -27,6 +27,24 @@ impl Cfg {
             .collect::<Vec<_>>()
             .into_boxed_slice();
         Self { pairs: boxed_pairs }
+    }
+
+    pub fn fromenv(prefix: &str) -> Self {
+        let pairs = env::vars()
+            .filter(|(key, _)| key.starts_with(prefix))
+            .map(|(key, val)| (key[prefix.len()..].to_string(), val))
+            .map(|(mut key, val)| {
+                if key.starts_with('_') {
+                    key.remove(0);
+                }
+                (key, val)
+            })
+            .map(|(key, val)| (key.to_lowercase(), val))
+            .map(|(k, v)| (k.into_boxed_str(), v.into_boxed_str()))
+            .collect::<Vec<_>>()
+            .into_boxed_slice();
+
+        Self { pairs }
     }
 
     /// Merges two configurations, returning a new one.
@@ -99,6 +117,7 @@ impl fmt::Debug for Cfg {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::env;
 
     #[test]
     fn test_conversion_and_storage() {
@@ -123,5 +142,41 @@ mod tests {
         // We compare the &str returned by index to the &str "1".
         assert_eq!(&merged["trace"], "1");
         assert_eq!(&merged["missing"], "");
+    }
+
+    #[test]
+    fn test_cfg_fromenv_mangling() {
+        let prefix = "TX";
+
+        // Set up the environment for the test
+        unsafe {
+            env::set_var("TXVERBOSE", "true");
+            env::set_var("TX_DEBUG", "1");
+            env::set_var("TX_MAX_DEPTH", "50");
+            env::set_var("OTHER_VAR", "ignore_me");
+        }
+
+        let cfg = Cfg::fromenv(prefix);
+
+        // Helper to check if a key exists in our boxed slice
+        let get_val = |key: &str| {
+            cfg.pairs
+                .iter()
+                .find(|(k, _)| k.as_ref() == key)
+                .map(|(_, v)| v.as_ref())
+        };
+
+        // Assertions for the four cases
+        assert_eq!(get_val("verbose"), Some("true")); // Case 1: Simple prefix removal
+        assert_eq!(get_val("debug"), Some("1")); // Case 2: Underscore peeling
+        assert_eq!(get_val("max_depth"), Some("50")); // Case 3: Lowercasing
+        assert!(get_val("other_var").is_none()); // Case 4: Filtering
+
+        // Clean up (optional, but polite for other tests)
+        unsafe {
+            env::remove_var("TXVERBOSE");
+            env::remove_var("TX_DEBUG");
+            env::remove_var("TX_MAX_DEPTH");
+        }
     }
 }
