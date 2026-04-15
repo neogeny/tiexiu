@@ -1,8 +1,11 @@
 //! Test fixtures for bootstrap tests
 
+#![allow(dead_code)]
 use tiexiu::input::StrCursor;
 use tiexiu::peg::{Exp, ExpKind, Grammar};
 use tiexiu::state::corectx::CoreCtx;
+
+pub const TATSU_GRAMMAR_PATH: &str = "grammar/tatsu.ebnf";
 
 pub fn boot_grammar() -> Grammar {
     tiexiu::json::boot::boot_grammar().expect("Failed to load boot grammar")
