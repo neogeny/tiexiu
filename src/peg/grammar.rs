@@ -17,7 +17,7 @@ pub struct Grammar {
     pub directives: HashMap<String, String>,
     pub keywords: HashSet<String>,
     pub(super) rules: Box<[RuleRef]>,
-    index: RuleIndex,
+    pub index: RuleIndex,
 }
 
 impl<C> Parser<C> for Grammar
@@ -39,7 +39,7 @@ impl Default for Grammar {
 
 impl fmt::Display for Grammar {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(f, "@@grammar:: {};", self.name)?;
+        writeln!(f, "@@grammar:: {}", self.name)?;
 
         for rule in self.rules() {
             writeln!(f, "{}", rule)?;
@@ -82,13 +82,28 @@ impl Grammar {
         self.link();
     }
 
+    pub fn start_rule(&self) -> Result<&Rule, ParseError> {
+        if self.rules.is_empty() {
+            return Err(ParseError::NoRulesInGrammar)
+        }
+        let start = "start";
+        self.index
+            .get(start)
+            .map(|i| self.rules[*i].as_ref())
+            .or_else(|| self.rules.first().map(|r| r.as_ref()))
+            .ok_or_else(|| RuleNotFound(start.into()))
+    }
+
     pub fn parse<C: Ctx>(&self, ctx: C) -> ParseResult<C> {
-        self.parse_at("start", ctx)
+        let start_mark = ctx.mark();
+        match self.start_rule() {
+            Ok(rule) => rule.parse(ctx),
+            Err(err) => Err(ctx.failure(start_mark, err)),
+        }
     }
 
     fn parse_at<C: Ctx>(&self, start: &str, ctx: C) -> ParseResult<C> {
         let start_mark = ctx.mark();
-        assert_eq!(start, "start", "parse_at('{}')", start);
         match self.get_rule(start) {
             Ok(rule) => rule.parse(ctx),
             Err(err) => Err(ctx.failure(start_mark, err)),
