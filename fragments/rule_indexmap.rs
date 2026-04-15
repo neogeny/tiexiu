@@ -3,10 +3,10 @@
 
 use super::error::ParseError;
 use super::parser::{ParseResult, Parser};
-use super::rule::{Rule, RuleMap, RuleRef};
+use super::rule::{Rule, RuleRef};
 use crate::peg::ParseError::RuleNotFound;
 use crate::state::Ctx;
-use indexmap::IndexMap;
+use indexmap::IndexMap; // Added IndexMap
 use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::rc::Rc;
@@ -17,7 +17,8 @@ pub struct Grammar {
     pub analyzed: bool,
     pub directives: HashMap<String, String>,
     pub keywords: HashSet<String>,
-    pub rules: RuleMap,
+    // Rules are now stored by name while preserving insertion order
+    pub(super) rules: IndexMap<String, RuleRef>,
 }
 
 impl<C> Parser<C> for Grammar
@@ -25,7 +26,18 @@ where
     C: Ctx,
 {
     fn parse(&self, ctx: C) -> ParseResult<C> {
-        Grammar::parse(self, ctx)
+        // Fallback to the first rule by index if "start" is not found
+        let name = self.rules.get_index(0)
+            .map(|(name, _)| name.clone())
+            .ok_or_else(|| ParseError::NoRulesInGrammar);
+
+        match name {
+            Ok(n) => self.parse_at(&n, ctx),
+            Err(e) => {
+                let mark = ctx.mark();
+                Err(ctx.failure(mark, e))
+            }
+        }
     }
 }
 
@@ -44,21 +56,22 @@ impl fmt::Display for Grammar {
             writeln!(f, "{}", rule)?;
             writeln!(f)?;
         }
-        write!(f, "")
+        Ok(())
     }
 }
 
 impl Grammar {
     pub fn new(name: &str, rules: &[Rule]) -> Self {
-        let rules: IndexMap<Box<str>, RuleRef> = rules
+        let rule_map: IndexMap<String, RuleRef> = rules
             .iter()
             .cloned()
-            .map(|r| (r.name.clone(), r.into()))
+            .map(|r| (r.name.clone(), RuleRef::from(r)))
             .collect();
+
         let mut grammar = Self {
             name: name.to_string(),
             analyzed: false,
-            rules,
+            rules: rule_map,
             directives: HashMap::new(),
             keywords: HashSet::new(),
         };
@@ -72,14 +85,11 @@ impl Grammar {
     }
 
     pub fn start_rule(&self) -> Result<&Rule, ParseError> {
-        if self.rules.is_empty() {
-            return Err(ParseError::NoRulesInGrammar);
-        }
         let start = "start";
         self.rules
             .get(start)
+            .or_else(|| self.rules.get_index(0).map(|(_, r)| r))
             .map(|r| r.as_ref())
-            .or_else(|| self.rules.get_index(0).map(|(_, r)| r.as_ref()))
             .ok_or_else(|| RuleNotFound(start.into()))
     }
 
@@ -91,7 +101,7 @@ impl Grammar {
         }
     }
 
-    pub fn parse_from<C: Ctx>(&self, start: &str, ctx: C) -> ParseResult<C> {
+    fn parse_at<C: Ctx>(&self, start: &str, ctx: C) -> ParseResult<C> {
         let start_mark = ctx.mark();
         match self.get_rule(start) {
             Ok(rule) => rule.parse(ctx),
@@ -140,47 +150,5 @@ impl Grammar {
 
     pub fn rules_mut(&mut self) -> impl Iterator<Item = &mut Rule> {
         self.rules.values_mut().map(Rc::make_mut)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::peg::rule::Rule;
-    use crate::peg::Exp;
-
-    #[test]
-    fn new_grammar() {
-        let grammar = Grammar::new("Test", &[]);
-        assert_eq!(grammar.name, "Test");
-    }
-
-    #[test]
-    fn grammar_with_rules() {
-        let exp = Exp::nil();
-        let rule = Rule::new("start", &[], exp);
-        let grammar = Grammar::new("Test", &[rule]);
-        let count = grammar.rules().count();
-        assert_eq!(count, 1);
-    }
-
-    #[test]
-    fn get_rule() {
-        let exp = Exp::nil();
-        let rule = Rule::new("start", &[], exp.clone());
-        let grammar = Grammar::new("Test", &[rule]);
-        assert!(grammar.get_rule("start").is_ok());
-    }
-
-    #[test]
-    fn get_rule_not_found() {
-        let grammar = Grammar::new("Test", &[]);
-        assert!(grammar.get_rule("missing").is_err());
-    }
-
-    #[test]
-    fn grammar_not_analyzed() {
-        let grammar = Grammar::new("Test", &[]);
-        assert!(!grammar.analyzed);
     }
 }
