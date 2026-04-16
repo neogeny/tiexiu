@@ -14,8 +14,8 @@ pub mod exp;
 pub mod fold;
 pub mod grammar;
 pub mod parser;
-pub mod rule;
 pub mod pretty;
+pub mod rule;
 
 pub use compiler::{CompileError, CompileResult, GrammarCompiler};
 pub use error::ParseError;
