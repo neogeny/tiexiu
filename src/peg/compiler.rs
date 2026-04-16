@@ -110,7 +110,7 @@ impl GrammarCompiler {
     pub fn compile_grammar(&mut self, tree: &Tree) -> CompileResult<Grammar> {
         let map = parse_node_check(tree, "Grammar")?;
 
-        let rule_trees = map_get(map, "Grammar", "rules")?.value_list();
+        let rule_trees = map_get(map, "Grammar", "rules")?.list_value();
         let mut rulemap: IndexMap<Box<str>, Rule> = IndexMap::new();
         for rtree in rule_trees {
             let rule = self.compile_rule(&rtree)?;
@@ -141,7 +141,7 @@ impl GrammarCompiler {
         let exp = self.parse_exp(map_get(map, ctx, "exp")?)?;
         let params = match map_get(map, ctx, "params") {
             Err(_) => [].into(),
-            Ok(p) => p.value_str_list(),
+            Ok(p) => p.str_list_value(),
         };
         Ok(Rule::new(&name, &params, exp))
     }
@@ -154,13 +154,14 @@ impl GrammarCompiler {
             "Box" => Exp::nil(),
             "Call" => Exp::call(&tree.value()),
             "Choice" => {
-                let items = tree.get_list("tree");
+                let items = tree.list_value();
                 let exps: Vec<Exp> = items
                     .iter()
                     .map(|t| self.parse_exp(t))
                     .collect::<CompileResult<_>>()?;
                 Exp::choice(exps)
             }
+            "Option" => self.parse_exp(tree)?,
             "Closure" => {
                 let inner = map_get(tree, "exp", "exp")?;
                 Exp::closure(self.parse_exp(inner)?)
@@ -212,14 +213,6 @@ impl GrammarCompiler {
                 let inner = map_get(tree, "exp", "exp")?;
                 Exp::negative_lookahead(self.parse_exp(inner)?)
             }
-            "Option" => {
-                let items = tree.get_list("tree");
-                let exps: Vec<Exp> = items
-                    .iter()
-                    .map(|t| self.parse_exp(t))
-                    .collect::<CompileResult<_>>()?;
-                Exp::choice(exps)
-            }
             "Optional" => {
                 let inner = map_get(tree, "exp", "exp")?;
                 Exp::optional(self.parse_exp(inner)?)
@@ -262,8 +255,8 @@ impl GrammarCompiler {
             "Sequence" => {
                 let tree_inner = tree
                     .get("tree")
-                    .map(|t| t.value_list())
-                    .unwrap_or_else(|| tree.value_list());
+                    .map(|t| t.list_value())
+                    .unwrap_or_else(|| tree.list_value());
                 let exps: Vec<Exp> = tree_inner
                     .iter()
                     .map(|t| self.parse_exp(t))
