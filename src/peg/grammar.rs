@@ -3,13 +3,13 @@
 
 use super::error::ParseError;
 use super::parser::{ParseResult, Parser};
+pub use super::pretty::*;
 use super::rule::{Rule, RuleMap, RuleRef};
 use crate::peg::ParseError::RuleNotFound;
 use crate::state::Ctx;
 use indexmap::IndexMap;
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
-pub use super::pretty::*;
 
 #[derive(Debug, Clone)]
 pub struct Grammar {
