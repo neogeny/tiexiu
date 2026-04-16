@@ -65,18 +65,18 @@ impl Tree {
         }
     }
 
-    pub fn value_list(&self) -> Box<[Tree]> {
+    pub fn list_value(&self) -> Box<[Tree]> {
         match self {
             Tree::List(items) | Tree::Closed(items) => items.clone(),
             _ => [].into(),
         }
     }
 
-    pub fn value_str_list(&self) -> Box<[Box<str>]> {
-        self.value_list().iter().map(|t| t.value()).collect()
+    pub fn str_list_value(&self) -> Box<[Box<str>]> {
+        self.list_value().iter().map(|t| t.value()).collect()
     }
 
-    pub fn value_map(&self) -> Option<&TreeMap> {
+    pub fn map_value(&self) -> Option<&TreeMap> {
         match self {
             Tree::Map(map) => Some(map),
             _ => None,
@@ -98,7 +98,7 @@ impl Tree {
 
     pub fn get_list(&self, key: &str) -> Box<[Tree]> {
         self.get(key)
-            .map(|n| n.value_list().clone())
+            .map(|n| n.list_value().clone())
             .unwrap_or_else(|| [].into())
     }
 
