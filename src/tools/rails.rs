@@ -6,53 +6,78 @@
 use crate::peg::{Exp, ExpKind, Grammar, Rule};
 use std::rc::Rc;
 
-type Track = Vec<Rc<str>>;
+type Rails = Vec<Rc<str>>;
 
-fn make_rail(content: &str) -> Rc<str> {
-    content.into()
+const ETX: &str = "／";
+
+fn make_rail(s: &str) -> Rc<str> {
+    s.into()
 }
 
-#[allow(dead_code)]
-fn rail_to_string(rail: &Rc<str>) -> String {
-    rail.as_ref().to_string()
+fn ulen(s: &str) -> usize {
+    s.chars().count()
 }
 
-#[allow(dead_code)]
-fn track_to_string(track: &Track) -> String {
-    if track.is_empty() {
-        return String::new();
+fn assert_one_length(rails: Rails) -> Rails {
+    if rails.is_empty() {
+        return rails;
     }
-    track
-        .iter()
-        .map(|s| s.as_ref().trim_end())
-        .collect::<Vec<_>>()
-        .join("\n")
+    let len0 = ulen(rails[0].as_ref());
+    for rail in &rails {
+        assert!(
+            ulen(rail.as_ref()) == len0,
+            "lengths differ: {} vs {}",
+            ulen(rail.as_ref()),
+            len0
+        );
+    }
+    rails
 }
 
-fn join_tracks(tracks: impl IntoIterator<Item = Track>) -> Track {
-    tracks.into_iter().flatten().collect()
+fn pad(s: &str, c: char, width: usize) -> String {
+    let padding = width.saturating_sub(ulen(s));
+    format!("{}{}", s, c.to_string().repeat(padding))
 }
 
-fn weld(a: &[Rc<str>], b: &[Rc<str>]) -> Track {
+fn railpad(s: &str, maxl: usize) -> String {
+    pad(s, '─', maxl)
+}
+
+fn blankpad(s: &str, maxl: usize) -> String {
+    pad(s, ' ', maxl)
+}
+
+fn weld(a: &[Rc<str>], b: &[Rc<str>]) -> Rails {
     if a.is_empty() {
-        return b.to_vec();
+        return b.into();
     }
     if b.is_empty() {
-        return a.to_vec();
+        return a.into();
+    }
+    if a.iter().any(|s| s.as_ref().contains(ETX)) {
+        return a.into();
     }
 
+    let len_a = ulen(a[0].as_ref());
+    let len_b = ulen(b[0].as_ref());
     let height = a.len().max(b.len());
-    let mut result = Vec::with_capacity(height);
+    let common = a.len().min(b.len());
 
+    let mut out: Vec<Rc<str>> = a.iter().cloned().collect();
     for i in 0..height {
-        let a_content = a.get(i).map(|s| s.as_ref()).unwrap_or("");
-        let b_content = b.get(i).map(|s| s.as_ref()).unwrap_or("");
-        result.push(make_rail(&format!("{}{}", a_content, b_content)));
+        if i < common {
+            out[i] = format!("{}{}", out[i].as_ref(), b[i].as_ref()).into();
+        } else if i < a.len() {
+            out[i] = format!("{}{:len_b$}", out[i].as_ref(), "").into();
+        } else {
+            out.push(format!("{:len_a$}{}", "", b[i].as_ref()).into());
+        }
     }
-    result
+
+    assert_one_length(out)
 }
 
-fn lay_out(tracks: &[Track]) -> Track {
+fn lay_out(tracks: &[Rails]) -> Rails {
     if tracks.is_empty() {
         return vec![];
     }
@@ -63,153 +88,122 @@ fn lay_out(tracks: &[Track]) -> Track {
     let maxl = tracks
         .iter()
         .filter_map(|t| t.first())
-        .map(|s| s.len())
+        .map(|s| ulen(s.as_ref()))
         .max()
         .unwrap_or(0);
 
-    let mut result = Vec::new();
+    let mut out: Rails = Vec::new();
 
     for (ti, track) in tracks.iter().enumerate() {
-        let is_first = ti == 0;
-        let is_last = ti == tracks.len() - 1;
+        if track.is_empty() {
+            continue;
+        }
 
-        for (ri, line) in track.iter().enumerate() {
-            while result.len() <= ri {
-                result.push(make_rail(""));
+        let _is_first = ti == 0;
+        let is_last = ti == tracks.len() - 1;
+        let joint = &track[0];
+
+        if !is_last {
+            let first_line = if !joint.as_ref().contains(ETX) {
+                format!("  ├─{}─┤ ", railpad(joint.as_ref(), maxl))
+            } else {
+                format!("  ├─{} │ ", blankpad(joint.as_ref(), maxl))
+            };
+            out.push(first_line.into());
+
+            for rail in &track[1..] {
+                out.push(format!("  │ {} │ ", blankpad(rail.as_ref(), maxl)).into());
+            }
+        } else {
+            let is_etx = joint.as_ref().contains(ETX);
+            if !is_etx {
+                out.push(format!("  └─{}─┘ ", railpad(joint.as_ref(), maxl)).into());
+            } else {
+                if let Some(last) = out.last_mut() {
+                    let old = last.as_ref().to_string();
+                    let end = old.trim_end_matches("─┘ ");
+                    *last = format!("{}─┘ ", end).into();
+                }
+                out.push(format!("  └─{}   ", blankpad(joint.as_ref(), maxl)).into());
             }
 
-            let _conn = if ri == 0 {
-                if is_first {
-                    "──┬"
-                } else if is_last {
-                    "  └"
-                } else {
-                    "  ├"
-                }
-            } else {
-                if is_first {
-                    "  │"
-                } else if is_last {
-                    "    "
-                } else {
-                    "  │"
-                }
-            };
-
-            let suffix = if ri == 0 {
-                if is_last {
-                    "─┘ "
-                } else {
-                    "─┤ "
-                }
-            } else {
-                "   "
-            };
-
-            let padded = pad(line.as_ref(), maxl);
-            let new_content = if ri == 0 && ti > 0 {
-                format!("{}{}{}", result[ri].as_ref(), padded, suffix)
-            } else {
-                format!("{}{}", padded, suffix)
-            };
-            result[ri] = make_rail(&new_content);
+            for rail in &track[1..] {
+                out.push(format!("    {}   ", blankpad(rail.as_ref(), maxl)).into());
+            }
         }
     }
 
-    result
+    if !out.is_empty() {
+        let first_track = &tracks[0];
+        if !first_track.is_empty() {
+            let joint = &first_track[0];
+            let first_line = if !joint.as_ref().contains(ETX) {
+                format!("──┬─{}─┬─", railpad(joint.as_ref(), maxl))
+            } else {
+                format!("──┬─{} ┬─", blankpad(joint.as_ref(), maxl))
+            };
+            out[0] = first_line.into();
+        }
+    }
+
+    assert_one_length(out)
 }
 
-fn pad(s: &str, width: usize) -> String {
-    format!("{}{}", s, " ".repeat(width.saturating_sub(s.len())))
-}
-
-fn loop_(inner: &Track) -> Track {
-    if inner.is_empty() {
+fn loop_(rails: &Rails) -> Rails {
+    if rails.is_empty() {
         return vec![make_rail("───>───")];
     }
 
-    let maxl = inner.iter().map(|s| s.len()).max().unwrap_or(0);
-    let inner_str = inner
-        .iter()
-        .map(|s| s.as_ref())
-        .collect::<Vec<_>>()
-        .join("");
-    let inner_conn = if inner.len() > 1 { "  │" } else { "" };
+    let maxl = rails.iter().map(|s| ulen(s.as_ref())).max().unwrap_or(0);
+    let first = &rails[0];
 
-    let top = make_rail("──┬");
-    let mid = make_rail(&format!("{}{}", inner_conn, pad(&inner_str, maxl)));
-    let bot = make_rail("──┴");
+    let mut out = vec![format!("──┬→{}─┬──", railpad("", maxl)).into()];
+    out.push(format!("  ├→{}─┤  ", railpad(first.as_ref(), maxl)).into());
 
-    vec![top, mid, bot]
+    for rail in &rails[1..] {
+        out.push(format!("  │ {} │  ", blankpad(rail.as_ref(), maxl)).into());
+    }
+    out.push(format!("  └─{}<┘  ", railpad("", maxl)).into());
+
+    assert_one_length(out)
 }
 
-fn stopn_loop(inner: &Track) -> Track {
-    if inner.is_empty() {
+fn stopnloop(rails: &Rails) -> Rails {
+    if rails.is_empty() {
         return vec![make_rail("───>───")];
     }
 
-    let maxl = inner.iter().map(|s| s.len()).max().unwrap_or(0);
-    let inner_str = inner
-        .iter()
-        .map(|s| s.as_ref())
-        .collect::<Vec<_>>()
-        .join("");
-    let inner_conn = if inner.len() > 1 { "  │" } else { "" };
+    let maxl = rails.iter().map(|s| ulen(s.as_ref())).max().unwrap_or(0);
+    let first = &rails[0];
 
-    let top = make_rail("──┬");
-    let mid = make_rail(&format!("{}{}", inner_conn, pad(&inner_str, maxl)));
-    let bot = make_rail("──┴");
+    let mut out = vec![format!("──┬─{}─┬──", railpad(first.as_ref(), maxl)).into()];
 
-    vec![top, mid, bot]
-}
-
-pub trait ToRailroad {
-    fn railroads(&self) -> String;
-}
-
-impl ToRailroad for Grammar {
-    fn railroads(&self) -> String {
-        let tracks: Vec<Track> = self.rules().map(walk_rule).collect();
-        let result = join_tracks(tracks);
-        track_to_string(&result)
+    for rail in &rails[1..] {
+        out.push(format!("  │ {} │  ", blankpad(rail.as_ref(), maxl)).into());
     }
+    out.push(format!("  └─{}<┘  ", railpad("", maxl)).into());
+
+    assert_one_length(out)
 }
 
-impl ToRailroad for Rule {
-    fn railroads(&self) -> String {
-        let track = walk_rule(self);
-        track_to_string(&track)
-    }
+fn join_lists(tracks: impl IntoIterator<Item = Rails>) -> Rails {
+    tracks.into_iter().flatten().collect()
 }
 
-impl ToRailroad for Exp {
-    fn railroads(&self) -> String {
-        let track = walk_exp(self);
-        track_to_string(&track)
-    }
-}
-
-pub fn walk_grammar(grammar: &Grammar) -> Vec<Track> {
-    grammar.rules().map(walk_rule).collect()
-}
-
-pub fn walk_rule(rule: &Rule) -> Track {
-    let start_conn = format!("{} ●─", rule.name);
-    let rule_content = walk_exp(&rule.exp);
-    let with_start = weld(&[make_rail(&start_conn)], &rule_content);
-    weld(&with_start, &[make_rail("─■")])
-}
-
-fn walk_exp(exp: &Exp) -> Track {
+#[allow(clippy::redundant_closure)]
+fn walk_exp(exp: &Exp) -> Rails {
     match &exp.kind {
         ExpKind::Void => vec![make_rail(" ∅ ")],
         ExpKind::Fail => vec![make_rail(" ⚠ ")],
         ExpKind::Cut => vec![make_rail(" ✂ ")],
         ExpKind::Dot => vec![make_rail(" ∀ ")],
-        ExpKind::Eof => vec![make_rail(" $")],
+        ExpKind::Eof => vec![make_rail(&format!("⇥{} ", ETX))],
 
         ExpKind::Token(t) => vec![make_rail(&format!("{:?}", t))],
-        ExpKind::Pattern(p) => vec![make_rail(&format!("/{}/", p))],
+        ExpKind::Pattern(p) => {
+            let pat = p.trim_start_matches("r'").trim_end_matches('\'');
+            vec![make_rail(&format!("/{}/─", pat))]
+        }
         ExpKind::Constant(c) => vec![make_rail(&format!("`{}`", c))],
         ExpKind::Alert(c, level) => vec![make_rail(&format!(
             "{}^`{}`",
@@ -221,47 +215,38 @@ fn walk_exp(exp: &Exp) -> Track {
         ExpKind::RuleInclude { name, .. } => vec![make_rail(&format!(" >({}) ", name))],
 
         ExpKind::Optional(inner) => {
-            let inner_track = walk_exp(inner);
-            lay_out(&[inner_track.clone(), inner_track])
+            let out = weld(&[make_rail("→")], &walk_exp(inner));
+            lay_out(&[out, vec![make_rail("→")]])
         }
 
         ExpKind::Closure(inner) => loop_(&walk_exp(inner)),
-        ExpKind::PositiveClosure(inner) => stopn_loop(&walk_exp(inner)),
+        ExpKind::PositiveClosure(inner) => stopnloop(&walk_exp(inner)),
 
         ExpKind::Join { exp, sep } => {
-            let exp_track = walk_exp(exp);
-            let sep_track = walk_exp(sep);
-            let joined = weld(&sep_track, &[make_rail(" ✂ ─")]);
-            let joined = weld(&joined, &exp_track);
-            loop_(&joined)
+            let sep = weld(&walk_exp(sep), &[make_rail(" ✂ ─")]);
+            let out = weld(&sep, &walk_exp(exp));
+            loop_(&out)
         }
         ExpKind::PositiveJoin { exp, sep } => {
-            let exp_track = walk_exp(exp);
-            let sep_track = walk_exp(sep);
-            let joined = weld(&sep_track, &[make_rail(" ✂ ─")]);
-            let joined = weld(&joined, &exp_track);
-            stopn_loop(&joined)
+            let sep = weld(&walk_exp(sep), &[make_rail(" ✂ ─")]);
+            let out = weld(&sep, &walk_exp(exp));
+            stopnloop(&out)
         }
         ExpKind::Gather { exp, sep } => {
-            let exp_track = walk_exp(exp);
-            let sep_track = walk_exp(sep);
-            let gathered = weld(&sep_track, &[make_rail(" │ ")]);
-            let gathered = weld(&gathered, &exp_track);
-            loop_(&gathered)
+            let sep = weld(&walk_exp(sep), &[make_rail(" │ ")]);
+            let out = weld(&sep, &walk_exp(exp));
+            loop_(&out)
         }
         ExpKind::PositiveGather { exp, sep } => {
-            let exp_track = walk_exp(exp);
-            let sep_track = walk_exp(sep);
-            let gathered = weld(&sep_track, &[make_rail(" │ ")]);
-            let gathered = weld(&gathered, &exp_track);
-            stopn_loop(&gathered)
+            let sep = weld(&walk_exp(sep), &[make_rail(" │ ")]);
+            let out = weld(&sep, &walk_exp(exp));
+            stopnloop(&out)
         }
 
-        ExpKind::SkipTo(inner) => {
-            let prefixed = vec![make_rail(" ->(")];
-            let inner_track = walk_exp(inner);
-            weld(&prefixed, &weld(&inner_track, &[make_rail(")")]))
-        }
+        ExpKind::SkipTo(inner) => weld(
+            &[make_rail(" ->(")],
+            &weld(&walk_exp(inner), &[make_rail(")")]),
+        ),
 
         ExpKind::Sequence(items) => {
             if items.is_empty() {
@@ -276,53 +261,126 @@ fn walk_exp(exp: &Exp) -> Track {
         }
 
         ExpKind::Choice(options) => {
-            let tracks: Vec<Track> = options.iter().map(walk_exp).collect();
+            let tracks: Vec<Rails> = options.iter().map(walk_exp).collect();
             lay_out(&tracks)
         }
         ExpKind::Alt(inner) => walk_exp(inner),
 
-        ExpKind::Named(name, inner) => {
-            let inner_track = walk_exp(inner);
-            let prefixed = vec![make_rail(&format!(" `{}`(", name))];
-            let suffixed = vec![make_rail(")")];
-            weld(&weld(&prefixed, &inner_track), &suffixed)
-        }
+        ExpKind::Named(name, inner) => weld(
+            &[make_rail(&format!(" `{}`(", name))],
+            &weld(&walk_exp(inner), &[make_rail(")")]),
+        ),
 
-        ExpKind::NamedList(name, inner) => {
-            let inner_track = walk_exp(inner);
-            let prefixed = vec![make_rail(&format!(" `{}`]+(", name))];
-            let suffixed = vec![make_rail(")")];
-            weld(&weld(&prefixed, &inner_track), &suffixed)
-        }
+        ExpKind::NamedList(name, inner) => weld(
+            &[make_rail(&format!(" `{}`]+(", name))],
+            &weld(&walk_exp(inner), &[make_rail(")")]),
+        ),
 
         ExpKind::Group(inner) => walk_exp(inner),
         ExpKind::SkipGroup(inner) => walk_exp(inner),
 
-        ExpKind::Lookahead(inner) => {
-            let prefixed = vec![make_rail(" &")];
-            let inner_track = walk_exp(inner);
-            weld(&prefixed, &inner_track)
-        }
+        ExpKind::Lookahead(inner) => weld(
+            &[make_rail("─ &[")],
+            &weld(&walk_exp(inner), &[make_rail("]")]),
+        ),
 
-        ExpKind::NegativeLookahead(inner) => {
-            let prefixed = vec![make_rail(" !")];
-            let inner_track = walk_exp(inner);
-            weld(&prefixed, &inner_track)
-        }
+        ExpKind::NegativeLookahead(inner) => weld(
+            &[make_rail("─ ![")],
+            &weld(&walk_exp(inner), &[make_rail("]")]),
+        ),
 
-        ExpKind::Override(inner) => {
-            let prefixed = vec![make_rail(r" @(")];
-            let inner_track = walk_exp(inner);
-            weld(&prefixed, &weld(&inner_track, &[make_rail(")")]))
-        }
+        ExpKind::Override(inner) => weld(
+            &[make_rail(" @(")],
+            &weld(&walk_exp(inner), &[make_rail(")")]),
+        ),
 
         ExpKind::OverrideList(inner) => {
-            let prefixed = vec![make_rail(r" @+(")];
-            let inner_track = walk_exp(inner);
-            weld(&prefixed, &weld(&inner_track, &[make_rail(")")]))
+            let content = walk_exp(inner);
+            let _content_len = ulen(content[0].as_ref());
+            weld(&[make_rail(" @+(")], &weld(&content, &[make_rail(")")]))
         }
 
         ExpKind::Nil => vec![make_rail("")],
+    }
+}
+
+fn walk_rule(rule: &Rule) -> Rails {
+    let leftrec = if rule.is_left_recursive() {
+        "⟳".to_string()
+    } else if !rule.is_memoizable() {
+        "⊬".to_string()
+    } else {
+        String::new()
+    };
+
+    let mut out = vec![make_rail(&format!("{}{} ●─", leftrec, rule.name))];
+    out = weld(&out, &walk_exp(&rule.exp));
+    out = weld(&out, &[make_rail("─■")]);
+
+    let len0 = ulen(out[0].as_ref());
+    let padding = " ".repeat(len0);
+    let out: Rails = out
+        .into_iter()
+        .map(|s| Rc::from(format!("{}{}", s.as_ref(), padding)))
+        .collect();
+
+    assert_one_length(out)
+}
+
+fn walk_grammar(grammar: &Grammar) -> Rails {
+    let tracks: Vec<Rails> = grammar.rules().map(walk_rule).collect();
+    join_lists(tracks)
+}
+
+pub fn tracks(grammar: &Grammar) -> Rails {
+    walk_grammar(grammar)
+}
+
+pub fn text(grammar: &Grammar) -> String {
+    let tracks = walk_grammar(grammar);
+    let tracks: Vec<String> = tracks
+        .iter()
+        .map(|s| s.as_ref().trim_end().to_string())
+        .collect();
+    tracks.join("\n")
+}
+
+pub fn draw(grammar: &Grammar) {
+    let tracks = walk_grammar(grammar);
+    for line in tracks {
+        println!("{}", line.as_ref().trim_end());
+    }
+}
+
+pub trait ToRailroad {
+    fn railroads(&self) -> String;
+}
+
+impl ToRailroad for Grammar {
+    fn railroads(&self) -> String {
+        text(self)
+    }
+}
+
+impl ToRailroad for Rule {
+    fn railroads(&self) -> String {
+        let track = walk_rule(self);
+        let s: String = track
+            .iter()
+            .map(|t| t.as_ref().trim_end().to_string())
+            .collect();
+        s
+    }
+}
+
+impl ToRailroad for Exp {
+    fn railroads(&self) -> String {
+        let track = walk_exp(self);
+        let s: String = track
+            .iter()
+            .map(|t| t.as_ref().trim_end().to_string())
+            .collect();
+        s
     }
 }
 
@@ -337,14 +395,8 @@ mod tests {
     }
 
     #[test]
-    fn test_rail_to_string() {
-        let rail = make_rail("foo");
-        assert_eq!(rail_to_string(&rail), "foo");
-    }
-
-    #[test]
     fn test_weld_empty_left() {
-        let a: Track = vec![];
+        let a: Rails = vec![];
         let b = vec![make_rail("x")];
         let result = weld(&a, &b);
         assert_eq!(result.len(), 1);
@@ -354,7 +406,7 @@ mod tests {
     #[test]
     fn test_weld_empty_right() {
         let a = vec![make_rail("x")];
-        let b: Track = vec![];
+        let b: Rails = vec![];
         let result = weld(&a, &b);
         assert_eq!(result.len(), 1);
         assert_eq!(result[0].as_ref(), "x");
@@ -379,7 +431,7 @@ mod tests {
 
     #[test]
     fn test_lay_out_empty() {
-        let tracks: Vec<Track> = vec![];
+        let tracks: Vec<Rails> = vec![];
         let result = lay_out(&tracks);
         assert!(result.is_empty());
     }
@@ -392,18 +444,15 @@ mod tests {
     }
 
     #[test]
-    fn test_track_to_string() {
-        let track = vec![make_rail("a"), make_rail("b")];
-        let result = track_to_string(&track);
-        assert_eq!(result, "a\nb");
-    }
-
-    #[test]
     fn test_lay_out_two_tracks() {
         let track_a = vec![make_rail("a")];
         let track_b = vec![make_rail("b")];
         let result = lay_out(&[track_a, track_b]);
-        let output = track_to_string(&result);
+        let output: String = result
+            .iter()
+            .map(|s| s.as_ref())
+            .collect::<Vec<_>>()
+            .join("\n");
         eprintln!("lay_out two:\n{}", output);
         assert!(!result.is_empty());
     }
@@ -419,7 +468,11 @@ mod tests {
     fn test_loop_with_content() {
         let inner = vec![make_rail("foo")];
         let result = loop_(&inner);
-        let output = track_to_string(&result);
+        let output: String = result
+            .iter()
+            .map(|s| s.as_ref())
+            .collect::<Vec<_>>()
+            .join("\n");
         eprintln!("loop:\n{}", output);
         assert!(result.len() >= 2);
     }
