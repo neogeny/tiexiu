@@ -31,7 +31,7 @@ impl Display for Exp {
         if f.alternate() {
             write!(f, "{}", self.pretty_print())
         } else {
-            write!(f, "{:#?}", self)
+            write!(f, "{:#?}", self.kind)
         }
     }
 }

@@ -14,10 +14,16 @@ pub type ERef = Box<Exp>;
 pub type ERefArr = Box<[Exp]>;
 pub type Str = Box<str>;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Exp {
     pub kind: ExpKind,
     pub la: Box<[Str]>, // the lookahead set
+}
+
+impl Debug for Exp {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Debug::fmt(&self.kind, f)
+    }
 }
 
 #[derive(Debug, Clone)]
