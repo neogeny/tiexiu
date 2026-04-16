@@ -8,7 +8,60 @@ use std::rc::Rc;
 
 type Rails = Vec<Rc<str>>;
 
-const ETX: &str = "／";
+const ETX: &str = "＄";
+
+
+pub fn tracks(grammar: &Grammar) -> Rails {
+    walk_grammar(grammar)
+}
+
+pub fn text(grammar: &Grammar) -> String {
+    let tracks = walk_grammar(grammar);
+    let tracks: Vec<String> = tracks
+        .iter()
+        .map(|s| s.as_ref().trim_end().to_string())
+        .collect();
+    tracks.join("\n")
+}
+
+pub fn draw(grammar: &Grammar) {
+    let tracks = walk_grammar(grammar);
+    for line in tracks {
+        println!("{}", line.as_ref().trim_end());
+    }
+}
+
+pub trait ToRailroad {
+    fn railroads(&self) -> String;
+}
+
+impl ToRailroad for Grammar {
+    fn railroads(&self) -> String {
+        text(self)
+    }
+}
+
+impl ToRailroad for Rule {
+    fn railroads(&self) -> String {
+        let track = walk_rule(self);
+        let s: String = track
+            .iter()
+            .map(|t| t.as_ref().trim_end().to_string())
+            .collect();
+        s
+    }
+}
+
+impl ToRailroad for Exp {
+    fn railroads(&self) -> String {
+        let track = walk_exp(self);
+        let s: String = track
+            .iter()
+            .map(|t| t.as_ref().trim_end().to_string())
+            .collect();
+        s
+    }
+}
 
 fn make_rail(s: &str) -> Rc<str> {
     s.into()
@@ -24,12 +77,7 @@ fn assert_one_length(rails: Rails) -> Rails {
     }
     let len0 = ulen(rails[0].as_ref());
     for rail in &rails {
-        assert!(
-            ulen(rail.as_ref()) == len0,
-            "lengths differ: {} vs {}",
-            ulen(rail.as_ref()),
-            len0
-        );
+        assert_eq!(ulen(rail.as_ref()), len0, "lengths differ: {} vs {}", ulen(rail.as_ref()), len0);
     }
     rails
 }
@@ -63,7 +111,7 @@ fn weld(a: &[Rc<str>], b: &[Rc<str>]) -> Rails {
     let height = a.len().max(b.len());
     let common = a.len().min(b.len());
 
-    let mut out: Vec<Rc<str>> = a.iter().cloned().collect();
+    let mut out: Vec<Rc<str>> = a.to_vec();
     for i in 0..height {
         if i < common {
             out[i] = format!("{}{}", out[i].as_ref(), b[i].as_ref()).into();
@@ -267,13 +315,13 @@ fn walk_exp(exp: &Exp) -> Rails {
         ExpKind::Alt(inner) => walk_exp(inner),
 
         ExpKind::Named(name, inner) => weld(
-            &[make_rail(&format!(" `{}`(", name))],
-            &weld(&walk_exp(inner), &[make_rail(")")]),
+            &[make_rail(&format!(" {}=(", name))],
+            &weld(&walk_exp(inner), &[make_rail(") ")]),
         ),
 
         ExpKind::NamedList(name, inner) => weld(
-            &[make_rail(&format!(" `{}`]+(", name))],
-            &weld(&walk_exp(inner), &[make_rail(")")]),
+            &[make_rail(&format!(" {}+=(", name))],
+            &weld(&walk_exp(inner), &[make_rail(") ")]),
         ),
 
         ExpKind::Group(inner) => walk_exp(inner),
@@ -290,14 +338,14 @@ fn walk_exp(exp: &Exp) -> Rails {
         ),
 
         ExpKind::Override(inner) => weld(
-            &[make_rail(" @(")],
-            &weld(&walk_exp(inner), &[make_rail(")")]),
+            &[make_rail(" =(")],
+            &weld(&walk_exp(inner), &[make_rail(") ")]),
         ),
 
         ExpKind::OverrideList(inner) => {
             let content = walk_exp(inner);
             let _content_len = ulen(content[0].as_ref());
-            weld(&[make_rail(" @+(")], &weld(&content, &[make_rail(")")]))
+            weld(&[make_rail(" +=(")], &weld(&content, &[make_rail(") ")]))
         }
 
         ExpKind::Nil => vec![make_rail("")],
@@ -313,16 +361,17 @@ fn walk_rule(rule: &Rule) -> Rails {
         String::new()
     };
 
-    let mut out = vec![make_rail(&format!("{}{} ●─", leftrec, rule.name))];
+    let mut out = vec![make_rail(&format!("{}{} ●─", rule.name, leftrec))];
     out = weld(&out, &walk_exp(&rule.exp));
     out = weld(&out, &[make_rail("─■")]);
 
     let len0 = ulen(out[0].as_ref());
     let padding = " ".repeat(len0);
-    let out: Rails = out
+    let mut out: Rails = out
         .into_iter()
-        .map(|s| Rc::from(format!("{}{}", s.as_ref(), padding)))
+        .map(|s| format!("{}{}", s.as_ref(), padding).into())
         .collect();
+    out.push(" ".repeat(ulen(&out[0])).into());
 
     assert_one_length(out)
 }
@@ -331,62 +380,10 @@ fn walk_grammar(grammar: &Grammar) -> Rails {
     let tracks: Vec<Rails> = grammar.rules().map(walk_rule).collect();
     join_lists(tracks)
 }
-
-pub fn tracks(grammar: &Grammar) -> Rails {
-    walk_grammar(grammar)
-}
-
-pub fn text(grammar: &Grammar) -> String {
-    let tracks = walk_grammar(grammar);
-    let tracks: Vec<String> = tracks
-        .iter()
-        .map(|s| s.as_ref().trim_end().to_string())
-        .collect();
-    tracks.join("\n")
-}
-
-pub fn draw(grammar: &Grammar) {
-    let tracks = walk_grammar(grammar);
-    for line in tracks {
-        println!("{}", line.as_ref().trim_end());
-    }
-}
-
-pub trait ToRailroad {
-    fn railroads(&self) -> String;
-}
-
-impl ToRailroad for Grammar {
-    fn railroads(&self) -> String {
-        text(self)
-    }
-}
-
-impl ToRailroad for Rule {
-    fn railroads(&self) -> String {
-        let track = walk_rule(self);
-        let s: String = track
-            .iter()
-            .map(|t| t.as_ref().trim_end().to_string())
-            .collect();
-        s
-    }
-}
-
-impl ToRailroad for Exp {
-    fn railroads(&self) -> String {
-        let track = walk_exp(self);
-        let s: String = track
-            .iter()
-            .map(|t| t.as_ref().trim_end().to_string())
-            .collect();
-        s
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::cfg::CALC_GRAMMAR_PATH;
 
     #[test]
     fn test_make_rail() {
@@ -489,7 +486,7 @@ mod tests {
     #[test]
     fn test_calc_json() {
         use crate::api::load;
-        let grammar_src = std::fs::read_to_string("grammar/calc.json").expect("read file");
+        let grammar_src = std::fs::read_to_string(CALC_GRAMMAR_PATH).expect("read file");
         let grammar = load(&grammar_src, &[]).expect("load failed");
         let result = grammar.railroads();
         eprintln!("calc.json railroads:\n{}", result);
