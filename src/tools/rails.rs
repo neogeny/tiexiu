@@ -388,7 +388,7 @@ fn walk_grammar(grammar: &Grammar) -> Rails {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::cfg::CALC_GRAMMAR_PATH;
+    use crate::cfg::CALC_GRAMMAR_JSON_PATH;
 
     #[test]
     fn test_make_rail() {
@@ -491,7 +491,7 @@ mod tests {
     #[test]
     fn test_calc_json() {
         use crate::api::load;
-        let grammar_src = std::fs::read_to_string(CALC_GRAMMAR_PATH).expect("read file");
+        let grammar_src = std::fs::read_to_string(CALC_GRAMMAR_JSON_PATH).expect("read file");
         let grammar = load(&grammar_src, &[]).expect("load failed");
         let result = grammar.railroads();
         eprintln!("calc.json railroads:\n{}", result);

@@ -490,6 +490,7 @@ mod round_trips {
     use super::*;
     use std::collections::hash_map::DefaultHasher;
     use std::hash::{Hash, Hasher};
+    use tiexiu::peg::pretty::*;
 
     #[test]
     fn parse_round_trip() {
@@ -529,8 +530,8 @@ mod round_trips {
         "#;
 
         let grammar = compile(grammar_text);
-        let pretty = grammar.to_string();
-        eprintln!("COMPILED\n{}", pretty);
+        let pretty = grammar.pretty_print();
+        eprintln!("COMPILED->PRETTY\n{:#?}", pretty);
 
         let grammar2 = compile(&pretty);
         let pretty2 = grammar2.to_string();

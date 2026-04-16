@@ -9,6 +9,7 @@ use crate::state::Ctx;
 use indexmap::IndexMap;
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
+pub use super::pretty::*;
 
 #[derive(Debug, Clone)]
 pub struct Grammar {
