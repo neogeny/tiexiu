@@ -2817,13 +2817,6 @@
             "__class__": "Option",
             "exp": {
               "__class__": "Call",
-              "name": "call"
-            }
-          },
-          {
-            "__class__": "Option",
-            "exp": {
-              "__class__": "Call",
               "name": "dot"
             }
           },
@@ -2832,6 +2825,13 @@
             "exp": {
               "__class__": "Call",
               "name": "pattern"
+            }
+          },
+          {
+            "__class__": "Option",
+            "exp": {
+              "__class__": "Call",
+              "name": "call"
             }
           }
         ]
@@ -3699,6 +3699,13 @@
       "exp": {
         "__class__": "Sequence",
         "sequence": [
+          {
+            "__class__": "Lookahead",
+            "exp": {
+              "__class__": "Token",
+              "token": "/"
+            }
+          },
           {
             "__class__": "Pattern",
             "pattern": "(?ms)/((?:[^/\\\\]|\\\\/|\\\\.)*)/"
