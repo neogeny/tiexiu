@@ -41,9 +41,9 @@ pub trait Cursor: Debug + Configurable {
 
     fn tokenizing_from_cfg(&self, cfg: &Cfg) -> Result<TokenizingPatterns, Error> {
         type P = TokenizingPatterns;
-        let wsp = cfg.get(WSP).map_or(P::DEFAULT_WSP, |s| s);
-        let cmt = cfg.get(CMT).map_or(P::DEFAULT_CMT, |s| s);
-        let eol = cfg.get(EOL).map_or(P::DEFAULT_EOL, |s| s);
+        let wsp = cfg.get(WSP_NAME).map_or(P::DEFAULT_WSP, |s| s);
+        let cmt = cfg.get(CMT_NAME).map_or(P::DEFAULT_CMT, |s| s);
+        let eol = cfg.get(EOL_NAME).map_or(P::DEFAULT_EOL, |s| s);
         TokenizingPatterns::try_new(wsp, cmt, eol)
     }
     // // Character classification
