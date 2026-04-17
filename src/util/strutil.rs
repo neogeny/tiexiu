@@ -47,11 +47,7 @@ pub fn indent_len(text: &str) -> usize {
 /// An empty line boundary followed by a line with zero leading spaces.
 pub fn dedent(text: &str) -> Option<usize> {
     let offset = empty_line(text)?;
-    let next_part = &text[offset..];
-
-    // If the next line starts with 0 whitespace, it's a dedent.
-    // This includes the end of the file (next_part.is_empty()).
-    if indent_len(next_part) == 0 {
+    if indent_len(&text[offset..]) == 0 {
         Some(offset)
     } else {
         None

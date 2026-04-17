@@ -8,8 +8,8 @@ pub mod fold;
 pub mod indent;
 pub mod into;
 pub mod pyre;
-pub mod tokenlist;
 pub mod strutil;
+pub mod tokenlist;
 
 pub use cfg::Cfg;
 pub use error::*;
