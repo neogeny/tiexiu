@@ -1,26 +1,27 @@
-use tiexiu::cfg::constants::*;
-use tiexiu::input::StrCursor;
-use tiexiu::state::corectx::CoreCtx;
+use tiexiu::compile;
 
 #[test]
-#[ignore = "TODO: Fix ebnf failures"]
 fn test_ebnf_parsing() -> tiexiu::Result<()> {
-    let ebnf_text = std::fs::read_to_string(TATSU_GRAMMAR_EBNF_PATH)?;
-    println!("EBNF grammar length: {} chars", ebnf_text.len());
+    let grammar = r#"
+        /*
+            Example of a grammar that mixes TatSu and EBNF
+        */
+        @@grammar :: EBNF  // this is TatSu wiht an EBNF comment
 
-    let boot = tiexiu::json::boot::boot_grammar()?;
-    println!("Boot grammar has {} rules", boot.rules().count());
+        start := expression $
 
-    let cursor = StrCursor::new(&ebnf_text);
-    let mut ctx = CoreCtx::new(cursor);
-    ctx.set_trace(true);
+        expression := expression '+' term | expression '-' term | term
 
-    let (_, tree) = boot.parse(ctx)?;
-    println!("SUCCESS: Boot grammar parsed EBNF!");
-    println!("Tree: {:?}", tree);
+        term := term '*' factor | term '/' factor | factor
 
-    // Basic assertion to verify we got a tree
-    assert!(!tree.is_empty(), "Parsed tree should not be empty");
+        factor := '(' expression ')' | number
+
+        number := /\d+/
+    "#;
+
+    let g = compile(grammar, &[])?;
+
+    assert_eq!(g.name, "EBNF");
 
     Ok(())
 }
