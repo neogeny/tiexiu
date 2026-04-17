@@ -10,31 +10,31 @@ use crate::util::pyre::Pattern;
 use std::rc::Rc;
 
 #[derive(Debug, Clone)]
-pub struct StrCursor<'a> {
-    text: &'a str,
+pub struct StrCursor {
+    text: Box<str>,
     offset: usize,
     patterns: Rc<TokenizingPatterns>,
 }
 
-impl<'a> From<&'a str> for StrCursor<'a> {
+impl From<&str> for StrCursor {
     #[inline]
-    fn from(text: &'a str) -> Self {
+    fn from(text: &str) -> Self {
         Self::new(text)
     }
 }
 
-impl<'a> StrCursor<'a> {
-    pub fn new(text: &'a str) -> Self {
+impl StrCursor {
+    pub fn new(text: &str) -> Self {
         Self {
-            text,
+            text: text.into(),
             offset: 0,
             patterns: TokenizingPatterns::default().into(),
         }
     }
 
-    pub fn with_patterns(text: &'a str, patterns: TokenizingPatterns) -> Result<Self, Error> {
+    pub fn with_patterns(text: &str, patterns: TokenizingPatterns) -> Result<Self, Error> {
         Ok(Self {
-            text,
+            text: text.into(),
             offset: 0,
             patterns: patterns.into(),
         })
@@ -51,14 +51,15 @@ impl<'a> StrCursor<'a> {
     }
 }
 
-impl<'a> Configurable for StrCursor<'a> {
+impl Configurable for StrCursor {
     fn configure(&mut self, cfg: &Cfg) {
-        let patterns = self.tokenizing_from_cfg(cfg);
-        self.set_tokenizing(&patterns);
+        if let Ok(patterns) = self.tokenizing_from_cfg(cfg) {
+            self.set_tokenizing(&patterns);
+        }
     }
 }
 
-impl<'a> Cursor for StrCursor<'a> {
+impl Cursor for StrCursor {
     fn mark(&self) -> usize {
         self.offset
     }
@@ -68,7 +69,7 @@ impl<'a> Cursor for StrCursor<'a> {
     }
 
     fn textstr(&self) -> &str {
-        self.text
+        &self.text
     }
 
     fn at_end(&self) -> bool {
@@ -121,6 +122,7 @@ impl<'a> Cursor for StrCursor<'a> {
     }
 
     fn set_tokenizing(&mut self, patterns: &TokenizingPatterns) {
+        eprintln!("StrCursor new patterns {:#?}", patterns);
         self.patterns = patterns.clone().into();
     }
 }
