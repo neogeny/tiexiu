@@ -1,10 +1,13 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::cfg::Configurable;
+use crate::input::tokenizing::TokenizingPatterns;
+use crate::util::Cfg;
 use crate::util::pyre::Pattern;
 use std::fmt::Debug;
 
-pub trait Cursor: Debug {
+pub trait Cursor: Debug + Configurable {
     fn mark(&self) -> usize;
     fn reset(&mut self, mark: usize);
     fn textstr(&self) -> &str;
@@ -32,6 +35,14 @@ pub trait Cursor: Debug {
         (line, col)
     }
 
+    fn set_tokenizing(&mut self, patterns: &TokenizingPatterns);
+
+    fn tokenizing_from_cfg(&self, cfg: &Cfg) -> TokenizingPatterns {
+        let wsp: &str = cfg.get("whitespace").map_or("", |s| s);
+        let cmt = cfg.get("comments").map_or("", |s| s);
+        let eol = cfg.get("eol_comments").map_or("", |s| s);
+        TokenizingPatterns::try_new(wsp, cmt, eol).unwrap()
+    }
     // // Character classification
     // fn is_name(&self, s: &str) -> bool;
     // fn is_name_char(&self, c: Option<&str>) -> bool;
@@ -43,5 +54,5 @@ pub trait Cursor: Debug {
     // fn at_eol(&self) -> bool;
     //
     // // Movement and Peeking
-    // fn next(&mut self) -> Option<&'a str>;
+    // fn next(&mut self) -> Option<&str>;
 }

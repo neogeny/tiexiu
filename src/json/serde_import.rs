@@ -61,14 +61,11 @@ impl TryFrom<TatSuModel> for Grammar {
                     rule_vec.push(rule);
                 }
             }
-            let str_directives: GrammarDirectives = directives
-                .iter()
-                .map(|(k, v)| {
-                    let val_str = v.as_str().map(|s| s.to_string()).unwrap_or(v.to_string());
+            let str_directives = GrammarDirectives::from_iter(directives.iter().map(|(k, v)| {
+                let val_str = v.as_str().map(|s| s.to_string()).unwrap_or(v.to_string());
 
-                    (k.as_str().into(), val_str.into())
-                })
-                .collect();
+                (k.as_str(), val_str)
+            }));
             let mut grammar = Grammar::new(name.as_str(), &rule_vec);
             grammar.analyzed = analyzed;
             grammar.directives = str_directives;

@@ -3,61 +3,17 @@
 
 use super::Cursor;
 use super::error::Error;
+use super::tokenizing::TokenizingPatterns;
+use crate::cfg::Configurable;
+use crate::util::Cfg;
 use crate::util::pyre::Pattern;
 use std::rc::Rc;
-
-#[derive(Clone, Debug)]
-struct Patterns {
-    pub wsp: Pattern,
-    pub cmt: Pattern,
-    pub eol: Pattern,
-}
-
-impl Patterns {
-    const DEFAULT_WSP: &'static str = r"\s+";
-    const DEFAULT_EOL: &'static str = r"//.*$";
-    const DEFAULT_CMT: &'static str = r"/\*\*/";
-
-    fn compile(kind: &'static str, pattern: &str) -> Result<Pattern, Error> {
-        let p = Pattern::new(pattern).map_err(|source| Error::InvalidRegex {
-            kind,
-            pattern: pattern.to_string(),
-            source,
-        })?;
-        Self::validate_no_empty_match(&p, kind);
-        Ok(p)
-    }
-
-    fn validate_no_empty_match(pattern: &Pattern, kind: &str) {
-        assert!(
-            pattern.search("").is_none(),
-            "pattern '{}' for {} matches empty string, which would cause infinite loop",
-            pattern.pattern(),
-            kind
-        );
-    }
-
-    pub fn try_new(ws: &str, cmt: &str, eol: &str) -> Result<Self, Error> {
-        Ok(Self {
-            wsp: Self::compile("whitespace", ws)?,
-            cmt: Self::compile("comment", cmt)?,
-            eol: Self::compile("end-of-line", eol)?,
-        })
-    }
-}
-
-impl Default for Patterns {
-    fn default() -> Self {
-        Self::try_new(Self::DEFAULT_WSP, Self::DEFAULT_CMT, Self::DEFAULT_EOL)
-            .expect("default StrCursor regex patterns must be valid")
-    }
-}
 
 #[derive(Debug, Clone)]
 pub struct StrCursor<'a> {
     text: &'a str,
     offset: usize,
-    patterns: Rc<Patterns>,
+    patterns: Rc<TokenizingPatterns>,
 }
 
 impl<'a> From<&'a str> for StrCursor<'a> {
@@ -72,15 +28,15 @@ impl<'a> StrCursor<'a> {
         Self {
             text,
             offset: 0,
-            patterns: Rc::new(Patterns::default()),
+            patterns: TokenizingPatterns::default().into(),
         }
     }
 
-    pub fn with_patterns(text: &'a str, ws: &str, cmt: &str, eol: &str) -> Result<Self, Error> {
+    pub fn with_patterns(text: &'a str, patterns: TokenizingPatterns) -> Result<Self, Error> {
         Ok(Self {
             text,
             offset: 0,
-            patterns: Rc::new(Patterns::try_new(ws, cmt, eol)?),
+            patterns: patterns.into(),
         })
     }
 
@@ -92,6 +48,13 @@ impl<'a> StrCursor<'a> {
             return true;
         }
         false
+    }
+}
+
+impl<'a> Configurable for StrCursor<'a> {
+    fn configure(&mut self, cfg: &Cfg) {
+        let patterns = self.tokenizing_from_cfg(cfg);
+        self.set_tokenizing(&patterns);
     }
 }
 
@@ -156,6 +119,10 @@ impl<'a> Cursor for StrCursor<'a> {
             }
         }
     }
+
+    fn set_tokenizing(&mut self, patterns: &TokenizingPatterns) {
+        self.patterns = patterns.clone().into();
+    }
 }
 
 #[cfg(test)]
@@ -165,24 +132,24 @@ mod tests {
     #[test]
     #[should_panic(expected = "matches empty string")]
     fn whitespace_pattern_cannot_match_empty() {
-        let _ = Patterns::try_new("", "/* */", "//.*$");
+        let _ = TokenizingPatterns::try_new("", "/* */", "//.*$");
     }
 
     #[test]
     #[should_panic(expected = "matches empty string")]
     fn comment_pattern_cannot_match_empty() {
-        let _ = Patterns::try_new(r"\s+", "", "//.*$");
+        let _ = TokenizingPatterns::try_new(r"\s+", "", "//.*$");
     }
 
     #[test]
     #[should_panic(expected = "matches empty string")]
     fn eol_pattern_cannot_match_empty() {
-        let _ = Patterns::try_new(r"\s+", "/* */", "");
+        let _ = TokenizingPatterns::try_new(r"\s+", "/* */", "");
     }
 
     #[test]
     fn default_patterns_are_valid() {
-        let patterns = Patterns::default();
+        let patterns = TokenizingPatterns::default();
         assert!(patterns.wsp.search("").is_none());
         assert!(patterns.cmt.search("").is_none());
         assert!(patterns.eol.search("").is_none());

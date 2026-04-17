@@ -7,12 +7,12 @@ pub use super::pretty::*;
 use super::rule::{Rule, RuleMap, RuleRef};
 use crate::peg::ParseError::RuleNotFound;
 use crate::state::Ctx;
-use indexmap::IndexMap;
+use crate::util::Cfg;
 use std::rc::Rc;
 
 pub type KeywordRef = Box<str>;
 pub type Keywords = Box<[KeywordRef]>;
-pub type GrammarDirectives = IndexMap<Box<str>, Box<str>>;
+pub type GrammarDirectives = Cfg;
 
 #[derive(Debug, Clone)]
 pub struct Grammar {
@@ -50,7 +50,7 @@ impl Grammar {
             name: name.to_string(),
             analyzed: false,
             rules,
-            directives: GrammarDirectives::new(),
+            directives: Cfg::new(&[]),
             keywords: [].into(),
         };
         grammar.initialize();
@@ -84,16 +84,18 @@ impl Grammar {
         self.keywords = vec.into_boxed_slice();
     }
 
-    pub fn parse<C: Ctx>(&self, ctx: C) -> ParseResult<C> {
+    pub fn parse<C: Ctx>(&self, mut ctx: C) -> ParseResult<C> {
         let start_mark = ctx.mark();
+        ctx.configure(&self.directives);
         match self.start_rule() {
             Ok(rule) => rule.parse(ctx),
             Err(err) => Err(ctx.failure(start_mark, err)),
         }
     }
 
-    pub fn parse_from<C: Ctx>(&self, start: &str, ctx: C) -> ParseResult<C> {
+    pub fn parse_from<C: Ctx>(&self, start: &str, mut ctx: C) -> ParseResult<C> {
         let start_mark = ctx.mark();
+        ctx.configure(&self.directives);
         match self.get_rule(start) {
             Ok(rule) => rule.parse(ctx),
             Err(err) => Err(ctx.failure(start_mark, err)),
@@ -147,8 +149,8 @@ impl Grammar {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::peg::Exp;
     use crate::peg::rule::Rule;
+    use crate::peg::Exp;
 
     #[test]
     fn new_grammar() {

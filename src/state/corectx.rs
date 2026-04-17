@@ -4,9 +4,11 @@
 pub use super::ctx::{Ctx, CtxI};
 use super::memo::{Key, Memo, MemoCache};
 use super::trace::{CONSOLE_TRACER, NULL_TRACER, Tracer};
+use crate::cfg::Configurable;
 use crate::input::Cursor;
 use crate::peg::parser::TokenList;
 use crate::trees::Tree;
+use crate::util::Cfg;
 use crate::util::pyre::Pattern;
 use std::borrow::Cow;
 use std::cell::RefCell;
@@ -106,6 +108,15 @@ where
     #[inline]
     fn cut_seen(&self) -> bool {
         self.state.cutseen
+    }
+}
+
+impl<'c, U> Configurable for CoreCtx<'c, U>
+where
+    U: Cursor + Clone,
+{
+    fn configure(&mut self, cfg: &Cfg) {
+        self.cursor_mut().configure(cfg);
     }
 }
 

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::memo::{Key, Memo, MemoCache};
+use crate::cfg::Configurable;
 use crate::input::Cursor;
 use crate::peg::error::ParseError;
 use crate::peg::{Nope, ParseResult, Rule, Succ};
@@ -11,7 +12,7 @@ use crate::util::pyre::{Pattern, escape};
 use crate::util::tokenlist::TokenList;
 use std::fmt::Debug;
 
-pub trait CtxI {
+pub trait CtxI: Configurable {
     fn cursor(&self) -> &dyn Cursor;
     fn callstack(&self) -> TokenList;
     fn mark(&self) -> usize {

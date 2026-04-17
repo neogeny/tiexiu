@@ -191,7 +191,7 @@ impl Grammar {
     }
 
     fn parse_directives(directives: Option<&Value>) -> Result<GrammarDirectives, JsonError> {
-        let mut result: GrammarDirectives = GrammarDirectives::new();
+        let mut result: GrammarDirectives = GrammarDirectives::default();
         if let Some(Value::Object(obj)) = directives {
             for (k, v) in obj {
                 let val_str = match v {
@@ -200,7 +200,7 @@ impl Grammar {
                     Value::Number(n) => n.to_string(),
                     _ => v.to_string(),
                 };
-                result.insert(k.as_str().into(), val_str.as_str().into());
+                result.insert(k.as_str(), val_str.as_str());
             }
         }
         Ok(result)

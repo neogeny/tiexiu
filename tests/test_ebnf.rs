@@ -1,7 +1,7 @@
 use tiexiu::compile;
 
 #[test]
-#[ignore]
+// #[ignore]
 fn test_ebnf_parsing() -> tiexiu::Result<()> {
     let grammar = r#"
         /*

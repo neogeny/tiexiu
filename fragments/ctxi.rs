@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
 pub trait CtxI {
     fn cursor(&self) -> &dyn Cursor;
     fn cursor_mut(&mut self) -> &mut dyn Cursor;
