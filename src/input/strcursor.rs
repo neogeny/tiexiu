@@ -122,7 +122,6 @@ impl Cursor for StrCursor {
     }
 
     fn set_tokenizing(&mut self, patterns: &TokenizingPatterns) {
-        eprintln!("StrCursor new patterns {:#?}", patterns);
         self.patterns = patterns.clone().into();
     }
 }
