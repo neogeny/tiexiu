@@ -4,7 +4,7 @@
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use tiexiu::input::StrCursor;
 use tiexiu::peg::{Exp, Grammar};
-use tiexiu::state::strctx::StrCtx;
+use tiexiu::state::StrCtx;
 
 fn bench_token_parse(c: &mut Criterion) {
     let token = Exp::token("hello");

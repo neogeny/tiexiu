@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 use tiexiu::input::StrCursor;
 use tiexiu::peg::{Exp, Grammar, Succ};
-use tiexiu::state::strctx::StrCtx;
+use tiexiu::state::StrCtx;
 use tiexiu::ui::cli;
 
 #[allow(dead_code)]
