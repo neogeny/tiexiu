@@ -10,7 +10,7 @@ apply: always
 ## Core Operational Rules
 * **Research Phase:** Study [README.md](README.md), [SYNTAX.md](SYNTAX.md), and [./tatsu/README.rst](./tatsu/README.rst). Read all `*.rst` documents in [./tatsu/docs/](./tatsu/docs/) to establish PEG/TatSu domain context.
 * **Context Gathering:** Analyze the current Rust project structure. Read all files in [./corpus/sessions/](./corpus/sessions/) to understand the history and current trajectory of the work.
-* **Project Summary**: Study [./corpus/SUMMARY.md](./corpus/SUMMARY.md) for a brief project description created for collaborators.
+* **Project Summary**: Red and and study the documents inn [./corpus/summaries](./corpus/summaries/) for brief project descriptions created by collaborators for collaborators.
 * **Source Mapping:** Cross-reference the Python source in [./tatsu/tatsu/](./tatsu/tatsu/) and [./tatsu/tests/](./tatsu/tests/) to ensure the Rust implementation aligns with TatSu's logic and goals.
 * **Code Modification:** Do not use `sed` or `awk` for bulk directory/glob modifications. Target specific files one-by-one only when structural tools are insufficient.
 * **Strict Compliance:** Adhere strictly to [RULES.md](RULES.md).
