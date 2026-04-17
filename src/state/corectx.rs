@@ -26,7 +26,7 @@ pub struct State<U: Cursor> {
 pub struct HeavyState<'c> {
     pub memos: MemoCache,
     pub patterns: PatternCache,
-    pub tracer: Box<&'c dyn Tracer>,
+    pub tracer: &'c dyn Tracer,
     pub marker: std::marker::PhantomData<&'c ()>,
 }
 
@@ -56,7 +56,7 @@ where
             heavy: Rc::new(RefCell::new(HeavyState {
                 memos: MemoCache::new(),
                 patterns: PatternCache::new(),
-                tracer: Box::new(&NULL_TRACER),
+                tracer: &NULL_TRACER,
                 marker: std::marker::PhantomData,
             })),
         }
@@ -77,7 +77,7 @@ where
     }
 
     pub fn trace_with(&mut self, tracer: &'c dyn Tracer) {
-        self.heavy.borrow_mut().tracer = tracer.into();
+        self.heavy.borrow_mut().tracer = tracer;
     }
 
     pub fn set_trace(&mut self, on: bool) {
@@ -132,7 +132,7 @@ where
     }
 
     fn tracer(&self) -> &dyn Tracer {
-        *self.heavy.borrow().tracer
+        self.heavy.borrow().tracer
     }
 
     fn get_pattern(&self, pattern: &str) -> Pattern {
