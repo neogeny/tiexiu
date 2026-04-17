@@ -26,6 +26,7 @@ impl Exp {
             | ExpKind::Fail
             | ExpKind::Dot
             | ExpKind::Eof
+            | ExpKind::Eol
             | ExpKind::Token(_)
             | ExpKind::Pattern(_)
             | ExpKind::Constant(_)

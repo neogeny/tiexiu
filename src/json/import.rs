@@ -361,6 +361,7 @@ impl Exp {
             "Void" => Ok(Exp::void()),
             "Cut" => Ok(Exp::cut()),
             "EOF" => Ok(Exp::eof()),
+            "EOL" => Ok(Exp::eol()),
             _ => Err(path.error(&format!("Unsupported: {}", class))),
         }
     }

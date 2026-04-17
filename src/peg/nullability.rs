@@ -26,6 +26,7 @@ impl ExpKind {
 
             // Consumes nothing, always succeeds (or affects state only)
             Self::Eof => false,
+            Self::Eol => true,
 
             Self::Cut
             | Self::Void
@@ -90,6 +91,7 @@ impl ExpKind {
             | Self::Fail
             | Self::Dot
             | Self::Eof
+            | Self::Eol
             | Self::Token(_)
             | Self::Pattern(_)
             | Self::Constant(_)
@@ -148,6 +150,7 @@ impl ExpKind {
             | Self::Fail
             | Self::Dot
             | Self::Eof
+            | Self::Eol
             | Self::Token(_)
             | Self::Pattern(_)
             | Self::Constant(_)

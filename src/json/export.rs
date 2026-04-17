@@ -238,6 +238,9 @@ impl ExpKind {
             ExpKind::Eof => {
                 obj.insert("__class__".into(), Value::String("EOF".into()));
             }
+            ExpKind::Eol => {
+                obj.insert("__class__".into(), Value::String("EOL".into()));
+            }
             ExpKind::Cut => {
                 obj.insert("__class__".into(), Value::String("Cut".into()));
             }

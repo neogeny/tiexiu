@@ -89,6 +89,7 @@ pub enum TatSuModel {
     },
     Void,
     Cut,
+    EOL,
     EOF,
     Optional {
         exp: Box<TatSuModel>,

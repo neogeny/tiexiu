@@ -109,6 +109,7 @@ impl PrettyPrint for ExpKind {
             ExpKind::Fail => "!()".into(),
             ExpKind::Dot => ".".into(),
             ExpKind::Eof => "$".into(),
+            ExpKind::Eol => "$->".into(),
 
             ExpKind::Call { name, .. } => name.to_string(),
 

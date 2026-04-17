@@ -3,12 +3,11 @@
 
 //! Railroad diagram generation for grammars
 
+use crate::cfg::constants::{EOL_SYM, ETX_SYM};
 use crate::peg::{Exp, ExpKind, Grammar, Rule};
 use std::rc::Rc;
 
 type Rails = Vec<Rc<str>>;
-
-const ETX: &str = "＄";
 
 pub fn tracks(grammar: &Grammar) -> Rails {
     walk_grammar(grammar)
@@ -107,7 +106,7 @@ fn weld(a: &[Rc<str>], b: &[Rc<str>]) -> Rails {
     if b.is_empty() {
         return a.into();
     }
-    if a.iter().any(|s| s.as_ref().contains(ETX)) {
+    if a.iter().any(|s| s.as_ref().contains(ETX_SYM)) {
         return a.into();
     }
 
@@ -157,7 +156,7 @@ fn lay_out(tracks: &[Rails]) -> Rails {
         let joint = &track[0];
 
         if !is_last {
-            let first_line = if !joint.as_ref().contains(ETX) {
+            let first_line = if !joint.as_ref().contains(ETX_SYM) {
                 format!("  ├─{}─┤ ", railpad(joint.as_ref(), maxl))
             } else {
                 format!("  ├─{} │ ", blankpad(joint.as_ref(), maxl))
@@ -168,7 +167,7 @@ fn lay_out(tracks: &[Rails]) -> Rails {
                 out.push(format!("  │ {} │ ", blankpad(rail.as_ref(), maxl)).into());
             }
         } else {
-            let is_etx = joint.as_ref().contains(ETX);
+            let is_etx = joint.as_ref().contains(ETX_SYM);
             if !is_etx {
                 out.push(format!("  └─{}─┘ ", railpad(joint.as_ref(), maxl)).into());
             } else {
@@ -190,7 +189,7 @@ fn lay_out(tracks: &[Rails]) -> Rails {
         let first_track = &tracks[0];
         if !first_track.is_empty() {
             let joint = &first_track[0];
-            let first_line = if !joint.as_ref().contains(ETX) {
+            let first_line = if !joint.as_ref().contains(ETX_SYM) {
                 format!("──┬─{}─┬─", railpad(joint.as_ref(), maxl))
             } else {
                 format!("──┬─{} ┬─", blankpad(joint.as_ref(), maxl))
@@ -250,7 +249,8 @@ fn walk_exp(exp: &Exp) -> Rails {
         ExpKind::Fail => vec![make_rail(" ⚠ ")],
         ExpKind::Cut => vec![make_rail(" ✂ ")],
         ExpKind::Dot => vec![make_rail(" ∀ ")],
-        ExpKind::Eof => vec![make_rail(&format!("⇥{} ", ETX))],
+        ExpKind::Eof => vec![make_rail(&format!("⇥{} ", ETX_SYM))],
+        ExpKind::Eol => vec![make_rail(&format!("⇥{} ", EOL_SYM))],
 
         ExpKind::Token(t) => vec![make_rail(&format!("{:?}", t))],
         ExpKind::Pattern(p) => {

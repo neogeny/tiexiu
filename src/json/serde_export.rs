@@ -51,6 +51,7 @@ impl From<Exp> for TatSuModel {
             ExpKind::Cut => TatSuModel::Cut,
             ExpKind::Void => TatSuModel::Void,
             ExpKind::Eof => TatSuModel::EOF,
+            ExpKind::Eol => TatSuModel::EOL,
             ExpKind::Dot => TatSuModel::Pattern {
                 pattern: ".".to_string(),
             },

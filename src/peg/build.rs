@@ -68,6 +68,11 @@ impl Exp {
     }
 
     #[inline]
+    pub fn eol() -> Self {
+        Self::new(ExpKind::Eol)
+    }
+
+    #[inline]
     pub fn call(name: &str) -> Self {
         Self::new(ExpKind::Call {
             name: name.into(),

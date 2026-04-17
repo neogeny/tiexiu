@@ -2782,6 +2782,13 @@
             "__class__": "Option",
             "exp": {
               "__class__": "Call",
+              "name": "eol"
+            }
+          },
+          {
+            "__class__": "Option",
+            "exp": {
+              "__class__": "Call",
               "name": "skip"
             }
           },
@@ -3832,6 +3839,25 @@
       },
       "params": [
         "EOF"
+      ],
+      "kwparams": {},
+      "decorators": [],
+      "base": null,
+      "is_name": false,
+      "is_tokn": false,
+      "no_memo": false,
+      "is_memo": true,
+      "is_lrec": false
+    },
+    {
+      "__class__": "Rule",
+      "name": "eol",
+      "exp": {
+        "__class__": "Token",
+        "token": "$->"
+      },
+      "params": [
+        "EOL"
       ],
       "kwparams": {},
       "decorators": [],

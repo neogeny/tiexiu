@@ -34,6 +34,7 @@ pub enum ExpKind {
     Fail,
     Dot,
     Eof,
+    Eol,
 
     Call { name: Str, rule: Option<RuleRef> },
 
@@ -123,6 +124,7 @@ impl Exp {
                     Err(ctx.failure(start, ParseError::NoMoreInput))
                 }
             }
+            ExpKind::Eol => Ok(Succ(ctx, Tree::Nil)),
             ExpKind::Eof => {
                 if ctx.eof_check() {
                     Ok(Succ(ctx, Tree::Nil))

@@ -96,6 +96,7 @@ impl TryFrom<TatSuModel> for Exp {
             // --- Core Terminals ---
             TatSuModel::Cut => Ok(Exp::cut()),
             TatSuModel::EOF => Ok(Exp::eof()),
+            TatSuModel::EOL => Ok(Exp::eol()),
             TatSuModel::Void => Ok(Exp::void()),
 
             // --- Calls and Tokens ---
