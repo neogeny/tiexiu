@@ -5,6 +5,7 @@ use super::error::ParseError;
 use super::parser::{ParseResult, Parser};
 pub use super::pretty::*;
 use super::rule::{Rule, RuleMap, RuleRef};
+use crate::cfg::constants::GRAMMAR_NAME_STR;
 use crate::peg::ParseError::RuleNotFound;
 use crate::state::Ctx;
 use crate::util::Cfg;
@@ -16,9 +17,9 @@ pub type GrammarDirectives = Cfg;
 
 #[derive(Debug, Clone)]
 pub struct Grammar {
-    pub name: String,
+    pub name: Box<str>,
     pub analyzed: bool,
-    pub directives: GrammarDirectives,
+    directives: GrammarDirectives,
     pub keywords: Keywords,
     pub rules: RuleMap,
 }
@@ -47,7 +48,7 @@ impl Grammar {
             .map(|r| (r.name.clone(), r.into()))
             .collect();
         let mut grammar = Self {
-            name: name.to_string(),
+            name: name.into(),
             analyzed: false,
             rules,
             directives: Cfg::new(&[]),
@@ -60,6 +61,17 @@ impl Grammar {
     pub fn initialize(&mut self) {
         self.mark_left_recursion();
         self.link();
+    }
+
+    pub fn get_directives(&self) -> &GrammarDirectives {
+        &self.directives
+    }
+
+    pub fn set_directives(&mut self, directives: GrammarDirectives) {
+        self.directives = directives;
+        if let Some(name) = self.directives.get(GRAMMAR_NAME_STR) {
+            self.name = name.into();
+        }
     }
 
     pub fn start_rule(&self) -> Result<&Rule, ParseError> {
@@ -155,7 +167,7 @@ mod tests {
     #[test]
     fn new_grammar() {
         let grammar = Grammar::new("Test", &[]);
-        assert_eq!(grammar.name, "Test");
+        assert_eq!(grammar.name, "Test".into());
     }
 
     #[test]

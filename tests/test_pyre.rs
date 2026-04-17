@@ -45,3 +45,44 @@ fn test_findall_behavior() {
         ]
     );
 }
+
+#[test]
+fn test_match_zero_width_lookahead_at_start() {
+    let p = Pattern::new(r"(?=\s*(?:\r?\n|\r)\S)").unwrap();
+
+    let m = p.match_("\nnext").expect("lookahead should match at start");
+    assert_eq!(m.start(None), 0);
+    assert_eq!(m.end(None), 0);
+}
+
+#[test]
+fn test_match_endrule_unindented_branch() {
+    let p = Pattern::new(r"\s*[;]|(?=\s*(?:\r?\n|\r)\S)|(?:\s*(?:\r?\n|\r)){2,}[;]?").unwrap();
+
+    let m = p
+        .match_("\nnext_rule")
+        .expect("ENDRULE should match before an unindented next rule");
+    assert_eq!(m.start(None), 0);
+    assert_eq!(m.end(None), 0);
+}
+
+#[test]
+fn test_match_endrule_blankline_branch() {
+    let p = Pattern::new(r"\s*[;]|(?=\s*(?:\r?\n|\r)\S)|(?:\s*(?:\r?\n|\r)){2,}[;]?").unwrap();
+
+    let m = p
+        .match_("\n\n")
+        .expect("ENDRULE should match repeated line endings");
+    assert_eq!(m.group(0).unwrap(), "\n\n");
+}
+
+#[test]
+fn test_match_endrule_crlf_branch() {
+    let p = Pattern::new(r"\s*[;]|(?=\s*(?:\r?\n|\r)\S)|(?:\s*(?:\r?\n|\r)){2,}[;]?").unwrap();
+
+    let m = p
+        .match_("\r\nnext_rule")
+        .expect("ENDRULE should match CRLF before an unindented next rule");
+    assert_eq!(m.start(None), 0);
+    assert_eq!(m.end(None), 0);
+}

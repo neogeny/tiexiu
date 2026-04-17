@@ -184,7 +184,7 @@ impl Grammar {
 
         let mut grammar = Grammar::new(&name, &rule_vec?);
         grammar.analyzed = analyzed;
-        grammar.directives = directives;
+        grammar.set_directives(directives);
         grammar.keywords = keywords.into();
         grammar.initialize();
         Ok(grammar)
@@ -375,7 +375,7 @@ mod tests {
         let json_str = std::fs::read_to_string("grammar/tatsu.json").expect("tatsu.json missing");
         let value: Value = serde_json::from_str(&json_str).expect("Failed to parse JSON");
         let grammar = Grammar::from_serde_json_value(&value).expect("Failed to convert");
-        assert_eq!(grammar.name, "TatSu");
+        assert_eq!(grammar.name, "TatSu".into());
         let rule_count = grammar.rules().count();
         assert!(rule_count > 0, "Expected rules, got {}", rule_count);
     }
@@ -385,6 +385,6 @@ mod tests {
         let json_str = std::fs::read_to_string("grammar/calc.json").expect("calc.json missing");
         let value: Value = serde_json::from_str(&json_str).expect("Failed to parse JSON");
         let grammar = Grammar::from_serde_json_value(&value).expect("Failed to convert");
-        assert_eq!(grammar.name, "CALC");
+        assert_eq!(grammar.name, "CALC".into());
     }
 }

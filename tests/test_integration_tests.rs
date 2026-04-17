@@ -100,7 +100,7 @@ mod directives {
             start: 'test'
         "#;
         let grammar = compile(grammar);
-        assert_eq!(grammar.name.as_str(), "MyGrammar");
+        assert_eq!(grammar.name.to_string(), "MyGrammar");
     }
 
     #[test]

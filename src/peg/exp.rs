@@ -111,7 +111,10 @@ impl Exp {
                 ctx.setcut();
                 Ok(Succ(ctx, Tree::Nil))
             }
-            ExpKind::Void => Ok(Succ(ctx, Tree::Nil)),
+            ExpKind::Void => {
+                ctx.match_void();
+                Ok(Succ(ctx, Tree::Nil))
+            }
             ExpKind::Fail => Err(ctx.failure(start, ParseError::Fail)),
             ExpKind::Dot => {
                 if let Some(c) = ctx.next() {

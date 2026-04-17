@@ -29,13 +29,13 @@ impl TryFrom<Grammar> for TatSuModel {
             .collect();
 
         let directives: HashMap<String, serde_json::Value> = grammar
-            .directives
+            .get_directives()
             .iter()
             .map(|(k, v)| (k.to_string(), serde_json::Value::String(v.to_string())))
             .collect();
 
         Ok(TatSuModel::Grammar {
-            name: grammar.name.as_str().into(),
+            name: grammar.name.into(),
             rules,
             directives,
             keywords: grammar.keywords,

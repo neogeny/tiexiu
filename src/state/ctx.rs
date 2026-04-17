@@ -75,8 +75,11 @@ pub trait Ctx: CtxI + Clone + Debug {
         result
     }
 
-    fn match_pattern(&mut self, pattern: &str) -> Option<String> {
+    fn match_void(&mut self) {
         self.next_token();
+    }
+
+    fn match_pattern(&mut self, pattern: &str) -> Option<String> {
         let re = self.get_pattern(pattern);
         let result = self.cursor_mut().match_pattern(&re);
         if let Some(matched) = result {

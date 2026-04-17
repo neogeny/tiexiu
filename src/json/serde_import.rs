@@ -68,7 +68,7 @@ impl TryFrom<TatSuModel> for Grammar {
             }));
             let mut grammar = Grammar::new(name.as_str(), &rule_vec);
             grammar.analyzed = analyzed;
-            grammar.directives = str_directives;
+            grammar.set_directives(str_directives);
             grammar.keywords = keywords;
             grammar.initialize();
             Ok(grammar)

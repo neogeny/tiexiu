@@ -32,9 +32,9 @@ fn test_update_ast() {
     eprintln!("{:?}", tree);
     let parser = compile(grammar, &[]).expect("Failed to compile");
 
-    assert_eq!(parser.name, "grammar");
+    assert_eq!(parser.name.to_string(), "grammar");
     assert!(!parser.analyzed);
-    assert!(parser.directives.is_empty());
+    assert!(parser.get_directives().is_empty());
     assert!(parser.keywords.is_empty());
 
     for rule in parser.rules() {

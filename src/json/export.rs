@@ -53,14 +53,14 @@ impl Grammar {
         let mut obj = Map::new();
 
         obj.insert("__class__".into(), Value::String("Grammar".into()));
-        obj.insert("name".into(), Value::String(self.name.clone()));
+        obj.insert("name".into(), Value::String(self.name.clone().into()));
         obj.insert("analyzed".into(), Value::Bool(self.analyzed));
 
         let rules: Vec<Value> = self.rules().map(|r| r.to_serde_value()).collect();
         obj.insert("rules".into(), Value::Array(rules));
 
         let directives: Map<String, Value> = self
-            .directives
+            .get_directives()
             .iter()
             .map(|(k, v)| (k.to_string(), Value::String(v.to_string())))
             .collect();

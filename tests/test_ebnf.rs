@@ -25,7 +25,7 @@ fn test_ebnf_parsing() -> tiexiu::Result<()> {
 
     let g = compile(grammar.as_ref(), &[("trace", "1")])?;
 
-    assert_eq!(g.name, "EBNF");
+    assert_eq!(g.name.to_string(), "EBNF");
 
     Ok(())
 }

@@ -9,7 +9,7 @@ const RULE_INCLUDE_WITH_EXP_JSON: &str = include_str!("./fixtures/rule_include_w
 #[test]
 fn test_grammar_from_json() {
     let grammar = Grammar::serde_from_json(TATSU_JSON).expect("Failed to convert");
-    assert_eq!(grammar.name, "TatSu");
+    assert_eq!(grammar.name.to_string(), "TatSu");
     let rule_count = grammar.rules().count();
     assert!(rule_count > 0, "Expected rules, got {}", rule_count);
 }
@@ -18,7 +18,7 @@ fn test_grammar_from_json() {
 fn test_grammar_from_serde_value() {
     let value: Value = serde_json::from_str(CALC_JSON).expect("Failed to parse JSON");
     let grammar = Grammar::from_serde_json_value(&value).expect("Failed to convert");
-    assert_eq!(grammar.name, "CALC");
+    assert_eq!(grammar.name.to_string(), "CALC");
 }
 
 #[test]
@@ -52,7 +52,7 @@ fn test_grammar_from_json_with_rule_include_exp() {
     let result = Grammar::serde_from_json(RULE_INCLUDE_WITH_EXP_JSON);
     match result {
         Ok(g) => {
-            assert_eq!(g.name, "TatSu");
+            assert_eq!(g.name.to_string(), "TatSu");
             assert!(g.rules().count() > 0);
         }
         Err(e) => panic!("Expected success, got error: {}", e),
