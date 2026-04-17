@@ -126,7 +126,8 @@ impl Tree {
     pub fn append(self, node: Self) -> Self {
         match (self, node) {
             (Self::Nil, n) => n,
-            (s, Self::Nil) => s,
+            // FIXME
+            // (s, Self::Nil) => s,
             (Self::List(list), node) => {
                 let mut v = list.into_vec();
                 v.push(node);
