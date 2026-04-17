@@ -6,6 +6,18 @@ use crate::input::strcursor::StrCursor;
 
 pub type StrCtx<'c> = CoreCtx<'c, StrCursor<'c>>;
 
+impl<'c> From<&'c str> for StrCtx<'c> {
+    fn from(text: &'c str) -> Self {
+        Self::new(StrCursor::new(text))
+    }
+}
+
+impl<'c> From<StrCursor<'c>> for StrCtx<'c> {
+    fn from(cursor: StrCursor<'c>) -> Self {
+        Self::new(cursor)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
