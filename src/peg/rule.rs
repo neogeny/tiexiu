@@ -15,7 +15,7 @@ pub const FLAG_NO_MEMO: &str = "no_memo";
 pub const FLAG_IS_MEMO: &str = "is_memo";
 pub const FLAG_IS_LREC: &str = "is_lrec";
 
-pub type RuleName = Box<str>;
+pub type RuleName = Rc<str>;
 pub type RuleRef = Rc<Rule>;
 pub type RuleIndex = IndexMap<Box<str>, usize>;
 pub type Rules = Box<[Rule]>;

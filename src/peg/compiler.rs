@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::{Exp, Grammar, Rule};
+use crate::peg::rule::RuleName;
 use crate::trees::{FlagMap, Tree, TreeMap};
 use indexmap::IndexMap;
 use thiserror::Error;
@@ -111,7 +112,7 @@ impl GrammarCompiler {
         let map = parse_node_check(tree, "Grammar")?;
 
         let rule_trees = map_get(map, "Grammar", "rules")?.list_value();
-        let mut rulemap: IndexMap<Box<str>, Rule> = IndexMap::new();
+        let mut rulemap: IndexMap<RuleName, Rule> = IndexMap::new();
         for rtree in rule_trees {
             let rule = self.compile_rule(&rtree)?;
             rulemap.insert(rule.name.clone(), rule);

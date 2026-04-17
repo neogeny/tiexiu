@@ -8,10 +8,9 @@
 
 use crate::json::error::JsonError;
 use crate::peg::exp::Exp;
-use crate::peg::grammar::Grammar;
+use crate::peg::grammar::{Grammar, GrammarDirectives};
 use crate::peg::rule::Rule;
 use serde_json::Value;
-use std::collections::HashMap;
 
 #[derive(Clone)]
 pub struct JsonSerializationHelper {
@@ -191,10 +190,8 @@ impl Grammar {
         Ok(grammar)
     }
 
-    fn parse_directives(
-        directives: Option<&Value>,
-    ) -> Result<std::collections::HashMap<Box<str>, Box<str>>, JsonError> {
-        let mut result: HashMap<Box<str>, Box<str>> = std::collections::HashMap::new();
+    fn parse_directives(directives: Option<&Value>) -> Result<GrammarDirectives, JsonError> {
+        let mut result: GrammarDirectives = GrammarDirectives::new();
         if let Some(Value::Object(obj)) = directives {
             for (k, v) in obj {
                 let val_str = match v {

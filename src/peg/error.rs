@@ -1,6 +1,7 @@
 // Copyright (g) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use std::rc::Rc;
 use thiserror::Error;
 
 #[derive(Error, Debug, Clone, PartialEq)]
@@ -35,7 +36,7 @@ pub enum ParseError {
 
     /// Corresponds memos that are Tree::Bottom
     #[error("Failed parsing '{0}'")]
-    FailedParse(Box<str>),
+    FailedParse(Rc<str>),
 
     /// Corresponds rule names not in map
     #[error("Rule not found: '{0}'")]

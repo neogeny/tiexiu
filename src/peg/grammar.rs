@@ -8,12 +8,11 @@ use super::rule::{Rule, RuleMap, RuleRef};
 use crate::peg::ParseError::RuleNotFound;
 use crate::state::Ctx;
 use indexmap::IndexMap;
-use std::collections::HashMap;
 use std::rc::Rc;
 
 pub type KeywordRef = Box<str>;
 pub type Keywords = Box<[KeywordRef]>;
-pub type GrammarDirectives = HashMap<Box<str>, Box<str>>;
+pub type GrammarDirectives = IndexMap<Box<str>, Box<str>>;
 
 #[derive(Debug, Clone)]
 pub struct Grammar {
@@ -42,7 +41,7 @@ impl Default for Grammar {
 
 impl Grammar {
     pub fn new(name: &str, rules: &[Rule]) -> Self {
-        let rules: IndexMap<Box<str>, RuleRef> = rules
+        let rules: RuleMap = rules
             .iter()
             .cloned()
             .map(|r| (r.name.clone(), r.into()))
@@ -51,7 +50,7 @@ impl Grammar {
             name: name.to_string(),
             analyzed: false,
             rules,
-            directives: HashMap::new(),
+            directives: GrammarDirectives::new(),
             keywords: [].into(),
         };
         grammar.initialize();

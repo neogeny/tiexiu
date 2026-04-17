@@ -16,7 +16,7 @@ impl TryFrom<Grammar> for TatSuModel {
             .map(|r| {
                 let rule = r;
                 TatSuModel::Rule {
-                    name: rule.name.clone().into(),
+                    name: rule.name.to_string(),
                     params: rule.params.iter().map(|p| p.clone().into()).collect(),
                     exp: TatSuModel::from(rule.exp.clone()).into(),
                     is_name: rule.is_identifier(),
