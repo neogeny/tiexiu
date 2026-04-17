@@ -29,3 +29,4 @@ apply: always
 - Instead of calling specific constructors like Box::new() or Rc::new(), the
   preference in this project is to use .into() whenever possible, as it hides
   decisions about typing and require no modification after a change in typing.
+- Error Delegation: Utilize thiserror's #[from] attribute for sub-module error promotion.
