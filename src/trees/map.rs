@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::tree::Tree;
+use crate::trees::tree::Define;
 use indexmap::IndexMap;
 
 pub type MapEntries = IndexMap<Box<str>, Tree>;
@@ -41,10 +42,14 @@ impl TreeMap {
         }
     }
 
-    pub fn define(&mut self, keys: &[Box<str>]) {
-        for k in keys {
+    pub fn define(&mut self, keys: &[Define]) {
+        for (k, aslist) in keys {
             let key = self.safe_key(k);
-            self.entries.entry(key).or_insert(Tree::Nil);
+            if *aslist {
+                self.entries.entry(key).or_insert(Tree::list(&[]));
+            } else {
+                self.entries.entry(key).or_insert(Tree::Nil);
+            }
         }
     }
 

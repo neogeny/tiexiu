@@ -1,23 +1,24 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::exp::{Exp, ExpKind, NameSet};
+use super::exp::{Exp, ExpKind};
+use crate::trees::tree::DefineSet;
 
 impl Exp {
     pub(super) fn cache_defines(&mut self) {
-        let mut names = NameSet::new();
+        let mut names = DefineSet::new();
         self._defines(&mut names);
         self.df = names.iter().cloned().collect();
     }
 
-    fn _defines(&self, names: &mut NameSet) {
+    fn _defines(&self, names: &mut DefineSet) {
         match &self.kind {
             ExpKind::Named(name, exp) => {
-                names.insert(name.clone());
+                names.insert((name.clone(), false));
                 exp._defines(names);
             }
             ExpKind::NamedList(name, exp) => {
-                names.insert(name.clone());
+                names.insert((name.clone(), true));
                 exp._defines(names);
             }
             ExpKind::Override(exp) | ExpKind::OverrideList(exp) => {

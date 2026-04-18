@@ -2,16 +2,20 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::map::TreeMap;
-use indexmap::IndexMap;
+use indexmap::{IndexMap, IndexSet};
+
+pub type Str = Box<str>;
+pub type FlagMap = IndexMap<Str, bool>;
+pub type Define = (Str, bool);
+pub type StrSet = IndexSet<Str>;
+pub type DefineSet = IndexSet<Define>;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct KeyValue(pub Box<str>, pub Box<Tree>);
+pub struct KeyValue(pub Str, pub Box<Tree>);
 
 pub fn keyval(name: &str, tree: Tree) -> KeyValue {
     KeyValue(name.into(), tree.into())
 }
-
-pub type FlagMap = IndexMap<Box<str>, bool>;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Tree {
@@ -73,7 +77,7 @@ impl TreeMerge {
 }
 
 impl Tree {
-    pub fn define(&mut self, names: &[Box<str>]) {
+    pub fn define(&mut self, names: &[Define]) {
         if let Tree::Map(map) = self {
             map.define(names);
         }

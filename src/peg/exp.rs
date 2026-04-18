@@ -5,22 +5,20 @@ use super::error::ParseError;
 use super::parser::{Nope, ParseResult, Parser, Succ};
 use super::rule::RuleRef;
 use crate::state::Ctx;
-use crate::trees::Tree;
+use crate::trees::tree::Define;
+use crate::trees::{Str, Tree};
 use crate::util::pyre;
-use indexmap::IndexSet;
 use std::fmt::Debug;
 use std::ops::Deref;
 
 pub type ERef = Box<Exp>;
 pub type ERefArr = Box<[Exp]>;
-pub type Str = Box<str>;
-pub type NameSet = IndexSet<Str>;
 
 #[derive(Clone)]
 pub struct Exp {
     pub kind: ExpKind,
-    pub la: Box<[Str]>, // the lookahead set
-    pub df: Box<[Str]>, // the lookahead set
+    pub la: Box<[Str]>,    // the lookahead set
+    pub df: Box<[Define]>, // the lookahead set
 }
 
 impl Debug for Exp {

@@ -1,12 +1,12 @@
 // copyright (c) 2026 juancarlo añez (apalala@gmail.com)
 // spdx-license-identifier: mit or apache-2.0
 
-use super::exp::{Exp, ExpKind, Str};
-use std::collections::HashSet;
+use super::exp::{Exp, ExpKind};
+use crate::trees::{Str, StrSet};
 
 impl Exp {
-    pub(super) fn cache_lookahead(&mut self) -> HashSet<Box<str>> {
-        let mut lookaheads = HashSet::new();
+    pub(super) fn cache_lookahead(&mut self) -> StrSet {
+        let mut lookaheads = StrSet::new();
 
         match &self.kind {
             ExpKind::Token(s) | ExpKind::Constant(s) | ExpKind::Alert(s, _) => {
