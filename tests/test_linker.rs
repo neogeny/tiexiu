@@ -2,7 +2,7 @@ use tiexiu::input::StrCursor;
 use tiexiu::peg::{Exp, ExpKind, Grammar};
 use tiexiu::state::corectx::CoreCtx;
 mod fixtures;
-use fixtures::*;
+use tiexiu::cfg::constants::PATH_TATSU_GRAMMAR_EBNF;
 
 pub fn check_exp_for_unlinked(exp: &Exp, path: &str, grammar: &Grammar) {
     match &exp.kind {
@@ -93,7 +93,7 @@ fn test_linker_debug() {
 
     println!("\n=== Trying to parse EBNF ===");
     let ebnf_text =
-        std::fs::read_to_string(TATSU_GRAMMAR_PATH).expect("Failed to read tatsu.tatsu");
+        std::fs::read_to_string(PATH_TATSU_GRAMMAR_EBNF).expect("Failed to read tatsu.tatsu");
     let cursor = StrCursor::new(&ebnf_text);
     let ctx = CoreCtx::new(cursor);
 

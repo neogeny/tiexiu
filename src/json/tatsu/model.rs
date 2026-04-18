@@ -152,14 +152,13 @@ pub enum TatSuModel {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::cfg::constants::PATH_TATSU_GRAMMAR_JSON;
     use std::fs;
     use std::path::PathBuf;
 
     #[test]
     fn test_tatsumodel_round_trip() {
-        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        path.push("../../../grammar");
-        path.push("tatsu.json");
+        let path = PathBuf::from(PATH_TATSU_GRAMMAR_JSON);
 
         println!("{}", path.to_str().unwrap());
         let original_json =

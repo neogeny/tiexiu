@@ -6,6 +6,7 @@ pub const ENV_PREFIX: &str = "TIEXIU";
 // Paths for unit tests
 
 pub const PATH_TATSU_GRAMMAR_EBNF: &str = "grammar/tatsu.ebnf";
+pub const PATH_TATSU_GRAMMAR_JSON: &str = "grammar/tatsu.json";
 pub const PATH_CALC_GRAMMAR_JSON: &str = "grammar/calc.json";
 pub const PATH_CALC_GRAMMAR_EBNF: &str = "grammar/calc.ebnf";
 
