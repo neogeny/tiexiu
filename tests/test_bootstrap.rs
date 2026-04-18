@@ -106,7 +106,7 @@ mod parse_grammar {
         )
         .expect("Failed to parse");
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
-        assert!(tree.to_json_string().unwrap().contains("grammar"));
+        assert!(tree.to_model_json_string().unwrap().contains("grammar"));
     }
 
     #[test]
@@ -120,7 +120,7 @@ mod parse_grammar {
             c: 'c'
         "#;
         let tree = parse_ebnf(&boot, grammar);
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("rules"));
     }
 
@@ -134,7 +134,7 @@ mod parse_grammar {
             start: 'hello'
         "#;
         let tree = parse_ebnf(&boot, grammar);
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("directive"));
     }
 }
@@ -151,7 +151,7 @@ mod parse_expressions {
         let boot = boot_grammar();
         let grammar = r#"@@grammar :: T start: 'foo' 'bar'"#;
         let tree = parse_ebnf(&boot, grammar);
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Token"));
     }
 
@@ -160,7 +160,7 @@ mod parse_expressions {
         let boot = boot_grammar();
         let grammar = r#"@@grammar :: P start: /\d+/"#;
         let tree = parse_ebnf(&boot, grammar);
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Pattern"));
     }
 
@@ -169,7 +169,7 @@ mod parse_expressions {
         let boot = boot_grammar();
         let grammar = r#"@@grammar :: S start: 'a' 'b' 'c'"#;
         let tree = parse_ebnf(&boot, grammar);
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Sequence"));
     }
 
@@ -178,7 +178,7 @@ mod parse_expressions {
         let boot = boot_grammar();
         let grammar = r#"@@grammar :: C start: 'a' | 'b' | 'c'"#;
         let tree = parse_ebnf(&boot, grammar);
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Choice"));
     }
 
@@ -187,7 +187,7 @@ mod parse_expressions {
         let boot = boot_grammar();
         let grammar = r#"@@grammar :: O start: 'a' 'b'? 'c'"#;
         let tree = parse_ebnf(&boot, grammar);
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Optional"));
     }
 
@@ -196,7 +196,7 @@ mod parse_expressions {
         let boot = boot_grammar();
         let grammar = r#"@@grammar :: Cl start: 'a'*"#;
         let tree = parse_ebnf(&boot, grammar);
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Closure"));
     }
 
@@ -205,7 +205,7 @@ mod parse_expressions {
         let boot = boot_grammar();
         let grammar = r#"@@grammar :: PC start: 'a'+"#;
         let tree = parse_ebnf(&boot, grammar);
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("PositiveClosure"));
     }
 
@@ -214,7 +214,7 @@ mod parse_expressions {
         let boot = boot_grammar();
         let grammar = r#"@@grammar :: G start: ('a' 'b')*"#;
         let tree = parse_ebnf(&boot, grammar);
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Group"));
     }
 }
@@ -231,7 +231,7 @@ mod parse_constraints {
         let boot = boot_grammar();
         let grammar = r#"@@grammar :: L start: &'a' 'a'"#;
         let tree = parse_ebnf(&boot, grammar);
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Lookahead"));
     }
 
@@ -240,7 +240,7 @@ mod parse_constraints {
         let boot = boot_grammar();
         let grammar = r#"@@grammar :: NL start: !'b' 'a'"#;
         let tree = parse_ebnf(&boot, grammar);
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("NegativeLookahead"));
     }
 
@@ -249,7 +249,7 @@ mod parse_constraints {
         let boot = boot_grammar();
         let grammar = r#"@@grammar :: Cu start: 'a' ~ 'b'"#;
         let tree = parse_ebnf(&boot, grammar);
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Cut"));
     }
 }
@@ -266,7 +266,7 @@ mod parse_naming {
         let boot = boot_grammar();
         let grammar = r#"@@grammar :: N start: name='a'"#;
         let tree = parse_ebnf(&boot, grammar);
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Named"));
         assert!(json.contains("name"));
     }
@@ -280,7 +280,7 @@ mod parse_naming {
             foo: 'x'
         "#;
         let tree = parse_ebnf(&boot, grammar);
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Call"));
     }
 
@@ -293,7 +293,7 @@ mod parse_naming {
             base: 'x'
         "#;
         let tree = parse_ebnf(&boot, grammar);
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("RuleInclude"));
     }
 
@@ -307,7 +307,7 @@ mod parse_naming {
             foo[param]: 'x' param
         "#;
         let tree = parse_ebnf(&boot, grammar);
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("params"));
     }
 }
@@ -324,7 +324,7 @@ mod parse_special {
         let boot = boot_grammar();
         let grammar = r#"@@grammar :: V start: 'a' () 'b'"#;
         let tree = parse_ebnf(&boot, grammar);
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Void"));
     }
 
@@ -333,7 +333,7 @@ mod parse_special {
         let boot = boot_grammar();
         let grammar = r#"@@grammar :: E start: 'a' $"#;
         let tree = parse_ebnf(&boot, grammar);
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("EOF"));
     }
 
@@ -342,7 +342,7 @@ mod parse_special {
         let boot = boot_grammar();
         let grammar = r#"@@grammar :: D start: /./"#;
         let tree = parse_ebnf(&boot, grammar);
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         eprintln!("{:#}", json);
         assert!(json.contains("Dot"));
     }
@@ -352,7 +352,7 @@ mod parse_special {
         let boot = boot_grammar();
         let grammar = r#"@@grammar :: Cst start: `constant`"#;
         let tree = parse_ebnf(&boot, grammar);
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Constant"));
     }
 
@@ -361,7 +361,7 @@ mod parse_special {
         let boot = boot_grammar();
         let grammar = r#"@@grammar :: J start: ','%{'a'}*"#;
         let tree = parse_ebnf(&boot, grammar);
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Join"));
     }
 
@@ -370,7 +370,7 @@ mod parse_special {
         let boot = boot_grammar();
         let grammar = r#"@@grammar :: Gt start: ','.{'a'}*"#;
         let tree = parse_ebnf(&boot, grammar);
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Gather"));
     }
 
@@ -379,7 +379,7 @@ mod parse_special {
         let boot = boot_grammar();
         let grammar = r#"@@grammar :: Sk start: (?: 'a' 'b')*"#;
         let tree = parse_ebnf(&boot, grammar);
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("SkipGroup"));
     }
 
@@ -388,7 +388,7 @@ mod parse_special {
         let boot = boot_grammar();
         let grammar = r#"@@grammar :: Al start: ^^`danger`"#;
         let tree = parse_ebnf(&boot, grammar);
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Alert"));
     }
 }
@@ -436,7 +436,7 @@ mod integration {
             .expect("Failed to read grammar/tatsu.tatsu");
 
         let tree = parse_ebnf(&boot, &tatsu_grammar);
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
 
         assert!(json.contains("Grammar"));
         assert!(json.contains("rules"));
@@ -513,8 +513,8 @@ mod round_trips {
         let grammar = tiexiu::compile(grammar_text, &[]).unwrap();
         let tree2 = parse_with_boot(&grammar, grammar_text);
 
-        let json1 = tree1.to_json_string().expect("Serialize tree1");
-        let json2 = tree2.to_json_string().expect("Serialize tree2");
+        let json1 = tree1.to_model_json_string().expect("Serialize tree1");
+        let json2 = tree2.to_model_json_string().expect("Serialize tree2");
 
         let mut h1 = DefaultHasher::new();
         json1.hash(&mut h1);

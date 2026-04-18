@@ -4,7 +4,7 @@
 pub use super::ctx::{Ctx, CtxI};
 use super::memo::{Key, Memo, MemoCache};
 use super::trace::{CONSOLE_TRACER, NULL_TRACER, Tracer};
-use crate::cfg::Configurable;
+pub use crate::cfg::*;
 use crate::input::Cursor;
 use crate::peg::parser::TokenList;
 use crate::trees::Tree;

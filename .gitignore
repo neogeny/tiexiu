@@ -25,5 +25,5 @@ target
 
 # Develoment
 tmp
-tatsu
+./tatsu/
 Modelfile

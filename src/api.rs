@@ -3,11 +3,11 @@
 
 use crate::input::Cursor;
 use crate::input::StrCursor;
-use crate::json::ToJson;
+use crate::json::ToExpJson;
 use crate::peg::{Grammar, Succ};
 use crate::state::corectx::CoreCtx;
 use crate::trees::Tree;
-use crate::util::cfg::{Cfg, CfgA};
+use crate::util::cfg::*;
 use crate::{Error, Result};
 
 pub fn boot_grammar() -> Result<Grammar> {
@@ -20,7 +20,7 @@ pub fn parse_grammar(grammar: &str, cfg: CfgA) -> Result<Tree> {
 
 pub fn parse_grammar_as_json(grammar: &str, cfg: CfgA) -> Result<String> {
     let tree = parse_grammar(grammar, cfg)?;
-    tree.to_json_string().map_err(Error::from)
+    tree.to_model_json_string().map_err(Error::from)
 }
 
 pub fn parse_grammar_with<U>(cursor: U, cfg: CfgA) -> Result<Tree>
@@ -30,6 +30,7 @@ where
     let _ = cfg;
     let boot = boot_grammar()?;
     let mut ctx = CoreCtx::new(cursor);
+    ctx.configure(&Cfg::new(cfg));
     if Cfg::new(cfg).is_enabled("trace") {
         ctx.set_trace(true);
     }
@@ -45,7 +46,7 @@ where
     U: Cursor + Clone,
 {
     let tree = parse_grammar_with(cursor, cfg)?;
-    tree.to_json_string().map_err(Error::from)
+    tree.to_model_json_string().map_err(Error::from)
 }
 
 pub fn compile(grammar: &str, cfg: CfgA) -> Result<Grammar> {
@@ -54,7 +55,7 @@ pub fn compile(grammar: &str, cfg: CfgA) -> Result<Grammar> {
 
 pub fn compile_to_json(grammar: &str, cfg: CfgA) -> Result<String> {
     let compiled = compile(grammar, cfg)?;
-    compiled.to_json_string().map_err(Error::from)
+    compiled.to_json_exp_string().map_err(Error::from)
 }
 
 pub fn compile_with<U>(cursor: U, cfg: CfgA) -> Result<Grammar>
@@ -70,7 +71,7 @@ where
     U: Cursor + Clone,
 {
     let compiled = compile_with(cursor, cfg)?;
-    compiled.to_json_string().map_err(Error::from)
+    compiled.to_json_exp_string().map_err(Error::from)
 }
 
 pub fn load(json: &str, cfg: CfgA) -> Result<Grammar> {
@@ -80,17 +81,17 @@ pub fn load(json: &str, cfg: CfgA) -> Result<Grammar> {
 
 pub fn load_as_json(json: &str, cfg: CfgA) -> Result<String> {
     let grammar = load(json, cfg)?;
-    grammar.to_json_string().map_err(Error::from)
+    grammar.to_json_exp_string().map_err(Error::from)
 }
 
 pub fn load_tree(json: &str, cfg: CfgA) -> Result<Tree> {
     let _ = cfg;
-    Tree::from_serde_json_str(json).map_err(Error::from)
+    Tree::from_model_json(json).map_err(Error::from)
 }
 
 pub fn load_tree_as_json(json: &str, cfg: CfgA) -> Result<String> {
     let tree = load_tree(json, cfg)?;
-    tree.to_json_string().map_err(Error::from)
+    tree.to_model_json_string().map_err(Error::from)
 }
 
 pub fn pretty(grammar: &str, cfg: CfgA) -> Result<String> {
@@ -100,12 +101,12 @@ pub fn pretty(grammar: &str, cfg: CfgA) -> Result<String> {
 
 pub fn pretty_tree(tree: &Tree, cfg: CfgA) -> Result<String> {
     let _ = cfg;
-    Ok(tree.to_json_string()?)
+    Ok(tree.to_model_json_string()?)
 }
 
 pub fn pretty_tree_json(tree: &Tree, cfg: CfgA) -> Result<String> {
     let _ = cfg;
-    tree.to_json_string().map_err(Error::from)
+    tree.to_model_json_string().map_err(Error::from)
 }
 
 pub fn load_boot(cfg: CfgA) -> Result<Grammar> {
@@ -115,13 +116,13 @@ pub fn load_boot(cfg: CfgA) -> Result<Grammar> {
 
 pub fn load_boot_as_json(cfg: CfgA) -> Result<String> {
     let grammar = load_boot(cfg)?;
-    grammar.to_json_string().map_err(Error::from)
+    grammar.to_json_exp_string().map_err(Error::from)
 }
 
 pub fn boot_grammar_json(cfg: CfgA) -> Result<String> {
     let _ = cfg;
     let boot = boot_grammar()?;
-    match boot.to_json_string() {
+    match boot.to_json_exp_string() {
         Ok(s) => Ok(s),
         Err(e) => Err(e.into()),
     }
@@ -148,7 +149,7 @@ pub fn parse_input(parser: &Grammar, text: &str, cfg: CfgA) -> Result<Tree> {
 
 pub fn parse_input_to_json(parser: &Grammar, text: &str, cfg: CfgA) -> Result<String> {
     let tree = parse_input(parser, text, cfg)?;
-    tree.to_json_string().map_err(Error::from)
+    Ok(tree.to_json_str().to_string())
 }
 
 pub fn parse(grammar: &str, text: &str, cfg: CfgA) -> Result<Tree> {

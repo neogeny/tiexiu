@@ -158,7 +158,7 @@ mod tests {
     #[test]
     fn test_tatsumodel_round_trip() {
         let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        path.push("grammar");
+        path.push("../../../grammar");
         path.push("tatsu.json");
 
         println!("{}", path.to_str().unwrap());

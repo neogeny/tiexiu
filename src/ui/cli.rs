@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::api::{boot_grammar_json, boot_grammar_pretty, compile, load, parse_input};
-pub use crate::json::export::*;
+pub use crate::json::exp::*;
 pub use crate::tools::rails::*;
 use crate::{Result, boot_grammar};
 use clap;
@@ -144,7 +144,7 @@ pub fn cli() -> Result<()> {
         } => {
             let parser = load_grammar_from_path(&grammar)?;
             if json {
-                (parser.to_json_string()?, "json")
+                (parser.to_json_exp_string()?, "json")
             } else if railroads {
                 (parser.railroads(), "apl")
             } else {

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::json::error::JsonError;
-use crate::json::tatsu::TatSuModel;
+use crate::json::tatsu::model::TatSuModel;
 use crate::peg::exp::{ERef, Exp};
 use crate::peg::grammar::{Grammar, GrammarDirectives};
 use crate::peg::rule::Rule;

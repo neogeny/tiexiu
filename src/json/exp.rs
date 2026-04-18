@@ -12,51 +12,51 @@ use crate::peg::grammar::Grammar;
 use crate::peg::rule::Rule;
 use serde_json::{Map, Value};
 
-pub trait ToJson {
-    fn to_serde_value(&self) -> Value;
+pub trait ToExpJson {
+    fn to_json_exp(&self) -> Value;
 
-    fn to_json_string(&self) -> Result<String> {
-        match serde_json::to_string_pretty(&self.to_serde_value()) {
+    fn to_json_exp_string(&self) -> Result<String> {
+        match serde_json::to_string_pretty(&self.to_json_exp()) {
             Ok(s) => Ok(s),
             Err(e) => Err(JsonError::Json(e)),
         }
     }
 
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self.to_json_string() {
+        match self.to_json_exp_string() {
             Ok(json) => write!(f, "{}", json),
             Err(_) => Err(std::fmt::Error),
         }
     }
 }
 
-impl ToJson for Grammar {
-    fn to_serde_value(&self) -> Value {
-        Grammar::to_serde_value(self)
+impl ToExpJson for Grammar {
+    fn to_json_exp(&self) -> Value {
+        Grammar::to_json_exp(self)
     }
 }
 
-impl ToJson for Rule {
-    fn to_serde_value(&self) -> Value {
-        Rule::to_serde_value(self)
+impl ToExpJson for Rule {
+    fn to_json_exp(&self) -> Value {
+        Rule::to_json_exp(self)
     }
 }
 
-impl ToJson for Exp {
-    fn to_serde_value(&self) -> Value {
-        Exp::to_serde_value(self)
+impl ToExpJson for Exp {
+    fn to_json_exp(&self) -> Value {
+        Exp::to_json_exp(self)
     }
 }
 
 impl Grammar {
-    pub fn to_serde_value(&self) -> Value {
+    pub fn to_json_exp(&self) -> Value {
         let mut obj = Map::new();
 
         obj.insert("__class__".into(), Value::String("Grammar".into()));
         obj.insert("name".into(), Value::String(self.name.clone().into()));
         obj.insert("analyzed".into(), Value::Bool(self.analyzed));
 
-        let rules: Vec<Value> = self.rules().map(|r| r.to_serde_value()).collect();
+        let rules: Vec<Value> = self.rules().map(|r| r.to_json_exp()).collect();
         obj.insert("rules".into(), Value::Array(rules));
 
         let directives: Map<String, Value> = self
@@ -78,13 +78,13 @@ impl Grammar {
 }
 
 impl Rule {
-    pub fn to_serde_value(&self) -> Value {
+    pub fn to_json_exp(&self) -> Value {
         let mut obj = Map::new();
 
         obj.insert("__class__".into(), Value::String("Rule".into()));
         obj.insert("name".into(), Value::String(self.name.to_string()));
 
-        obj.insert("exp".into(), self.exp.to_serde_value());
+        obj.insert("exp".into(), self.exp.to_json_exp());
 
         let params: Vec<Value> = self
             .params
@@ -107,7 +107,7 @@ impl Rule {
 }
 
 impl Exp {
-    pub fn to_serde_value(&self) -> Value {
+    pub fn to_json_exp(&self) -> Value {
         self.kind.to_serde_value()
     }
 }
@@ -144,95 +144,95 @@ impl ExpKind {
             ExpKind::Named(name, inner) => {
                 obj.insert("__class__".into(), Value::String("Named".into()));
                 obj.insert("name".into(), Value::String(name.as_ref().to_string()));
-                obj.insert("exp".into(), inner.to_serde_value());
+                obj.insert("exp".into(), inner.to_json_exp());
             }
             ExpKind::NamedList(name, inner) => {
                 obj.insert("__class__".into(), Value::String("NamedList".into()));
                 obj.insert("name".into(), Value::String(name.as_ref().to_string()));
-                obj.insert("exp".into(), inner.to_serde_value());
+                obj.insert("exp".into(), inner.to_json_exp());
             }
             ExpKind::Override(inner) => {
                 obj.insert("__class__".into(), Value::String("Override".into()));
-                obj.insert("exp".into(), inner.to_serde_value());
+                obj.insert("exp".into(), inner.to_json_exp());
             }
             ExpKind::OverrideList(inner) => {
                 obj.insert("__class__".into(), Value::String("OverrideList".into()));
-                obj.insert("exp".into(), inner.to_serde_value());
+                obj.insert("exp".into(), inner.to_json_exp());
             }
             ExpKind::Group(inner) => {
                 obj.insert("__class__".into(), Value::String("Group".into()));
-                obj.insert("exp".into(), inner.to_serde_value());
+                obj.insert("exp".into(), inner.to_json_exp());
             }
             ExpKind::SkipGroup(inner) => {
                 obj.insert("__class__".into(), Value::String("SkipGroup".into()));
-                obj.insert("exp".into(), inner.to_serde_value());
+                obj.insert("exp".into(), inner.to_json_exp());
             }
             ExpKind::Lookahead(inner) => {
                 obj.insert("__class__".into(), Value::String("Lookahead".into()));
-                obj.insert("exp".into(), inner.to_serde_value());
+                obj.insert("exp".into(), inner.to_json_exp());
             }
             ExpKind::NegativeLookahead(inner) => {
                 obj.insert(
                     "__class__".into(),
                     Value::String("NegativeLookahead".into()),
                 );
-                obj.insert("exp".into(), inner.to_serde_value());
+                obj.insert("exp".into(), inner.to_json_exp());
             }
             ExpKind::SkipTo(inner) => {
                 obj.insert("__class__".into(), Value::String("SkipTo".into()));
-                obj.insert("exp".into(), inner.to_serde_value());
+                obj.insert("exp".into(), inner.to_json_exp());
             }
             ExpKind::Sequence(arr) => {
                 obj.insert("__class__".into(), Value::String("Sequence".into()));
-                let seq: Vec<Value> = arr.iter().map(|e| e.to_serde_value()).collect();
+                let seq: Vec<Value> = arr.iter().map(|e| e.to_json_exp()).collect();
                 obj.insert("sequence".into(), Value::Array(seq));
             }
             ExpKind::Choice(arr) => {
                 obj.insert("__class__".into(), Value::String("Choice".into()));
-                let opts: Vec<Value> = arr.iter().map(|e| e.to_serde_value()).collect();
+                let opts: Vec<Value> = arr.iter().map(|e| e.to_json_exp()).collect();
                 obj.insert("options".into(), Value::Array(opts));
             }
             ExpKind::Alt(inner) => {
                 obj.insert("__class__".into(), Value::String("Option".into()));
-                obj.insert("exp".into(), inner.to_serde_value());
+                obj.insert("exp".into(), inner.to_json_exp());
             }
             ExpKind::Optional(inner) => {
                 obj.insert("__class__".into(), Value::String("Optional".into()));
-                obj.insert("exp".into(), inner.to_serde_value());
+                obj.insert("exp".into(), inner.to_json_exp());
             }
             ExpKind::Closure(inner) => {
                 obj.insert("__class__".into(), Value::String("Closure".into()));
-                obj.insert("exp".into(), inner.to_serde_value());
+                obj.insert("exp".into(), inner.to_json_exp());
             }
             ExpKind::PositiveClosure(inner) => {
                 obj.insert("__class__".into(), Value::String("PositiveClosure".into()));
-                obj.insert("exp".into(), inner.to_serde_value());
+                obj.insert("exp".into(), inner.to_json_exp());
             }
             ExpKind::Join { exp, sep } => {
                 obj.insert("__class__".into(), Value::String("Join".into()));
-                obj.insert("exp".into(), exp.to_serde_value());
-                obj.insert("sep".into(), sep.to_serde_value());
+                obj.insert("exp".into(), exp.to_json_exp());
+                obj.insert("sep".into(), sep.to_json_exp());
             }
             ExpKind::PositiveJoin { exp, sep } => {
                 obj.insert("__class__".into(), Value::String("PositiveJoin".into()));
-                obj.insert("exp".into(), exp.to_serde_value());
-                obj.insert("sep".into(), sep.to_serde_value());
+                obj.insert("exp".into(), exp.to_json_exp());
+                obj.insert("sep".into(), sep.to_json_exp());
             }
             ExpKind::Gather { exp, sep } => {
                 obj.insert("__class__".into(), Value::String("Gather".into()));
-                obj.insert("exp".into(), exp.to_serde_value());
-                obj.insert("sep".into(), sep.to_serde_value());
+                obj.insert("exp".into(), exp.to_json_exp());
+                obj.insert("sep".into(), sep.to_json_exp());
             }
             ExpKind::PositiveGather { exp, sep } => {
                 obj.insert("__class__".into(), Value::String("PositiveGather".into()));
-                obj.insert("exp".into(), exp.to_serde_value());
-                obj.insert("sep".into(), sep.to_serde_value());
+                obj.insert("exp".into(), exp.to_json_exp());
+                obj.insert("sep".into(), sep.to_json_exp());
             }
             ExpKind::RuleInclude { name, exp } => {
                 obj.insert("__class__".into(), Value::String("RuleInclude".into()));
                 obj.insert("name".into(), Value::String(name.as_ref().to_string()));
                 if let Some(inner) = exp {
-                    obj.insert("exp".into(), inner.to_serde_value());
+                    obj.insert("exp".into(), inner.to_json_exp());
                 }
             }
             ExpKind::Eof => {
@@ -259,7 +259,7 @@ mod tests {
         let json_str = std::fs::read_to_string("grammar/tatsu.json").expect("tatsu.json missing");
         let value: Value = serde_json::from_str(&json_str).expect("Failed to parse JSON");
         let grammar = Grammar::from_serde_json_value(&value).expect("Failed to convert");
-        let output = grammar.to_serde_value();
+        let output = grammar.to_json_exp();
 
         assert!(output.is_object());
         let obj = output.as_object().unwrap();

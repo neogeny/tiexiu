@@ -62,7 +62,7 @@ mod basic_grammar {
         "#;
         let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "hello world");
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("hello") && json.contains("world"));
     }
 
@@ -105,7 +105,7 @@ mod directives {
         "#;
         let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "a b");
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("a") && json.contains("b"));
     }
 
@@ -119,7 +119,7 @@ mod directives {
         let grammar = tiexiu::compile(grammar, &[]).unwrap();
         // Should work without whitespace
         let tree = parse_input(&grammar, "ab");
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("a") && json.contains("b"));
     }
 
@@ -130,7 +130,7 @@ mod directives {
         "#;
         let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "a b");
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("a") && json.contains("b"));
     }
 
@@ -156,7 +156,7 @@ mod directives {
         let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "test");
         // parseinfo should be present
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("parseinfo") || json.contains("pos"));
     }
 
@@ -266,7 +266,7 @@ mod tokens_and_sequences {
         "#;
         let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "hello world");
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("hello") && json.contains("world"));
     }
 
@@ -348,7 +348,7 @@ mod naming {
         "#;
         let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "hello");
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("name"));
     }
 
@@ -360,7 +360,7 @@ mod naming {
         "#;
         let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "aaa");
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("names"));
     }
 
@@ -383,7 +383,7 @@ mod naming {
         "#;
         let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "aaa");
-        let json = tree.to_json_string().unwrap();
+        let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("@+") || json.contains("OverrideList"));
     }
 
@@ -685,7 +685,7 @@ mod round_trips {
         // Parse with both should work
         let tree1 = parse_input(&grammar, "x y");
 
-        let j1 = tree1.to_json_string().unwrap();
+        let j1 = tree1.to_model_json_string().unwrap();
         assert!(j1.contains("x") && j1.contains("y"));
     }
 

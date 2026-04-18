@@ -46,5 +46,8 @@ run:
     {{shell}} --version
 
 
-pytest:
+pytest: pyo3
     uv run pytest -vv
+
+pyo3:
+    uv run maturin build

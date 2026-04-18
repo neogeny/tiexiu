@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::json::error::JsonError;
-use crate::json::serde_tree::TreeJsonError;
+use crate::json::tree::TreeJsonError;
 use crate::peg::{CompileError, Nope, ParseError};
 use thiserror::Error;
 
