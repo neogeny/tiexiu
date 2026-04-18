@@ -97,17 +97,20 @@ impl Rule {
     pub fn parse<C: Ctx>(&self, ctx: C) -> ParseResult<C> {
         let _text = ctx.cursor().textstr();
         match self.exp.parse(ctx) {
-            Ok(Succ(ctx, tree)) => Ok(Succ(
-                ctx,
-                if self.params.is_empty() {
-                    tree
-                } else {
-                    Tree::Node {
-                        typename: self.params[0].clone(),
-                        tree: tree.normalized().into(),
-                    }
-                },
-            )),
+            Ok(Succ(ctx, mut tree)) => {
+                tree = tree.normalized();
+                Ok(Succ(
+                    ctx,
+                    if self.params.is_empty() {
+                        tree
+                    } else {
+                        Tree::Node {
+                            typename: self.params[0].clone(),
+                            tree: tree.into(),
+                        }
+                    },
+                ))
+            }
             err => err,
         }
     }

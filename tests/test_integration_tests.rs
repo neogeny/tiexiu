@@ -8,12 +8,6 @@ use tiexiu::peg::Grammar;
 use tiexiu::state::CtxI;
 use tiexiu::state::corectx::CoreCtx;
 
-fn compile(grammar_text: &str) -> Grammar {
-    let tree = tiexiu::parse_grammar(grammar_text, &[]).expect("Failed to parse grammar");
-    eprintln!("TREE\n{:?}", tree);
-    tiexiu::compile(grammar_text, &[]).expect("Failed to compile grammar")
-}
-
 fn parse_input(grammar: &Grammar, input: &str) -> tiexiu::trees::Tree {
     let cursor = StrCursor::new(input);
     let ctx = CoreCtx::new(cursor);
@@ -37,7 +31,7 @@ mod basic_grammar {
             @@grammar :: Test
             start: 'hello'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "hello");
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
     }
@@ -52,7 +46,7 @@ mod basic_grammar {
             b: 'b'
             c: 'c'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "a");
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
     }
@@ -66,7 +60,7 @@ mod basic_grammar {
             foo: 'hello'
             bar: 'world'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "hello world");
         let json = tree.to_json_string().unwrap();
         assert!(json.contains("hello") && json.contains("world"));
@@ -79,7 +73,7 @@ mod basic_grammar {
             @@grammar :: Test
             start: ''
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "");
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
     }
@@ -99,7 +93,7 @@ mod directives {
             @@grammar :: MyGrammar
             start: 'test'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         assert_eq!(grammar.name.to_string(), "MyGrammar");
     }
 
@@ -109,7 +103,7 @@ mod directives {
             @@whitespace :: /[\t ]+/
             start: 'a' 'b'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "a b");
         let json = tree.to_json_string().unwrap();
         assert!(json.contains("a") && json.contains("b"));
@@ -122,7 +116,7 @@ mod directives {
             @@whitespace :: None
             start: 'a' 'b'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         // Should work without whitespace
         let tree = parse_input(&grammar, "ab");
         let json = tree.to_json_string().unwrap();
@@ -134,7 +128,7 @@ mod directives {
         let grammar = r#"
             start: 'a' 'b'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "a b");
         let json = tree.to_json_string().unwrap();
         assert!(json.contains("a") && json.contains("b"));
@@ -147,7 +141,7 @@ mod directives {
             @@left_recursion :: False
             start: 'test'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "test");
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
     }
@@ -159,7 +153,7 @@ mod directives {
             @@parseinfo :: True
             start: 'test'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "test");
         // parseinfo should be present
         let json = tree.to_json_string().unwrap();
@@ -173,7 +167,7 @@ mod directives {
             @@nameguard :: False
             start: 'ab'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "ab");
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
     }
@@ -185,7 +179,7 @@ mod directives {
             @@comments :: /#[^\n]*/
             start: 'a'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "a");
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
     }
@@ -205,7 +199,7 @@ mod patterns {
             @@grammar :: Test
             start: /\d+/
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "123");
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
     }
@@ -217,7 +211,7 @@ mod patterns {
             @@grammar :: Test
             start: /[a-z]+/
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "hello");
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
     }
@@ -229,7 +223,7 @@ mod patterns {
             @@grammar :: Test
             start: /^start/
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "start");
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
     }
@@ -241,7 +235,7 @@ mod patterns {
             @@ignorecase :: True
             start: /hello/
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "HELLO");
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
     }
@@ -252,7 +246,7 @@ mod patterns {
         let grammar = r#"
             start: /[A-Za-z_]\w*/
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "hello_world");
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
     }
@@ -270,7 +264,7 @@ mod tokens_and_sequences {
         let grammar = r#"
             start: 'hello' 'world'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "hello world");
         let json = tree.to_json_string().unwrap();
         assert!(json.contains("hello") && json.contains("world"));
@@ -282,7 +276,7 @@ mod tokens_and_sequences {
         let grammar = r#"
             start: 'a' 'b'?
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
 
         // With optional
         let tree = parse_input(&grammar, "a b");
@@ -299,7 +293,7 @@ mod tokens_and_sequences {
         let grammar = r#"
             start: 'a'*
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "aaa");
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
     }
@@ -310,7 +304,7 @@ mod tokens_and_sequences {
         let grammar = r#"
             start: 'a'+
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
 
         // Should match
         let tree = parse_input(&grammar, "aaa");
@@ -323,7 +317,7 @@ mod tokens_and_sequences {
         let grammar = r#"
             start: 'a' | 'b' | 'c'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
 
         assert!(matches!(
             parse_input(&grammar, "a"),
@@ -352,7 +346,7 @@ mod naming {
         let grammar = r#"
             start: name='hello'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "hello");
         let json = tree.to_json_string().unwrap();
         assert!(json.contains("name"));
@@ -364,7 +358,7 @@ mod naming {
         let grammar = r#"
             start: names+:'a'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "aaa");
         let json = tree.to_json_string().unwrap();
         assert!(json.contains("names"));
@@ -376,7 +370,7 @@ mod naming {
         let grammar = r#"
             start: ='hello'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "hello");
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
     }
@@ -387,7 +381,7 @@ mod naming {
         let grammar = r#"
             start: @+:'a'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "aaa");
         let json = tree.to_json_string().unwrap();
         assert!(json.contains("@+") || json.contains("OverrideList"));
@@ -400,7 +394,7 @@ mod naming {
             start: >base
             base: 'hello'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "hello");
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
     }
@@ -419,7 +413,7 @@ mod constraints {
         let grammar = r#"
             start: &'a' 'a'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "a");
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
     }
@@ -430,7 +424,7 @@ mod constraints {
         let grammar = r#"
             start: !'b' 'a'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "a");
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
     }
@@ -441,7 +435,7 @@ mod constraints {
         let grammar = r#"
             start: 'a' ~ 'b'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "ab");
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
     }
@@ -460,7 +454,7 @@ mod special_forms {
         let grammar = r#"
             start: ('a' 'b')*
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "abab");
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
     }
@@ -471,7 +465,7 @@ mod special_forms {
         let grammar = r#"
             start: (?: 'a' 'b')*
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "abab");
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
     }
@@ -482,7 +476,7 @@ mod special_forms {
         let grammar = r#"
             start: 'a' () 'b'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "ab");
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
     }
@@ -493,7 +487,7 @@ mod special_forms {
         let grammar = r#"
             start: 'a' $
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "a");
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
     }
@@ -504,7 +498,7 @@ mod special_forms {
         let grammar = r#"
             start: /./ 'b'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "ab");
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
     }
@@ -515,7 +509,7 @@ mod special_forms {
         let grammar = r#"
             start: `constant`
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "");
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
     }
@@ -549,7 +543,7 @@ mod complex_grammars {
 
             NUMBER: /\d+/
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
 
         // Test simple expression
         let tree = parse_input(&grammar, "3 + 5");
@@ -585,7 +579,7 @@ mod complex_grammars {
 
             number: /-?\d+(\.\d+)?/
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
 
         // Simple object
         let tree = parse_input(&grammar, r#"{"key": "value"}"#);
@@ -613,7 +607,7 @@ mod complex_grammars {
 
             WORD: /\w+/
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
 
         let tree = parse_input(&grammar, "(hello world)");
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
@@ -638,7 +632,7 @@ mod grammar_structure {
             rule1: 'b'
             rule2: 'c'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let rule_names: Vec<_> = grammar.rules().map(|r| &*r.name).collect();
         assert!(rule_names.contains(&"start"));
         assert!(rule_names.contains(&"rule1"));
@@ -652,7 +646,7 @@ mod grammar_structure {
             start: 'a'
             other: 'b'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let tree = parse_input(&grammar, "a");
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
     }
@@ -663,7 +657,7 @@ mod grammar_structure {
             @@grammar :: Test
             start: 'a' | 'b'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let pretty = grammar.to_string();
         assert!(pretty.contains("Test") || pretty.contains("start"));
     }
@@ -686,7 +680,7 @@ mod round_trips {
             bar: 'y'
         "#;
 
-        let grammar = compile(grammar_text);
+        let grammar = tiexiu::compile(grammar_text, &[]).unwrap();
 
         // Parse with both should work
         let tree1 = parse_input(&grammar, "x y");
@@ -703,10 +697,10 @@ mod round_trips {
             start: 'a' | 'b'
         "#;
 
-        let grammar = compile(grammar_text);
+        let grammar = tiexiu::compile(grammar_text, &[]).unwrap();
         let pretty1 = grammar.to_string();
 
-        let grammar2 = compile(&pretty1);
+        let grammar2 = tiexiu::compile(&pretty1, &[]).unwrap();
         let pretty2 = grammar2.to_string();
 
         // Both should compile and produce valid output
@@ -727,7 +721,7 @@ mod input_positions {
         let grammar = r#"
             start: 'hello'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
 
         let cursor = StrCursor::new("hello");
         let ctx = CoreCtx::new(cursor);
@@ -750,7 +744,7 @@ mod input_positions {
         let grammar = r#"
             start: 'hello' 'world'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
 
         let tree = parse_input(&grammar, "hello\nworld");
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
@@ -769,7 +763,7 @@ mod error_handling {
         let grammar = r#"
             start: 'a'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
 
         let cursor = StrCursor::new("b");
         let ctx = CoreCtx::new(cursor);
@@ -783,7 +777,7 @@ mod error_handling {
         let grammar = r#"
             start: 'a' 'b'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
 
         let cursor = StrCursor::new("a");
         let ctx = CoreCtx::new(cursor);
@@ -797,7 +791,7 @@ mod error_handling {
         let grammar = r#"
             start: 'a'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
 
         let cursor = StrCursor::new("");
         let ctx = CoreCtx::new(cursor);
@@ -812,15 +806,13 @@ mod error_handling {
 // =============================================================================
 
 mod pretty_print {
-    use super::*;
-
     #[test]
     fn pretty_contains_grammar_name() {
         let grammar = r#"
             @@grammar :: MyTest
             start: 'hello'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let pretty = grammar.to_string();
         assert!(pretty.contains("MyTest") || pretty.contains("start"));
     }
@@ -832,7 +824,7 @@ mod pretty_print {
             start: 'a'
             other: 'b'
         "#;
-        let grammar = compile(grammar);
+        let grammar = tiexiu::compile(grammar, &[]).unwrap();
         let pretty = grammar.to_string();
         // Should contain at least one rule
         assert!(pretty.contains("start") || pretty.contains("other"));

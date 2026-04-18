@@ -12,16 +12,6 @@ use tiexiu::input::StrCursor;
 use tiexiu::peg::Grammar;
 use tiexiu::state::corectx::CoreCtx;
 
-fn compile(grammar_text: &str) -> Grammar {
-    // tiexiu::compile(grammar_text, &[("trace", "1")]).expect("Failed to compile grammar")
-    tiexiu::compile(grammar_text, &[]).expect("Failed to compile grammar")
-}
-
-fn parse(grammar_text: &str) -> tiexiu::trees::Tree {
-    let grammar = compile(grammar_text);
-    parse_with_boot(&grammar, grammar_text)
-}
-
 fn parse_input(grammar: &Grammar, input: &str) -> tiexiu::trees::Tree {
     let cursor = StrCursor::new(input);
     let ctx = CoreCtx::new(cursor);
@@ -29,6 +19,11 @@ fn parse_input(grammar: &Grammar, input: &str) -> tiexiu::trees::Tree {
         Ok(s) => s.1,
         Err(f) => panic!("Failed to parse at mark {}: {:?}", f.mark, f.source),
     }
+}
+
+fn parse(grammar_text: &str) -> tiexiu::trees::Tree {
+    let grammar = tiexiu::compile(grammar_text, &[]).unwrap();
+    parse_with_boot(&grammar, grammar_text)
 }
 
 // =============================================================================
@@ -458,12 +453,14 @@ mod compilation {
 
     #[test]
     fn simple_grammar_links() {
-        let grammar = compile(
+        let grammar = tiexiu::compile(
             r#"
             @@grammar :: Test
             start: 'hello' 'world'
         "#,
-        );
+            &[],
+        )
+        .unwrap();
 
         let issues = all_rules_linked(&grammar);
         assert!(
@@ -476,12 +473,14 @@ mod compilation {
     #[test]
     #[ignore = "TODO: Fix bootstrap failures"]
     fn compiled_grammar_parses_input() {
-        let grammar = compile(
+        let grammar = tiexiu::compile(
             r#"
             @@grammar :: Test
             start: 'hello' 'world'
         "#,
-        );
+            &[],
+        )
+        .unwrap();
 
         let tree = parse_input(&grammar, "hello world");
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
@@ -511,7 +510,7 @@ mod round_trips {
         "#;
 
         let tree1 = parse(grammar_text);
-        let grammar = compile(grammar_text);
+        let grammar = tiexiu::compile(grammar_text, &[]).unwrap();
         let tree2 = parse_with_boot(&grammar, grammar_text);
 
         let json1 = tree1.to_json_string().expect("Serialize tree1");
@@ -539,13 +538,13 @@ mod round_trips {
         let tree = parse(grammar_text);
         eprintln!("TREE\n{:#?}", tree);
 
-        let grammar = compile(grammar_text);
+        let grammar = tiexiu::compile(grammar_text, &[]).unwrap();
         eprintln!("COMPILED\n{}", grammar);
 
         let pretty = grammar.pretty_print();
         eprintln!("COMPILED->PRETTY\n{:#}", pretty);
 
-        let grammar2 = compile(&pretty);
+        let grammar2 = tiexiu::compile(&pretty, &[]).unwrap();
         let pretty2 = grammar2.to_string();
 
         assert_eq!(

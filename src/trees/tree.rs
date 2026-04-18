@@ -57,6 +57,21 @@ impl<const N: usize> From<[Tree; N]> for Tree {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
+struct TreeMerge {
+    pub root: Tree,
+    pub map: TreeMap,
+}
+
+impl TreeMerge {
+    pub fn new() -> Self {
+        Self {
+            root: Tree::Nil,
+            map: TreeMap::new(),
+        }
+    }
+}
+
 impl Tree {
     pub fn value(&self) -> Box<str> {
         match self {
@@ -108,26 +123,15 @@ impl Tree {
 
     pub fn closed(self) -> Self {
         match self {
-            Tree::List(items) => {
-                Tree::Closed(items.into_iter().map(|item| item.normalized()).collect())
-            }
+            Tree::List(items) => Tree::Closed(items),
             _ => self,
-        }
-    }
-
-    pub fn aslist(self) -> Self {
-        let norm = self.normalized();
-        match &norm {
-            Tree::List(_) | Tree::Closed(_) => norm,
-            _ => Tree::List([norm].into()),
         }
     }
 
     pub fn append(self, node: Self) -> Self {
         match (self, node) {
             (Self::Nil, n) => n,
-            // FIXME
-            // (s, Self::Nil) => s,
+            (s, Self::Nil) => s,
             (Self::List(list), node) => {
                 let mut v = list.into_vec();
                 v.push(node);
@@ -174,47 +178,66 @@ impl Tree {
     }
 
     pub fn normalized(self) -> Tree {
-        let (map, root, tree) = self._normalize();
+        let mut gather = TreeMerge::new();
+        let tree = self._clean(&mut gather);
 
-        if root != Tree::Nil {
-            root
-        } else if !map.is_empty() {
-            Tree::Map(map.into())
+        if gather.root != Tree::Nil {
+            gather.root
+        } else if !gather.map.is_empty() {
+            Tree::Map(gather.map.into())
         } else {
             tree
         }
     }
 
-    fn _normalize(self) -> (TreeMap, Tree, Tree) {
-        let mut map = TreeMap::new();
-        let mut root = Tree::Nil;
-        let mut tree = Tree::Nil;
-
+    fn _clean(&self, gather: &mut TreeMerge) -> Tree {
         match self {
             Tree::List(elements) => {
-                for node in elements {
-                    let (child_map, child_root, child_cst) = node._normalize();
+                // NOTE:
+                //  Tree::List is the product of Exp::Sequence and the
+                //  right semantics are to merge the values one by one
+                //  Later, Tree::List should be renamed to Tree::Sequence
+                //  to make it clear
 
-                    map.update(&child_map);
-                    root = root.merge(child_root);
-                    tree = tree.merge(child_cst);
-                }
+                let mut out = Tree::Nil;
+                elements
+                    .into_iter()
+                    .for_each(|s| out = out.clone().append(s._clean(gather)));
+                out
+            }
+            Tree::Closed(elements) => {
+                // NOTE:
+                //  Tree::Closed is the product of the Exp closure node kinds.
+                //  The current semantics inherited from TatSu are to keep them
+                //  intact, with no merging
+                let clean: Vec<Tree> = elements.into_iter().map(|s| s._clean(gather)).collect();
+                Tree::Closed(clean.into())
             }
             Tree::Named(keyval) => {
                 let KeyValue(name, val) = keyval;
-                map.insert(&name, *val);
+                let clean = val.clone()._clean(gather);
+                gather.map.insert(name, clean.clone());
+                clean
             }
             Tree::NamedAsList(keyval) => {
                 let KeyValue(name, val) = keyval;
-                map.insert_as_list(&name, *val);
+                let clean = val._clean(gather);
+                gather.map.insert_as_list(name, clean.clone());
+                clean
             }
-            Tree::Override(val) => root = root.append(*val),
-            Tree::OverrideAsList(val) => root = root.append_as_list(*val),
-            Tree::Nil => {}
-            other => tree = tree.merge(other),
+            Tree::Override(val) => {
+                let clean = val._clean(gather);
+                gather.root = gather.root.clone().append(clean.clone());
+                clean
+            }
+            Tree::OverrideAsList(val) => {
+                let clean = val._clean(gather);
+                gather.root = gather.root.clone().append_as_list(clean.clone());
+                clean
+            }
+            Tree::Nil => Tree::Nil,
+            _ => self.clone(),
         }
-
-        (map, root, tree)
     }
 
     pub fn width(&self) -> usize {
@@ -292,5 +315,31 @@ mod tests {
         // Since it's effectively Bottom, and Bottom isn't a list,
         // it doesn't become a Closure of len 1. It just stays Bottom.
         assert_eq!(result, Tree::Bottom);
+    }
+
+    #[test]
+    fn test_named_group_with_inner_names() {
+        // r: x=(a='a' b='b') - nested named expressions
+        // After normalization, all of a, b, and x should be present
+        let tree = Tree::named(
+            "x",
+            Tree::List(
+                [
+                    Tree::named("a", Tree::text("a")),
+                    Tree::named("b", Tree::text("b")),
+                ]
+                .into(),
+            ),
+        );
+
+        let result = tree.normalized();
+
+        // Result should be a Map containing "a", "b", and "x"
+        assert!(matches!(result, Tree::Map(_)));
+        if let Tree::Map(m) = result {
+            assert!(m.get("x").is_some(), "key 'x' should be present");
+            assert!(m.get("a").is_some(), "key 'a' should be present");
+            assert!(m.get("b").is_some(), "key 'b' should be present");
+        }
     }
 }

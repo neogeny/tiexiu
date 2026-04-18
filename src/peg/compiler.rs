@@ -76,7 +76,7 @@ fn parse_node_check<'n>(node: &'n Tree, typename: &'static str) -> CompileResult
     Ok(tree)
 }
 
-fn parse_map(node: &Tree) -> CompileResult<&TreeMap> {
+fn _parse_map(node: &Tree) -> CompileResult<&TreeMap> {
     let Tree::Map(map) = node else {
         return Err(CompileError::ExpectedMap(format!("{:?}", node)));
     };
@@ -123,21 +123,22 @@ impl GrammarCompiler {
         let rules: Vec<Rule> = rulemap.into_iter().map(|(_, r)| r).collect();
         let name = map_get_default(map, "name", "__COMPILED__");
 
-        // let directives_tree = map_get(map, "Grammar", "directives")?;
-        // let directives_map = parse_map(directives_tree)?;
-        // let directives: GrammarDirectives = GrammarDirectives::from_iter(
-        //     directives_map
-        //         .entries
-        //         .iter()
-        //         .map(|(k, v)| (k.to_string(), v.value().to_string())),
-        // );
+        let directives_tree = map_get(map, "Grammar", "directives")?;
+        let directives_list = _parse_list(directives_tree)?;
+        let directives: GrammarDirectives =
+            GrammarDirectives::from_iter(directives_list.iter().map(|d| {
+                let dm = _parse_map(d).expect("directive should be a Map");
+                let name = dm.get("name").expect("name key").value();
+                let value = dm.get("value").expect("value key").value();
+                (name.to_string(), value.to_string())
+            }));
         if let Ok(_keywords_tree) = map_get(map, "Grammar", "keywords") {
             // TODO: Implement keywords
             unimplemented!();
         }
 
         let mut grammar = Grammar::new(&name, rules.as_slice());
-        // grammar.set_directives(directives);
+        grammar.set_directives(directives);
         Ok(grammar)
     }
 

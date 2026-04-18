@@ -162,22 +162,33 @@ impl Exp {
             ExpKind::Alert(literal, _) => Ok(Succ(ctx, Tree::Text(literal.deref().into()))),
 
             ExpKind::Named(name, exp) => match exp.parse(ctx) {
-                Ok(Succ(ctx, tree)) => Ok(Succ(ctx, Tree::named(name, tree))),
+                Ok(Succ(ctx, mut tree)) => {
+                    tree = Tree::named(name, tree);
+                    eprintln!("Named {}={:#?}", name, tree);
+                    Ok(Succ(ctx, tree))
+                }
                 err => err,
             },
             ExpKind::NamedList(name, exp) => match exp.parse(ctx) {
-                Ok(Succ(ctx, tree)) => {
-                    eprintln!("NamedList {}=", name);
-                    Ok(Succ(ctx, Tree::named_as_list(name, tree)))
+                Ok(Succ(ctx, mut tree)) => {
+                    tree = Tree::named_as_list(name, tree);
+                    eprintln!("NamedList {}={:#?}", name, tree);
+                    Ok(Succ(ctx, tree))
                 }
                 err => err,
             },
             ExpKind::Override(exp) => match exp.parse(ctx) {
-                Ok(Succ(ctx, tree)) => Ok(Succ(ctx, Tree::override_with(tree))),
+                Ok(Succ(ctx, mut tree)) => {
+                    tree = Tree::override_with(tree);
+                    Ok(Succ(ctx, tree))
+                }
                 err => err,
             },
             ExpKind::OverrideList(exp) => match exp.parse(ctx) {
-                Ok(Succ(ctx, tree)) => Ok(Succ(ctx, Tree::override_as_list(tree))),
+                Ok(Succ(ctx, mut tree)) => {
+                    tree = Tree::override_as_list(tree);
+                    Ok(Succ(ctx, tree))
+                }
                 err => err,
             },
             ExpKind::Group(exp) => exp.parse(ctx),
