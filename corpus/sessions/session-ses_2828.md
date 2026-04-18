@@ -17,7 +17,7 @@ The pattern causes an error on `src/peg/exp.rs`. Let me try with `--strictness r
 **Input:**
 ```json
 {
-  "command": "ast-grep run -p 'ERef' --lang rust src/peg/exp.rs --strictness relaxed 2>&1",
+  "command": "ast-grep run -p 'ERef' --lang rust src/peg/exp_json --strictness relaxed 2>&1",
   "description": "Try relaxed strictness"
 }
 ```
@@ -94,7 +94,7 @@ Let me check what the actual files look like inside src/peg/exp.rs - perhaps the
 **Input:**
 ```json
 {
-  "filePath": "/Users/apalala/art/tiexiu/src/peg/exp.rs",
+  "filePath": "/Users/apalala/art/tiexiu/src/peg/exp_json",
   "limit": 70
 }
 ```
@@ -220,8 +220,8 @@ Actually wait - I think the issue might be that ast-grep is filtering files base
 **Input:**
 ```json
 {
-  "command": "ast-grep run -p 'ERef' --lang rust src/peg/exp.rs --inspect summary 2>&1",
-  "description": "Inspect exp.rs specifically"
+  "command": "ast-grep run -p 'ERef' --lang rust src/peg/exp_json --inspect summary 2>&1",
+  "description": "Inspect exp_json specifically"
 }
 ```
 
@@ -334,7 +334,7 @@ Actually wait - let me check if maybe ast-grep has issues with the current src/p
 **Input:**
 ```json
 {
-  "command": "ast-grep run -p 'pub type' --lang rust src/peg/exp.rs 2>&1",
+  "command": "ast-grep run -p 'pub type' --lang rust src/peg/exp_json 2>&1",
   "description": "Test simpler pattern"
 }
 ```
@@ -498,7 +498,7 @@ Actually wait - let me check if there are any environment variables or anything 
 **Input:**
 ```json
 {
-  "command": "ast-grep run -p 'Group($X)' --lang rust src/peg/exp.rs 2>&1",
+  "command": "ast-grep run -p 'Group($X)' --lang rust src/peg/exp_json 2>&1",
   "description": "Try pattern with enum variant"
 }
 ```
@@ -955,7 +955,7 @@ Let me try one more approach - matching the full enum variant syntax:
 **Input:**
 ```json
 {
-  "command": "ast-grep run -p 'pub enum $X { $Y(Str, ERef) }' --lang rust src/peg/exp.rs 2>&1",
+  "command": "ast-grep run -p 'pub enum $X { $Y(Str, ERef) }' --lang rust src/peg/exp_json 2>&1",
   "description": "Try full enum pattern"
 }
 ```
@@ -1004,8 +1004,8 @@ Let me try searching for simpler things in exp.rs to understand the pattern matc
 **Input:**
 ```json
 {
-  "command": "ast-grep run -p 'Exp' --lang rust src/peg/exp.rs 2>&1 | head -20",
-  "description": "Search for Exp in exp.rs"
+  "command": "ast-grep run -p 'Exp' --lang rust src/peg/exp_json 2>&1 | head -20",
+  "description": "Search for Exp in exp_json"
 }
 ```
 
@@ -1043,7 +1043,7 @@ Interesting! `Exp` is found but not `ERef`. Let me check the file encodings or i
 **Input:**
 ```json
 {
-  "command": "xxd src/peg/exp.rs | grep -A2 \"ERef\" | head -20",
+  "command": "xxd src/peg/exp_json | grep -A2 \"ERef\" | head -20",
   "description": "Check hex encoding"
 }
 ```
@@ -1092,8 +1092,8 @@ Let me try a simpler test - just see if ast-grep can find any occurrence of `ERe
 **Input:**
 ```json
 {
-  "command": "ast-grep run -p 'ERef' --lang rust src/peg/exp.rs 2>&1",
-  "description": "Search exp.rs specifically"
+  "command": "ast-grep run -p 'ERef' --lang rust src/peg/exp_json 2>&1",
+  "description": "Search exp_json specifically"
 }
 ```
 
@@ -1505,8 +1505,8 @@ That's strange - Str should have many more matches. Let me check what's differen
 **Input:**
 ```json
 {
-  "command": "sg -l rust -p 'Str' src/peg/exp.rs 2>&1 | head -30",
-  "description": "Search Str in exp.rs"
+  "command": "sg -l rust -p 'Str' src/peg/exp_json 2>&1 | head -30",
+  "description": "Search Str in exp_json"
 }
 ```
 
@@ -1525,8 +1525,8 @@ This is very strange behavior. Let me test with a different simple identifier.
 **Input:**
 ```json
 {
-  "command": "sg -l rust -p 'Exp' src/peg/exp.rs 2>&1 | head -20",
-  "description": "Search Exp in exp.rs"
+  "command": "sg -l rust -p 'Exp' src/peg/exp_json 2>&1 | head -20",
+  "description": "Search Exp in exp_json"
 }
 ```
 
@@ -1642,7 +1642,7 @@ Now I see Token in exp.rs on line 32. Let me check - it says `Token(Str)` is in 
 **Input:**
 ```json
 {
-  "filePath": "/Users/apalala/art/tiexiu/src/peg/exp.rs",
+  "filePath": "/Users/apalala/art/tiexiu/src/peg/exp_json",
   "limit": 10,
   "offset": 30
 }
@@ -1681,8 +1681,8 @@ The hex output shows `Str` is present at those positions. Let me verify that ast
 **Input:**
 ```json
 {
-  "command": "sg -l rust -p 'Str,' src/peg/exp.rs 2>&1 | head -20",
-  "description": "Search Str with comma in exp.rs"
+  "command": "sg -l rust -p 'Str,' src/peg/exp_json 2>&1 | head -20",
+  "description": "Search Str with comma in exp_json"
 }
 ```
 
@@ -1731,7 +1731,7 @@ Let me try using this rule to find all enum variants.
 **Input:**
 ```json
 {
-  "command": "ast-grep scan -c ./tmp/rule.yml src/peg/exp.rs 2>&1 | head -20",
+  "command": "ast-grep scan -c ./tmp/rule.yml src/peg/exp_json 2>&1 | head -20",
   "description": "Scan with enum rule"
 }
 ```
@@ -1790,7 +1790,7 @@ Let me try scanning with this rule.
 **Input:**
 ```json
 {
-  "command": "ast-grep scan -c ./tmp/test_rule.yml src/peg/exp.rs 2>&1 | head -20",
+  "command": "ast-grep scan -c ./tmp/test_rule.yml src/peg/exp_json 2>&1 | head -20",
   "description": "Scan with rules format"
 }
 ```
@@ -1808,7 +1808,7 @@ This is getting really strange. Let me try something different - maybe there's a
 **Input:**
 ```json
 {
-  "command": "cp src/peg/exp.rs /tmp/exp_copy.rs && sg -l rust -p 'ERef' /tmp/exp_copy.rs 2>&1",
+  "command": "cp src/peg/exp_json /tmp/exp_copy.rs && sg -l rust -p 'ERef' /tmp/exp_copy.rs 2>&1",
   "description": "Copy and test"
 }
 ```
@@ -2924,7 +2924,7 @@ It's already been partially renamed! `serde_import.rs` uses `ExpRef` but `into_j
 **Input:**
 ```json
 {
-  "filePath": "/Users/apalala/art/tiexiu/src/peg/exp.rs",
+  "filePath": "/Users/apalala/art/tiexiu/src/peg/exp_json",
   "limit": 15
 }
 ```
