@@ -7,6 +7,7 @@ apply: always
 ## Interaction
 
 - Never change files without a plan and user authorization
+- Never change more than the files explicitly named in the authorization
 - Always consult with the User before making changes that impact multiple files
 - Evaluate changes before applying them (no "apply and see" approach)
 - Do not act on assumptions. Always verify assumptions with the User.
