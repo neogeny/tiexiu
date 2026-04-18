@@ -30,7 +30,7 @@ where
     let _ = cfg;
     let boot = boot_grammar()?;
     let mut ctx = CoreCtx::new(cursor);
-    ctx.configure(&Cfg::new(cfg));
+    ctx.configure(&cfg.into());
     if Cfg::new(cfg).is_enabled("trace") {
         ctx.set_trace(true);
     }
@@ -149,7 +149,7 @@ pub fn parse_input(parser: &Grammar, text: &str, cfg: CfgA) -> Result<Tree> {
 
 pub fn parse_input_to_json(parser: &Grammar, text: &str, cfg: CfgA) -> Result<String> {
     let tree = parse_input(parser, text, cfg)?;
-    Ok(tree.to_json_str().to_string())
+    Ok(tree.as_json_str().to_string())
 }
 
 pub fn parse(grammar: &str, text: &str, cfg: CfgA) -> Result<Tree> {
