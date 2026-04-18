@@ -18,7 +18,9 @@ pub mod parser;
 pub mod pretty;
 pub mod rule;
 
-pub use compiler::{CompileError, CompileResult, GrammarCompiler};
+pub use compiler::GrammarCompiler;
+pub use error::CompileError;
+pub use error::CompileResult;
 pub use error::ParseError;
 pub use exp::{Exp, ExpKind};
 pub use grammar::Grammar;

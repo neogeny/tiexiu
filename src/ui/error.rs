@@ -3,7 +3,8 @@
 
 use crate::error as liberror;
 use crate::json::error::JsonError;
-use crate::peg::{CompileError, ParseError};
+use crate::peg::ParseError;
+use crate::peg::error::CompileError;
 use thiserror::Error;
 
 #[derive(Debug, Error)]

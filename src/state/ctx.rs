@@ -119,8 +119,13 @@ pub trait Ctx: CtxI + Clone + Debug {
     }
     fn prune_cache(&mut self);
 
-    fn is_keyword(&self, name: &str) -> bool;
-    fn set_keywords(&mut self, keywords: &[Box<str>]);
+    fn is_keyword(&self, name: &str) -> bool {
+        let _ = name;
+        false
+    }
+    fn set_keywords(&mut self, keywords: &[Box<str>]) {
+        let _ = keywords;
+    }
 
     fn call(mut self, name: &str, rule: &Rule) -> ParseResult<Self> {
         let start = self.mark();

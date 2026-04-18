@@ -1,59 +1,11 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use super::error::{CompileError, CompileResult};
 use super::{Exp, Grammar, Rule};
 use crate::peg::grammar::{GrammarDirectives, KeywordRef};
-use crate::peg::rule::RuleName;
+use crate::peg::rule::{RuleMap, RuleRef};
 use crate::trees::{FlagMap, Tree, TreeMap};
-use indexmap::IndexMap;
-use thiserror::Error;
-
-pub type CompileResult<T> = Result<T, CompileError>;
-
-#[derive(Debug, Error, Clone, PartialEq)]
-pub enum CompileError {
-    #[error("expected {0} to be a Tree::Node")]
-    ExpectedNode(String),
-
-    #[error("expected {0} to contain a Tree::Map")]
-    ExpectedMap(String),
-
-    #[error("expected {0} to be Tree::Text")]
-    ExpectedText(&'static str),
-
-    #[error("expected {0} to be Tree::List")]
-    ExpectedList(String),
-
-    #[error("expected {0} to be Tree::List or Tree::Nil")]
-    ExpectedListOrNil(&'static str),
-
-    #[error("expected {0} to be Tree::Text or Tree::Nil")]
-    ExpectedTextOrNil(&'static str),
-
-    #[error("expected {context} to contain key '{key}'")]
-    MissingKey {
-        context: &'static str,
-        key: &'static str,
-    },
-
-    #[error("expected {0}")]
-    ExpectedField(&'static str),
-
-    #[error("expected {expected}, found '{found}'")]
-    UnexpectedNodeName {
-        expected: &'static str,
-        found: Box<str>,
-    },
-
-    #[error("expected {expected}, found '{found}'")]
-    UnexpectedTypeName { expected: Box<str>, found: Box<str> },
-
-    #[error("{0} is not implemented")]
-    NotImplemented(&'static str),
-
-    #[error("Unknown expression type '{0}'")]
-    UnknownExpressionType(Box<str>),
-}
 
 #[derive(Debug, Default)]
 pub struct GrammarCompiler {}
@@ -112,25 +64,26 @@ impl GrammarCompiler {
     pub fn compile_grammar(&mut self, tree: &Tree) -> CompileResult<Grammar> {
         let map = parse_node_check(tree, "Grammar")?;
 
+        let mut rulemap: RuleMap = RuleMap::new();
         let rule_trees = map_get(map, "Grammar", "rules")?.list_value();
-        let mut rulemap: IndexMap<RuleName, Rule> = IndexMap::new();
         for rtree in rule_trees {
             let rule = self.compile_rule(&rtree)?;
-            rulemap.insert(rule.name.clone(), rule);
+            rulemap.insert(rule.name.clone(), rule.into());
         }
 
-        let rules: Vec<Rule> = rulemap.into_iter().map(|(_, r)| r).collect();
+        let rules: Vec<RuleRef> = rulemap.into_iter().map(|(_, r)| r).collect();
         let name = map_get_default(map, "name", "__COMPILED__");
 
-        let directives_tree = map_get(map, "Grammar", "directives")?;
-        let directives_list = _parse_list(directives_tree)?;
-        let directives: GrammarDirectives =
-            GrammarDirectives::from_iter(directives_list.iter().map(|d| {
+        let mut directives: GrammarDirectives = GrammarDirectives::new(&[]);
+        if let Ok(directives_tree) = map_get(map, "Grammar", "directives") {
+            let directives_list = _parse_list(directives_tree)?;
+            directives = GrammarDirectives::from_iter(directives_list.iter().map(|d| {
                 let dm = _parse_map(d).expect("directive should be a Map");
                 let name = dm.get("name").expect("name key").value();
                 let value = dm.get("value").expect("value key").value();
                 (name.to_string(), value.to_string())
             }));
+        }
         let keywords: Vec<KeywordRef> =
             if let Ok(keywords_tree) = map_get(map, "Grammar", "keywords") {
                 let keywords_nested = _parse_list(keywords_tree)?;

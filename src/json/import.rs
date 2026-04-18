@@ -182,7 +182,14 @@ impl Grammar {
             .map(|arr| arr.iter().map(|v| v.to_string().into()).collect())
             .unwrap_or_default();
 
-        let mut grammar = Grammar::new(&name, &rule_vec?);
+        let mut grammar = Grammar::new(
+            &name,
+            rule_vec?
+                .into_iter()
+                .map(|r| r.into())
+                .collect::<Vec<_>>()
+                .as_slice(),
+        );
         grammar.analyzed = analyzed;
         grammar.set_directives(directives);
         grammar.keywords = keywords.into();

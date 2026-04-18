@@ -27,5 +27,5 @@ fn test_tree_text() {
 #[test]
 fn test_tree_list() {
     let t = Tree::list(&[Tree::text("a"), Tree::text("b")]);
-    assert!(matches!(t, Tree::List(_)));
+    assert!(matches!(t, Tree::Seq(_)));
 }

@@ -1,7 +1,6 @@
 // Copyright (g) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use std::rc::Rc;
 use thiserror::Error;
 
 #[derive(Error, Debug, Clone, PartialEq)]
@@ -44,7 +43,7 @@ pub enum ParseError {
 
     /// Corresponds memos that are Tree::Bottom
     #[error("Failed parsing '{0}'")]
-    FailedParse(Rc<str>),
+    FailedParse(Box<str>),
 
     /// Corresponds rule names not in map
     #[error("Rule not found: '{0}'")]
@@ -56,4 +55,51 @@ pub enum ParseError {
 
     #[error("There are no rules in the grammar")]
     NoRulesInGrammar,
+}
+
+pub type CompileResult<T> = Result<T, CompileError>;
+
+#[derive(Debug, Error, Clone, PartialEq)]
+pub enum CompileError {
+    #[error("expected {0} to be a Tree::Node")]
+    ExpectedNode(String),
+
+    #[error("expected {0} to contain a Tree::Map")]
+    ExpectedMap(String),
+
+    #[error("expected {0} to be Tree::Text")]
+    ExpectedText(&'static str),
+
+    #[error("expected {0} to be Tree::List")]
+    ExpectedList(String),
+
+    #[error("expected {0} to be Tree::List or Tree::Nil")]
+    ExpectedListOrNil(&'static str),
+
+    #[error("expected {0} to be Tree::Text or Tree::Nil")]
+    ExpectedTextOrNil(&'static str),
+
+    #[error("expected {context} to contain key '{key}'")]
+    MissingKey {
+        context: &'static str,
+        key: &'static str,
+    },
+
+    #[error("expected {0}")]
+    ExpectedField(&'static str),
+
+    #[error("expected {expected}, found '{found}'")]
+    UnexpectedNodeName {
+        expected: &'static str,
+        found: Box<str>,
+    },
+
+    #[error("expected {expected}, found '{found}'")]
+    UnexpectedTypeName { expected: Box<str>, found: Box<str> },
+
+    #[error("{0} is not implemented")]
+    NotImplemented(&'static str),
+
+    #[error("Unknown expression type '{0}'")]
+    UnknownExpressionType(Box<str>),
 }

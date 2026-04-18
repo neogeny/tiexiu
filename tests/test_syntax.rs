@@ -22,7 +22,6 @@ fn parse_input(grammar: &Grammar, input: &str) -> tiexiu::trees::Tree {
 // ============================================================================
 
 #[test]
-#[ignore = "TODO: Fix syntax failures"]
 fn test_update_ast() {
     let grammar = r#"
         start = 'test' $ ;
@@ -76,7 +75,6 @@ fn test_ast_assignment() {
 }
 
 #[test]
-#[ignore = "TODO: Fix syntax failures"]
 fn test_optional_closure() {
     let grammar = r#"
         start = foo+:"x" foo:{"y"}* {foo:"z"}* ;
@@ -87,7 +85,6 @@ fn test_optional_closure() {
 }
 
 #[test]
-#[ignore = "TODO: Fix syntax failures"]
 fn test_optional_sequence() {
     let grammar = r#"
         start = '1' ['2' '3'] '4' $ ;
@@ -98,7 +95,6 @@ fn test_optional_sequence() {
 }
 
 #[test]
-#[ignore = "TODO: Fix syntax failures"]
 fn test_group_ast() {
     let grammar = r#"
         start = '1' ('2' '3') '4' $ ;
@@ -109,7 +105,6 @@ fn test_group_ast() {
 }
 
 #[test]
-#[ignore = "TODO: Fix syntax failures"]
 fn test_partial_options() {
     let grammar = r#"
         start = [a] ['A' 'A' | 'A' 'B'] $ ;

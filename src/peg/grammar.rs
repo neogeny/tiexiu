@@ -41,12 +41,8 @@ impl Default for Grammar {
 }
 
 impl Grammar {
-    pub fn new(name: &str, rules: &[Rule]) -> Self {
-        let rules: RuleMap = rules
-            .iter()
-            .cloned()
-            .map(|r| (r.name.clone(), r.into()))
-            .collect();
+    pub fn new(name: &str, rules: &[RuleRef]) -> Self {
+        let rules: RuleMap = rules.iter().cloned().map(|r| (r.name.clone(), r)).collect();
         let mut grammar = Self {
             name: name.into(),
             analyzed: false,
@@ -180,7 +176,7 @@ mod tests {
     fn grammar_with_rules() {
         let exp = Exp::nil();
         let rule = Rule::new("start", &[], exp);
-        let grammar = Grammar::new("Test", &[rule]);
+        let grammar = Grammar::new("Test", &[rule.into()]);
         let count = grammar.rules().count();
         assert_eq!(count, 1);
     }
@@ -189,7 +185,7 @@ mod tests {
     fn get_rule() {
         let exp = Exp::nil();
         let rule = Rule::new("start", &[], exp.clone());
-        let grammar = Grammar::new("Test", &[rule]);
+        let grammar = Grammar::new("Test", &[rule.into()]);
         assert!(grammar.get_rule("start").is_ok());
     }
 

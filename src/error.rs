@@ -3,7 +3,8 @@
 
 use crate::json::error::JsonError;
 use crate::json::tree_json::TreeJsonError;
-use crate::peg::{CompileError, Nope, ParseError};
+use crate::peg::error::CompileError;
+use crate::peg::{Nope, ParseError};
 use thiserror::Error;
 
 pub type Result<T> = std::result::Result<T, Error>;

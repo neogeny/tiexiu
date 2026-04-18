@@ -5,7 +5,7 @@ use crate::json::error::JsonError;
 use crate::json::tatsu::model::TatSuModel;
 use crate::peg::exp::{ERef, Exp};
 use crate::peg::grammar::{Grammar, GrammarDirectives};
-use crate::peg::rule::Rule;
+use crate::peg::rule::{Rule, RuleRef};
 
 impl TryFrom<TatSuModel> for ERef {
     type Error = JsonError;
@@ -37,7 +37,7 @@ impl TryFrom<TatSuModel> for Grammar {
             analyzed,
         } = model
         {
-            let mut rule_vec: Vec<Rule> = vec![];
+            let mut rule_vec: Vec<RuleRef> = vec![];
             for rule_model in rules {
                 if let TatSuModel::Rule {
                     name,
@@ -58,7 +58,7 @@ impl TryFrom<TatSuModel> for Grammar {
                     let rule = Rule::from_parts(
                         name, params, rhs, is_name, is_tokn, no_memo, is_memo, is_lrec,
                     );
-                    rule_vec.push(rule);
+                    rule_vec.push(rule.into());
                 }
             }
             let str_directives = GrammarDirectives::from_iter(directives.iter().map(|(k, v)| {
@@ -66,7 +66,7 @@ impl TryFrom<TatSuModel> for Grammar {
 
                 (k.as_str(), val_str)
             }));
-            let mut grammar = Grammar::new(name.as_str(), &rule_vec);
+            let mut grammar = Grammar::new(name.as_str(), rule_vec.as_slice());
             grammar.analyzed = analyzed;
             grammar.set_directives(str_directives);
             grammar.keywords = keywords;

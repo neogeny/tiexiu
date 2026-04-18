@@ -5,25 +5,21 @@
 //! These functions are NOT implemented in TieXiu yet.
 
 #[test]
-#[ignore = "TODO: Fix safe_name failures"]
 fn test_safe_name_valid_cases() {
     unimplemented!("safe_name not implemented");
 }
 
 #[test]
-#[ignore = "TODO: Fix safe_name failures"]
 fn test_safe_name_unicode_cases() {
     unimplemented!("safe_name not implemented");
 }
 
 #[test]
-#[ignore = "TODO: Fix safe_name failures"]
 fn test_pythonize_name() {
     unimplemented!("pythonize_name not implemented");
 }
 
 #[test]
-#[ignore = "TODO: Fix safe_name failures"]
 fn test_pythonize_name_unicode() {
     unimplemented!("pythonize_name not implemented");
 }

@@ -428,8 +428,10 @@ mod tests {
 
     #[test]
     fn choice_restores_entered_cut_on_success() {
-        let grammar =
-            crate::peg::Grammar::new("test", &[Rule::new("start", &[], Exp::token("abc"))]);
+        let grammar = crate::peg::Grammar::new(
+            "test",
+            &[RuleRef::from(Rule::new("start", &[], Exp::token("abc")))],
+        );
         let _ = grammar;
         let mut ctx = StrCtx::new(StrCursor::new("abc"));
         ctx.setcut();
@@ -447,8 +449,10 @@ mod tests {
 
     #[test]
     fn choice_returns_err_when_all_options_fail() {
-        let grammar =
-            crate::peg::Grammar::new("test", &[Rule::new("start", &[], Exp::token("xyz"))]);
+        let grammar = crate::peg::Grammar::new(
+            "test",
+            &[RuleRef::from(Rule::new("start", &[], Exp::token("xyz")))],
+        );
         let _ = grammar;
         let mut ctx = StrCtx::new(StrCursor::new("abc"));
         ctx.setcut();
@@ -464,8 +468,10 @@ mod tests {
 
     #[test]
     fn choice_clears_when_no_cut_enters() {
-        let grammar =
-            crate::peg::Grammar::new("test", &[Rule::new("start", &[], Exp::token("abc"))]);
+        let grammar = crate::peg::Grammar::new(
+            "test",
+            &[RuleRef::from(Rule::new("start", &[], Exp::token("abc")))],
+        );
         let _ = grammar;
         let ctx = StrCtx::new(StrCursor::new("abc"));
         assert!(!ctx.cut_seen(), "ctx should not have cut set");
@@ -482,8 +488,10 @@ mod tests {
 
     #[test]
     fn optional_restores_entered_cut_on_success() {
-        let grammar =
-            crate::peg::Grammar::new("test", &[Rule::new("start", &[], Exp::token("abc"))]);
+        let grammar = crate::peg::Grammar::new(
+            "test",
+            &[RuleRef::from(Rule::new("start", &[], Exp::token("abc")))],
+        );
         let _ = grammar;
         let mut ctx = StrCtx::new(StrCursor::new("abc"));
         ctx.setcut();
@@ -502,7 +510,7 @@ mod tests {
     #[test]
     fn optional_restores_entered_cut_on_failure() {
         let grammar =
-            crate::peg::Grammar::new("test", &[Rule::new("start", &[], Exp::token("xyz"))]);
+            crate::peg::Grammar::new("test", &[Rule::new("start", &[], Exp::token("xyz")).into()]);
         let _ = grammar;
         let mut ctx = StrCtx::new(StrCursor::new("abc"));
         ctx.setcut();
@@ -521,7 +529,7 @@ mod tests {
     #[test]
     fn optional_clears_when_no_cut_enters() {
         let grammar =
-            crate::peg::Grammar::new("test", &[Rule::new("start", &[], Exp::token("abc"))]);
+            crate::peg::Grammar::new("test", &[Rule::new("start", &[], Exp::token("abc")).into()]);
         let _ = grammar;
         let ctx = StrCtx::new(StrCursor::new("abc"));
         assert!(!ctx.cut_seen(), "ctx should not have cut set");
