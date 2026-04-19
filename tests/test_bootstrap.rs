@@ -300,7 +300,7 @@ mod parse_naming {
         let boot = boot_grammar();
         let grammar = r#"
             @@grammar :: RWP
-            start: foo[bar]
+            start: foo
             foo[param]: 'x' param
         "#;
         let tree = parse_ebnf(&boot, grammar);
