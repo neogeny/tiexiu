@@ -5,8 +5,10 @@ use crate::trees::{KeyValue, Tree, TreeMap};
 use serde_json::{Map, Value};
 
 impl Tree {
-    pub fn as_json_str(&self) -> Box<str> {
-        format!("{:#?}", self.as_json()).into()
+    pub fn as_json_str(&self) -> String {
+        serde_json::to_string_pretty(
+            &self.as_json())
+            .unwrap()
     }
 
     pub fn as_json(&self) -> Value {

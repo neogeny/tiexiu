@@ -6,13 +6,11 @@ use tiexiu::cfg::constants::PATH_TATSU_GRAMMAR_EBNF;
 
 pub fn check_exp_for_unlinked(exp: &Exp, path: &str, grammar: &Grammar) {
     match &exp.kind {
-        ExpKind::Call { name, rule } => {
-            if rule.is_none() {
-                println!("  {}: Call to '{}' is NOT linked", path, name);
-                match grammar.get_rule(name) {
-                    Ok(r) => println!("    BUT '{}' exists in grammar as rule '{}'", name, r.name),
-                    Err(_) => println!("    AND '{}' does NOT exist in grammar", name),
-                }
+        ExpKind::Call { name, rule: None } => {
+            println!("  {}: Call to '{}' is NOT linked", path, name);
+            match grammar.get_rule(name) {
+                Ok(r) => println!("    BUT '{}' exists in grammar as rule '{}'", name, r.name),
+                Err(_) => println!("    AND '{}' does NOT exist in grammar", name),
             }
         }
         ExpKind::Sequence(items) => {
@@ -50,13 +48,11 @@ pub fn check_exp_for_unlinked(exp: &Exp, path: &str, grammar: &Grammar) {
             check_exp_for_unlinked(e1, &format!("{}.exp", path), grammar);
             check_exp_for_unlinked(sep, &format!("{}.sep", path), grammar);
         }
-        ExpKind::RuleInclude { name: ri_name, exp } => {
-            if exp.is_none() {
-                println!("  {}: RuleInclude '{}' is NOT resolved", path, ri_name);
-                match grammar.get_rule(ri_name) {
-                    Ok(r) => println!("    Rule '{}' exists in grammar", r.name),
-                    Err(_) => println!("    AND '{}' does NOT exist in grammar", ri_name),
-                }
+        ExpKind::RuleInclude { name: ri_name, exp: None } => {
+            println!("  {}: RuleInclude '{}' is NOT resolved", path, ri_name);
+            match grammar.get_rule(ri_name) {
+                Ok(r) => println!("    Rule '{}' exists in grammar", r.name),
+                Err(_) => println!("    AND '{}' does NOT exist in grammar", ri_name),
             }
         }
         _ => {}

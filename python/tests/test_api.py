@@ -47,7 +47,7 @@ def test_parse():
 def test_parse_to_json():
     json_str = tiexiu.parse_to_json("start = /a/", "a")
     assert json_str is not None
-    assert "Pattern" in json_str
+    assert json_str == '"a"'
 
 
 def test_kwargs_int():

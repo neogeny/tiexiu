@@ -149,7 +149,7 @@ pub fn parse_input(parser: &Grammar, text: &str, cfg: CfgA) -> Result<Tree> {
 
 pub fn parse_input_to_json(parser: &Grammar, text: &str, cfg: CfgA) -> Result<String> {
     let tree = parse_input(parser, text, cfg)?;
-    Ok(tree.as_json_str().to_string())
+    Ok(tree.as_json_str())
 }
 
 pub fn parse(grammar: &str, text: &str, cfg: CfgA) -> Result<Tree> {
