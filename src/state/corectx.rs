@@ -44,7 +44,8 @@ impl<'c, U> CoreCtx<'c, U>
 where
     U: Cursor + Clone,
 {
-    pub fn new(cursor: U) -> Self {
+    pub fn new(cursor: U, cfg: &CfgA) -> Self {
+        let _ = cfg;
         Self {
             state: Cow::Owned(
                 State {
@@ -114,10 +115,10 @@ impl<'c, U> Configurable for CoreCtx<'c, U>
 where
     U: Cursor + Clone,
 {
-    fn configure(&mut self, cfg: &Cfg) {
+    fn configure(&mut self, cfg: &CfgBox) {
         self.cursor_mut().configure(cfg);
 
-        if cfg.contains(&CfgK::Trace) {
+        if cfg.contains(&Cfg::Trace) {
             self.set_trace(true);
         }
     }
@@ -207,7 +208,7 @@ mod tests {
     #[test]
     fn new_context() {
         let cursor = StrCursor::new("test");
-        let ctx = CoreCtx::new(cursor);
+        let ctx = CoreCtx::new(cursor, &[]);
 
         assert!(!ctx.cut_seen());
     }
@@ -215,7 +216,7 @@ mod tests {
     #[test]
     fn enter_rule() {
         let cursor = StrCursor::new("test");
-        let mut ctx = CoreCtx::new(cursor);
+        let mut ctx = CoreCtx::new(cursor, &[]);
 
         ctx.enter("rule");
 
@@ -226,7 +227,7 @@ mod tests {
     #[test]
     fn cut_and_uncut() {
         let cursor = StrCursor::new("test");
-        let mut ctx = CoreCtx::new(cursor);
+        let mut ctx = CoreCtx::new(cursor, &[]);
 
         ctx.setcut();
         assert!(ctx.cut_seen());
@@ -238,7 +239,7 @@ mod tests {
     #[test]
     fn get_pattern_caches() {
         let cursor = StrCursor::new("test");
-        let ctx = CoreCtx::new(cursor);
+        let ctx = CoreCtx::new(cursor, &[]);
 
         let p1 = ctx.get_pattern(r"\d+");
         let p2 = ctx.get_pattern(r"\d+");

@@ -6,7 +6,7 @@ use std::ops::Deref;
 
 // NOTE! Order matters here! Debug < Mode < Trace
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Default)]
-pub enum CfgK {
+pub enum Cfg {
     #[default]
     None,
 
@@ -29,81 +29,97 @@ pub enum CfgK {
 }
 
 #[derive(Clone, Default, Debug)]
-pub struct Cfg(cfg::Cfg<CfgK>);
+pub struct CfgBox {
+    cfg: cfg::CfgBox<Cfg>,
+}
 
-pub type CfgA<'c> = cfg::CfgA<'c, CfgK>;
+pub type CfgA = cfg::CfgA<Cfg>;
 
 /// Specialized trait for types that can be configured with the project-specific Cfg.
 pub trait Configurable {
-    fn configure(&mut self, _cfg: &Cfg) {}
+    fn configure(&mut self, _cfg: &CfgBox) {}
 }
 
-impl cfg::CfgMapper<CfgK> for Cfg {
-    fn map(key: &str, value: &str) -> Option<CfgK> {
-        Cfg::map(key, value)
+impl cfg::CfgMapper<Cfg> for CfgBox {
+    fn map(key: &str, value: &str) -> Option<Cfg> {
+        CfgBox::map(key, value)
     }
 }
 
-impl Cfg {
-    pub fn new(options: CfgA) -> Self {
-        Self(cfg::Cfg::new(options))
+impl From<&CfgA> for CfgBox {
+    fn from(cfg: &CfgA) -> Self {
+        Self::new(cfg)
+    }
+}
+
+impl CfgBox {
+    pub fn new(options: &CfgA) -> Self {
+        Self {
+            cfg: cfg::CfgBox::new(options),
+        }
     }
 
-    pub fn map(key: &str, value: &str) -> Option<CfgK> {
+    pub fn map(key: &str, value: &str) -> Option<Cfg> {
         use super::constants::*;
         let is_truthy = !is_falsy(value);
 
         match (key.to_lowercase().as_str(), value) {
-            ("trace", "1") => Some(CfgK::Trace),
-            ("debug", "1") => Some(CfgK::Debug),
-            ("verbose", "1") => Some(CfgK::Verbose),
+            ("trace", "1") => Some(Cfg::Trace),
+            ("debug", "1") => Some(Cfg::Debug),
+            ("verbose", "1") => Some(Cfg::Verbose),
 
-            (STR_GRAMMAR_NAME, name) => Some(CfgK::Grammar(name.to_string())),
-            (STR_WSP, pattern) => Some(CfgK::Wsp(pattern.to_string())),
-            (STR_CMT, pattern) => Some(CfgK::Cmt(pattern.to_string())),
-            (STR_EOL, pattern) => Some(CfgK::Eol(pattern.to_string())),
+            (STR_GRAMMAR_NAME, name) => Some(Cfg::Grammar(name.to_string())),
+            (STR_WSP, pattern) => Some(Cfg::Wsp(pattern.to_string())),
+            (STR_CMT, pattern) => Some(Cfg::Cmt(pattern.to_string())),
+            (STR_EOL, pattern) => Some(Cfg::Eol(pattern.to_string())),
 
-            ("ignorecase", _) if is_truthy => Some(CfgK::IgnoreCase),
-            ("nameguard", _) if !is_truthy => Some(CfgK::NoNameGuard),
-            ("left_recursion", _) if !is_truthy => Some(CfgK::NoLeftRecursion),
-            ("parseinfo", _) if !is_truthy => Some(CfgK::NoParseInfo),
-            ("memoization", _) if !is_truthy => Some(CfgK::NoMemoization),
-            ("namechars", pattern) => Some(CfgK::NameChars(pattern.to_string())),
+            ("ignorecase", _) if is_truthy => Some(Cfg::IgnoreCase),
+            ("nameguard", _) if !is_truthy => Some(Cfg::NoNameGuard),
+            ("left_recursion", _) if !is_truthy => Some(Cfg::NoLeftRecursion),
+            ("parseinfo", _) if !is_truthy => Some(Cfg::NoParseInfo),
+            ("memoization", _) if !is_truthy => Some(Cfg::NoMemoization),
+            ("namechars", pattern) => Some(Cfg::NameChars(pattern.to_string())),
 
             _ => None,
         }
     }
 
-    pub fn merge(&self, other: &Cfg) -> Self {
-        Self(self.0.merge(&other.0))
+    pub fn merge(&self, other: &CfgBox) -> Self {
+        Self {
+            cfg: self.cfg.merge(&other.cfg),
+        }
     }
 
     pub fn load_from_env(prefix: &str) -> Self {
-        Self(<Self as cfg::CfgMapper<CfgK>>::load_from_env(prefix))
+        Self {
+            cfg: <Self as cfg::CfgMapper<Cfg>>::load_from_env(prefix),
+        }
     }
 }
 
-impl Deref for Cfg {
-    type Target = cfg::Cfg<CfgK>;
+impl Deref for CfgBox {
+    type Target = cfg::CfgBox<Cfg>;
     fn deref(&self) -> &Self::Target {
-        &self.0
+        &self.cfg
     }
 }
 
-impl FromIterator<CfgK> for Cfg {
-    fn from_iter<I: IntoIterator<Item = CfgK>>(iter: I) -> Self {
-        Self(cfg::Cfg::from_iter(iter))
+impl FromIterator<Cfg> for CfgBox {
+    fn from_iter<I: IntoIterator<Item = Cfg>>(iter: I) -> Self {
+        Self {
+            cfg: cfg::CfgBox::from_iter(iter),
+        }
     }
 }
 
-impl<'a, const N: usize> From<&'a [CfgK; N]> for Cfg {
-    fn from(options: &'a [CfgK; N]) -> Self {
+impl<'a, const N: usize> From<&'a [Cfg; N]> for CfgBox {
+    fn from(options: &'a [Cfg; N]) -> Self {
         Self::new(options.as_slice())
     }
 }
 
-impl From<Vec<CfgK>> for Cfg {
-    fn from(options: Vec<CfgK>) -> Self {
+impl From<Vec<Cfg>> for CfgBox {
+    fn from(options: Vec<Cfg>) -> Self {
         options.into_iter().collect()
     }
 }
@@ -121,13 +137,13 @@ mod tests {
 
     #[test]
     fn test_cfg_concrete() {
-        let options = [CfgK::Trace, CfgK::Debug];
-        let cfg = Cfg::new(&options);
+        let options = [Cfg::Trace, Cfg::Debug];
+        let cfg = CfgBox::new(&options);
 
         // Tests Deref to access generic Cfg methods
-        assert!(cfg.contains(&CfgK::Trace));
-        assert!(cfg.contains(&CfgK::Debug));
-        assert!(!cfg.contains(&CfgK::Verbose));
+        assert!(cfg.contains(&Cfg::Trace));
+        assert!(cfg.contains(&Cfg::Debug));
+        assert!(!cfg.contains(&Cfg::Verbose));
     }
 
     #[test]
@@ -138,18 +154,21 @@ mod tests {
             env::set_var("TIEXIU_PARSEINFO", "False");
         }
 
-        let cfg = Cfg::load_from_env("TIEXIU_");
+        let cfg = CfgBox::load_from_env("TIEXIU_");
 
-        assert!(cfg.contains(&CfgK::Trace));
-        assert!(cfg.contains(&CfgK::Wsp(r"\s+".to_string())));
-        assert!(cfg.contains(&CfgK::NoParseInfo));
+        assert!(cfg.contains(&Cfg::Trace));
+        assert!(cfg.contains(&Cfg::Wsp(r"\s+".to_string())));
+        assert!(cfg.contains(&Cfg::NoParseInfo));
     }
 
     #[test]
     fn test_bool_mapping() {
-        assert_eq!(Cfg::map("ignorecase", "True"), Some(CfgK::IgnoreCase));
-        assert_eq!(Cfg::map("parseinfo", "False"), Some(CfgK::NoParseInfo));
-        assert_eq!(Cfg::map("parseinfo", "True"), None);
-        assert_eq!(Cfg::map("left_recursion", "0"), Some(CfgK::NoLeftRecursion));
+        assert_eq!(CfgBox::map("ignorecase", "True"), Some(Cfg::IgnoreCase));
+        assert_eq!(CfgBox::map("parseinfo", "False"), Some(Cfg::NoParseInfo));
+        assert_eq!(CfgBox::map("parseinfo", "True"), None);
+        assert_eq!(
+            CfgBox::map("left_recursion", "0"),
+            Some(Cfg::NoLeftRecursion)
+        );
     }
 }

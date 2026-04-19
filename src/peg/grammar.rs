@@ -12,7 +12,7 @@ use std::rc::Rc;
 
 pub type KeywordRef = Box<str>;
 pub type GrammarKeywords = Box<[KeywordRef]>;
-pub type GrammarDirectives = Cfg;
+pub type GrammarDirectives = CfgBox;
 
 #[derive(Debug, Clone)]
 pub struct Grammar {
@@ -65,10 +65,10 @@ impl Grammar {
     pub fn set_directives(&mut self, directives: GrammarDirectives) {
         self.directives = directives;
         // In the new CfgK model, we can find the grammar name directly using binary search.
-        if let Some(CfgK::Grammar(name)) = self
+        if let Some(Cfg::Grammar(name)) = self
             .directives
             .iter()
-            .find(|k| matches!(k, CfgK::Grammar(_)))
+            .find(|k| matches!(k, Cfg::Grammar(_)))
         {
             self.name = name.clone().into_boxed_str();
         }

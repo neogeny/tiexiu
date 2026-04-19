@@ -389,34 +389,34 @@ mod tests {
         let token_a = Exp::token("a");
         let cursor = StrCursor::new("a");
         println!("cursor on 'a': {:?}", cursor);
-        let result_a = token_a.parse(StrCtx::new(cursor));
+        let result_a = token_a.parse(StrCtx::new(cursor, &[]));
         println!("token('a') on 'a': {:?}", result_a);
         assert!(result_a.is_ok(), "token('a') should match 'a'");
 
         let exp1 = Exp::sequence(vec![Exp::token("a"), Exp::token("b")]);
-        let result1_ok = exp1.parse(StrCtx::new(StrCursor::new("a b")));
+        let result1_ok = exp1.parse(StrCtx::new(StrCursor::new("a b"), &[]));
         println!("exp1 on 'a b': {:?}", result1_ok);
         assert!(result1_ok.is_ok(), "sequence 1 should succeed on 'a b'");
 
-        let result1_err = exp1.parse(StrCtx::new(StrCursor::new("a c x")));
+        let result1_err = exp1.parse(StrCtx::new(StrCursor::new("a c x"), &[]));
         println!("exp1 on 'a c x': {:?}", result1_err);
         let err1 = result1_err.unwrap_err();
         assert_eq!(err1.mark, 2);
         assert_eq!(err1.source, ParseError::ExpectedToken("b".into()).into());
 
         let exp2 = Exp::sequence(vec![Exp::token("a"), Exp::token("c"), Exp::token("d")]);
-        let result2_ok = exp2.parse(StrCtx::new(StrCursor::new("a c d")));
+        let result2_ok = exp2.parse(StrCtx::new(StrCursor::new("a c d"), &[]));
         println!("exp2 on 'a c d': {:?}", result2_ok);
         assert!(result2_ok.is_ok(), "sequence 2 should succeed on 'a c d'");
 
-        let result2_err = exp2.parse(StrCtx::new(StrCursor::new("a c x")));
+        let result2_err = exp2.parse(StrCtx::new(StrCursor::new("a c x"), &[]));
         println!("exp2 on 'a c x': {:?}", result2_err);
         let err2 = result2_err.unwrap_err();
         assert_eq!(err2.mark, 4);
         assert_eq!(err2.source, ParseError::ExpectedToken("d".into()).into());
 
         let exp = Exp::choice(vec![exp1, exp2]);
-        let ctx = StrCtx::new(StrCursor::new("a c x"));
+        let ctx = StrCtx::new(StrCursor::new("a c x"), &[]);
 
         let result = exp.parse(ctx);
         println!("choice on 'a c x': {:?}", result);
@@ -433,7 +433,7 @@ mod tests {
             &[RuleRef::from(Rule::new("start", &[], Exp::token("abc")))],
         );
         let _ = grammar;
-        let mut ctx = StrCtx::new(StrCursor::new("abc"));
+        let mut ctx = StrCtx::new(StrCursor::new("abc"), &[]);
         ctx.setcut();
         assert!(ctx.cut_seen(), "ctx should have cut set before choice");
 
@@ -454,7 +454,7 @@ mod tests {
             &[RuleRef::from(Rule::new("start", &[], Exp::token("xyz")))],
         );
         let _ = grammar;
-        let mut ctx = StrCtx::new(StrCursor::new("abc"));
+        let mut ctx = StrCtx::new(StrCursor::new("abc"), &[]);
         ctx.setcut();
         assert!(ctx.cut_seen(), "ctx should have cut set before choice");
 
@@ -473,7 +473,7 @@ mod tests {
             &[RuleRef::from(Rule::new("start", &[], Exp::token("abc")))],
         );
         let _ = grammar;
-        let ctx = StrCtx::new(StrCursor::new("abc"));
+        let ctx = StrCtx::new(StrCursor::new("abc"), &[]);
         assert!(!ctx.cut_seen(), "ctx should not have cut set");
 
         let exp = Exp::choice(vec![Exp::token("abc"), Exp::token("xyz")]);
@@ -493,7 +493,7 @@ mod tests {
             &[RuleRef::from(Rule::new("start", &[], Exp::token("abc")))],
         );
         let _ = grammar;
-        let mut ctx = StrCtx::new(StrCursor::new("abc"));
+        let mut ctx = StrCtx::new(StrCursor::new("abc"), &[]);
         ctx.setcut();
         assert!(ctx.cut_seen(), "ctx should have cut set before optional");
 
@@ -512,7 +512,7 @@ mod tests {
         let grammar =
             crate::peg::Grammar::new("test", &[Rule::new("start", &[], Exp::token("xyz")).into()]);
         let _ = grammar;
-        let mut ctx = StrCtx::new(StrCursor::new("abc"));
+        let mut ctx = StrCtx::new(StrCursor::new("abc"), &[]);
         ctx.setcut();
         assert!(ctx.cut_seen(), "ctx should have cut set before optional");
 
@@ -531,7 +531,7 @@ mod tests {
         let grammar =
             crate::peg::Grammar::new("test", &[Rule::new("start", &[], Exp::token("abc")).into()]);
         let _ = grammar;
-        let ctx = StrCtx::new(StrCursor::new("abc"));
+        let ctx = StrCtx::new(StrCursor::new("abc"), &[]);
         assert!(!ctx.cut_seen(), "ctx should not have cut set");
 
         let exp = Exp::optional(Exp::token("abc"));

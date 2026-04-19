@@ -1,6 +1,8 @@
 //! Test fixtures for bootstrap tests
 
 #![allow(dead_code)]
+
+use tiexiu::cfg::Cfg;
 use tiexiu::input::StrCursor;
 use tiexiu::peg::{Exp, ExpKind, Grammar};
 use tiexiu::state::corectx::CoreCtx;
@@ -11,10 +13,10 @@ pub fn boot_grammar() -> Grammar {
 
 pub fn parse_ebnf(grammar: &Grammar, text: &str) -> tiexiu::trees::Tree {
     let cursor = StrCursor::new(text);
-    let ctx = CoreCtx::new(cursor);
+    let ctx = CoreCtx::new(cursor, &[Cfg::Trace]);
     match grammar.parse(ctx) {
         Ok(s) => s.1,
-        Err(f) => panic!("Failed to parse EBNF at mark {}: {:?}", f.mark, f.source),
+        Err(f) => panic!("Failed to parse EBNF: {:#?}", f),
     }
 }
 

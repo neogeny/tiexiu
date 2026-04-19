@@ -9,7 +9,7 @@ use tiexiu::state::StrCtx;
 fn bench_token_parse(c: &mut Criterion) {
     let token = Exp::token("hello");
     let cursor: StrCursor = "hello world".into();
-    let ctx = StrCtx::new(cursor);
+    let ctx = StrCtx::new(cursor, &[]);
 
     c.bench_function("parse_single_token", |b| {
         b.iter_with_setup(
@@ -22,7 +22,7 @@ fn bench_token_parse(c: &mut Criterion) {
 fn bench_sequence_parse(c: &mut Criterion) {
     let seq = Exp::sequence([Exp::token("a"), Exp::token("b"), Exp::token("c")].into());
     let cursor: StrCursor = "a b c".into();
-    let ctx = StrCtx::new(cursor);
+    let ctx = StrCtx::new(cursor, &[]);
 
     c.bench_function("parse_sequence_3_tokens", |b| {
         b.iter_with_setup(
@@ -37,7 +37,7 @@ fn bench_choice_parse(c: &mut Criterion) {
 
     c.bench_function("parse_choice_first_match", |b| {
         let cursor: StrCursor = "x rest".into();
-        let ctx = StrCtx::new(cursor);
+        let ctx = StrCtx::new(cursor, &[]);
         b.iter_with_setup(
             || (ctx.clone(), choice.clone()),
             |(current_ctx, ch)| black_box(ch.parse(current_ctx)),
@@ -46,7 +46,7 @@ fn bench_choice_parse(c: &mut Criterion) {
 
     c.bench_function("parse_choice_last_match", |b| {
         let cursor: StrCursor = "z rest".into();
-        let ctx = StrCtx::new(cursor);
+        let ctx = StrCtx::new(cursor, &[]);
         b.iter_with_setup(
             || (ctx.clone(), choice.clone()),
             |(current_ctx, ch)| black_box(ch.parse(current_ctx)),
@@ -57,7 +57,7 @@ fn bench_choice_parse(c: &mut Criterion) {
 fn bench_closure_parse(c: &mut Criterion) {
     let closure = Exp::closure(Exp::token("a"));
     let cursor: StrCursor = "a a a a a a a a a a".into();
-    let ctx = StrCtx::new(cursor);
+    let ctx = StrCtx::new(cursor, &[]);
 
     c.bench_function("parse_closure_10_repetitions", |b| {
         b.iter_with_setup(
@@ -79,7 +79,7 @@ fn bench_nested_expression(c: &mut Criterion) {
         .into(),
     );
     let cursor: StrCursor = "start foo bar baz foo bar end".into();
-    let ctx = StrCtx::new(cursor);
+    let ctx = StrCtx::new(cursor, &[]);
 
     c.bench_function("parse_nested_expression", |b| {
         b.iter_with_setup(
@@ -91,7 +91,7 @@ fn bench_nested_expression(c: &mut Criterion) {
 
 fn bench_context_clone(c: &mut Criterion) {
     let cursor: StrCursor = "some text to parse".into();
-    let ctx = StrCtx::new(cursor);
+    let ctx = StrCtx::new(cursor, &[]);
 
     c.bench_function("context_clone_cow", |b| {
         b.iter(|| black_box(ctx.clone()));
@@ -111,7 +111,7 @@ fn bench_optional_parse(c: &mut Criterion) {
 
     c.bench_function("parse_optional_present", |b| {
         let cursor: StrCursor = "maybe rest".into();
-        let ctx = StrCtx::new(cursor);
+        let ctx = StrCtx::new(cursor, &[]);
         b.iter_with_setup(
             || (ctx.clone(), opt.clone()),
             |(current_ctx, o)| black_box(o.parse(current_ctx)),
@@ -120,7 +120,7 @@ fn bench_optional_parse(c: &mut Criterion) {
 
     c.bench_function("parse_optional_absent", |b| {
         let cursor: StrCursor = "other rest".into();
-        let ctx = StrCtx::new(cursor);
+        let ctx = StrCtx::new(cursor, &[]);
         b.iter_with_setup(
             || (ctx.clone(), opt.clone()),
             |(current_ctx, o)| black_box(o.parse(current_ctx)),
@@ -131,7 +131,7 @@ fn bench_optional_parse(c: &mut Criterion) {
 fn bench_lookahead_parse(c: &mut Criterion) {
     let la = Exp::lookahead(Exp::token("peek"));
     let cursor: StrCursor = "peek rest".into();
-    let ctx = StrCtx::new(cursor);
+    let ctx = StrCtx::new(cursor, &[]);
 
     c.bench_function("parse_lookahead", |b| {
         b.iter_with_setup(
@@ -144,7 +144,7 @@ fn bench_lookahead_parse(c: &mut Criterion) {
 fn bench_named_parse(c: &mut Criterion) {
     let named = Exp::named("label", Exp::token("value"));
     let cursor: StrCursor = "value rest".into();
-    let ctx = StrCtx::new(cursor);
+    let ctx = StrCtx::new(cursor, &[]);
 
     c.bench_function("parse_named_element", |b| {
         b.iter_with_setup(

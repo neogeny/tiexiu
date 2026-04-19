@@ -8,13 +8,13 @@ pub type StrCtx<'c> = CoreCtx<'c, StrCursor>;
 
 impl<'c> From<&str> for StrCtx<'c> {
     fn from(text: &str) -> Self {
-        Self::new(StrCursor::new(text))
+        Self::new(StrCursor::new(text), &[])
     }
 }
 
 impl<'c> From<StrCursor> for StrCtx<'c> {
     fn from(cursor: StrCursor) -> Self {
-        Self::new(cursor)
+        Self::new(cursor, &[])
     }
 }
 
@@ -60,7 +60,7 @@ mod tests {
         let text = "calculate 1 + 2";
         let cursor: StrCursor = StrCursor::new(text);
 
-        let mut ctx1 = CoreCtx::new(cursor);
+        let mut ctx1 = CoreCtx::new(cursor, &[]);
 
         ctx1.reset(10);
         assert_eq!(ctx1.cursor().mark(), 10);
@@ -82,7 +82,7 @@ mod tests {
     fn test_shared_memoization_semantics() {
         let text = "abc";
         let cursor: StrCursor = StrCursor::new(text);
-        let mut ctx1 = CoreCtx::new(cursor);
+        let mut ctx1 = CoreCtx::new(cursor, &[]);
 
         let mut ctx2 = ctx1.clone();
 
@@ -106,7 +106,7 @@ mod tests {
     #[test]
     fn test_state_isolation_preserves_shared_cache() {
         let cursor: StrCursor = StrCursor::new("abc");
-        let mut ctx1 = CoreCtx::new(cursor);
+        let mut ctx1 = CoreCtx::new(cursor, &[]);
         let mut ctx2 = ctx1.clone();
 
         ctx2.reset(1);

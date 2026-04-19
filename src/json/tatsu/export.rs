@@ -34,16 +34,16 @@ impl TryFrom<Grammar> for TatSuModel {
             .iter()
             .filter_map(|opt| {
                 let (name, value) = match opt {
-                    CfgK::Grammar(name) => ("grammar", serde_json::Value::String(name.to_string())),
-                    CfgK::Wsp(p) => ("whitespace", serde_json::Value::String(p.to_string())),
-                    CfgK::Cmt(p) => ("comments", serde_json::Value::String(p.to_string())),
-                    CfgK::Eol(p) => ("eol_comments", serde_json::Value::String(p.to_string())),
-                    CfgK::NameChars(p) => ("namechars", serde_json::Value::String(p.to_string())),
-                    CfgK::IgnoreCase => ("ignorecase", serde_json::Value::Bool(true)),
-                    CfgK::NoNameGuard => ("nameguard", serde_json::Value::Bool(false)),
-                    CfgK::NoLeftRecursion => ("left_recursion", serde_json::Value::Bool(false)),
-                    CfgK::NoParseInfo => ("parseinfo", serde_json::Value::Bool(false)),
-                    CfgK::NoMemoization => ("memoization", serde_json::Value::Bool(false)),
+                    Cfg::Grammar(name) => ("grammar", serde_json::Value::String(name.to_string())),
+                    Cfg::Wsp(p) => ("whitespace", serde_json::Value::String(p.to_string())),
+                    Cfg::Cmt(p) => ("comments", serde_json::Value::String(p.to_string())),
+                    Cfg::Eol(p) => ("eol_comments", serde_json::Value::String(p.to_string())),
+                    Cfg::NameChars(p) => ("namechars", serde_json::Value::String(p.to_string())),
+                    Cfg::IgnoreCase => ("ignorecase", serde_json::Value::Bool(true)),
+                    Cfg::NoNameGuard => ("nameguard", serde_json::Value::Bool(false)),
+                    Cfg::NoLeftRecursion => ("left_recursion", serde_json::Value::Bool(false)),
+                    Cfg::NoParseInfo => ("parseinfo", serde_json::Value::Bool(false)),
+                    Cfg::NoMemoization => ("memoization", serde_json::Value::Bool(false)),
                     _ => return None,
                 };
                 Some((name.to_string(), value))

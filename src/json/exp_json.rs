@@ -65,16 +65,16 @@ impl Grammar {
             .iter()
             .filter_map(|opt| {
                 let (name, value) = match opt {
-                    CfgK::Grammar(name) => ("grammar", name.as_str()),
-                    CfgK::Wsp(p) => ("whitespace", p.as_str()),
-                    CfgK::Cmt(p) => ("comments", p.as_str()),
-                    CfgK::Eol(p) => ("eol_comments", p.as_str()),
-                    CfgK::NameChars(p) => ("namechars", p.as_str()),
-                    CfgK::IgnoreCase => ("ignorecase", "True"),
-                    CfgK::NoNameGuard => ("nameguard", "False"),
-                    CfgK::NoLeftRecursion => ("left_recursion", "False"),
-                    CfgK::NoParseInfo => ("parseinfo", "False"),
-                    CfgK::NoMemoization => ("memoization", "False"),
+                    Cfg::Grammar(name) => ("grammar", name.as_str()),
+                    Cfg::Wsp(p) => ("whitespace", p.as_str()),
+                    Cfg::Cmt(p) => ("comments", p.as_str()),
+                    Cfg::Eol(p) => ("eol_comments", p.as_str()),
+                    Cfg::NameChars(p) => ("namechars", p.as_str()),
+                    Cfg::IgnoreCase => ("ignorecase", "True"),
+                    Cfg::NoNameGuard => ("nameguard", "False"),
+                    Cfg::NoLeftRecursion => ("left_recursion", "False"),
+                    Cfg::NoParseInfo => ("parseinfo", "False"),
+                    Cfg::NoMemoization => ("memoization", "False"),
                     _ => return None,
                 };
                 let mut d_obj = Map::new();

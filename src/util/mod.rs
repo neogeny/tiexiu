@@ -11,6 +11,6 @@ pub mod newlines;
 pub mod pyre;
 pub mod tokenlist;
 
-pub use cfg::Cfg;
+pub use cfg::CfgBox;
 pub use error::*;
 pub use finally::finally;

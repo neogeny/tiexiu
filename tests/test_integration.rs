@@ -10,7 +10,7 @@ use tiexiu::state::corectx::CoreCtx;
 
 fn parse_input(grammar: &Grammar, input: &str) -> tiexiu::trees::Tree {
     let cursor = StrCursor::new(input);
-    let ctx = CoreCtx::new(cursor);
+    let ctx = CoreCtx::new(cursor, &[]);
     match grammar.parse(ctx) {
         Ok(s) => s.1,
         Err(f) => panic!("Failed to parse at mark {}: {:?}", f.mark, f.source),
@@ -685,7 +685,7 @@ mod input_positions {
         let grammar = tiexiu::compile(grammar, &[]).unwrap();
 
         let cursor = StrCursor::new("hello");
-        let ctx = CoreCtx::new(cursor);
+        let ctx = CoreCtx::new(cursor, &[]);
 
         match grammar.parse(ctx) {
             Ok(state) => {
@@ -726,7 +726,7 @@ mod error_handling {
         let grammar = tiexiu::compile(grammar, &[]).unwrap();
 
         let cursor = StrCursor::new("b");
-        let ctx = CoreCtx::new(cursor);
+        let ctx = CoreCtx::new(cursor, &[]);
 
         let result = grammar.parse(ctx);
         assert!(result.is_err());
@@ -740,7 +740,7 @@ mod error_handling {
         let grammar = tiexiu::compile(grammar, &[]).unwrap();
 
         let cursor = StrCursor::new("a");
-        let ctx = CoreCtx::new(cursor);
+        let ctx = CoreCtx::new(cursor, &[]);
 
         let result = grammar.parse(ctx);
         assert!(result.is_err());
@@ -754,7 +754,7 @@ mod error_handling {
         let grammar = tiexiu::compile(grammar, &[]).unwrap();
 
         let cursor = StrCursor::new("");
-        let ctx = CoreCtx::new(cursor);
+        let ctx = CoreCtx::new(cursor, &[]);
 
         let result = grammar.parse(ctx);
         assert!(result.is_err());

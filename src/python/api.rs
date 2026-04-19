@@ -1,16 +1,16 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::cfg::{Cfg, CfgK};
+use crate::cfg::{Cfg, CfgBox};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
-fn pykwargs_to_cfg(kwargs: &Bound<'_, PyDict>) -> Vec<CfgK> {
-    let mut cfg: Vec<CfgK> = Vec::new();
+fn pykwargs_to_cfg(kwargs: &Bound<'_, PyDict>) -> Vec<Cfg> {
+    let mut cfg: Vec<Cfg> = Vec::new();
     for (key, value) in kwargs.iter() {
         let key_str: String = key.extract().unwrap_or_default();
         let value_str = value.str().map(|s| s.to_string()).unwrap_or_default();
-        if let Some(opt) = Cfg::map(&key_str, &value_str) {
+        if let Some(opt) = CfgBox::map(&key_str, &value_str) {
             cfg.push(opt);
         }
     }

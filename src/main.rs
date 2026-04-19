@@ -23,7 +23,7 @@ fn test_build() {
 
     let cur: StrCursor = StrCursor::new("a b c c c");
     let _grammar = Grammar::new("test", &[]);
-    let ctx = StrCtx::new(cur);
+    let ctx = StrCtx::new(cur, &[]);
 
     if let Ok(Succ(_, tree)) = seq.parse(ctx) {
         println!("{}", tree);

@@ -75,7 +75,7 @@ impl GrammarCompiler {
         let rules: Vec<RuleRef> = rulemap.into_iter().map(|(_, r)| r).collect();
         let name = map_get_default(map, "name", "__COMPILED__");
 
-        let mut directives = Cfg::default();
+        let mut directives = CfgBox::default();
         if let Ok(directives_tree) = map_get(map, "Grammar", "directives") {
             let directives_list = _parse_list(directives_tree)?;
             let str_directives = directives_list.iter().map(|d| {
@@ -85,7 +85,7 @@ impl GrammarCompiler {
                 (name.to_string(), value.to_string())
             });
             directives = str_directives
-                .filter_map(|(k, v)| Cfg::map(&k, &v))
+                .filter_map(|(k, v)| CfgBox::map(&k, &v))
                 .collect();
         }
         let keywords: Vec<KeywordRef> =
