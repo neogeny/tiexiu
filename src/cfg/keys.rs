@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::util::cfg;
-use std::ops::Deref;
+pub use crate::util::cfg;
+pub use cfg::*;
 
 // NOTE! Order matters here! Debug < Mode < Trace
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Default)]
@@ -28,38 +28,18 @@ pub enum Cfg {
     NoMemoization,
 }
 
-#[derive(Clone, Default, Debug)]
-pub struct CfgBox {
-    cfg: cfg::CfgBox<Cfg>,
-}
-
 pub type CfgA = cfg::CfgA<Cfg>;
+pub type CfgBox = cfg::CfgBox<Cfg>;
 
-/// Specialized trait for types that can be configured with the project-specific Cfg.
+/// Specialized trait for types that can be configured with the project-specific CfgBox.
 pub trait Configurable {
-    fn configure(&mut self, _cfg: &CfgBox) {}
+    fn configure(&mut self, cfg: &CfgBox) {
+        let _ = cfg;
+    }
 }
 
-impl cfg::CfgMapper<Cfg> for CfgBox {
+impl CfgMapper<Cfg> for Cfg {
     fn map(key: &str, value: &str) -> Option<Cfg> {
-        CfgBox::map(key, value)
-    }
-}
-
-impl From<&CfgA> for CfgBox {
-    fn from(cfg: &CfgA) -> Self {
-        Self::new(cfg)
-    }
-}
-
-impl CfgBox {
-    pub fn new(options: &CfgA) -> Self {
-        Self {
-            cfg: cfg::CfgBox::new(options),
-        }
-    }
-
-    pub fn map(key: &str, value: &str) -> Option<Cfg> {
         use super::constants::*;
         let is_truthy = !is_falsy(value);
 
@@ -83,45 +63,6 @@ impl CfgBox {
             _ => None,
         }
     }
-
-    pub fn merge(&self, other: &CfgBox) -> Self {
-        Self {
-            cfg: self.cfg.merge(&other.cfg),
-        }
-    }
-
-    pub fn load_from_env(prefix: &str) -> Self {
-        Self {
-            cfg: <Self as cfg::CfgMapper<Cfg>>::load_from_env(prefix),
-        }
-    }
-}
-
-impl Deref for CfgBox {
-    type Target = cfg::CfgBox<Cfg>;
-    fn deref(&self) -> &Self::Target {
-        &self.cfg
-    }
-}
-
-impl FromIterator<Cfg> for CfgBox {
-    fn from_iter<I: IntoIterator<Item = Cfg>>(iter: I) -> Self {
-        Self {
-            cfg: cfg::CfgBox::from_iter(iter),
-        }
-    }
-}
-
-impl<'a, const N: usize> From<&'a [Cfg; N]> for CfgBox {
-    fn from(options: &'a [Cfg; N]) -> Self {
-        Self::new(options.as_slice())
-    }
-}
-
-impl From<Vec<Cfg>> for CfgBox {
-    fn from(options: Vec<Cfg>) -> Self {
-        options.into_iter().collect()
-    }
 }
 
 /// Helper to determine if a string is "falsy" in a Pythonic context.
@@ -136,14 +77,12 @@ mod tests {
     use std::env;
 
     #[test]
-    fn test_cfg_concrete() {
+    fn test_cfg_box_is_alias() {
         let options = [Cfg::Trace, Cfg::Debug];
         let cfg = CfgBox::new(&options);
 
-        // Tests Deref to access generic Cfg methods
         assert!(cfg.contains(&Cfg::Trace));
         assert!(cfg.contains(&Cfg::Debug));
-        assert!(!cfg.contains(&Cfg::Verbose));
     }
 
     #[test]
@@ -154,7 +93,7 @@ mod tests {
             env::set_var("TIEXIU_PARSEINFO", "False");
         }
 
-        let cfg = CfgBox::load_from_env("TIEXIU_");
+        let cfg = Cfg::load_from_env("TIEXIU_");
 
         assert!(cfg.contains(&Cfg::Trace));
         assert!(cfg.contains(&Cfg::Wsp(r"\s+".to_string())));
@@ -163,12 +102,9 @@ mod tests {
 
     #[test]
     fn test_bool_mapping() {
-        assert_eq!(CfgBox::map("ignorecase", "True"), Some(Cfg::IgnoreCase));
-        assert_eq!(CfgBox::map("parseinfo", "False"), Some(Cfg::NoParseInfo));
-        assert_eq!(CfgBox::map("parseinfo", "True"), None);
-        assert_eq!(
-            CfgBox::map("left_recursion", "0"),
-            Some(Cfg::NoLeftRecursion)
-        );
+        assert_eq!(Cfg::map("ignorecase", "True"), Some(Cfg::IgnoreCase));
+        assert_eq!(Cfg::map("parseinfo", "False"), Some(Cfg::NoParseInfo));
+        assert_eq!(Cfg::map("parseinfo", "True"), None);
+        assert_eq!(Cfg::map("left_recursion", "0"), Some(Cfg::NoLeftRecursion));
     }
 }

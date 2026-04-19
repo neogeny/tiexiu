@@ -55,9 +55,14 @@ pub trait CfgMapper<K: Ord + Clone + Default> {
     }
 }
 
-impl<K: Ord + Clone + Default> CfgMapper<K> for CfgBox<K> {
-    fn map(_key: &str, _value: &str) -> Option<K> {
-        None
+impl<K: Ord + Clone + Default> CfgMapper<K> for CfgBox<K>
+where
+    K: CfgMapper<K>,
+{
+    fn map(key: &str, value: &str) -> Option<K> {
+        let _ = key;
+        let _ = value;
+        K::map(key, value)
     }
 }
 
@@ -142,8 +147,7 @@ mod tests {
         Strict,
     }
 
-    struct TestMapper;
-    impl CfgMapper<TestOpt> for TestMapper {
+    impl CfgMapper<TestOpt> for TestOpt {
         fn map(key: &str, value: &str) -> Option<TestOpt> {
             match (key.to_lowercase().as_str(), value) {
                 ("trace", "1") => Some(TestOpt::Trace),
@@ -187,7 +191,7 @@ mod tests {
             env::set_var("TEST_OTHER", "skip");
         }
 
-        let cfg = TestMapper::load_from_env("TEST_");
+        let cfg = TestOpt::load_from_env("TEST_");
         assert!(cfg.contains(&TestOpt::Trace));
         assert!(cfg.contains(&TestOpt::Strict));
         assert_eq!(cfg.options.len(), 2);
