@@ -8,15 +8,10 @@
 //!
 //! The implementation currently relies on the fancy_regex crate
 
+use super::error::{Error, Result};
+use super::traits as traits_impl;
 use fancy_regex;
 use fancy_regex::{Captures, Regex};
-use thiserror::Error;
-
-#[derive(Debug, Error)]
-pub enum Error {
-    #[error("invalid regex pattern: {0}")]
-    Regex(#[from] fancy_regex::Error),
-}
 
 #[derive(Debug, Clone)]
 pub struct Pattern {
@@ -35,7 +30,7 @@ pub fn escape(pattern: &str) -> Box<str> {
     fancy_regex::escape(pattern).into()
 }
 
-pub fn compile(pattern: &str) -> Result<Pattern, Error> {
+pub fn compile(pattern: &str) -> Result<Pattern> {
     Pattern::new(pattern)
 }
 
@@ -89,7 +84,7 @@ pub fn subn(pattern: &str, repl: &str, text: &str, count: Option<usize>) -> (Str
 pub fn purge() {}
 
 impl Pattern {
-    pub fn new(pattern: &str) -> Result<Self, Error> {
+    pub fn new(pattern: &str) -> Result<Self> {
         let anchored = format!(r"\A(?:{})", pattern);
         Ok(Self {
             regex: Regex::new(pattern)?,
@@ -130,8 +125,8 @@ impl Pattern {
             if maxsplit > 0 && splits_done >= maxsplit {
                 break;
             }
-            if let Ok(caps) = caps_result
-                && let Some(m) = caps.get(0) {
+            if let Ok(caps) = caps_result {
+                if let Some(m) = caps.get(0) {
                     result.push(text[last_end..m.start()].to_string());
                     for i in 1..caps.len() {
                         if let Some(cap) = caps.get(i) {
@@ -143,6 +138,7 @@ impl Pattern {
                     last_end = m.end();
                     splits_done += 1;
                 }
+            }
         }
         result.push(text[last_end..].to_string());
         result
@@ -202,13 +198,14 @@ impl Pattern {
             if count > 0 && replacements >= count {
                 break;
             }
-            if let Ok(caps) = caps_result
-                && let Some(m) = caps.get(0) {
+            if let Ok(caps) = caps_result {
+                if let Some(m) = caps.get(0) {
                     result.push_str(&text[last_end..m.start()]);
                     result.push_str(repl);
                     last_end = m.end();
                     replacements += 1;
                 }
+            }
         }
         result.push_str(&text[last_end..]);
         (result, replacements)
@@ -270,8 +267,6 @@ impl<'a> Match<'a> {
     }
 }
 
-use crate::util::pyre::traits as traits_impl;
-
 impl<'a> traits_impl::Match<'a> for Match<'a> {
     fn group(&self, group: usize) -> Option<&'a str> {
         Match::group(self, group)
@@ -294,19 +289,22 @@ impl<'a> traits_impl::Match<'a> for Match<'a> {
     }
 }
 
-impl<'a> traits_impl::Pattern<'a> for Pattern {
-    type Match = Match<'a>;
+impl traits_impl::Pattern for Pattern {
+    type Match<'a>
+        = Match<'a>
+    where
+        Self: 'a;
     type Error = Error;
 
-    fn search(&self, text: &'a str) -> Option<Self::Match> {
+    fn search<'a>(&self, text: &'a str) -> Option<Self::Match<'a>> {
         self.search(text)
     }
 
-    fn match_(&self, text: &'a str) -> Option<Self::Match> {
+    fn match_<'a>(&self, text: &'a str) -> Option<Self::Match<'a>> {
         self.match_(text)
     }
 
-    fn fullmatch(&self, text: &'a str) -> Option<Self::Match> {
+    fn fullmatch<'a>(&self, text: &'a str) -> Option<Self::Match<'a>> {
         self.fullmatch(text)
     }
 
@@ -318,7 +316,7 @@ impl<'a> traits_impl::Pattern<'a> for Pattern {
         self.findall(text)
     }
 
-    fn finditer(&self, text: &'a str) -> Vec<Self::Match> {
+    fn finditer<'a>(&self, text: &'a str) -> Vec<Self::Match<'a>> {
         self.finditer(text)
     }
 

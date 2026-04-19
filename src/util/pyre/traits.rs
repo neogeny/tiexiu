@@ -1,18 +1,23 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+#![allow(clippy::collapsible_if)]
+#![allow(clippy::collapsible_match)]
+
 //! Traits that define the pyre Pattern and Match interfaces.
 //! These traits mirror the Python `re` module API.
 
-pub trait Pattern<'a>: Clone {
-    type Match: Match<'a>;
+pub trait Pattern: Clone {
+    type Match<'a>: Match<'a>
+    where
+        Self: 'a;
     type Error: std::error::Error;
 
-    fn search(&self, text: &'a str) -> Option<Self::Match>;
+    fn search<'a>(&self, text: &'a str) -> Option<Self::Match<'a>>;
 
-    fn match_(&self, text: &'a str) -> Option<Self::Match>;
+    fn match_<'a>(&self, text: &'a str) -> Option<Self::Match<'a>>;
 
-    fn fullmatch(&self, text: &'a str) -> Option<Self::Match>;
+    fn fullmatch<'a>(&self, text: &'a str) -> Option<Self::Match<'a>>;
 
     fn split(&self, text: &str, maxsplit: Option<usize>) -> Vec<String>;
 
@@ -24,7 +29,7 @@ pub trait Pattern<'a>: Clone {
     /// non-participating groups), matching Python's `re.findall` semantics.
     fn findall(&self, text: &str) -> Vec<Vec<String>>;
 
-    fn finditer(&self, text: &'a str) -> Vec<Self::Match>;
+    fn finditer<'a>(&self, text: &'a str) -> Vec<Self::Match<'a>>;
 
     fn sub(&self, repl: &str, text: &str, count: Option<usize>) -> String;
 

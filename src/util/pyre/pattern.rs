@@ -6,7 +6,7 @@
 //! This module uses the pyre Trait Pattern to validate the regex,
 //! not fancy_regex.
 
-use crate::util::pyre::fancy::Pattern;
+use super::Pattern;
 
 pub fn truncate_pattern(pattern: &str, max: usize) -> Box<str> {
     if pattern.len() <= max {
