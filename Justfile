@@ -15,10 +15,12 @@ push: pre-push
 pre-push: clean book clippy fmt test
 
 clippy:
+    cargo clippy --lib --all-features --fix --allow-dirty -- -D warnings
     cargo clippy --all-targets --all-features -- -D warnings
 
 fmt:
     cargo fmt --all
+    cargo fmt --all --check
 
 test: fmt clippy
     cargo nextest run --lib --no-fail-fast
