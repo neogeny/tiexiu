@@ -6,7 +6,7 @@ use tiexiu::cfg::constants::PATH_TATSU_GRAMMAR_EBNF;
 
 pub fn check_exp_for_unlinked(exp: &Exp, path: &str, grammar: &Grammar) {
     match &exp.kind {
-        ExpKind::Call { name, rule: None } => {
+        ExpKind::Call { name, rule: _ } => {
             println!("  {}: Call to '{}' is NOT linked", path, name);
             match grammar.get_rule(name) {
                 Ok(r) => println!("    BUT '{}' exists in grammar as rule '{}'", name, r.name),
@@ -92,7 +92,8 @@ fn test_linker_debug() {
 
     println!("\n=== Trying to parse EBNF ===");
     let ebnf_text =
-        std::fs::read_to_string(PATH_TATSU_GRAMMAR_EBNF).expect("Failed to read tatsu.tatsu");
+        std::fs::read_to_string(PATH_TATSU_GRAMMAR_EBNF)
+            .expect("Failed to read grammar");
     let cursor = StrCursor::new(&ebnf_text);
     let ctx = CoreCtx::new(cursor);
 

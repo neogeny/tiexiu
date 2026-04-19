@@ -6,6 +6,7 @@
 //! This module translates serde_json::Value directly to Grammar,
 //! bypassing the TatSuModel deserializer which fails on modified JSON.
 
+use crate::cfg::*;
 use crate::json::error::JsonError;
 use crate::peg::exp::Exp;
 use crate::peg::grammar::{Grammar, GrammarDirectives};
@@ -100,27 +101,27 @@ impl JsonSerializationHelper {
     }
 
     fn get_array(&self, field: &str) -> Result<Vec<JsonSerializationHelper>, JsonError> {
-        if let Ok(obj) = self.get_obj()
-            && let Some(arr) = obj.get(field).and_then(|v: &Value| v.as_array())
-        {
-            return Ok(arr
-                .iter()
-                .enumerate()
-                .map(|(i, v)| {
-                    let label = if let Some(child_obj) = v.as_object() {
-                        if let Some(class) =
-                            child_obj.get("__class__").and_then(|v: &Value| v.as_str())
-                        {
-                            format!("{}[{}]:{}", field, i, class)
+        if let Ok(obj) = self.get_obj() {
+            if let Some(arr) = obj.get(field).and_then(|v: &Value| v.as_array()) {
+                return Ok(arr
+                    .iter()
+                    .enumerate()
+                    .map(|(i, v)| {
+                        let label = if let Some(child_obj) = v.as_object() {
+                            if let Some(class) =
+                                child_obj.get("__class__").and_then(|v: &Value| v.as_str())
+                            {
+                                format!("{}[{}]:{}", field, i, class)
+                            } else {
+                                format!("{}[{}]", field, i)
+                            }
                         } else {
                             format!("{}[{}]", field, i)
-                        }
-                    } else {
-                        format!("{}[{}]", field, i)
-                    };
-                    self.push(&label).with_value(v.clone())
-                })
-                .collect());
+                        };
+                        self.push(&label).with_value(v.clone())
+                    })
+                    .collect());
+            }
         }
         Err(self.error(&format!("Missing or not array: {}", field)))
     }
@@ -198,19 +199,22 @@ impl Grammar {
     }
 
     fn parse_directives(directives: Option<&Value>) -> Result<GrammarDirectives, JsonError> {
-        let mut result: GrammarDirectives = GrammarDirectives::default();
         if let Some(Value::Object(obj)) = directives {
-            for (k, v) in obj {
-                let val_str = match v {
-                    Value::String(s) => s.to_string(),
-                    Value::Bool(b) => b.to_string(),
-                    Value::Number(n) => n.to_string(),
-                    _ => v.to_string(),
-                };
-                result.insert(k.as_str(), val_str.as_str());
-            }
+            let res: GrammarDirectives = obj
+                .iter()
+                .filter_map(|(k, v)| {
+                    let val_str = match v {
+                        Value::String(s) => s.to_string(),
+                        Value::Bool(b) => b.to_string(),
+                        Value::Number(n) => n.to_string(),
+                        _ => v.to_string(),
+                    };
+                    Cfg::map(k.as_str(), val_str.as_str())
+                })
+                .collect();
+            return Ok(res);
         }
-        Ok(result)
+        Ok(GrammarDirectives::default())
     }
 }
 

@@ -4,8 +4,7 @@
 use super::Cursor;
 use super::error::Error;
 use super::tokenizing::TokenizingPatterns;
-use crate::cfg::Configurable;
-use crate::util::Cfg;
+use crate::cfg::*;
 use crate::util::newlines::empty_line;
 use crate::util::pyre::Pattern;
 use std::rc::Rc;
@@ -45,7 +44,7 @@ impl StrCursor {
     fn eat_pattern(&mut self, pat: &Pattern) -> bool {
         let text = &self.text[self.offset..];
         if let Some(mat) = pat.match_(text) {
-            self.offset += mat.end(Option::<usize>::None) as usize;
+            self.offset += mat.end(None) as usize;
             return true;
         }
         false
@@ -74,7 +73,7 @@ impl Cursor for StrCursor {
     }
 
     fn at_end(&self) -> bool {
-        self.offset >= self.text.len() || self.text[self.offset..].trim().is_empty()
+        self.offset >= self.text.len()
     }
 
     fn next(&mut self) -> Option<char> {
@@ -98,7 +97,7 @@ impl Cursor for StrCursor {
         let text = &self.text[self.offset..];
         let m = pat.match_(text)?;
 
-        self.offset += m.end(Option::<usize>::None) as usize;
+        self.offset += m.end(None) as usize;
         m.group(1).or(m.group(0)).map(|s| s.to_string())
     }
 

@@ -1,177 +1,130 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::error::{Error, Result};
-use std::collections::BTreeMap;
-use std::ops::Index;
-use std::str::FromStr;
+use std::collections::BTreeSet;
+use std::ops::Deref;
 use std::{env, fmt};
 
-/// Python-style falsy values for string-based configuration.
-pub const FALSY_VALUES: &[&str] = &["false", "0", "no", "none", "False", "No"];
-
-/// Helper to determine if a string is "falsy" in a Pythonic context.
-pub fn is_falsy(v: &str) -> bool {
-    v.is_empty() || FALSY_VALUES.contains(&v.to_lowercase().as_str())
-}
-
 /// Type aliases for external usage
-pub type CfgA<'c> = &'c [(&'c str, &'c str)];
-pub type CfgR<'c> = Box<[(&'c str, &'c str)]>;
+pub type CfgA<'c, K> = &'c [K];
 
 /// An owned, optimized configuration container.
-/// Invariants: Sorted by key, Unique keys, Latter wins on construction.
+/// Invariants:
+/// 1. Sorted by value (for binary search).
+/// 2. Unique values.
 #[derive(Clone, Default)]
-pub struct Cfg {
-    pairs: Box<[(Box<str>, Box<str>)]>,
+pub struct Cfg<K: Ord + Clone + Default> {
+    options: Box<[K]>,
 }
 
-impl<'c> From<CfgA<'c>> for Cfg {
-    fn from(cfg: CfgA) -> Self {
+impl<'c, K: Ord + Clone + Default> From<CfgA<'c, K>> for Cfg<K> {
+    fn from(cfg: CfgA<K>) -> Self {
         Self::new(cfg)
     }
 }
 
+impl<'a, K: Ord + Clone + Default, const N: usize> From<&'a [K; N]> for Cfg<K> {
+    fn from(options: &'a [K; N]) -> Self {
+        Self::new(options.as_slice())
+    }
+}
+
 /// Has use for a Cfg
-pub trait Configurable {
-    fn configure(&mut self, cfg: &Cfg) {
+pub trait Configurable<K: Ord + Clone + Default> {
+    fn configure(&mut self, cfg: &Cfg<K>) {
         let _ = cfg;
     }
 }
 
-impl<K, V> FromIterator<(K, V)> for Cfg
-where
-    K: Into<Box<str>>,
-    V: Into<Box<str>>,
-{
-    fn from_iter<I: IntoIterator<Item = (K, V)>>(iter: I) -> Self {
-        let map: BTreeMap<Box<str>, Box<str>> = iter
-            .into_iter()
-            .map(|(k, v)| (k.into(), v.into()))
-            .collect();
-        Self::from_map(map)
-    }
-}
+/// Maps environment key-value pairs to a configuration type K.
+pub trait CfgMapper<K: Ord + Clone + Default> {
+    fn map(key: &str, value: &str) -> Option<K>;
 
-impl Cfg {
-    /// Creates a new Cfg from borrowed slices ensuring all invariants.
-    pub fn new(pairs: CfgA) -> Self {
-        let map: BTreeMap<Box<str>, Box<str>> = pairs
-            .iter()
-            .map(|(k, v)| (Box::from(*k), Box::from(*v)))
-            .collect();
-        Self::from_map(map)
-    }
-
-    /// Internal helper to freeze a map into the optimized storage.
-    fn from_map(map: BTreeMap<Box<str>, Box<str>>) -> Self {
-        Self {
-            pairs: map.into_iter().collect::<Vec<_>>().into_boxed_slice(),
-        }
-    }
-
-    /// Validates keys against a whitelist before creation.
-    pub fn check_new(pairs: CfgA, valid: &[&str]) -> Result<Self> {
-        for (name, _) in pairs {
-            if !valid.contains(name) {
-                return Err(Error::UnknownCfgOption((**name).into()));
-            }
-        }
-        Ok(Self::new(pairs))
-    }
-
-    /// Pulls configuration from environment variables with a specific prefix.
-    pub fn from_env(prefix: &str) -> Self {
-        let map: BTreeMap<Box<str>, Box<str>> = env::vars()
+    /// Loads configuration from environment variables using this mapper.
+    fn load_from_env(prefix: &str) -> Cfg<K> {
+        env::vars()
             .filter(|(key, _)| key.starts_with(prefix))
-            .map(|(key, val)| {
+            .filter_map(|(key, val)| {
                 let mut key = key[prefix.len()..].to_string();
                 if key.starts_with('_') {
                     key.remove(0);
                 }
-                (key.to_lowercase().into_boxed_str(), val.into_boxed_str())
+                Self::map(&key, &val)
             })
-            .collect();
-
-        Self::from_map(map)
+            .collect()
     }
+}
 
-    pub fn from_boxed_slice(pairs: Box<[(&'_ str, &'_ str)]>) -> Self {
-        Self::new(pairs.as_ref())
+impl<K: Ord + Clone + Default> CfgMapper<K> for Cfg<K> {
+    fn map(_key: &str, _value: &str) -> Option<K> {
+        None
     }
+}
 
-    pub fn as_boxed_slice(&self) -> Box<[(&str, &str)]> {
-        self.pairs
-            .iter()
-            .map(|(k, v)| (k.as_ref(), v.as_ref()))
-            .collect::<Vec<_>>()
-            .into_boxed_slice()
-    }
-
-    /// Inserts or updates a value, re-freezing the internal slice.
-    pub fn insert(&mut self, key: &str, value: &str) {
-        let mut map: BTreeMap<Box<str>, Box<str>> = self.pairs.iter().cloned().collect();
-        map.insert(Box::from(key), Box::from(value));
-        *self = Self::from_map(map);
-    }
-
-    /// Merges two configurations. Values from 'other' win on key collisions.
-    pub fn merge(&self, other: &Cfg) -> Self {
-        let mut map: BTreeMap<Box<str>, Box<str>> = self.pairs.iter().cloned().collect();
-
-        for (k, v) in other.pairs.iter() {
-            if let Some(u) = map.get(k)
-                && !is_falsy(u)
-            {
-                continue;
-            }
-            map.insert(k.clone(), v.clone());
+impl<K: Ord + Clone + Default> FromIterator<K> for Cfg<K> {
+    fn from_iter<I: IntoIterator<Item = K>>(iter: I) -> Self {
+        let set: BTreeSet<K> = iter.into_iter().collect();
+        Self {
+            options: set.into_iter().collect::<Vec<_>>().into_boxed_slice(),
         }
+    }
+}
 
-        Self::from_map(map)
+impl<K: Ord + Clone + Default> Cfg<K> {
+    /// Creates a new Cfg ensuring all invariants (Sorted, Unique).
+    pub fn new(options: CfgA<K>) -> Self {
+        let set: BTreeSet<K> = options.iter().cloned().collect();
+        Self {
+            options: set.into_iter().collect::<Vec<_>>().into_boxed_slice(),
+        }
+    }
+
+    pub fn from_boxed_slice(options: Box<[K]>) -> Self {
+        let mut vec = options.into_vec();
+        vec.sort();
+        vec.dedup();
+        Self {
+            options: vec.into_boxed_slice(),
+        }
+    }
+
+    /// Merges two configurations (Set Union).
+    pub fn merge(&self, other: &Cfg<K>) -> Self {
+        let mut set: BTreeSet<K> = self.options.iter().cloned().collect();
+        set.extend(other.options.iter().cloned());
+
+        Self {
+            options: set.into_iter().collect::<Vec<_>>().into_boxed_slice(),
+        }
+    }
+
+    pub fn contains(&self, key: &K) -> bool {
+        self.options.binary_search(key).is_ok()
     }
 
     pub fn is_empty(&self) -> bool {
-        self.pairs.is_empty()
+        self.options.is_empty()
     }
 
-    /// Optimized $O(\log n)$ lookup.
-    pub fn get(&self, key: &str) -> Option<&str> {
-        self.pairs
-            .binary_search_by(|(k, _)| k.as_ref().cmp(key))
-            .ok()
-            .map(|idx| self.pairs[idx].1.as_ref())
+    pub fn iter(&self) -> impl Iterator<Item = &K> {
+        self.options.iter()
     }
 
-    pub fn is_enabled(&self, key: &str) -> bool {
-        self.get(key).map(|v| !is_falsy(v)).unwrap_or(false)
-    }
-
-    pub fn get_or<T: FromStr>(&self, key: &str, default: T) -> T {
-        self.get(key)
-            .and_then(|v| v.parse::<T>().ok())
-            .unwrap_or(default)
-    }
-
-    pub fn get_value(&self, key: &str) -> &str {
-        self.get(key).unwrap_or("")
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = (&str, &str)> {
-        self.pairs.iter().map(|(k, v)| (k.as_ref(), v.as_ref()))
+    pub fn as_slice(&self) -> &[K] {
+        &self.options
     }
 }
 
-impl Index<&str> for Cfg {
-    type Output = str;
-    fn index(&self, key: &str) -> &Self::Output {
-        self.get_value(key)
+impl<K: Ord + Clone + Default> Deref for Cfg<K> {
+    type Target = [K];
+    fn deref(&self) -> &Self::Target {
+        &self.options
     }
 }
 
-impl fmt::Debug for Cfg {
+impl<K: Ord + Clone + Default + fmt::Debug> fmt::Debug for Cfg<K> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_map().entries(self.iter()).finish()
+        f.debug_set().entries(self.iter()).finish()
     }
 }
 
@@ -179,57 +132,93 @@ impl fmt::Debug for Cfg {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_invariants() {
-        // Test Latter Wins and Sorting
-        let cfg = Cfg::new(&[("trace", "0"), ("mode", "strict"), ("trace", "1")]);
-        assert_eq!(cfg.pairs.len(), 2);
-        assert_eq!(&cfg["trace"], "1");
-        assert_eq!(cfg.pairs[0].0.as_ref(), "mode"); // Alphabetical
+    #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Default)]
+    enum TestOpt {
+        #[default]
+        None,
+        Trace,
+        Debug,
+        Memoize,
+        Strict,
+    }
+
+    struct TestMapper;
+    impl CfgMapper<TestOpt> for TestMapper {
+        fn map(key: &str, value: &str) -> Option<TestOpt> {
+            match (key.to_lowercase().as_str(), value) {
+                ("trace", "1") => Some(TestOpt::Trace),
+                ("memoize", "1") => Some(TestOpt::Memoize),
+                ("strict", "1") => Some(TestOpt::Strict),
+                _ => None,
+            }
+        }
     }
 
     #[test]
-    fn test_binary_search() {
-        let cfg = Cfg::new(&[("z", "last"), ("a", "first"), ("m", "middle")]);
-        assert_eq!(cfg.get("a"), Some("first"));
-        assert_eq!(cfg.get("m"), Some("middle"));
-        assert_eq!(cfg.get("z"), Some("last"));
+    fn test_invariants() {
+        let options = [TestOpt::Trace, TestOpt::Strict, TestOpt::Trace];
+        let cfg = Cfg::new(&options);
+
+        assert_eq!(cfg.options.len(), 2); // Unique keys
+        assert!(cfg.contains(&TestOpt::Trace));
+        assert!(cfg.contains(&TestOpt::Strict));
+        assert!(!cfg.contains(&TestOpt::Memoize));
+
+        // Verify sorting
+        assert!(cfg.options[0] < cfg.options[1]);
     }
 
     #[test]
     fn test_merge_logic() {
-        let base = Cfg::new(&[("trace", "0"), ("memoize", "true")]);
-        let over = Cfg::new(&[("trace", "1"), ("new_opt", "yes")]);
+        let base = Cfg::new(&[TestOpt::Trace]);
+        let over = Cfg::new(&[TestOpt::Memoize]);
         let merged = base.merge(&over);
 
-        assert!(merged.is_enabled("trace"));
-        assert!(merged.is_enabled("memoize"));
-        assert_eq!(&merged["new_opt"], "yes");
+        assert!(merged.contains(&TestOpt::Trace));
+        assert!(merged.contains(&TestOpt::Memoize));
+        assert_eq!(merged.options.len(), 2);
     }
 
     #[test]
-    fn test_insert_mutation() {
-        let mut cfg = Cfg::new(&[("a", "1")]);
-        cfg.insert("b", "2");
-        cfg.insert("a", "3");
-        assert_eq!(&cfg["a"], "3");
-        assert_eq!(&cfg["b"], "2");
-        assert_eq!(cfg.pairs.len(), 2);
+    fn test_from_env() {
+        unsafe {
+            env::set_var("TEST_TRACE", "1");
+            env::set_var("TEST_STRICT", "1");
+            env::set_var("TEST_OTHER", "skip");
+        }
+
+        let cfg = TestMapper::load_from_env("TEST_");
+        assert!(cfg.contains(&TestOpt::Trace));
+        assert!(cfg.contains(&TestOpt::Strict));
+        assert_eq!(cfg.options.len(), 2);
     }
 
     #[test]
-    fn test_get_or() {
-        let cfg = Cfg::new(&[("depth", "100")]);
-        assert_eq!(cfg.get_or("depth", 0), 100);
-        assert_eq!(cfg.get_or("missing", 50), 50);
+    fn test_cfg_is_mapper() {
+        let cfg = Cfg::<TestOpt>::load_from_env("EMPTY_");
+        assert!(cfg.is_empty());
     }
 
     #[test]
-    fn test_is_falsy() {
-        assert!(is_falsy("0"));
-        assert!(is_falsy("false"));
-        assert!(is_falsy("None"));
-        assert!(!is_falsy("true"));
-        assert!(!is_falsy("1"));
+    fn test_conversions() {
+        let options_a = [TestOpt::Trace, TestOpt::Debug];
+        let cfg_from_a: Cfg<TestOpt> = (&options_a).into(); // CfgA -> Cfg
+        assert!(cfg_from_a.contains(&TestOpt::Trace));
+
+        let cfg_new = Cfg::new(&options_a); // CfgA -> Cfg via new
+        assert!(cfg_new.contains(&TestOpt::Debug));
+
+        let slice_from_cfg: &[TestOpt] = &cfg_from_a; // Cfg -> &[K] via Deref
+        assert_eq!(slice_from_cfg.len(), 2);
+
+        let slice_from_as_slice = cfg_new.as_slice(); // Cfg -> &[K] via as_slice
+        assert_eq!(slice_from_as_slice.len(), 2);
+
+        let iter_from_cfg = cfg_from_a.iter(); // Cfg -> Iterator
+        assert_eq!(iter_from_cfg.count(), 2);
+
+        let vec_from_iter: Cfg<TestOpt> =
+            vec![TestOpt::Trace, TestOpt::Memoize].into_iter().collect(); // Vec<K> -> Cfg via FromIterator
+        assert!(vec_from_iter.contains(&TestOpt::Memoize));
     }
 }

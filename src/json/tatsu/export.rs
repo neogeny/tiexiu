@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::cfg::*;
 use crate::json::error::JsonError;
 use crate::json::tatsu::model::TatSuModel;
 use crate::peg::exp::{Exp, ExpKind};
@@ -31,7 +32,22 @@ impl TryFrom<Grammar> for TatSuModel {
         let directives: HashMap<String, serde_json::Value> = grammar
             .get_directives()
             .iter()
-            .map(|(k, v)| (k.to_string(), serde_json::Value::String(v.to_string())))
+            .filter_map(|opt| {
+                let (name, value) = match opt {
+                    CfgK::Grammar(name) => ("grammar", serde_json::Value::String(name.to_string())),
+                    CfgK::Wsp(p) => ("whitespace", serde_json::Value::String(p.to_string())),
+                    CfgK::Cmt(p) => ("comments", serde_json::Value::String(p.to_string())),
+                    CfgK::Eol(p) => ("eol_comments", serde_json::Value::String(p.to_string())),
+                    CfgK::NameChars(p) => ("namechars", serde_json::Value::String(p.to_string())),
+                    CfgK::IgnoreCase => ("ignorecase", serde_json::Value::Bool(true)),
+                    CfgK::NoNameGuard => ("nameguard", serde_json::Value::Bool(false)),
+                    CfgK::NoLeftRecursion => ("left_recursion", serde_json::Value::Bool(false)),
+                    CfgK::NoParseInfo => ("parseinfo", serde_json::Value::Bool(false)),
+                    CfgK::NoMemoization => ("memoization", serde_json::Value::Bool(false)),
+                    _ => return None,
+                };
+                Some((name.to_string(), value))
+            })
             .collect();
 
         Ok(TatSuModel::Grammar {

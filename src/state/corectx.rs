@@ -4,11 +4,10 @@
 pub use super::ctx::{Ctx, CtxI};
 use super::memo::{Key, Memo, MemoCache};
 use super::trace::{CONSOLE_TRACER, NULL_TRACER, Tracer};
-use crate::cfg::Configurable;
+use crate::cfg::*;
 use crate::input::Cursor;
 use crate::peg::parser::TokenList;
 use crate::trees::Tree;
-use crate::util::Cfg;
 use crate::util::pyre::Pattern;
 use std::borrow::Cow;
 use std::cell::RefCell;
@@ -117,6 +116,10 @@ where
 {
     fn configure(&mut self, cfg: &Cfg) {
         self.cursor_mut().configure(cfg);
+
+        if cfg.contains(&CfgK::Trace) {
+            self.set_trace(true);
+        }
     }
 }
 

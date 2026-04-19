@@ -1,11 +1,9 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::cfg::Configurable;
-use crate::cfg::constants::*;
+use crate::cfg::*;
 use crate::input::Error;
 use crate::input::tokenizing::TokenizingPatterns;
-use crate::util::Cfg;
 use crate::util::pyre::Pattern;
 use std::fmt::Debug;
 
@@ -42,21 +40,19 @@ pub trait Cursor: Debug + Configurable {
 
     fn tokenizing_from_cfg(&self, cfg: &Cfg) -> Result<TokenizingPatterns, Error> {
         type P = TokenizingPatterns;
-        let wsp = cfg.get(STR_WSP).map_or(P::DEFAULT_WSP, |s| s);
-        let cmt = cfg.get(STR_CMT).map_or(P::DEFAULT_CMT, |s| s);
-        let eol = cfg.get(STR_EOL).map_or(P::DEFAULT_EOL, |s| s);
+        let mut wsp = P::DEFAULT_WSP;
+        let mut cmt = P::DEFAULT_CMT;
+        let mut eol = P::DEFAULT_EOL;
+
+        for opt in cfg.iter() {
+            match opt {
+                CfgK::Wsp(p) => wsp = p.as_str(),
+                CfgK::Cmt(p) => cmt = p.as_str(),
+                CfgK::Eol(p) => eol = p.as_str(),
+                _ => {}
+            }
+        }
+
         TokenizingPatterns::try_new(wsp, cmt, eol)
     }
-    // // Character classification
-    // fn is_name(&self, s: &str) -> bool;
-    // fn is_name_char(&self, c: Option<&str>) -> bool;
-    //
-    // // Navigation
-    // fn goto(&mut self, pos: usize);
-    // fn move_by(&mut self, n: i64);
-    // fn at_end(&self) -> bool;
-    // fn at_eol(&self) -> bool;
-    //
-    // // Movement and Peeking
-    // fn next(&mut self) -> Option<&str>;
 }

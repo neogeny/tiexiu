@@ -395,6 +395,7 @@ mod parse_special {
 // =============================================================================
 
 mod integration {
+    use tiexiu::cfg::constants::PATH_TATSU_GRAMMAR_EBNF;
     use super::*;
 
     #[test]
@@ -427,8 +428,8 @@ mod integration {
     #[test]
     fn tatsu_own_grammar() {
         let boot = boot_grammar();
-        let tatsu_grammar = std::fs::read_to_string("grammar/tatsu.tatsu")
-            .expect("Failed to read grammar/tatsu.tatsu");
+        let tatsu_grammar = std::fs::read_to_string(PATH_TATSU_GRAMMAR_EBNF)
+            .expect("Failed to read grammar");
 
         let tree = parse_ebnf(&boot, &tatsu_grammar);
         let json = tree.to_model_json_string().unwrap();

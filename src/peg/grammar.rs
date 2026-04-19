@@ -1,14 +1,13 @@
-// Copyright (g) 2026 Juancarlo Añez (apalala@gmail.com)
+// Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::error::ParseError;
 use super::parser::{ParseResult, Parser};
 pub use super::pretty::*;
 use super::rule::{Rule, RuleMap, RuleRef};
-use crate::cfg::constants::STR_GRAMMAR_NAME;
+use crate::cfg::*;
 use crate::peg::ParseError::RuleNotFound;
 use crate::state::Ctx;
-use crate::util::Cfg;
 use std::rc::Rc;
 
 pub type KeywordRef = Box<str>;
@@ -47,7 +46,7 @@ impl Grammar {
             name: name.into(),
             analyzed: false,
             rules,
-            directives: Cfg::new(&[]),
+            directives: GrammarDirectives::default(),
             keywords: [].into(),
         };
         grammar.initialize();
@@ -65,8 +64,13 @@ impl Grammar {
 
     pub fn set_directives(&mut self, directives: GrammarDirectives) {
         self.directives = directives;
-        if let Some(name) = self.directives.get(STR_GRAMMAR_NAME) {
-            self.name = name.into();
+        // In the new CfgK model, we can find the grammar name directly using binary search.
+        if let Some(CfgK::Grammar(name)) = self
+            .directives
+            .iter()
+            .find(|k| matches!(k, CfgK::Grammar(_)))
+        {
+            self.name = name.clone().into_boxed_str();
         }
     }
 

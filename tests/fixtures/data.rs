@@ -26,11 +26,11 @@ pub fn parse_with_boot(_grammar: &Grammar, text: &str) -> tiexiu::trees::Tree {
 pub fn find_unlinked_calls(exp: &Exp, path: &str) -> Vec<String> {
     let mut result = Vec::new();
     match &exp.kind {
-        ExpKind::Call { name, rule: None } => {
+        ExpKind::Call { name, rule: _ } => {
             result.push(format!("{}: Call to '{}' is NOT linked", path, name));
         }
 
-        ExpKind::RuleInclude { name, exp: None } => {
+        ExpKind::RuleInclude { name, exp: _ } => {
             result.push(format!("{}: RuleInclude '{}' is NOT resolved", path, name));
         }
 

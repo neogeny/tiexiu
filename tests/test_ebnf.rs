@@ -26,7 +26,7 @@ fn test_ebnf_parsing() -> tiexiu::Result<()> {
     "#,
     );
 
-    let g = compile(grammar.as_ref(), &[("trace", "0")])?;
+    let g = compile(grammar.as_ref(), &[])?;
 
     assert_eq!(g.name.to_string(), "EBNF");
     assert_eq!(g.rules.len(), 5, "Unexpected number of rules");

@@ -7,6 +7,7 @@
 //! allowing easy tweaking of the output before final serialization.
 
 use super::error::{JsonError, Result};
+use crate::cfg::*;
 use crate::peg::exp::{Exp, ExpKind};
 use crate::peg::grammar::Grammar;
 use crate::peg::rule::Rule;
@@ -59,12 +60,30 @@ impl Grammar {
         let rules: Vec<Value> = self.rules().map(|r| r.to_json_exp()).collect();
         obj.insert("rules".into(), Value::Array(rules));
 
-        let directives: Map<String, Value> = self
+        let directives: Vec<Value> = self
             .get_directives()
             .iter()
-            .map(|(k, v)| (k.to_string(), Value::String(v.to_string())))
+            .filter_map(|opt| {
+                let (name, value) = match opt {
+                    CfgK::Grammar(name) => ("grammar", name.as_str()),
+                    CfgK::Wsp(p) => ("whitespace", p.as_str()),
+                    CfgK::Cmt(p) => ("comments", p.as_str()),
+                    CfgK::Eol(p) => ("eol_comments", p.as_str()),
+                    CfgK::NameChars(p) => ("namechars", p.as_str()),
+                    CfgK::IgnoreCase => ("ignorecase", "True"),
+                    CfgK::NoNameGuard => ("nameguard", "False"),
+                    CfgK::NoLeftRecursion => ("left_recursion", "False"),
+                    CfgK::NoParseInfo => ("parseinfo", "False"),
+                    CfgK::NoMemoization => ("memoization", "False"),
+                    _ => return None,
+                };
+                let mut d_obj = Map::new();
+                d_obj.insert("name".into(), Value::String(name.into()));
+                d_obj.insert("value".into(), Value::String(value.into()));
+                Some(Value::Object(d_obj))
+            })
             .collect();
-        obj.insert("directives".into(), Value::Object(directives));
+        obj.insert("directives".into(), Value::Array(directives));
 
         let keywords: Vec<Value> = self
             .keywords

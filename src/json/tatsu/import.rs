@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::cfg::*;
 use crate::json::error::JsonError;
 use crate::json::tatsu::model::TatSuModel;
 use crate::peg::exp::{ERef, Exp};
@@ -61,11 +62,13 @@ impl TryFrom<TatSuModel> for Grammar {
                     rule_vec.push(rule.into());
                 }
             }
-            let str_directives = GrammarDirectives::from_iter(directives.iter().map(|(k, v)| {
-                let val_str = v.as_str().map(|s| s.to_string()).unwrap_or(v.to_string());
-
-                (k.as_str(), val_str)
-            }));
+            let str_directives: GrammarDirectives = directives
+                .iter()
+                .filter_map(|(k, v)| {
+                    let val_str = v.as_str().map(|s| s.to_string()).unwrap_or(v.to_string());
+                    Cfg::map(k.as_str(), val_str.as_str())
+                })
+                .collect();
             let mut grammar = Grammar::new(name.as_str(), rule_vec.as_slice());
             grammar.analyzed = analyzed;
             grammar.set_directives(str_directives);

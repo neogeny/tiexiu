@@ -3,7 +3,8 @@
 
 use super::error::{CompileError, CompileResult};
 use super::{Exp, Grammar, Rule};
-use crate::peg::grammar::{GrammarDirectives, KeywordRef};
+use crate::cfg::*;
+use crate::peg::grammar::KeywordRef;
 use crate::peg::rule::{RuleMap, RuleRef};
 use crate::trees::{FlagMap, Tree, TreeMap};
 
@@ -74,15 +75,18 @@ impl GrammarCompiler {
         let rules: Vec<RuleRef> = rulemap.into_iter().map(|(_, r)| r).collect();
         let name = map_get_default(map, "name", "__COMPILED__");
 
-        let mut directives: GrammarDirectives = GrammarDirectives::new(&[]);
+        let mut directives = Cfg::default();
         if let Ok(directives_tree) = map_get(map, "Grammar", "directives") {
             let directives_list = _parse_list(directives_tree)?;
-            directives = GrammarDirectives::from_iter(directives_list.iter().map(|d| {
+            let str_directives = directives_list.iter().map(|d| {
                 let dm = _parse_map(d).expect("directive should be a Map");
                 let name = dm.get("name").expect("name key").value();
                 let value = dm.get("value").expect("value key").value();
                 (name.to_string(), value.to_string())
-            }));
+            });
+            directives = str_directives
+                .filter_map(|(k, v)| Cfg::map(&k, &v))
+                .collect();
         }
         let keywords: Vec<KeywordRef> =
             if let Ok(keywords_tree) = map_get(map, "Grammar", "keywords") {

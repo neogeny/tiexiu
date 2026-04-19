@@ -4,8 +4,8 @@
 pub mod constants;
 pub mod keys;
 
-pub use crate::util::cfg::*;
+pub use keys::{Cfg, CfgA, CfgK, Configurable};
 
 pub fn cfg(input: CfgA) -> Cfg {
-    Cfg::from_env(constants::ENV_PREFIX).merge(&Cfg::new(input))
+    Cfg::load_from_env(constants::ENV_PREFIX).merge(&Cfg::new(input))
 }
