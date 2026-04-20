@@ -5,6 +5,8 @@ use crate::peg::exp::{Exp, ExpKind};
 use crate::peg::{Grammar, Rule};
 use crate::util::indent::IndentWriter;
 use std::fmt::Display;
+use crate::cfg::Cfg;
+use crate::cfg::constants::*;
 
 impl Display for Grammar {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -57,10 +59,39 @@ pub trait PrettyPrint {
 
 impl PrettyPrint for Grammar {
     fn pretty_print_with(&self, writer: &mut IndentWriter) -> String {
-        writer.writeln(&format!("@@grammar:: {}", self.name));
+        let directives_strs: Vec<_> = self
+            .directives
+            .iter()
+            .filter_map(|d| match d {
+                Cfg::Grammar(_) => Some(format!("@@{} :: {}", STR_GRAMMAR_NAME, self.name)),
+                Cfg::Wsp(v) => Some(format!("@@{} :: /{}/", STR_WHITESPACE, v)),
+                Cfg::Cmt(v) => Some(format!("@@{} :: /{}/", STR_COMMENTS, v)),
+                Cfg::Eol(v) => Some(format!("@@{} :: /{}/", STR_EOL_COMMENTS, v)),
+                Cfg::NameChars(v) => Some(format!("@@{} :: \"{}\"", STR_NAMECHARS, v)),
 
-        // TODO: Write the rest of the directives
-        // TODO: Write keywords
+                Cfg::IgnoreCase => Some(format!("@@{} :: True", STR_IGNORECASE)),
+                Cfg::NoNameGuard => Some(format!("@@{} :: False", STR_NAMEGUARD)),
+                Cfg::NoLeftRecursion => Some(format!("@@{} :: False", STR_LEFTREC)),
+                Cfg::NoParseInfo => Some(format!("@@{} :: False", STR_PARSEINFO)),
+                Cfg::NoMemoization => Some(format!("@@{} :: False", STR_MEMOIZATION)),
+                _ => None,
+            })
+            .collect();
+
+        if !directives_strs.is_empty() {
+            writer.writeln(&directives_strs.join("\n"));
+            writer.writeln("");
+        }
+
+        let keyword_strs = self.keywords
+            .chunks(8)
+            .map(|chunk| format!("@@{} :: {}", STR_KEYWORD, chunk.join(" ")))
+            .collect::<Vec<_>>();
+
+        if !keyword_strs.is_empty() {
+            writer.writeln(&keyword_strs.join("\n"));
+            writer.writeln("");
+        }
 
         for rule in self.rules() {
             writer.writeln("");
