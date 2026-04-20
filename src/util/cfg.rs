@@ -39,6 +39,7 @@ pub trait Configurable<K: Ord + Clone + Default> {
 /// Maps environment key-value pairs to a configuration type K.
 pub trait CfgMapper<K: Ord + Clone + Default> {
     fn map(key: &str, value: &str) -> Option<K>;
+    fn unmap(value: &K) -> Option<(&str, &str)>;
 
     /// Loads configuration from environment variables using this mapper.
     fn load_from_env(prefix: &str) -> CfgBox<K> {
@@ -60,9 +61,11 @@ where
     K: CfgMapper<K>,
 {
     fn map(key: &str, value: &str) -> Option<K> {
-        let _ = key;
-        let _ = value;
         K::map(key, value)
+    }
+
+    fn unmap(value: &K) -> Option<(&str, &str)> {
+        K::unmap(value)
     }
 }
 

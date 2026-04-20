@@ -63,6 +63,26 @@ impl CfgMapper<Cfg> for Cfg {
             _ => None,
         }
     }
+
+    fn unmap(value: &Cfg) -> Option<(&str, &str)> {
+        use super::constants::*;
+        let true_str = "True";
+        let false_str = "False";
+        match value {
+            Cfg::Grammar(v) => Some((STR_GRAMMAR_NAME, v.as_str())),
+            Cfg::Wsp(v) => Some((STR_WHITESPACE, v.as_str())),
+            Cfg::Cmt(v) => Some((STR_COMMENTS, v.as_str())),
+            Cfg::Eol(v) => Some((STR_EOL_COMMENTS, v.as_str())),
+            Cfg::NameChars(v) => Some((STR_NAMECHARS, v.as_str())),
+
+            Cfg::IgnoreCase => Some((STR_IGNORECASE, true_str)),
+            Cfg::NoNameGuard => Some((STR_NAMEGUARD, false_str)),
+            Cfg::NoLeftRecursion => Some((STR_LEFTREC, false_str)),
+            Cfg::NoParseInfo => Some((STR_PARSEINFO, false_str)),
+            Cfg::NoMemoization => Some((STR_MEMOIZATION, false_str)),
+            _ => None,
+        }
+    }
 }
 
 /// Helper to determine if a string is "falsy" in a Pythonic context.
