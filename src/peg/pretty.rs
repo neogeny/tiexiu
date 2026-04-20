@@ -1,12 +1,12 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::cfg::Cfg;
+use crate::cfg::constants::*;
 use crate::peg::exp::{Exp, ExpKind};
 use crate::peg::{Grammar, Rule};
 use crate::util::indent::IndentWriter;
 use std::fmt::Display;
-use crate::cfg::Cfg;
-use crate::cfg::constants::*;
 
 impl Display for Grammar {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -83,7 +83,8 @@ impl PrettyPrint for Grammar {
             writer.writeln("");
         }
 
-        let keyword_strs = self.keywords
+        let keyword_strs = self
+            .keywords
             .chunks(8)
             .map(|chunk| format!("@@{} :: {}", STR_KEYWORD, chunk.join(" ")))
             .collect::<Vec<_>>();

@@ -1,7 +1,6 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use std::fmt;
 use super::error::ParseError;
 use super::parser::{Nope, ParseResult, Parser, Succ};
 use super::rule::RuleRef;
@@ -10,6 +9,7 @@ use crate::trees::tree::Define;
 use crate::trees::{Str, Tree};
 use crate::util::pyre;
 use derivative::Derivative;
+use std::fmt;
 use std::ops::Deref;
 
 pub type ERef = Box<Exp>;
@@ -36,8 +36,7 @@ fn debug_none<T>(_field: &T, f: &mut fmt::Formatter) -> fmt::Result {
     write!(f, "None")
 }
 
-impl Exp {
-}
+impl Exp {}
 
 #[derive(Derivative)]
 #[derivative(Debug)]
@@ -56,7 +55,7 @@ pub enum ExpKind {
 
         // NOTE
         //   This hacked field makes the structure recursive
-        #[derivative(Debug(format_with="debug_none"))]
+        #[derivative(Debug(format_with = "debug_none"))]
         rule: Option<RuleRef>,
     },
 
@@ -105,7 +104,7 @@ pub enum ExpKind {
 
         // NOTE
         //   No recursion, but a repetition that may be large
-        #[derivative(Debug(format_with="debug_none"))]
+        #[derivative(Debug(format_with = "debug_none"))]
         exp: Option<ERef>,
     },
 }
