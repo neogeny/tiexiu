@@ -17,13 +17,12 @@ use fancy_regex::{Captures, Regex};
 pub struct Pattern {
     regex: Regex,
     anchored: Regex,
-    pattern: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Match<'a> {
-    haystack: &'a str,
-    groups: Vec<Option<std::ops::Range<usize>>>,
+    pub string: &'a str,
+    captures: Captures<'a>,
 }
 
 pub fn escape(pattern: &str) -> Box<str> {
@@ -89,20 +88,25 @@ impl Pattern {
         Ok(Self {
             regex: Regex::new(pattern)?,
             anchored: Regex::new(&anchored)?,
-            pattern: pattern.to_string(),
         })
     }
 
     pub fn search<'a>(&self, text: &'a str) -> Option<Match<'a>> {
         match self.regex.captures(text) {
-            Ok(Some(caps)) => Some(create_match_from_captures(text, &caps)),
+            Ok(Some(captures)) => Some(Match {
+                string: text,
+                captures,
+            }),
             _ => None,
         }
     }
 
     pub fn match_<'a>(&self, text: &'a str) -> Option<Match<'a>> {
         match self.anchored.captures(text) {
-            Ok(Some(caps)) => Some(create_match_from_captures(text, &caps)),
+            Ok(Some(captures)) => Some(Match {
+                string: text,
+                captures,
+            }),
             _ => None,
         }
     }
@@ -149,21 +153,17 @@ impl Pattern {
             .captures_iter(text)
             .filter_map(|caps_result| caps_result.ok())
             .map(|caps| {
-                // caps.len() includes the whole match at index 0.
                 if caps.len() == 1 {
-                    // No capturing groups: return the whole match as a single-element vec
                     caps.get(0)
                         .map(|m| vec![m.as_str().to_string()])
                         .unwrap_or_default()
                 } else if caps.len() == 2 {
-                    // Single capturing group: return that group's text (empty string if missing)
                     let g = caps
                         .get(1)
                         .map(|m| m.as_str().to_string())
                         .unwrap_or_default();
                     vec![g]
                 } else {
-                    // Multiple capturing groups: return each group's text (1..len)
                     (1..caps.len())
                         .map(|i| {
                             caps.get(i)
@@ -180,7 +180,10 @@ impl Pattern {
         self.regex
             .captures_iter(text)
             .filter_map(|caps_result| caps_result.ok())
-            .map(|caps| create_match_from_captures(text, &caps))
+            .map(|captures| Match {
+                string: text,
+                captures,
+            })
             .collect()
     }
 
@@ -212,80 +215,66 @@ impl Pattern {
     }
 
     pub fn pattern(&self) -> &str {
-        &self.pattern
+        self.regex.as_str()
     }
-}
-
-fn create_match_from_captures<'a>(haystack: &'a str, caps: &Captures) -> Match<'a> {
-    let groups: Vec<Option<std::ops::Range<usize>>> = caps
-        .iter()
-        .map(|opt| opt.map(|m| m.start()..m.end()))
-        .collect();
-    Match { haystack, groups }
 }
 
 impl<'a> Match<'a> {
     pub fn group(&self, group: usize) -> Option<&'a str> {
-        self.groups
-            .get(group)?
-            .as_ref()
-            .map(|r| &self.haystack[r.start..r.end])
+        self.captures.get(group).map(|m| m.as_str())
     }
 
     pub fn groups(&self) -> Vec<Option<&'a str>> {
-        self.groups
+        self.captures
             .iter()
-            .map(|g| g.as_ref().map(|r| &self.haystack[r.start..r.end]))
+            .map(|opt| opt.map(|m| m.as_str()))
             .collect()
     }
 
     pub fn start(&self, group: Option<usize>) -> isize {
         let group = group.unwrap_or(0);
-        self.groups
+        self.captures
             .get(group)
-            .and_then(|g| g.as_ref())
-            .map(|r| r.start as isize)
+            .map(|m| m.start() as isize)
             .unwrap_or(-1)
     }
 
     pub fn end(&self, group: Option<usize>) -> isize {
         let group = group.unwrap_or(0);
-        self.groups
+        self.captures
             .get(group)
-            .and_then(|g| g.as_ref())
-            .map(|r| r.end as isize)
+            .map(|m| m.end() as isize)
             .unwrap_or(-1)
     }
 
     pub fn span(&self, group: Option<usize>) -> (usize, usize) {
         let group = group.unwrap_or(0);
-        self.groups
+        self.captures
             .get(group)
-            .and_then(|g| g.as_ref())
-            .map(|r| (r.start, r.end))
+            .map(|m| (m.start(), m.end()))
             .unwrap_or((0, 0))
     }
 }
 
 impl<'a> traits_impl::Match<'a> for Match<'a> {
     fn group(&self, group: usize) -> Option<&'a str> {
-        Match::group(self, group)
+        self.group(group)
     }
 
     fn groups(&self) -> Vec<Option<&'a str>> {
-        Match::groups(self)
+        self.groups()
     }
 
     fn start(&self, group: Option<usize>) -> isize {
-        Match::start(self, group)
+        self.start(group)
     }
 
     fn end(&self, group: Option<usize>) -> isize {
-        Match::end(self, group)
+        self.end(group)
     }
 
     fn span(&self, group: Option<usize>) -> (usize, usize) {
-        Match::span(self, group)
+        self.span(group)
     }
 }
 
