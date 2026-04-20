@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use std::fmt;
 use super::error::ParseError;
 use super::parser::{Nope, ParseResult, Parser, Succ};
 use super::rule::RuleRef;
@@ -8,12 +9,14 @@ use crate::state::Ctx;
 use crate::trees::tree::Define;
 use crate::trees::{Str, Tree};
 use crate::util::pyre;
-use std::fmt::Debug;
+use derivative::Derivative;
 use std::ops::Deref;
 
 pub type ERef = Box<Exp>;
 pub type ERefArr = Box<[Exp]>;
 
+#[derive(Derivative)]
+#[derivative(Debug)]
 #[derive(Clone)]
 pub struct Exp {
     pub kind: ExpKind,
@@ -21,13 +24,24 @@ pub struct Exp {
     pub df: Box<[Define]>, // the defines set
 }
 
-impl Debug for Exp {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        Debug::fmt(&self.kind, f)
-    }
+// NOTE
+//  For output to reconstruct, Exp.kind cannot be hidden
+// impl Debug for Exp {
+//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+//         Debug::fmt(&self.kind, f)
+//     }
+// }
+
+fn debug_none<T>(_field: &T, f: &mut fmt::Formatter) -> fmt::Result {
+    write!(f, "None")
 }
 
-#[derive(Debug, Clone)]
+impl Exp {
+}
+
+#[derive(Derivative)]
+#[derivative(Debug)]
+#[derive(Clone)]
 pub enum ExpKind {
     Nil,
     Cut,
@@ -37,7 +51,14 @@ pub enum ExpKind {
     Eof,
     Eol,
 
-    Call { name: Str, rule: Option<RuleRef> },
+    Call {
+        name: Str,
+
+        // NOTE
+        //   This hacked field makes the structure recursive
+        #[derivative(Debug(format_with="debug_none"))]
+        rule: Option<RuleRef>,
+    },
 
     Token(Str),
     Pattern(Str),
@@ -63,11 +84,30 @@ pub enum ExpKind {
     Closure(ERef),
     PositiveClosure(ERef),
 
-    Join { exp: ERef, sep: ERef },
-    PositiveJoin { exp: ERef, sep: ERef },
-    Gather { exp: ERef, sep: ERef },
-    PositiveGather { exp: ERef, sep: ERef },
-    RuleInclude { name: Str, exp: Option<ERef> },
+    Join {
+        exp: ERef,
+        sep: ERef,
+    },
+    PositiveJoin {
+        exp: ERef,
+        sep: ERef,
+    },
+    Gather {
+        exp: ERef,
+        sep: ERef,
+    },
+    PositiveGather {
+        exp: ERef,
+        sep: ERef,
+    },
+    RuleInclude {
+        name: Str,
+
+        // NOTE
+        //   No recursion, but a repetition that may be large
+        #[derivative(Debug(format_with="debug_none"))]
+        exp: Option<ERef>,
+    },
 }
 
 impl<C: Ctx> Parser<C> for Exp {
