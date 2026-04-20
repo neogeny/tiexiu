@@ -80,8 +80,8 @@ mod tests {
 
     #[test]
     #[ignore]
-    fn test_linker_debug() {
-        let boot = crate::api::boot_grammar().expect("Failed to load boot grammar");
+    fn test_linker_debug() -> Result<(), crate::Error> {
+        let boot = crate::api::boot_grammar()?;
 
         println!("=== Checking boot grammar structure ===\n");
 
@@ -115,12 +115,13 @@ mod tests {
         match boot.parse(ctx) {
             Ok(_) => {
                 println!("SUCCESS!");
+                Ok(())
             }
             Err(failure) => {
                 println!("FAILED: {:?}", failure);
                 println!("Error at mark: {}", failure.mark);
                 println!("Error message: {:?}", failure.source);
-                panic!("Parsing failed");
+                Err(failure.into())
             }
         }
     }
