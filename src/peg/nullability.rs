@@ -28,7 +28,8 @@ impl ExpKind {
             Self::Eof => false,
             Self::Eol => true,
 
-            Self::Cut
+            Self::EmptyClosure
+            | Self::Cut
             | Self::Void
             | Self::Lookahead(_)
             | Self::NegativeLookahead(_)
@@ -86,7 +87,8 @@ impl ExpKind {
             },
 
             // These don't lead to further rules
-            Self::Cut
+            Self::EmptyClosure
+            | Self::Cut
             | Self::Void
             | Self::Fail
             | Self::Dot
@@ -145,7 +147,8 @@ impl ExpKind {
             Self::RuleInclude { .. } => vec![],
 
             // These don't lead to further rules
-            Self::Cut
+            Self::EmptyClosure
+            | Self::Cut
             | Self::Void
             | Self::Fail
             | Self::Dot

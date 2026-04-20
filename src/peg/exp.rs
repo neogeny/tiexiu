@@ -49,6 +49,7 @@ pub enum ExpKind {
     Dot,
     Eof,
     Eol,
+    EmptyClosure,
 
     Call {
         name: Str,
@@ -145,6 +146,7 @@ impl Exp {
         let start = ctx.mark();
         let was_cut = ctx.cut_seen();
         match &self.kind {
+            ExpKind::EmptyClosure => Ok(Succ(ctx, Tree::from(vec![]).closed())),
             ExpKind::Nil => Ok(Succ(ctx, Tree::Nil)),
             ExpKind::RuleInclude { name, exp } => match exp {
                 None => Err(ctx.failure(start, ParseError::RuleNotLinked(name.clone()))),

@@ -232,6 +232,7 @@ fn join_lists(tracks: impl IntoIterator<Item = Rails>) -> Rails {
 #[allow(clippy::redundant_closure)]
 fn walk_exp(exp: &Exp) -> Rails {
     match &exp.kind {
+        ExpKind::EmptyClosure => vec![make_rail("[]")],
         ExpKind::Void => vec![make_rail(" ∅ ")],
         ExpKind::Fail => vec![make_rail(" ⚠ ")],
         ExpKind::Cut => vec![make_rail(" ✂ ")],

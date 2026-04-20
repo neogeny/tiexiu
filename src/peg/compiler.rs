@@ -157,7 +157,7 @@ impl GrammarCompiler {
             "EOF" | "Eof" => Exp::eof(),
             "EOL" | "Eol" => Exp::eol(),
             "EOLComment" => Exp::nil(),
-            "EmptyClosure" => Exp::closure(Exp::nil()),
+            "EmptyClosure" => Exp::empty_closure(),
             "Fail" => Exp::fail(),
             "Gather" => {
                 let exp = map_get(tree, "exp", "exp")?;

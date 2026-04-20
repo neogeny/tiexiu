@@ -157,6 +157,11 @@ impl Exp {
     }
 
     #[inline]
+    pub fn empty_closure() -> Self {
+        Self::new(ExpKind::EmptyClosure)
+    }
+
+    #[inline]
     pub fn closure(model: Self) -> Self {
         Self::new(ExpKind::Closure(model.into()))
     }

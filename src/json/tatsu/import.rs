@@ -86,6 +86,7 @@ impl TryFrom<TatSuModel> for Exp {
 
     fn try_from(model: TatSuModel) -> Result<Self, Self::Error> {
         match model {
+            TatSuModel::EmptyClosure => Ok(Exp::empty_closure()),
             TatSuModel::Grammar { .. } | TatSuModel::Rule { .. } => {
                 Err(JsonError::UnsupportedModel(format!("{:?}", model)))
             }

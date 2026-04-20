@@ -20,7 +20,8 @@ impl<O> Folds<Exp, O> for Exp {
 impl Exp {
     fn children(&self) -> Vec<&Exp> {
         match &self.kind {
-            ExpKind::Nil
+            ExpKind::EmptyClosure
+            | ExpKind::Nil
             | ExpKind::Cut
             | ExpKind::Void
             | ExpKind::Fail

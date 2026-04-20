@@ -94,11 +94,10 @@ impl PrettyPrint for Grammar {
             writer.writeln("");
         }
 
-        for rule in self.rules() {
-            writer.writeln("");
-            let rule_str = rule.pretty_print_with(writer);
-            writer.writeln(&rule_str);
-        }
+        // for rule in self.rules() {
+        //     let rule_str = rule.pretty_print_with(writer);
+        //     writer.writeln(&rule_str);
+        // }
         writer.take()
     }
 }
@@ -132,6 +131,7 @@ impl PrettyPrint for Exp {
 impl PrettyPrint for ExpKind {
     fn pretty_print_with(&self, writer: &mut IndentWriter) -> String {
         match &self {
+            ExpKind::EmptyClosure => "{}".to_string(),
             ExpKind::Nil => "".to_string(),
             ExpKind::RuleInclude { name, exp: _ } => {
                 format!(">{}", name)

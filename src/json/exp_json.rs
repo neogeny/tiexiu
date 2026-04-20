@@ -137,8 +137,17 @@ impl ExpKind {
         let mut obj = Map::new();
 
         match self {
-            ExpKind::Nil | ExpKind::Void | ExpKind::Fail | ExpKind::Dot => {
+            Self::EmptyClosure => {
+                obj.insert("__class__".into(), Value::String("EmptyClosure".into()));
+            }
+            ExpKind::Nil | ExpKind::Void => {
                 obj.insert("__class__".into(), Value::String("Void".into()));
+            }
+            ExpKind::Fail => {
+                obj.insert("__class__".into(), Value::String("Fail".into()));
+            }
+            ExpKind::Dot => {
+                obj.insert("__class__".into(), Value::String("Dot".into()));
             }
             ExpKind::Call { name, .. } => {
                 obj.insert("__class__".into(), Value::String("Call".into()));

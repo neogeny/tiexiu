@@ -78,6 +78,7 @@ impl<'a> Analyzer<'a> {
             | ExpKind::PositiveGather { exp, .. } => Self::first_calls(grammar, exp),
 
             ExpKind::Nil
+            | ExpKind::EmptyClosure
             | ExpKind::Cut
             | ExpKind::Void
             | ExpKind::Fail
