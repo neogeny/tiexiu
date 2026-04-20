@@ -10,7 +10,6 @@ pub const PATH_TATSU_GRAMMAR_JSON: &str = "grammar/tatsu.json";
 pub const PATH_CALC_GRAMMAR_JSON: &str = "grammar/calc.json";
 pub const PATH_CALC_GRAMMAR_EBNF: &str = "grammar/calc.ebnf";
 
-
 // Grammar directives (from TatSu)
 pub const STR_GRAMMAR_NAME: &str = "grammar";
 pub const STR_WHITESPACE: &str = "whitespace";
@@ -24,7 +23,6 @@ pub const STR_NAMECHARS: &str = "namechars";
 pub const STR_NAMEGUARD: &str = "nameguard";
 
 // Symbols
-
 
 pub const SYM_ETX: &str = "＄";
 pub const SYM_EOL: &str = "⏎";

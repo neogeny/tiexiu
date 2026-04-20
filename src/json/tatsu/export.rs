@@ -1,13 +1,13 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::cfg::constants::*;
 use crate::cfg::*;
 use crate::json::error::JsonError;
 use crate::json::tatsu::model::TatSuModel;
 use crate::peg::exp::{Exp, ExpKind};
 use crate::peg::grammar::Grammar;
 use std::collections::HashMap;
-use crate::cfg::constants::*;
 
 impl TryFrom<Grammar> for TatSuModel {
     type Error = JsonError;
@@ -35,7 +35,10 @@ impl TryFrom<Grammar> for TatSuModel {
             .iter()
             .filter_map(|opt| {
                 let (name, value) = match opt {
-                    Cfg::Grammar(name) => (STR_GRAMMAR_NAME, serde_json::Value::String(name.to_string())),
+                    Cfg::Grammar(name) => (
+                        STR_GRAMMAR_NAME,
+                        serde_json::Value::String(name.to_string()),
+                    ),
                     Cfg::Wsp(p) => (STR_WHITESPACE, serde_json::Value::String(p.to_string())),
                     Cfg::Cmt(p) => (STR_COMMENTS, serde_json::Value::String(p.to_string())),
                     Cfg::Eol(p) => (STR_EOL_COMMENTS, serde_json::Value::String(p.to_string())),

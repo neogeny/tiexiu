@@ -7,12 +7,12 @@
 //! allowing easy tweaking of the output before final serialization.
 
 use super::error::{JsonError, Result};
+use crate::cfg::constants::*;
 use crate::cfg::*;
 use crate::peg::exp::{Exp, ExpKind};
 use crate::peg::grammar::Grammar;
 use crate::peg::rule::Rule;
 use serde_json::{Map, Value};
-use crate::cfg::constants::*;
 
 pub trait ToExpJson {
     fn to_json_exp(&self) -> Value;
