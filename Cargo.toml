@@ -26,8 +26,8 @@ required-features = ["cli"]
 
 # --- Features ---
 [features]
+default = ["serde", "serde_json", "cli", "pyo3"]
 bootstrap = ["default"]
-default = ["serde", "serde_json", "cli", "pyo3", "pcre2"]
 
 # Specific feature groupings
 serde = ["dep:serde"]
