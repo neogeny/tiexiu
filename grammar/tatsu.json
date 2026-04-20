@@ -2775,14 +2775,14 @@
             "__class__": "Option",
             "exp": {
               "__class__": "Call",
-              "name": "eof"
+              "name": "eol"
             }
           },
           {
             "__class__": "Option",
             "exp": {
               "__class__": "Call",
-              "name": "eol"
+              "name": "eof"
             }
           },
           {

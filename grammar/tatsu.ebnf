@@ -72,8 +72,16 @@ rule[Rule]:
     ENDRULE
     ~
 
-ENDRULE:
-    /\s*[;]|(?=\s*(?:\r?\n|\r)\S)|(?:\s*(?:\r?\n|\r)){2,}[;]?/ |  $ | ';'
+ENDRULE: DEDENT | BLANK | ';' | $
+
+DEDENT: EOL /\S/
+
+BLANK: EOL EOL
+
+# BLANK: $-> $-> ;
+
+
+EOL: /(?m)[ \t]*$/ /(?m)(?:\r?\n|\r)?/
 
 decorator: '@' !'@' ~ =('override' | 'name' | 'isname' | 'nomemo')
 
@@ -166,15 +174,16 @@ negative_lookahead[NegativeLookahead]: '!' ~ =term
 skip_to[SkipTo]: '->' ~ =term
 
 atom:
+    | eol
+    | eof
     | skip
     | group
     | token
     | alert
     | constant
-    | call
-    | pattern
     | dot
-    | eof
+    | pattern
+    | call
 
 call[Call]: word
 
@@ -212,7 +221,7 @@ literal:
     | int
     | null
 
-string: multiline_string | singlequoted | doublequoted
+string: &('"'|"'") (multiline_string | singlequoted | doublequoted)
 
 singlequoted: SINGLEQUOTED
 
@@ -246,7 +255,7 @@ pattern[Pattern]: regex
 
 regex: deprecated_regex | !'?/' ( REGEX | '?' =STRING)
 
-REGEX: ?"(?ms)/((?:[^/\\]|\\/|\\.)*)/" ~
+REGEX: &'/' ?"(?ms)/((?:[^/\\]|\\/|\\.)*)/" ~
 
 deprecated_regex: '?/' ~ =?"(?ms)((?:[^/\\]|\\/|\\.)*)" ~ '/?'
 
@@ -255,3 +264,5 @@ boolean[bool]: 'True' | 'False'
 null: 'None'
 
 eof[EOF]: '$' ~
+
+eol[EOL]: '$->'
