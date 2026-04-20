@@ -10,11 +10,16 @@ use crate::util::pyre::Pattern;
 use std::rc::Rc;
 
 #[derive(Debug, Clone)]
+pub struct CursorHeavy {
+    ignorecase: bool,
+    patterns: Rc<TokenizingPatterns>,
+}
+
+#[derive(Debug, Clone)]
 pub struct StrCursor {
     text: Box<str>,
     offset: usize,
-    ignorecase: bool,
-    patterns: Rc<TokenizingPatterns>,
+    heavy: Rc<CursorHeavy>,
 }
 
 impl From<&str> for StrCursor {
@@ -29,8 +34,11 @@ impl StrCursor {
         Self {
             text: text.into(),
             offset: 0,
-            ignorecase: false,
-            patterns: TokenizingPatterns::default().into(),
+            heavy: CursorHeavy {
+                ignorecase: false,
+                patterns: TokenizingPatterns::default().into(),
+            }
+            .into(),
         }
     }
 
@@ -38,8 +46,11 @@ impl StrCursor {
         Ok(Self {
             text: text.into(),
             offset: 0,
-            ignorecase: false,
-            patterns: patterns.into(),
+            heavy: CursorHeavy {
+                ignorecase: false,
+                patterns: patterns.into(),
+            }
+            .into(),
         })
     }
 
@@ -59,7 +70,11 @@ impl Configurable for StrCursor {
         if let Ok(patterns) = self.tokenizing_from_cfg(cfg) {
             self.set_tokenizing(&patterns);
         }
-        self.ignorecase = cfg.contains(&Cfg::IgnoreCase);
+        self.heavy = CursorHeavy {
+            ignorecase: cfg.contains(&Cfg::IgnoreCase),
+            patterns: self.heavy.patterns.clone(),
+        }
+        .into()
     }
 }
 
@@ -77,7 +92,7 @@ impl Cursor for StrCursor {
     }
 
     fn ignore_case(&self) -> bool {
-        self.ignorecase
+        self.heavy.ignorecase
     }
 
     fn at_end(&self) -> bool {
@@ -94,8 +109,8 @@ impl Cursor for StrCursor {
     fn match_token(&mut self, token: &str) -> bool {
         let token_len = token.len();
         if let Some(text_slice) = self.text[self.offset..].get(..token_len)
-            && (self.ignorecase && text_slice.eq_ignore_ascii_case(token)
-                || !self.ignorecase && text_slice == token)
+            && (self.ignore_case() && text_slice.eq_ignore_ascii_case(token)
+                || !self.ignore_case() && text_slice == token)
         {
             self.offset += token_len;
             return true;
@@ -121,14 +136,18 @@ impl Cursor for StrCursor {
     }
 
     fn next_token(&mut self) {
-        let skip_all = self.patterns.skip_all.clone();
+        let skip_all = self.heavy.patterns.skip_all.clone();
         if let Some(pat) = skip_all {
             self.eat_pattern(&pat);
         }
     }
 
     fn set_tokenizing(&mut self, patterns: &TokenizingPatterns) {
-        self.patterns = patterns.clone().into();
+        self.heavy = CursorHeavy {
+            ignorecase: self.heavy.ignorecase,
+            patterns: patterns.clone().into(),
+        }
+        .into()
     }
 }
 
