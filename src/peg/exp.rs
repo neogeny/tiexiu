@@ -18,7 +18,7 @@ pub type ERefArr = Box<[Exp]>;
 pub struct Exp {
     pub kind: ExpKind,
     pub la: Box<[Str]>,    // the lookahead set
-    pub df: Box<[Define]>, // the lookahead set
+    pub df: Box<[Define]>, // the defines set
 }
 
 impl Debug for Exp {
