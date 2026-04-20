@@ -128,7 +128,7 @@ pub fn cli() -> Result<()> {
             if pretty {
                 (boot_grammar_pretty(&[])?, "ebnf")
             } else if model {
-                (format!("{:#?}", boot_grammar()?), "ebnf")
+                (format!("{:#?}", boot_grammar()?), "rs")
             } else if railroads {
                 (boot_grammar()?.railroads(), "apl")
             } else {
@@ -160,7 +160,7 @@ pub fn cli() -> Result<()> {
             if json {
                 (parser.to_json_exp_string()?, "json")
             } else if model {
-                (format!("{:#?}", boot_grammar()?), "ebnf")
+                (format!("{:#?}", boot_grammar()?), "rs")
             } else if railroads {
                 (parser.railroads(), "apl")
             } else {
@@ -205,7 +205,7 @@ fn configure_color(color: clap::ColorChoice) -> bool {
         clap::ColorChoice::Never => false,
         clap::ColorChoice::Auto => {
             std::io::IsTerminal::is_terminal(&std::io::stdout())
-                && std::io::IsTerminal::is_terminal(&std::io::stderr())
+                // && std::io::IsTerminal::is_terminal(&std::io::stderr())
         }
     }
 }
