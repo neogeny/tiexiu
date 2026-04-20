@@ -63,6 +63,10 @@ pub enum Commands {
         #[arg(short, long, default_value_t = true)]
         json: bool,
 
+        /// Print the Rust code for the boot grammar model
+        #[arg(short, long)]
+        model: bool,
+
         /// Pretty-print the boot grammar
         #[arg(short, long)]
         pretty: bool,
@@ -112,10 +116,12 @@ pub fn cli() -> Result<()> {
 
     let (content, lang) = match cli.command {
         Commands::Boot {
-            pretty, railroads, ..
+           model,  pretty, railroads, ..
         } => {
             if pretty {
                 (boot_grammar_pretty(&[])?, "ebnf")
+            } else if model {
+                (boot_grammar()?.to_string(), "")
             } else if railroads {
                 (boot_grammar()?.railroads(), "apl")
             } else {
