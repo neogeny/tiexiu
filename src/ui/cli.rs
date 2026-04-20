@@ -100,6 +100,10 @@ pub enum Commands {
         #[arg(short, long, group = "format")]
         json: bool,
 
+        /// Print the Rust code for the boot grammar model
+        #[arg(short, long)]
+        model: bool,
+
         /// Pretty-print the grammar (EBNF)
         #[arg(short, long, group = "format")]
         pretty: bool,
@@ -116,12 +120,15 @@ pub fn cli() -> Result<()> {
 
     let (content, lang) = match cli.command {
         Commands::Boot {
-           model,  pretty, railroads, ..
+            model,
+            pretty,
+            railroads,
+            ..
         } => {
             if pretty {
                 (boot_grammar_pretty(&[])?, "ebnf")
             } else if model {
-                (boot_grammar()?.to_string(), "")
+                (format!("{:#?}", boot_grammar()?), "ebnf")
             } else if railroads {
                 (boot_grammar()?.railroads(), "apl")
             } else {
@@ -145,16 +152,19 @@ pub fn cli() -> Result<()> {
         Commands::Grammar {
             grammar,
             json,
+            model,
             railroads,
             ..
         } => {
             let parser = load_grammar_from_path(&grammar)?;
             if json {
                 (parser.to_json_exp_string()?, "json")
+            } else if model {
+                (format!("{:#?}", boot_grammar()?), "ebnf")
             } else if railroads {
                 (parser.railroads(), "apl")
             } else {
-                (parser.to_string(), "ebnf")
+                (format!("{:#?}", parser), "ebnf")
             }
         }
     };

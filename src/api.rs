@@ -5,6 +5,7 @@ use crate::cfg::*;
 use crate::input::Cursor;
 use crate::input::StrCursor;
 use crate::json::ToExpJson;
+use crate::peg::grammar::PrettyPrint;
 use crate::peg::{Grammar, Succ};
 use crate::state::corectx::CoreCtx;
 use crate::trees::Tree;
@@ -95,7 +96,7 @@ pub fn load_tree_as_json(json: &str, cfg: &CfgA) -> Result<String> {
 
 pub fn pretty(grammar: &str, cfg: &CfgA) -> Result<String> {
     let grammar = compile(grammar, cfg)?;
-    Ok(grammar.to_string())
+    Ok(grammar.pretty_print())
 }
 
 pub fn pretty_tree(tree: &Tree, _cfg: &CfgA) -> Result<String> {
@@ -125,7 +126,7 @@ pub fn boot_grammar_json(_cfg: &CfgA) -> Result<String> {
 
 pub fn boot_grammar_pretty(_cfg: &CfgA) -> Result<String> {
     let boot = boot_grammar()?;
-    Ok(boot.to_string())
+    Ok(boot.pretty_print())
 }
 
 pub fn parse_input(parser: &Grammar, text: &str, cfg_a: &CfgA) -> Result<Tree> {
