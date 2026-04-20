@@ -94,9 +94,9 @@ impl<K: Ord + Clone + Default> CfgBox<K> {
     }
 
     /// Merges two configurations (Set Union).
-    pub fn merge(&self, other: &CfgBox<K>) -> Self {
+    pub fn merge(&self, other: &CfgA<K>) -> Self {
         let mut set: BTreeSet<K> = self.options.iter().cloned().collect();
-        set.extend(other.options.iter().cloned());
+        set.extend(other.iter().cloned());
 
         Self {
             options: set.into_iter().collect::<Vec<_>>().into_boxed_slice(),
