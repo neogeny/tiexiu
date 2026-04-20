@@ -24,14 +24,12 @@ pub fn parse_grammar_as_json(grammar: &str, cfg: &CfgA) -> Result<String> {
     tree.to_model_json_string().map_err(Error::from)
 }
 
-pub fn parse_grammar_with<U>(cursor: U, cfg_a: &CfgA) -> Result<Tree>
+pub fn parse_grammar_with<U>(cursor: U, cfg: &CfgA) -> Result<Tree>
 where
     U: Cursor + Clone,
 {
     let boot = boot_grammar()?;
-    let mut ctx = CoreCtx::new(cursor, &[]);
-    let cfg = CfgBox::new(cfg_a);
-    ctx.configure(&cfg);
+    let ctx = CoreCtx::new(cursor, cfg);
 
     match boot.parse(ctx) {
         Ok(Succ(_, tree)) => Ok(tree),
@@ -125,10 +123,10 @@ pub fn boot_grammar_pretty(_cfg: &CfgA) -> Result<String> {
     Ok(boot.pretty_print())
 }
 
-pub fn parse_input(parser: &Grammar, text: &str, cfg_a: &CfgA) -> Result<Tree> {
+pub fn parse_input(parser: &Grammar, text: &str, cfg: &CfgA) -> Result<Tree> {
     let cursor = StrCursor::new(text);
-    let mut ctx = CoreCtx::new(cursor, &[]);
-    let cfg = CfgBox::new(cfg_a);
+    let mut ctx = CoreCtx::new(cursor, cfg);
+    let cfg = CfgBox::new(cfg);
     if cfg.contains(&Cfg::Trace) {
         ctx.set_trace(true);
     }

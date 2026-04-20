@@ -8,8 +8,23 @@ use crate::peg::{Nope, ParseError};
 
 pub type Result<T> = std::result::Result<T, Error>;
 
+impl From<&str> for Error {
+    fn from(msg: &str) -> Self {
+        Error::MessageFromTest(msg.to_string())
+    }
+}
+
+impl From<String> for Error {
+    fn from(msg: String) -> Self {
+        Error::MessageFromTest(msg)
+    }
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("JSON import/export failed: {0}")]
+    Regex(#[from] crate::util::pyre::Error),
+
     #[error("JSON import/export failed: {0}")]
     JsonModel(#[from] JsonError),
 
@@ -23,7 +38,7 @@ pub enum Error {
     ParseFailure(#[from] Nope),
 
     #[error("parse failed: {0}")]
-    ParseError(#[from] ParseError),
+    Parse(#[from] ParseError),
 
     #[error("failed to serialize JSON output: {0}")]
     Json(#[from] serde_json::Error),
@@ -33,4 +48,7 @@ pub enum Error {
 
     #[error("Library failure: {0}")]
     Library(#[from] crate::util::Error),
+
+    #[error("A test function says that: {0}")]
+    MessageFromTest(String),
 }
