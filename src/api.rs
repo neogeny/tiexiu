@@ -33,10 +33,6 @@ where
     let cfg = CfgBox::new(cfg_a);
     ctx.configure(&cfg);
 
-    if cfg.contains(&Cfg::Trace) {
-        ctx.set_trace(true);
-    }
-
     match boot.parse(ctx) {
         Ok(Succ(_, tree)) => Ok(tree),
         Err(failure) => Err(failure.into()),

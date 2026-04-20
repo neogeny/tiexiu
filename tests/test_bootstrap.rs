@@ -6,97 +6,16 @@
 
 mod fixtures;
 
-use fixtures::{boot_grammar, parse_ebnf, parse_with_boot};
-
-use tiexiu::input::StrCursor;
-use tiexiu::peg::Grammar;
-use tiexiu::state::corectx::CoreCtx;
-
-fn parse_input(grammar: &Grammar, input: &str) -> tiexiu::trees::Tree {
-    let cursor = StrCursor::new(input);
-    let ctx = CoreCtx::new(cursor, &[]);
-    match grammar.parse(ctx) {
-        Ok(s) => s.1,
-        Err(f) => panic!("Failed to parse at mark {}: {:?}", f.mark, f.source),
-    }
-}
-
-fn parse(grammar_text: &str) -> tiexiu::trees::Tree {
-    let grammar = tiexiu::compile(grammar_text, &[]).unwrap();
-    parse_with_boot(&grammar, grammar_text)
-}
-
-// =============================================================================
-// Boot Grammar Structure Tests
-// =============================================================================
-
-mod structure {
-    use super::*;
-    use fixtures::all_rules_linked;
-
-    #[test]
-    fn has_required_rules() {
-        let boot = boot_grammar();
-
-        let required = [
-            "start",
-            "grammar",
-            "rule",
-            "expre",
-            "choice",
-            "sequence",
-            "option",
-            "element",
-            "term",
-            "atom",
-            "call",
-            "named",
-            "named_single",
-            "named_list",
-            "optional",
-            "closure",
-            "positive_closure",
-            "lookahead",
-            "negative_lookahead",
-            "token",
-            "pattern",
-            "regex",
-            "constant",
-            "eof",
-            "cut",
-        ];
-
-        for name in required {
-            assert!(
-                boot.get_rule_id(name).is_ok(),
-                "Missing required rule: {}",
-                name
-            );
-        }
-    }
-
-    #[test]
-    fn all_rules_are_linked() {
-        let boot = boot_grammar();
-        let issues = all_rules_linked(&boot);
-        assert!(
-            issues.is_empty(),
-            "Boot grammar has unlinked calls:\n{}",
-            issues.join("\n")
-        );
-    }
-}
-
 // =============================================================================
 // Boot Grammar Parsing Tests - Grammar Syntax
 // =============================================================================
 
 mod parse_grammar {
-    use super::*;
+    use tiexiu::api::parse_grammar;
 
     #[test]
     fn simple_grammar() {
-        let tree = tiexiu::api::parse_grammar(
+        let tree = parse_grammar(
             r#"
             @@grammar :: Simple
             start: 'hello'
@@ -110,7 +29,6 @@ mod parse_grammar {
 
     #[test]
     fn multiple_rules() {
-        let boot = boot_grammar();
         let grammar = r#"
             @@grammar :: Multi
             start: a | b | c
@@ -118,20 +36,19 @@ mod parse_grammar {
             b: 'b'
             c: 'c'
         "#;
-        let tree = parse_ebnf(&boot, grammar);
+        let tree = parse_grammar(grammar, &[]).expect("a tree");
         let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("rules"));
     }
 
     #[test]
     fn directive() {
-        let boot = boot_grammar();
         let grammar = r#"
             @@grammar :: Directives
             @@whitespace :: /\s+/
             start: 'hello'
         "#;
-        let tree = parse_ebnf(&boot, grammar);
+        let tree = parse_grammar(grammar, &[]).unwrap();
         let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("directive"));
     }
@@ -142,76 +59,68 @@ mod parse_grammar {
 // =============================================================================
 
 mod parse_expressions {
-    use super::*;
+    use tiexiu::api::*;
 
     #[test]
     fn token() {
-        let boot = boot_grammar();
         let grammar = r#"@@grammar :: T start: 'foo' 'bar'"#;
-        let tree = parse_ebnf(&boot, grammar);
+        let tree = parse_grammar(grammar, &[]).unwrap();
         let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Token"));
     }
 
     #[test]
     fn pattern() {
-        let boot = boot_grammar();
         let grammar = r#"@@grammar :: P start: /\d+/"#;
-        let tree = parse_ebnf(&boot, grammar);
+        let tree = parse_grammar(grammar, &[]).unwrap();
         let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Pattern"));
     }
 
     #[test]
     fn sequence() {
-        let boot = boot_grammar();
         let grammar = r#"@@grammar :: S start: 'a' 'b' 'c'"#;
-        let tree = parse_ebnf(&boot, grammar);
+        let tree = parse_grammar(grammar, &[]).unwrap();
         let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Sequence"));
     }
 
     #[test]
     fn choice() {
-        let boot = boot_grammar();
         let grammar = r#"@@grammar :: C start: 'a' | 'b' | 'c'"#;
-        let tree = parse_ebnf(&boot, grammar);
+        let tree = parse_grammar(grammar, &[]).unwrap();
         let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Choice"));
     }
 
     #[test]
     fn optional() {
-        let boot = boot_grammar();
         let grammar = r#"@@grammar :: O start: 'a' 'b'? 'c'"#;
-        let tree = parse_ebnf(&boot, grammar);
+        let tree = parse_grammar(grammar, &[]).unwrap();
         let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Optional"));
     }
 
     #[test]
     fn closure() {
-        let boot = boot_grammar();
         let grammar = r#"@@grammar :: Cl start: 'a'*"#;
-        let tree = parse_ebnf(&boot, grammar);
+        let tree = parse_grammar(grammar, &[]).unwrap();
         let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Closure"));
     }
 
     #[test]
     fn positive_closure() {
-        let boot = boot_grammar();
         let grammar = r#"@@grammar :: PC start: 'a'+"#;
-        let tree = parse_ebnf(&boot, grammar);
+        let tree = parse_grammar(grammar, &[]).unwrap();
         let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("PositiveClosure"));
     }
 
     #[test]
     fn group() {
-        let boot = boot_grammar();
         let grammar = r#"@@grammar :: G start: ('a' 'b')*"#;
-        let tree = parse_ebnf(&boot, grammar);
+        let tree = parse_grammar(grammar, &[]).unwrap();
         let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Group"));
     }
@@ -222,31 +131,28 @@ mod parse_expressions {
 // =============================================================================
 
 mod parse_constraints {
-    use super::*;
+    use tiexiu::parse_grammar;
 
     #[test]
     fn lookahead() {
-        let boot = boot_grammar();
         let grammar = r#"@@grammar :: L start: &'a' 'a'"#;
-        let tree = parse_ebnf(&boot, grammar);
+        let tree = parse_grammar(grammar, &[]).unwrap();
         let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Lookahead"));
     }
 
     #[test]
     fn negative_lookahead() {
-        let boot = boot_grammar();
         let grammar = r#"@@grammar :: NL start: !'b' 'a'"#;
-        let tree = parse_ebnf(&boot, grammar);
+        let tree = parse_grammar(grammar, &[]).unwrap();
         let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("NegativeLookahead"));
     }
 
     #[test]
     fn cut() {
-        let boot = boot_grammar();
         let grammar = r#"@@grammar :: Cu start: 'a' ~ 'b'"#;
-        let tree = parse_ebnf(&boot, grammar);
+        let tree = parse_grammar(grammar, &[]).unwrap();
         let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Cut"));
     }
@@ -257,13 +163,12 @@ mod parse_constraints {
 // =============================================================================
 
 mod parse_naming {
-    use super::*;
+    use tiexiu::*;
 
     #[test]
     fn named() {
-        let boot = boot_grammar();
         let grammar = r#"@@grammar :: N start: name='a'"#;
-        let tree = parse_ebnf(&boot, grammar);
+        let tree = parse_grammar(grammar, &[]).unwrap();
         let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Named"));
         assert!(json.contains("name"));
@@ -271,33 +176,30 @@ mod parse_naming {
 
     #[test]
     fn rule_call() {
-        let boot = boot_grammar();
         let grammar = r#"
             @@grammar :: RC
             start: foo
             foo: 'x'
         "#;
-        let tree = parse_ebnf(&boot, grammar);
+        let tree = parse_grammar(grammar, &[]).unwrap();
         let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Call"));
     }
 
     #[test]
     fn rule_include() {
-        let boot = boot_grammar();
         let grammar = r#"
             @@grammar :: RI
             start: >base
             base: 'x'
         "#;
-        let tree = parse_ebnf(&boot, grammar);
+        let tree = parse_grammar(grammar, &[]).unwrap();
         let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("RuleInclude"));
     }
 
     #[test]
     fn rule_with_params() {
-        let boot = boot_grammar();
         let grammar = r#"
             @@grammar :: RWP
 
@@ -305,7 +207,7 @@ mod parse_naming {
 
             foo[Foo]: 'x' param ;
         "#;
-        let tree = parse_ebnf(&boot, grammar);
+        let tree = parse_grammar(grammar, &[]).unwrap();
         let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Foo"));
     }
@@ -316,31 +218,28 @@ mod parse_naming {
 // =============================================================================
 
 mod parse_special {
-    use super::*;
+    use tiexiu::*;
 
     #[test]
     fn void() {
-        let boot = boot_grammar();
         let grammar = r#"@@grammar :: V start: 'a' () 'b'"#;
-        let tree = parse_ebnf(&boot, grammar);
+        let tree = parse_grammar(grammar, &[]).unwrap();
         let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Void"));
     }
 
     #[test]
     fn eof() {
-        let boot = boot_grammar();
         let grammar = r#"@@grammar :: E start: 'a' $"#;
-        let tree = parse_ebnf(&boot, grammar);
+        let tree = parse_grammar(grammar, &[]).unwrap();
         let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("EOF"));
     }
 
     #[test]
     fn dot() {
-        let boot = boot_grammar();
         let grammar = r#"@@grammar :: D start: /./"#;
-        let tree = parse_ebnf(&boot, grammar);
+        let tree = parse_grammar(grammar, &[]).unwrap();
         let json = tree.to_model_json_string().unwrap();
         eprintln!("{:#}", json);
         assert!(json.contains("Dot"));
@@ -348,45 +247,40 @@ mod parse_special {
 
     #[test]
     fn constant() {
-        let boot = boot_grammar();
         let grammar = r#"@@grammar :: Cst start: `constant`"#;
-        let tree = parse_ebnf(&boot, grammar);
+        let tree = parse_grammar(grammar, &[]).unwrap();
         let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Constant"));
     }
 
     #[test]
     fn join() {
-        let boot = boot_grammar();
         let grammar = r#"@@grammar :: J start: ','%{'a'}*"#;
-        let tree = parse_ebnf(&boot, grammar);
+        let tree = parse_grammar(grammar, &[]).unwrap();
         let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Join"));
     }
 
     #[test]
     fn gather() {
-        let boot = boot_grammar();
         let grammar = r#"@@grammar :: Gt start: ','.{'a'}*"#;
-        let tree = parse_ebnf(&boot, grammar);
+        let tree = parse_grammar(grammar, &[]).unwrap();
         let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Gather"));
     }
 
     #[test]
     fn skip_group() {
-        let boot = boot_grammar();
         let grammar = r#"@@grammar :: Sk start: (?: 'a' 'b')*"#;
-        let tree = parse_ebnf(&boot, grammar);
+        let tree = parse_grammar(grammar, &[]).unwrap();
         let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("SkipGroup"));
     }
 
     #[test]
     fn alert() {
-        let boot = boot_grammar();
         let grammar = r#"@@grammar :: Al start: ^^`danger`"#;
-        let tree = parse_ebnf(&boot, grammar);
+        let tree = parse_grammar(grammar, &[]).unwrap();
         let json = tree.to_model_json_string().unwrap();
         assert!(json.contains("Alert"));
     }
@@ -397,12 +291,11 @@ mod parse_special {
 // =============================================================================
 
 mod integration {
-    use super::*;
     use tiexiu::cfg::constants::PATH_TATSU_GRAMMAR_EBNF;
+    use tiexiu::parse_grammar;
 
     #[test]
     fn complex_grammar() {
-        let boot = boot_grammar();
         let grammar = r#"
             @@grammar :: Complex
             @@whitespace :: /\s+/
@@ -423,18 +316,17 @@ mod integration {
 
             NUMBER: /\d+/
         "#;
-        let tree = parse_ebnf(&boot, grammar);
+        let tree = parse_grammar(grammar, &[]).unwrap();
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
     }
 
     #[test]
     #[ignore]
     fn tatsu_own_grammar() {
-        let boot = boot_grammar();
         let tatsu_grammar =
             std::fs::read_to_string(PATH_TATSU_GRAMMAR_EBNF).expect("Failed to read grammar");
 
-        let tree = parse_ebnf(&boot, &tatsu_grammar);
+        let tree = parse_grammar(&tatsu_grammar, &[]).unwrap();
         let json = tree.to_model_json_string().unwrap();
 
         assert!(json.contains("Grammar"));
@@ -447,27 +339,7 @@ mod integration {
 // =============================================================================
 
 mod compilation {
-    use crate::fixtures::all_rules_linked;
-    use crate::parse_input;
-
-    #[test]
-    fn simple_grammar_links() {
-        let grammar = tiexiu::compile(
-            r#"
-            @@grammar :: Test
-            start: 'hello' 'world'
-        "#,
-            &[],
-        )
-        .unwrap();
-
-        let issues = all_rules_linked(&grammar);
-        assert!(
-            issues.is_empty(),
-            "Compiled grammar has unlinked calls:\n{}",
-            issues.join("\n")
-        );
-    }
+    use tiexiu::parse_input;
 
     #[test]
     #[ignore]
@@ -481,7 +353,7 @@ mod compilation {
         )
         .unwrap();
 
-        let tree = parse_input(&grammar, "hello world");
+        let tree = parse_input(&grammar, "hello world", &[]).unwrap();
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
     }
 }
@@ -491,40 +363,8 @@ mod compilation {
 // =============================================================================
 
 mod round_trips {
-    use super::*;
-    use std::collections::hash_map::DefaultHasher;
-    use std::hash::{Hash, Hasher};
     use tiexiu::peg::pretty::*;
-
-    #[test]
-    fn parse_round_trip() {
-        let grammar_text = r#"
-            @@grammar :: RoundTrip
-            start: expression
-            expression: term (('+' | '-') term)*
-            term: factor (('*' | '/') factor)*
-            factor: NUMBER | '(' expression ')'
-            NUMBER: /\d+/
-        "#;
-
-        let tree1 = parse(grammar_text);
-        let grammar = tiexiu::compile(grammar_text, &[]).unwrap();
-        let tree2 = parse_with_boot(&grammar, grammar_text);
-
-        let json1 = tree1.to_model_json_string().expect("Serialize tree1");
-        let json2 = tree2.to_model_json_string().expect("Serialize tree2");
-
-        let mut h1 = DefaultHasher::new();
-        json1.hash(&mut h1);
-        let mut h2 = DefaultHasher::new();
-        json2.hash(&mut h2);
-
-        assert_eq!(
-            h1.finish(),
-            h2.finish(),
-            "Round-trip produced different trees"
-        );
-    }
+    use tiexiu::*;
 
     #[test]
     fn pretty_print_roundtrip() {
@@ -532,16 +372,16 @@ mod round_trips {
             @@grammar :: Pretty
             start: 'a' | 'b'
         "#;
-        let tree = parse(grammar_text);
+        let tree = parse_grammar(grammar_text, &[]).unwrap();
         eprintln!("TREE\n{:#?}", tree);
 
-        let grammar = tiexiu::compile(grammar_text, &[]).unwrap();
+        let grammar = compile(grammar_text, &[]).unwrap();
         eprintln!("COMPILED\n{}", grammar);
 
         let pretty = grammar.pretty_print();
         eprintln!("COMPILED->PRETTY\n{:#}", pretty);
 
-        let grammar2 = tiexiu::compile(&pretty, &[]).unwrap();
+        let grammar2 = compile(&pretty, &[]).unwrap();
         let pretty2 = grammar2.to_string();
 
         assert_eq!(

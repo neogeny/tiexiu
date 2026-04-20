@@ -19,7 +19,10 @@ fn pykwargs_to_cfg(kwargs: &Bound<'_, PyDict>) -> Vec<Cfg> {
 
 #[pyfunction]
 #[pyo3(signature = (grammar, **kwargs))]
-pub fn parse_grammar(grammar: &str, kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<Py<PyAny>> {
+pub(crate) fn parse_grammar(
+    grammar: &str,
+    kwargs: Option<&Bound<'_, PyDict>>,
+) -> PyResult<Py<PyAny>> {
     let cfg = if let Some(k) = kwargs {
         pykwargs_to_cfg(k)
     } else {
@@ -32,7 +35,7 @@ pub fn parse_grammar(grammar: &str, kwargs: Option<&Bound<'_, PyDict>>) -> PyRes
 
 #[pyfunction]
 #[pyo3(signature = (grammar, **kwargs))]
-pub fn parse_grammar_to_json(
+pub(crate) fn parse_grammar_to_json(
     grammar: &str,
     kwargs: Option<&Bound<'_, PyDict>>,
 ) -> PyResult<String> {
@@ -48,7 +51,10 @@ pub fn parse_grammar_to_json(
 
 #[pyfunction]
 #[pyo3(signature = (grammar, **kwargs))]
-pub fn compile_to_json(grammar: &str, kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<String> {
+pub(crate) fn compile_to_json(
+    grammar: &str,
+    kwargs: Option<&Bound<'_, PyDict>>,
+) -> PyResult<String> {
     let cfg = if let Some(k) = kwargs {
         pykwargs_to_cfg(k)
     } else {
@@ -61,7 +67,7 @@ pub fn compile_to_json(grammar: &str, kwargs: Option<&Bound<'_, PyDict>>) -> PyR
 
 #[pyfunction]
 #[pyo3(signature = (grammar, **kwargs))]
-pub fn pretty(grammar: &str, kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<String> {
+pub(crate) fn pretty(grammar: &str, kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<String> {
     let cfg = if let Some(k) = kwargs {
         pykwargs_to_cfg(k)
     } else {
@@ -74,7 +80,7 @@ pub fn pretty(grammar: &str, kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<Str
 
 #[pyfunction]
 #[pyo3(signature = (**kwargs))]
-pub fn load_boot_as_json(kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<String> {
+pub(crate) fn load_boot_as_json(kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<String> {
     let cfg = if let Some(k) = kwargs {
         pykwargs_to_cfg(k)
     } else {
@@ -87,7 +93,7 @@ pub fn load_boot_as_json(kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<String>
 
 #[pyfunction]
 #[pyo3(signature = (**kwargs))]
-pub fn boot_grammar_as_json(kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<String> {
+pub(crate) fn boot_grammar_as_json(kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<String> {
     let cfg = if let Some(k) = kwargs {
         pykwargs_to_cfg(k)
     } else {
@@ -100,7 +106,11 @@ pub fn boot_grammar_as_json(kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<Stri
 
 #[pyfunction]
 #[pyo3(signature = (grammar, text, **kwargs))]
-pub fn parse(grammar: &str, text: &str, kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<Py<PyAny>> {
+pub(crate) fn parse(
+    grammar: &str,
+    text: &str,
+    kwargs: Option<&Bound<'_, PyDict>>,
+) -> PyResult<Py<PyAny>> {
     let cfg = if let Some(k) = kwargs {
         pykwargs_to_cfg(k)
     } else {
@@ -113,7 +123,7 @@ pub fn parse(grammar: &str, text: &str, kwargs: Option<&Bound<'_, PyDict>>) -> P
 
 #[pyfunction]
 #[pyo3(signature = (grammar, text, **kwargs))]
-pub fn parse_to_json(
+pub(crate) fn parse_to_json(
     grammar: &str,
     text: &str,
     kwargs: Option<&Bound<'_, PyDict>>,

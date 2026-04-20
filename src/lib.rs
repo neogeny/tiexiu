@@ -20,7 +20,7 @@ pub use api::*;
 pub use error::{Error, Result};
 
 #[cfg(feature = "pyo3")]
-pub mod python;
+pub(crate) mod python;
 
 #[cfg(feature = "pyo3")]
 #[allow(dead_code)]

@@ -7,7 +7,7 @@ use crate::peg::Grammar;
 pub const TATSU_GRAMMAR_JSON: &str = include_str!("../../grammar/tatsu.json");
 
 /// Loads the embedded TatSu grammar from its JSON representation.
-pub fn boot_grammar() -> Result<Grammar, JsonError> {
+pub(crate) fn boot_grammar() -> Result<Grammar, JsonError> {
     Grammar::serde_from_json(TATSU_GRAMMAR_JSON)
 }
 
@@ -36,5 +36,46 @@ mod tests {
         // println!("Successfully bootstrapped grammar: {}", grammar.name);
 
         Ok(())
+    }
+
+    #[test]
+    fn has_required_rules() {
+        let boot = boot_grammar().unwrap();
+
+        let required = [
+            "start",
+            "grammar",
+            "rule",
+            "expre",
+            "choice",
+            "sequence",
+            "option",
+            "element",
+            "term",
+            "atom",
+            "call",
+            "named",
+            "named_single",
+            "named_list",
+            "optional",
+            "closure",
+            "positive_closure",
+            "lookahead",
+            "negative_lookahead",
+            "token",
+            "pattern",
+            "regex",
+            "constant",
+            "eof",
+            "cut",
+        ];
+
+        for name in required {
+            assert!(
+                boot.get_rule_id(name).is_ok(),
+                "Missing required rule: {}",
+                name
+            );
+        }
     }
 }
