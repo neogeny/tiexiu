@@ -6,7 +6,7 @@
 
 use super::error::{Error, Result};
 use super::traits;
-use pcre2::bytes::{Regex, RegexBuilder};
+use pcre2::bytes::{Captures, Regex, RegexBuilder};
 
 #[derive(Debug, Clone)]
 pub struct Pattern {
@@ -15,10 +15,10 @@ pub struct Pattern {
     pattern: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Match<'a> {
     haystack: &'a str,
-    groups: Vec<Option<(usize, usize)>>,
+    captures: Captures<'a>,
 }
 
 pub fn escape(pattern: &str) -> Box<str> {
@@ -31,16 +31,12 @@ pub fn compile(pattern: &str) -> Result<Pattern> {
 
 impl Pattern {
     pub fn new(pattern: &str) -> Result<Self> {
-        // Use .jit(true) on the builder itself
-        let regex = RegexBuilder::new()
-            .utf(true)
-            .jit(true) // This is the magic line
-            .build(pattern)?;
+        let regex = RegexBuilder::new().utf(true).jit(true).build(pattern)?;
 
         let anchored_pattern = format!(r"\A(?:{})", pattern);
         let anchored = RegexBuilder::new()
             .utf(true)
-            .jit(true) // Enable it here too
+            .jit(true)
             .build(&anchored_pattern)?;
 
         Ok(Self {
@@ -51,17 +47,25 @@ impl Pattern {
     }
 
     pub fn search<'a>(&self, text: &'a str) -> Option<Match<'a>> {
-        match self.regex.captures(text.as_bytes()) {
-            Ok(Some(caps)) => Some(Match::from_captures(text, &caps)),
-            _ => None,
-        }
+        self.regex
+            .captures(text.as_bytes())
+            .ok()
+            .flatten()
+            .map(|captures| Match {
+                haystack: text,
+                captures,
+            })
     }
 
     pub fn match_<'a>(&self, text: &'a str) -> Option<Match<'a>> {
-        match self.anchored.captures(text.as_bytes()) {
-            Ok(Some(caps)) => Some(Match::from_captures(text, &caps)),
-            _ => None,
-        }
+        self.anchored
+            .captures(text.as_bytes())
+            .ok()
+            .flatten()
+            .map(|captures| Match {
+                haystack: text,
+                captures,
+            })
     }
 
     pub fn fullmatch<'a>(&self, text: &'a str) -> Option<Match<'a>> {
@@ -77,24 +81,23 @@ impl Pattern {
         let maxsplit = maxsplit.unwrap_or(0);
         let mut result = Vec::new();
         let mut last_end = 0;
-        let mut splits_done = 0;
 
-        for caps_result in self.regex.captures_iter(text.as_bytes()) {
+        for (splits_done, caps_res) in self.regex.captures_iter(text.as_bytes()).enumerate() {
             if maxsplit > 0 && splits_done >= maxsplit {
                 break;
             }
-            if let Ok(caps) = caps_result {
-                let m = caps.get(0).unwrap();
-                result.push(text[last_end..m.start()].to_string());
-                for i in 1..caps.len() {
-                    if let Some(cap) = caps.get(i) {
-                        result.push(text[cap.start()..cap.end()].to_string());
-                    } else {
-                        result.push(String::new());
+            if let Ok(caps) = caps_res {
+                if let Some(m) = caps.get(0) {
+                    result.push(text[last_end..m.start()].to_string());
+                    for i in 1..caps.len() {
+                        if let Some(cap) = caps.get(i) {
+                            result.push(text[cap.start()..cap.end()].to_string());
+                        } else {
+                            result.push(String::new());
+                        }
                     }
+                    last_end = m.end();
                 }
-                last_end = m.end();
-                splits_done += 1;
             }
         }
         result.push(text[last_end..].to_string());
@@ -126,7 +129,10 @@ impl Pattern {
         self.regex
             .captures_iter(text.as_bytes())
             .filter_map(|caps_result| caps_result.ok())
-            .map(|caps| Match::from_captures(text, &caps))
+            .map(|captures| Match {
+                haystack: text,
+                captures,
+            })
             .collect()
     }
 
@@ -145,11 +151,12 @@ impl Pattern {
                 break;
             }
             if let Ok(caps) = caps_result {
-                let m = caps.get(0).unwrap();
-                result.push_str(&text[last_end..m.start()]);
-                result.push_str(repl);
-                last_end = m.end();
-                replacements += 1;
+                if let Some(m) = caps.get(0) {
+                    result.push_str(&text[last_end..m.start()]);
+                    result.push_str(repl);
+                    last_end = m.end();
+                    replacements += 1;
+                }
             }
         }
         result.push_str(&text[last_end..]);
@@ -162,50 +169,36 @@ impl Pattern {
 }
 
 impl<'a> Match<'a> {
-    fn from_captures(haystack: &'a str, caps: &pcre2::bytes::Captures) -> Self {
-        let mut groups = Vec::with_capacity(caps.len());
-        for i in 0..caps.len() {
-            groups.push(caps.get(i).map(|m| (m.start(), m.end())));
-        }
-        Self { haystack, groups }
-    }
-
     pub fn group(&self, group: usize) -> Option<&'a str> {
-        let (start, end) = self.groups.get(group)?.as_ref()?;
-        Some(&self.haystack[*start..*end])
+        let m = self.captures.get(group)?;
+        Some(&self.haystack[m.start()..m.end()])
     }
 
     pub fn groups(&self) -> Vec<Option<&'a str>> {
-        self.groups
-            .iter()
-            .map(|g| g.as_ref().map(|(s, e)| &self.haystack[*s..*e]))
-            .collect()
+        (0..self.captures.len()).map(|i| self.group(i)).collect()
     }
 
     pub fn start(&self, group: Option<usize>) -> isize {
         let group = group.unwrap_or(0);
-        self.groups
+        self.captures
             .get(group)
-            .and_then(|g| g.as_ref())
-            .map(|(s, _)| *s as isize)
+            .map(|m| m.start() as isize)
             .unwrap_or(-1)
     }
 
     pub fn end(&self, group: Option<usize>) -> isize {
         let group = group.unwrap_or(0);
-        self.groups
+        self.captures
             .get(group)
-            .and_then(|g| g.as_ref())
-            .map(|(_, e)| *e as isize)
+            .map(|m| m.end() as isize)
             .unwrap_or(-1)
     }
 
     pub fn span(&self, group: Option<usize>) -> (usize, usize) {
         let group = group.unwrap_or(0);
-        self.groups
+        self.captures
             .get(group)
-            .and_then(|g| g.as_ref())
-            .map(|(s, e)| (*s, *e))
+            .map(|m| (m.start(), m.end()))
             .unwrap_or((0, 0))
     }
 }
