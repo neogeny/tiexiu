@@ -205,7 +205,7 @@ fn configure_color(color: clap::ColorChoice) -> bool {
         clap::ColorChoice::Never => false,
         clap::ColorChoice::Auto => {
             std::io::IsTerminal::is_terminal(&std::io::stdout())
-                // && std::io::IsTerminal::is_terminal(&std::io::stderr())
+            // && std::io::IsTerminal::is_terminal(&std::io::stderr())
         }
     }
 }
