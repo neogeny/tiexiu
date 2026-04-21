@@ -99,3 +99,34 @@ fn test_match_endrule_crlf_branch() -> Result<()> {
     assert_eq!(m.end(None), 0);
     Ok(())
 }
+
+#[test]
+fn test_multiline_dollar_with_anchor() -> Result<()> {
+    let p = Pattern::new(r"(?m)[ \t]*$")?;
+    let m = p
+        .match_("  \n")
+        .ok_or_else(|| Error::from("should match trailing whitespace"))?;
+    assert_eq!(m.group(0).ok_or_else(|| Error::from("no group 0"))?, "  ");
+    Ok(())
+}
+
+#[test]
+fn test_tatsu_eol_patterns() -> Result<()> {
+    let p1 = Pattern::new(r"(?m)[ \t]*$")?;
+    let p2 = Pattern::new(r"(?m)(?:\r?\n|\r)?")?;
+
+    let text = "  \nNext line";
+
+    let m1 = p1
+        .match_(text)
+        .ok_or_else(|| Error::from("p1 should match"))?;
+    assert_eq!(m1.group(0).unwrap(), "  ");
+
+    let text2 = &text[m1.end(None) as usize..];
+    let m2 = p2
+        .match_(text2)
+        .ok_or_else(|| Error::from("p2 should match"))?;
+    assert_eq!(m2.group(0).unwrap(), "\n");
+
+    Ok(())
+}

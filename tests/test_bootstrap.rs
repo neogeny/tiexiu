@@ -353,8 +353,7 @@ mod integration {
     #[test]
     #[ignore]
     fn tatsu_own_grammar() -> Result<()> {
-        let tatsu_grammar = std::fs::read_to_string(PATH_TATSU_GRAMMAR_EBNF)
-            .map_err(|e| tiexiu::Error::from(e.to_string()))?;
+        let tatsu_grammar = std::fs::read_to_string(PATH_TATSU_GRAMMAR_EBNF)?;
 
         let tree = parse_grammar(&tatsu_grammar, &[])?;
         let json = tree.to_model_json_string()?;

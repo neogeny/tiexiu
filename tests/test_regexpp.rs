@@ -8,20 +8,20 @@ use tiexiu::util::pyre::pattern::regexpp as r;
 
 #[test]
 fn test_regexpp_simple() -> Result<()> {
-    let result = r(r"\d+").map_err(|e| tiexiu::Error::from(e.to_string()))?;
+    let result = r(r"\d+")?;
     assert!(result.starts_with("r\"") || result.starts_with("r'"));
     Ok(())
 }
 
 #[test]
 fn test_regexpp_with_backslash() -> Result<()> {
-    let _ = r(r"\\d").map_err(|e| tiexiu::Error::from(e.to_string()))?;
+    let _ = r(r"\\d")?;
     Ok(())
 }
 
 #[test]
 fn test_regexpp_with_tab() -> Result<()> {
-    let result = r("a\tb").map_err(|e| tiexiu::Error::from(e.to_string()))?;
+    let result = r("a\tb")?;
     assert!(result.contains("\\t"));
     Ok(())
 }
