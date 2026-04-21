@@ -7,6 +7,11 @@ use crate::input::tokenizing::TokenizingPatterns;
 use crate::util::pyre::Pattern;
 use std::fmt::Debug;
 
+pub struct Location<'l> {
+    pub source: &'l str,
+    pub pos: (usize, usize)
+}
+
 pub trait Cursor: Debug + Configurable {
     fn mark(&self) -> usize;
     fn reset(&mut self, mark: usize);
@@ -35,6 +40,18 @@ pub trait Cursor: Debug + Configurable {
         let line = head.lines().count();
         let col = head.lines().last().map_or(0, |l| l.chars().count());
         (line, col)
+    }
+    
+    fn location(&self) -> Location<'_> {
+        self.location_at(self.mark())
+    }
+    
+    fn location_at<'l>(&self, mark: usize) -> Location<'l> {
+        let pos = self.pos_at(mark);
+        Location {
+            source: "input",
+            pos
+        }
     }
 
     fn set_tokenizing(&mut self, patterns: &TokenizingPatterns);
