@@ -61,9 +61,8 @@ impl<'c, U> CoreCtx<'c, U>
 where
     U: Cursor + Clone,
 {
-    pub fn new(cursor: U, cfg: &CfgA) -> Self {
-        let _ = cfg;
-        Self {
+    pub fn new(cursor: U, cfga: &CfgA) -> Self {
+        let mut ctx = Self {
             cloned: true,
             state: Cow::Owned(
                 State {
@@ -79,7 +78,9 @@ where
                 keywords: [].into(),
                 tracer: &NULL_TRACER,
             })),
-        }
+        };
+        ctx.configure(&config(cfga));
+        ctx
     }
 
     #[inline]
