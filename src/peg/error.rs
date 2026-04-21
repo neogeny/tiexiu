@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use thiserror::Error;
+use crate::Tree;
 
 #[derive(Error, Debug, Clone, PartialEq)]
 pub enum ParseError {
@@ -83,6 +84,7 @@ pub enum CompileError {
     MissingKey {
         context: &'static str,
         key: &'static str,
+        tree: Box<Tree>,
     },
 
     #[error("expected {0}")]
