@@ -94,10 +94,11 @@ impl PrettyPrint for Grammar {
             writer.writeln("");
         }
 
-        // for rule in self.rules() {
-        //     let rule_str = rule.pretty_print_with(writer);
-        //     writer.writeln(&rule_str);
-        // }
+        for rule in self.rules() {
+            let rule_str = rule.pretty_print();
+            writer.writeln("");
+            writer.writeln(&rule_str);
+        }
         writer.take()
     }
 }
@@ -108,12 +109,13 @@ impl PrettyPrint for Rule {
         if !self.params.is_empty() {
             params_str = format!("[{}]", self.params.join(", "));
         }
-        let pretty_exp = self.exp.pretty_print_with(writer);
+        let mut pretty_exp = self.exp.pretty_print_with(writer);
         let start_str = if pretty_exp.lines().count() <= 1 {
             " "
         } else {
             ""
         };
+        pretty_exp = "".to_string();
         writer.writeln(&format!(
             "{}{}:{}{}",
             self.name, params_str, start_str, pretty_exp,

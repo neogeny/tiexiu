@@ -95,18 +95,20 @@ fn is_falsy(v: &str) -> bool {
 mod tests {
     use super::*;
     use std::env;
+    use crate::Result;
 
     #[test]
-    fn test_cfg_box_is_alias() {
+    fn test_cfg_box_is_alias() -> Result<()> {
         let options = [Cfg::Trace, Cfg::Debug];
         let cfg = CfgBox::new(&options);
 
         assert!(cfg.contains(&Cfg::Trace));
         assert!(cfg.contains(&Cfg::Debug));
+        Ok(())
     }
 
     #[test]
-    fn test_cfg_load_from_env() {
+    fn test_cfg_load_from_env() -> Result<()> {
         unsafe {
             env::set_var("TIEXIU_TRACE", "1");
             env::set_var("TIEXIU_WHITESPACE", r"\s+");
@@ -118,13 +120,15 @@ mod tests {
         assert!(cfg.contains(&Cfg::Trace));
         assert!(cfg.contains(&Cfg::Wsp(r"\s+".to_string())));
         assert!(cfg.contains(&Cfg::NoParseInfo));
+        Ok(())
     }
 
     #[test]
-    fn test_bool_mapping() {
+    fn test_bool_mapping() -> Result<()> {
         assert_eq!(Cfg::map("ignorecase", "True"), Some(Cfg::IgnoreCase));
         assert_eq!(Cfg::map("parseinfo", "False"), Some(Cfg::NoParseInfo));
         assert_eq!(Cfg::map("parseinfo", "True"), None);
         assert_eq!(Cfg::map("left_recursion", "0"), Some(Cfg::NoLeftRecursion));
+        Ok(())
     }
 }

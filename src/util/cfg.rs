@@ -141,6 +141,7 @@ impl<K: Ord + Clone + Default + fmt::Debug> fmt::Debug for CfgBox<K> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::Result;
 
     #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Default)]
     enum TestOpt {
@@ -169,7 +170,7 @@ mod tests {
     }
 
     #[test]
-    fn test_invariants() {
+    fn test_invariants() -> Result<()> {
         let options = [TestOpt::Trace, TestOpt::Strict, TestOpt::Trace];
         let cfg = CfgBox::new(&options);
 
@@ -180,10 +181,11 @@ mod tests {
 
         // Verify sorting
         assert!(cfg.options[0] < cfg.options[1]);
+        Ok(())
     }
 
     #[test]
-    fn test_merge_logic() {
+    fn test_merge_logic() -> Result<()> {
         let base = CfgBox::new(&[TestOpt::Trace]);
         let over = CfgBox::new(&[TestOpt::Memoize]);
         let merged = base.merge(&over);
@@ -191,10 +193,11 @@ mod tests {
         assert!(merged.contains(&TestOpt::Trace));
         assert!(merged.contains(&TestOpt::Memoize));
         assert_eq!(merged.options.len(), 2);
+        Ok(())
     }
 
     #[test]
-    fn test_from_env() {
+    fn test_from_env() -> Result<()> {
         unsafe {
             env::set_var("TEST_TRACE", "1");
             env::set_var("TEST_STRICT", "1");
@@ -205,16 +208,18 @@ mod tests {
         assert!(cfg.contains(&TestOpt::Trace));
         assert!(cfg.contains(&TestOpt::Strict));
         assert_eq!(cfg.options.len(), 2);
+        Ok(())
     }
 
     #[test]
-    fn test_cfg_is_mapper() {
+    fn test_cfg_is_mapper() -> Result<()> {
         let cfg = CfgBox::<TestOpt>::load_from_env("EMPTY_");
         assert!(cfg.is_empty());
+        Ok(())
     }
 
     #[test]
-    fn test_conversions() {
+    fn test_conversions() -> Result<()> {
         let options_a = [TestOpt::Trace, TestOpt::Debug];
         let cfg_from_a: CfgBox<TestOpt> = (&options_a).into(); // CfgA -> Cfg
         assert!(cfg_from_a.contains(&TestOpt::Trace));
@@ -234,5 +239,6 @@ mod tests {
         let vec_from_iter: CfgBox<TestOpt> =
             vec![TestOpt::Trace, TestOpt::Memoize].into_iter().collect(); // Vec<K> -> Cfg via FromIterator
         assert!(vec_from_iter.contains(&TestOpt::Memoize));
+        Ok(())
     }
 }

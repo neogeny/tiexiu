@@ -154,6 +154,7 @@ impl Cursor for StrCursor {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::Result;
 
     #[test]
     #[should_panic(expected = "matches empty string")]
@@ -174,10 +175,11 @@ mod tests {
     }
 
     #[test]
-    fn default_patterns_are_valid() {
+    fn default_patterns_are_valid() -> Result<()> {
         let patterns = TokenizingPatterns::default();
         assert!(patterns.wsp.search("").is_none());
         assert!(patterns.cmt.search("").is_none());
         assert!(patterns.eol.search("").is_none());
+        Ok(())
     }
 }
