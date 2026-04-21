@@ -4,7 +4,6 @@
 // --- Private Internal Modules ---
 // These are files inside src/peg/ (e.g., src/peg/build.rs)
 mod build;
-mod choices;
 mod compiler;
 mod defines;
 mod leftrec;
