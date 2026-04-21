@@ -21,6 +21,16 @@ pub fn config(cfga: &CfgA) -> CfgBox {
         .merge(&cfga.into())
 }
 
+pub trait CfgBoxWrapper {
+    fn trace(&self) -> bool;
+}
+
+impl CfgBoxWrapper for CfgBox {
+    fn trace(&self) -> bool {
+        self.contains(&Cfg::Trace)
+    }
+}
+
 // NOTE! Order matters here! Debug < Mode < Trace
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Default)]
 pub enum Cfg {

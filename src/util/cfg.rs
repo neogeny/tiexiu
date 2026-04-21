@@ -14,7 +14,7 @@ pub type CfgA<K> = [K];
 /// 2. Unique values.
 #[derive(Clone, Default)]
 pub struct CfgBox<K: Ord + Clone + Default> {
-    options: Box<[K]>,
+    cfga: Box<CfgA<K>>,
 }
 
 // impl<K: Ord + Clone + Default> From<&CfgA<K>> for CfgBox<K> {
@@ -75,7 +75,7 @@ impl<K: Ord + Clone + Default> FromIterator<K> for CfgBox<K> {
     fn from_iter<I: IntoIterator<Item = K>>(iter: I) -> Self {
         let set: BTreeSet<K> = iter.into_iter().collect();
         Self {
-            options: set.into_iter().collect::<Vec<_>>().into_boxed_slice(),
+            cfga: set.into_iter().collect::<Vec<_>>().into_boxed_slice(),
         }
     }
 }
@@ -85,7 +85,7 @@ impl<K: Ord + Clone + Default> CfgBox<K> {
     pub fn new(options: &CfgA<K>) -> Self {
         let set: BTreeSet<K> = options.iter().cloned().collect();
         Self {
-            options: set.into_iter().collect::<Vec<_>>().into_boxed_slice(),
+            cfga: set.into_iter().collect::<Vec<_>>().into_boxed_slice(),
         }
     }
 
@@ -94,41 +94,41 @@ impl<K: Ord + Clone + Default> CfgBox<K> {
         vec.sort();
         vec.dedup();
         Self {
-            options: vec.into_boxed_slice(),
+            cfga: vec.into_boxed_slice(),
         }
     }
 
     /// Merges two configurations (Set Union).
     pub fn merge(&self, other: &CfgBox<K>) -> Self {
-        let mut set: BTreeSet<K> = self.options.iter().cloned().collect();
+        let mut set: BTreeSet<K> = self.cfga.iter().cloned().collect();
         set.extend(other.iter().cloned());
 
         Self {
-            options: set.into_iter().collect::<Vec<_>>().into_boxed_slice(),
+            cfga: set.into_iter().collect::<Vec<_>>().into_boxed_slice(),
         }
     }
 
     pub fn contains(&self, key: &K) -> bool {
-        self.options.binary_search(key).is_ok()
+        self.cfga.binary_search(key).is_ok()
     }
 
     pub fn is_empty(&self) -> bool {
-        self.options.is_empty()
+        self.cfga.is_empty()
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &K> {
-        self.options.iter()
+        self.cfga.iter()
     }
 
     pub fn as_slice(&self) -> &[K] {
-        &self.options
+        &self.cfga
     }
 }
 
 impl<K: Ord + Clone + Default> Deref for CfgBox<K> {
     type Target = [K];
     fn deref(&self) -> &Self::Target {
-        &self.options
+        &self.cfga
     }
 }
 
@@ -174,13 +174,13 @@ mod tests {
         let options = [TestOpt::Trace, TestOpt::Strict, TestOpt::Trace];
         let cfg = CfgBox::new(&options);
 
-        assert_eq!(cfg.options.len(), 2); // Unique keys
+        assert_eq!(cfg.cfga.len(), 2); // Unique keys
         assert!(cfg.contains(&TestOpt::Trace));
         assert!(cfg.contains(&TestOpt::Strict));
         assert!(!cfg.contains(&TestOpt::Memoize));
 
         // Verify sorting
-        assert!(cfg.options[0] < cfg.options[1]);
+        assert!(cfg.cfga[0] < cfg.cfga[1]);
         Ok(())
     }
 
@@ -192,7 +192,7 @@ mod tests {
 
         assert!(merged.contains(&TestOpt::Trace));
         assert!(merged.contains(&TestOpt::Memoize));
-        assert_eq!(merged.options.len(), 2);
+        assert_eq!(merged.cfga.len(), 2);
         Ok(())
     }
 
@@ -207,7 +207,7 @@ mod tests {
         let cfg: CfgBox<TestOpt> = TestOpt::load_from_env("TEST_");
         assert!(cfg.contains(&TestOpt::Trace));
         assert!(cfg.contains(&TestOpt::Strict));
-        assert_eq!(cfg.options.len(), 2);
+        assert_eq!(cfg.cfga.len(), 2);
         Ok(())
     }
 
