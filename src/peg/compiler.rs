@@ -57,12 +57,21 @@ fn map_get_default(map: &Tree, key: &'static str, default: &'static str) -> Box<
     }
 }
 
+impl Grammar {
+    pub fn compile(tree: &Tree, cfga: &CfgA) -> CompileResult<Self> {
+        let mut compiler = GrammarCompiler::new();
+        compiler.compile_grammar(tree, cfga)
+    }
+}
+
 impl GrammarCompiler {
     pub fn new() -> GrammarCompiler {
         GrammarCompiler {}
     }
 
-    pub fn compile_grammar(&mut self, tree: &Tree) -> CompileResult<Grammar> {
+    pub fn compile_grammar(&mut self, tree: &Tree, cfga: &CfgA) -> CompileResult<Grammar> {
+        let cfg = config(cfga);
+        let _debug = cfg.contains(&Cfg::Debug);
         let map = parse_node_check(tree, "Grammar")?;
 
         let mut rulemap: RuleMap = RuleMap::new();
@@ -262,12 +271,5 @@ impl GrammarCompiler {
             _ => return Err(CompileError::UnknownExpressionType(typename)),
         };
         Ok(exp)
-    }
-}
-
-impl Grammar {
-    pub fn compile(tree: &Tree) -> CompileResult<Self> {
-        let mut compiler = GrammarCompiler::new();
-        compiler.compile_grammar(tree)
     }
 }

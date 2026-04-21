@@ -1,15 +1,15 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::cfg::*;
-use crate::input::Cursor;
-use crate::input::StrCursor;
-use crate::json::ToExpJson;
-use crate::peg::grammar::PrettyPrint;
-use crate::peg::{Grammar, Succ};
-use crate::state::corectx::CoreCtx;
-use crate::trees::Tree;
-use crate::{Error, Result};
+pub use crate::cfg::*;
+pub use crate::input::{Cursor, StrCursor};
+pub use crate::json::ToExpJson;
+pub use crate::peg::grammar::PrettyPrint;
+pub use crate::peg::*;
+pub use crate::state::corectx::CoreCtx;
+pub use crate::trees::Tree;
+pub use crate::util;
+pub use crate::{Error, Result};
 
 pub(crate) fn boot_grammar() -> Result<Grammar> {
     Ok(crate::json::boot::boot_grammar()?)
@@ -59,7 +59,7 @@ where
     U: Cursor + Clone,
 {
     let tree = parse_grammar_with(cursor, cfg)?;
-    Ok(Grammar::compile(&tree)?)
+    Ok(Grammar::compile(&tree, cfg)?)
 }
 
 pub fn compile_with_as_json<U>(cursor: U, cfg: &CfgA) -> Result<String>

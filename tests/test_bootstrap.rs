@@ -14,15 +14,25 @@ mod parse_grammar {
 
     #[test]
     fn simple_grammar() -> Result<()> {
-        let tree = parse_grammar(
-            r#"
+        let grammar = r#"
             @@grammar :: Simple
             start: 'hello'
-        "#,
-            &[],
-        )?;
+        "#;
+        let tree = parse_grammar(grammar, &[])?;
+        eprintln!("TREE:\n{:#?}", tree);
+        eprintln!("TREE String:\n{}", tree);
         assert!(matches!(tree, tiexiu::trees::Tree::Node { .. }));
-        assert!(tree.to_model_json_string()?.contains("grammar"));
+
+        assert!(tree.to_model_json_string()?.contains("Simple"));
+
+        eprintln!("GRAMMAR:\n{}", tiexiu::pretty(grammar, &[])?);
+        let parser = tiexiu::compile(grammar, &[])?;
+        let tree = tiexiu::parse_input(&parser, "hello", &[])?;
+        eprintln!("PARSED:\n{}", tree);
+        assert_eq!(tree.to_string(), "hello");
+
+        let res = tiexiu::parse_input(&parser, "world", &[]);
+        assert!(res.is_err());
         Ok(())
     }
 

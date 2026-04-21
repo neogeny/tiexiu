@@ -38,6 +38,6 @@ fn main() -> Result<()> {
             eprintln!("{:#?}", err);
             Err(err)
         }
-        ok => ok
+        ok => ok,
     }
 }

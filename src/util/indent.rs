@@ -29,8 +29,7 @@ fn _dedent(text: &str, all: bool) -> Box<str> {
         .unwrap_or(0);
 
     let mut buf = String::new();
-    let lines: Vec<&str> = text.lines().collect();
-    for line in lines {
+    for line in text.lines() {
         if line.trim().is_empty() {
             writeln!(buf).unwrap();
         } else {
@@ -72,7 +71,11 @@ impl IndentWriter {
     }
 
     pub fn writeln(&mut self, text: &str) -> &mut Self {
-        self.writeln_with(0, text, "");
+        if text.is_empty() {
+            writeln!(self.buffer).unwrap();
+        } else {
+            self.writeln_with(0, text, "");
+        }
         self
     }
 

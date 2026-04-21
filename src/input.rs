@@ -5,5 +5,5 @@ pub mod strcursor;
 pub mod tokenizing;
 
 pub use cursor::Cursor;
-pub use error::Error;
+pub(crate) use error::Error;
 pub use strcursor::StrCursor;

@@ -80,7 +80,6 @@ impl PrettyPrint for Grammar {
 
         if !directives_strs.is_empty() {
             writer.writeln(&directives_strs.join("\n"));
-            writer.writeln("");
         }
 
         let keyword_strs = self
@@ -90,14 +89,12 @@ impl PrettyPrint for Grammar {
             .collect::<Vec<_>>();
 
         if !keyword_strs.is_empty() {
-            writer.writeln(&keyword_strs.join("\n"));
             writer.writeln("");
+            writer.writeln(&keyword_strs.join("\n"));
         }
 
         for rule in self.rules() {
-            let rule_str = rule.pretty_print();
-            writer.writeln("");
-            writer.writeln(&rule_str);
+            writer.writeln(&rule.pretty_print());
         }
         writer.take()
     }
@@ -109,13 +106,13 @@ impl PrettyPrint for Rule {
         if !self.params.is_empty() {
             params_str = format!("[{}]", self.params.join(", "));
         }
-        let mut pretty_exp = self.exp.pretty_print_with(writer);
+        let pretty_exp = self.exp.pretty_print_with(writer);
         let start_str = if pretty_exp.lines().count() <= 1 {
             " "
         } else {
             ""
         };
-        pretty_exp = "".to_string();
+        writer.writeln("");
         writer.writeln(&format!(
             "{}{}:{}{}",
             self.name, params_str, start_str, pretty_exp,
@@ -221,7 +218,7 @@ impl PrettyPrint for ExpKind {
                 // fold for multi-line
                 let folded = writer.fold(0, &pretty, "", "", "").take();
                 if folded.lines().count() > 1 {
-                    return format!("\n{}", folded);
+                    return folded.to_string();
                 }
 
                 // fold again for single line
