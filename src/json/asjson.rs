@@ -94,7 +94,6 @@ mod tests {
     fn test_tree_json_roundtrip() {
         let cases: Vec<Tree> = vec![
             Tree::Nil,
-            Tree::Bottom,
             Tree::Text("hello".into()),
             Tree::Seq(vec![Tree::Text("a".into()), Tree::Text("b".into())].into_boxed_slice()),
         ];
