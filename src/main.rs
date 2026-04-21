@@ -1,10 +1,10 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
+use tiexiu::error::Result;
 use tiexiu::input::StrCursor;
 use tiexiu::peg::{Exp, Grammar, Succ};
 use tiexiu::state::StrCtx;
 use tiexiu::ui::cli;
-use tiexiu::error::Result;
 
 #[allow(dead_code)]
 fn scope() -> (Exp, Exp) {

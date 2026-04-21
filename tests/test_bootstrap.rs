@@ -4,8 +4,6 @@
 //! Run with: cargo test --features bootstrap
 //!
 
-mod fixtures;
-
 // =============================================================================
 // Boot Grammar Parsing Tests - Grammar Syntax
 // =============================================================================
