@@ -1,8 +1,8 @@
 // Copyright (g) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use thiserror::Error;
 use crate::Tree;
+use thiserror::Error;
 
 #[derive(Error, Debug, Clone, PartialEq)]
 pub enum ParseError {
@@ -82,7 +82,7 @@ pub enum CompileError {
 
     #[error("expected {context} to contain key '{key}'")]
     MissingKey {
-        context: &'static str,
+        context: String,
         key: &'static str,
         tree: Box<Tree>,
     },

@@ -43,10 +43,14 @@ fn _parse_list(node: &Tree) -> CompileResult<&[Tree]> {
     }
 }
 
-fn map_get<'m>(map: &'m Tree, context: &'static str, key: &'static str) -> CompileResult<&'m Tree> {
+fn map_get<'m>(map: &'m Tree, context: &'m str, key: &'static str) -> CompileResult<&'m Tree> {
     match map.get(key) {
         Some(node) => Ok(node),
-        None => Err(CompileError::MissingKey { context, key, tree: map.clone().into() }),
+        None => Err(CompileError::MissingKey {
+            context: context.into(),
+            key,
+            tree: map.clone().into(),
+        }),
     }
 }
 
@@ -141,9 +145,9 @@ impl GrammarCompiler {
 
     pub fn parse_exp(&self, tree: &Tree) -> CompileResult<Exp> {
         let (typename, tree) = parse_node(tree)?;
-        let typename = &*typename;
-        let exp: Exp = match typename {
-            "Alert" => Exp::alert(&map_get(tree, typename, "msg")?.value(), 0),
+        let typename = typename.clone().to_string();
+        let exp: Exp = match typename.as_str() {
+            "Alert" => Exp::alert(&map_get(tree, &typename, "msg")?.value(), 0),
             "BasedRule" => Exp::nil(),
             "Box" => Exp::nil(),
             "Call" => Exp::call(&tree.value()),
@@ -157,7 +161,7 @@ impl GrammarCompiler {
             }
             "Option" => self.parse_exp(tree)?,
             "Closure" => {
-                let inner = map_get(tree, typename, "exp")?;
+                let inner = map_get(tree, &typename, "exp")?;
                 Exp::closure(self.parse_exp(inner)?)
             }
             "Comment" => Exp::nil(),
@@ -170,46 +174,46 @@ impl GrammarCompiler {
             "EmptyClosure" => Exp::empty_closure(),
             "Fail" => Exp::fail(),
             "Gather" => {
-                let exp = map_get(tree, typename, "exp")?;
-                let sep = map_get(tree, typename, "sep")?;
+                let exp = map_get(tree, &typename, "exp")?;
+                let sep = map_get(tree, &typename, "sep")?;
                 Exp::gather(self.parse_exp(exp)?, self.parse_exp(sep)?)
             }
             "Grammar" => Exp::nil(),
             "GrammarSemantics" => Exp::nil(),
             "Group" => {
-                let inner = map_get(tree, typename, "exp")?;
+                let inner = map_get(tree, &typename, "exp")?;
                 Exp::group(self.parse_exp(inner)?)
             }
             "Join" => {
-                let exp = map_get(tree, typename, "exp")?;
-                let sep = map_get(tree, typename, "sep")?;
+                let exp = map_get(tree, &typename, "exp")?;
+                let sep = map_get(tree, &typename, "sep")?;
                 Exp::join(self.parse_exp(exp)?, self.parse_exp(sep)?)
             }
             "LeftJoin" => Exp::nil(),
             "Lookahead" => {
-                let inner = map_get(tree, typename, "exp")?;
+                let inner = map_get(tree, &typename, "exp")?;
                 Exp::lookahead(self.parse_exp(inner)?)
             }
             "Model" => Exp::nil(),
             "ModelContext" => Exp::nil(),
             "NULL" => Exp::nil(),
             "Named" => {
-                let name = map_get(tree, typename, "name")?.value();
-            let inner = map_get(tree, typename, "exp")?;
+                let name = map_get(tree, &typename, "name")?.value();
+                let inner = map_get(tree, &typename, "exp")?;
                 Exp::named(&name, self.parse_exp(inner)?)
             }
             "NamedBox" => Exp::nil(),
             "NamedList" => {
-                let name = map_get(tree, typename, "name")?.value();
-                let inner = map_get(tree, typename, "exp")?;
+                let name = map_get(tree, &typename, "name")?.value();
+                let inner = map_get(tree, &typename, "exp")?;
                 Exp::named_list(&name, self.parse_exp(inner)?)
             }
             "NegativeLookahead" => {
-                let inner = map_get(tree, typename, "exp")?;
+                let inner = map_get(tree, &typename, "exp")?;
                 Exp::negative_lookahead(self.parse_exp(inner)?)
             }
             "Optional" => {
-                let inner = map_get(tree, typename, "exp")?;
+                let inner = map_get(tree, &typename, "exp")?;
                 Exp::optional(self.parse_exp(inner)?)
             }
             "Override" => Exp::nil(),
@@ -228,23 +232,23 @@ impl GrammarCompiler {
                 }
             }
             "PositiveClosure" => {
-                let inner = map_get(tree, typename, "exp")?;
+                let inner = map_get(tree, &typename, "exp")?;
                 Exp::positive_closure(self.parse_exp(inner)?)
             }
             "PositiveGather" => {
-                let exp = map_get(tree, typename, "exp")?;
-                let sep = map_get(tree, typename, "sep")?;
+                let exp = map_get(tree, &typename, "exp")?;
+                let sep = map_get(tree, &typename, "sep")?;
                 Exp::positive_gather(self.parse_exp(exp)?, self.parse_exp(sep)?)
             }
             "PositiveJoin" => {
-                let exp = map_get(tree, typename, "exp")?;
-                let sep = map_get(tree, typename, "sep")?;
+                let exp = map_get(tree, &typename, "exp")?;
+                let sep = map_get(tree, &typename, "sep")?;
                 Exp::positive_join(self.parse_exp(exp)?, self.parse_exp(sep)?)
             }
             "RightJoin" => Exp::nil(),
             "Rule" => Exp::nil(),
             "RuleInclude" => {
-                let name = map_get(tree, typename, "name")?.value();
+                let name = map_get(tree, &typename, "name")?.value();
                 Exp::rule_include(&name)
             }
             "Sequence" => {
@@ -259,11 +263,11 @@ impl GrammarCompiler {
                 Exp::sequence(exps)
             }
             "SkipGroup" => {
-                let inner = map_get(tree, typename, "exp")?;
+                let inner = map_get(tree, &typename, "exp")?;
                 Exp::skip_group(self.parse_exp(inner)?)
             }
             "SkipTo" => {
-                let inner = map_get(tree, typename, "exp")?;
+                let inner = map_get(tree, &typename, "exp")?;
                 Exp::skip_to(self.parse_exp(inner)?)
             }
             "Synth" => Exp::nil(),
