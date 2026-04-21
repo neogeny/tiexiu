@@ -145,7 +145,7 @@ impl GrammarCompiler {
 
     pub fn parse_exp(&self, tree: &Tree) -> CompileResult<Exp> {
         let (typename, tree) = parse_node(tree)?;
-        let typename = typename.clone().to_string();
+        let typename = typename.to_string();
         let exp: Exp = match typename.as_str() {
             "Alert" => Exp::alert(&map_get(tree, &typename, "msg")?.value(), 0),
             "BasedRule" => Exp::nil(),

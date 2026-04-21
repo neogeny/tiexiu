@@ -58,11 +58,11 @@ pub trait Tracer: Debug {
         )
         .white()
         .bold();
-        
+
         let location = ctx.cursor().location();
         let source = location.source.to_string();
         let (line, col) = location.pos;
-        
+
         let pos = style(format!("[{line}:{col}]→")).black().bright();
 
         let msg = format!("{event_symbol}{msg} {callstack}{source}\n{pos}{lookahead}");

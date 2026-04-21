@@ -9,7 +9,7 @@ use std::fmt::Debug;
 
 pub struct Location<'l> {
     pub source: &'l str,
-    pub pos: (usize, usize)
+    pub pos: (usize, usize),
 }
 
 pub trait Cursor: Debug + Configurable {
@@ -41,16 +41,16 @@ pub trait Cursor: Debug + Configurable {
         let col = head.lines().last().map_or(0, |l| l.chars().count());
         (line, col)
     }
-    
+
     fn location(&self) -> Location<'_> {
         self.location_at(self.mark())
     }
-    
+
     fn location_at<'l>(&self, mark: usize) -> Location<'l> {
         let pos = self.pos_at(mark);
         Location {
             source: "input",
-            pos
+            pos,
         }
     }
 
