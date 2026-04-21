@@ -34,12 +34,10 @@ fn test_build() {
 
 fn main() -> Result<()> {
     match cli::cli() {
-        Ok(result) => {
-            Ok(())
-        }
-        Err(err)  => {
+        Err(err) => {
             eprintln!("{:#?}", err);
             Err(err)
         }
+        ok => ok
     }
 }

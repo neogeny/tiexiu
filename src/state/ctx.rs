@@ -111,21 +111,8 @@ pub trait Ctx: CtxI + Clone + Debug {
 
     fn memoize(&mut self, key: &Key, tree: &Tree);
 
-    fn set_cut_seen(&mut self);
-    fn unset_cut(&mut self);
+    fn cut(&mut self); // Only cut() remains
 
-    fn cut(&mut self) {
-        self.set_cut_seen();
-        self.prune_cache();
-    }
-
-    fn restore_if_was_cut(&mut self, was_cut: bool) {
-        if was_cut {
-            self.set_cut_seen();
-        } else {
-            // NOTE: Do nothinig. A cut may have been set by the caller.
-        }
-    }
     fn prune_cache(&mut self);
 
     fn is_keyword(&self, name: &str) -> bool {
@@ -134,6 +121,31 @@ pub trait Ctx: CtxI + Clone + Debug {
     }
     fn set_keywords(&mut self, keywords: &[Box<str>]) {
         let _ = keywords;
+    }
+
+    /// This is the merge in TatSu
+    ///
+    /// ```python
+    /// def merge(self, prev: ParseState) -> Self:
+    ///     self.ast = prev.ast
+    ///     self.extend(prev.cst)
+    ///     self.alerts.extend(prev.alerts)
+    ///     self.cursor.goto(prev.cursor.pos)
+    ///     return self
+    /// ```
+    fn merge(mut self, other: &Self) -> Self {
+        // NOTE:
+        //  * We don't construct the resulting CST/AST because Tree does it
+        //    when Tree.node() is called on success of a rule call
+        //  * Alerts are not implemented (no one knows what they're for)
+        //  * We should reset our cursor. Copy? Just the mark? The only
+        //    state kept by cursor is the mark.
+        //  * Our `cutseen` remains as was
+        //  * WARNING:
+        //      Don't know what to do about the callstack
+        //      All self.leave() does is pop it
+        self.cursor_mut().reset(other.cursor().mark());
+        self
     }
 
     fn call(mut self, name: &str, rule: &Rule) -> ParseResult<Self> {
@@ -163,14 +175,14 @@ pub trait Ctx: CtxI + Clone + Debug {
             };
         }
 
-        let doppelganger = self.clone();
+        let cloned_ctx = self.clone();
         match if rule.is_left_recursive() {
-            doppelganger.call_recursive(&key, rule)
+            cloned_ctx.call_recursive(&key, rule)
         } else {
-            rule.parse(doppelganger)
+            rule.parse(cloned_ctx)
         } {
-            Ok(Succ(mut neogenus, tree)) => {
-                neogenus.leave();
+            Ok(Succ(mut new_ctx, tree)) => {
+                new_ctx.leave();
                 if rule.is_name()
                     && let Tree::Text(name) = &tree
                     && self.is_keyword(name)
@@ -180,9 +192,9 @@ pub trait Ctx: CtxI + Clone + Debug {
                     self.tracer().trace_failure(&self, &error);
                     return Err(self.failure(start, error));
                 }
-                neogenus.tracer().trace_success(&neogenus);
-                neogenus.memoize(&key, &tree);
-                Ok(Succ(neogenus, tree))
+                new_ctx.tracer().trace_success(&new_ctx);
+                new_ctx.memoize(&key, &tree);
+                Ok(Succ(new_ctx, tree))
             }
             Err(nope) => {
                 self.tracer().trace_failure(&self, &nope.source);

@@ -8,17 +8,14 @@ use crate::state::Ctx;
 use crate::trees::Tree;
 
 impl Exp {
-    pub fn parse_choice<C: Ctx>(&self, mut ctx: C, options: &[Exp]) -> ParseResult<C> {
+    pub fn parse_choice<C: Ctx>(&self, ctx: C, options: &[Exp]) -> ParseResult<C> {
         let start = ctx.mark();
-        let was_cut = ctx.cut_seen();
         let mut furthest: Option<crate::peg::Nope> = None;
 
         for option in options.iter() {
-            ctx.unset_cut();
             match option.parse(ctx.clone()) {
-                Ok(Succ(mut new_ctx, tree)) => {
-                    new_ctx.restore_if_was_cut(was_cut);
-                    return Ok(Succ(new_ctx, tree));
+                Ok(Succ(new_ctx, tree)) => {
+                    return Ok(Succ(ctx.merge(&new_ctx), tree));
                 }
                 Err(mut f) => {
                     if f.take_cut() {
@@ -34,19 +31,13 @@ impl Exp {
         Err(furthest.unwrap_or(ctx.failure(start, ParseError::NoViableOption(self.la.clone()))))
     }
 
-    pub fn parse_optional<C: Ctx>(&self, mut ctx: C, exp: &Exp) -> ParseResult<C> {
-        let was_cut = ctx.cut_seen();
-        ctx.unset_cut();
+    pub fn parse_optional<C: Ctx>(&self, ctx: C, exp: &Exp) -> ParseResult<C> {
         match exp.parse(ctx.clone()) {
-            Ok(Succ(mut new_ctx, tree)) => {
-                new_ctx.restore_if_was_cut(was_cut);
-                Ok(Succ(new_ctx, tree))
-            }
+            Ok(Succ(new_ctx, tree)) => Ok(Succ(ctx.merge(&new_ctx), tree)),
             Err(mut f) => {
                 if f.take_cut() {
                     return Err(f);
                 }
-                ctx.restore_if_was_cut(was_cut);
                 Ok(Succ(ctx, Tree::Nil))
             }
         }

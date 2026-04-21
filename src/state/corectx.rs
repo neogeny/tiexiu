@@ -31,13 +31,30 @@ pub struct HeavyState<'t> {
     pub tracer: &'t dyn Tracer,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct CoreCtx<'c, U>
 where
     U: Cursor + Clone,
 {
+    pub cloned: bool, // keep track of if we are a clone
     pub state: Cow<'c, Box<State<U>>>,
     pub heavy: Rc<RefCell<HeavyState<'c>>>,
+}
+
+impl<'c, U> Clone for CoreCtx<'c, U>
+where
+    U: Cursor + Clone,
+{
+    fn clone(&self) -> Self {
+        let mut new_state = (*self.state).clone();
+        // NOTE: new state, own the cuts
+        new_state.cutseen = false;
+        Self {
+            cloned: false,
+            state: Cow::Owned(new_state),
+            heavy: self.heavy.clone(),
+        }
+    }
 }
 
 impl<'c, U> CoreCtx<'c, U>
@@ -47,6 +64,7 @@ where
     pub fn new(cursor: U, cfg: &CfgA) -> Self {
         let _ = cfg;
         Self {
+            cloned: true,
             state: Cow::Owned(
                 State {
                     cursor,
@@ -171,13 +189,10 @@ where
         });
     }
 
-    fn set_cut_seen(&mut self) {
+    fn cut(&mut self) {
         self.tracer().trace_cut(self);
         self.state_mut().cutseen = true;
-    }
-    #[inline]
-    fn unset_cut(&mut self) {
-        self.state_mut().cutseen = false;
+        self.prune_cache();
     }
 
     fn prune_cache(&mut self) {
@@ -229,9 +244,25 @@ mod tests {
 
         ctx.cut();
         assert!(ctx.cut_seen());
+    }
 
-        ctx.unset_cut();
-        assert!(!ctx.cut_seen());
+    #[test]
+    fn clone_resets_cutseen() {
+        let cursor = StrCursor::new("test");
+        let mut ctx = CoreCtx::new(cursor, &[]);
+
+        ctx.cut();
+        assert!(ctx.cut_seen());
+
+        let cloned_ctx = ctx.clone();
+        assert!(
+            !cloned_ctx.cut_seen(),
+            "cloned context should have cutseen as false"
+        );
+        assert!(
+            ctx.cut_seen(),
+            "original context should still have cutseen as true"
+        );
     }
 
     #[test]

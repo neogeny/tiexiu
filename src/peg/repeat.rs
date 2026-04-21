@@ -10,7 +10,7 @@ use crate::trees::Tree;
 impl Exp {
     pub fn skip_exp<C: Ctx>(ctx: C, exp: &Exp) -> C {
         match exp.parse(ctx.clone()) {
-            Ok(Succ(new_ctx, _)) => new_ctx,
+            Ok(Succ(new_ctx, _)) => ctx.merge(&new_ctx),
             Err(_) => ctx,
         }
     }
@@ -19,54 +19,48 @@ impl Exp {
         match exp.parse(ctx.clone()) {
             Ok(Succ(new_ctx, tree)) => {
                 res.push(tree);
-                Ok(new_ctx)
+                Ok(ctx.merge(&new_ctx))
             }
             Err(f) => Err((ctx, f)),
         }
     }
 
-    pub fn repeat<C: Ctx>(mut ctx: C, exp: &Exp, res: &mut Vec<Tree>) -> ParseResult<C> {
-        let was_cut = ctx.cut_seen();
+    pub fn repeat<C: Ctx>(ctx: C, exp: &Exp, res: &mut Vec<Tree>) -> ParseResult<C> {
+        let mut loop_ctx = ctx.clone();
         loop {
-            let mut next_ctx = ctx.clone();
-            next_ctx.unset_cut();
-            match exp.parse(next_ctx) {
+            match exp.parse(loop_ctx.clone()) {
                 Ok(Succ(new_ctx, tree)) => {
                     res.push(tree);
-                    ctx = new_ctx;
+                    loop_ctx = new_ctx;
                 }
                 Err(mut f) => {
                     if f.take_cut() {
                         return Err(f);
                     }
-                    ctx.restore_if_was_cut(was_cut);
-                    return Ok(Succ(ctx, Tree::Nil));
+                    return Ok(Succ(ctx.merge(&loop_ctx), Tree::Nil));
                 }
             }
         }
     }
 
     pub fn repeat_with_pre<C: Ctx>(
-        mut ctx: C,
+        ctx: C,
         exp: &Exp,
         pre: &Exp,
         res: &mut Vec<Tree>,
         keep_pre: bool,
     ) -> ParseResult<C> {
-        let was_cut = ctx.cut_seen(); // take to not affect the choice that comes
+        let mut loop_ctx = ctx.clone();
         loop {
-            ctx.unset_cut();
-            match pre.parse(ctx.clone()) {
+            match pre.parse(loop_ctx.clone()) {
                 Err(mut f) => {
                     if f.take_cut() {
                         return Err(f);
                     }
                     // OK to match nothing
-                    ctx.restore_if_was_cut(was_cut);
-                    return Ok(Succ(ctx, Tree::Nil));
+                    return Ok(Succ(ctx.merge(&loop_ctx), Tree::Nil));
                 }
-                Ok(Succ(mut new_ctx, pre_cst)) => {
-                    new_ctx.unset_cut();
+                Ok(Succ(new_ctx, pre_cst)) => {
                     match exp.parse(new_ctx.clone()) {
                         // NOTE: pre.parse().is_ok() so exp.parse().is_ok_or(fail)
                         Ok(Succ(repeat_ctx, exp_cst)) => {
@@ -74,7 +68,7 @@ impl Exp {
                                 res.push(pre_cst);
                             }
                             res.push(exp_cst);
-                            ctx = repeat_ctx;
+                            loop_ctx = repeat_ctx;
                         }
                         Err(f) => {
                             return Err(f); // the implicit cut after pre.parse()

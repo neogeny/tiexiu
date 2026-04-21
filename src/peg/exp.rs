@@ -144,7 +144,6 @@ impl Exp {
     // #[track_caller]
     fn do_parse<C: Ctx>(&self, mut ctx: C) -> ParseResult<C> {
         let start = ctx.mark();
-        let was_cut = ctx.cut_seen();
         match &self.kind {
             ExpKind::EmptyClosure => Ok(Succ(ctx, Tree::from(vec![]).closed())),
             ExpKind::Nil => Ok(Succ(ctx, Tree::Nil)),
@@ -155,10 +154,7 @@ impl Exp {
             ExpKind::Call { name, rule } => match rule {
                 None => Err(ctx.failure(start, ParseError::RuleNotLinked(name.clone()))),
                 Some(rule) => match ctx.call(name, rule.as_ref()) {
-                    Ok(Succ(mut ctx, tree)) => {
-                        ctx.restore_if_was_cut(was_cut);
-                        Ok(Succ(ctx, tree))
-                    }
+                    Ok(ok) => Ok(ok),
                     Err(mut f) => {
                         f.take_cut();
                         Err(f)
