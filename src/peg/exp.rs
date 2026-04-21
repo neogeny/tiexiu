@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::error::ParseError;
-use super::parser::{Nope, ParseResult, Parser, Succ};
+use super::parser::{ParseResult, Parser, Succ};
 use super::rule::RuleRef;
 use crate::state::Ctx;
 use crate::trees::tree::Define;
@@ -156,7 +156,7 @@ impl Exp {
                 None => Err(ctx.failure(start, ParseError::RuleNotLinked(name.clone()))),
                 Some(rule) => match ctx.call(name, rule.as_ref()) {
                     Ok(Succ(mut ctx, tree)) => {
-                        ctx.restore_cut(was_cut);
+                        ctx.restore_if_was_cut(was_cut);
                         Ok(Succ(ctx, tree))
                     }
                     Err(mut f) => {
@@ -166,7 +166,7 @@ impl Exp {
                 },
             },
             ExpKind::Cut => {
-                ctx.setcut();
+                ctx.cut();
                 Ok(Succ(ctx, Tree::Nil))
             }
             ExpKind::Void => {
@@ -287,46 +287,8 @@ impl Exp {
                 Ok(Succ(ctx, Tree::from(results)))
             }
             ExpKind::Alt(exp) => exp.parse(ctx),
-            ExpKind::Choice(options) => {
-                let mut furthest: Option<Nope> = None;
-                for option in options.iter() {
-                    ctx.uncut();
-                    match option.parse(ctx.clone()) {
-                        Ok(Succ(mut new_ctx, tree)) => {
-                            new_ctx.restore_cut(was_cut);
-                            return Ok(Succ(new_ctx, tree));
-                        }
-                        Err(mut f) => {
-                            if f.take_cut() {
-                                return Err(f);
-                            }
-
-                            if furthest.as_ref().is_none_or(|prev| f.start >= prev.start) {
-                                furthest = Some(f);
-                            }
-                        }
-                    }
-                }
-                Err(furthest
-                    .unwrap_or(ctx.failure(start, ParseError::NoViableOption(self.la.clone()))))
-            }
-
-            ExpKind::Optional(exp) => {
-                ctx.uncut();
-                match exp.parse(ctx.clone()) {
-                    Ok(Succ(mut new_ctx, tree)) => {
-                        new_ctx.restore_cut(was_cut);
-                        Ok(Succ(new_ctx, tree))
-                    }
-                    Err(mut f) => {
-                        if f.take_cut() {
-                            return Err(f);
-                        }
-                        ctx.restore_cut(was_cut);
-                        Ok(Succ(ctx, Tree::Nil))
-                    }
-                }
-            }
+            ExpKind::Choice(options) => self.parse_choice(ctx, options),
+            ExpKind::Optional(exp) => self.parse_optional(ctx, exp),
 
             ExpKind::Closure(exp) => {
                 let mut res = Vec::new();
@@ -475,7 +437,7 @@ mod tests {
         );
         let _ = grammar;
         let mut ctx = StrCtx::new(StrCursor::new("abc"), &[]);
-        ctx.setcut();
+        ctx.cut();
         assert!(ctx.cut_seen(), "ctx should have cut set before choice");
 
         let exp = Exp::choice(vec![Exp::token("abc"), Exp::token("xyz")]);
@@ -496,7 +458,7 @@ mod tests {
         );
         let _ = grammar;
         let mut ctx = StrCtx::new(StrCursor::new("abc"), &[]);
-        ctx.setcut();
+        ctx.cut();
         assert!(ctx.cut_seen(), "ctx should have cut set before choice");
 
         let exp = Exp::choice(vec![Exp::token("xyz"), Exp::token("123")]);
@@ -535,7 +497,7 @@ mod tests {
         );
         let _ = grammar;
         let mut ctx = StrCtx::new(StrCursor::new("abc"), &[]);
-        ctx.setcut();
+        ctx.cut();
         assert!(ctx.cut_seen(), "ctx should have cut set before optional");
 
         let exp = Exp::optional(Exp::token("abc"));
@@ -554,7 +516,7 @@ mod tests {
             crate::peg::Grammar::new("test", &[Rule::new("start", &[], Exp::token("xyz")).into()]);
         let _ = grammar;
         let mut ctx = StrCtx::new(StrCursor::new("abc"), &[]);
-        ctx.setcut();
+        ctx.cut();
         assert!(ctx.cut_seen(), "ctx should have cut set before optional");
 
         let exp = Exp::optional(Exp::token("xyz"));
