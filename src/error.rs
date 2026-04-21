@@ -34,7 +34,7 @@ pub enum Error {
     #[error("grammar compilation failed: {0}")]
     Compile(#[from] CompileError),
 
-    #[error("parse failed: {0}")]
+    #[error("parse failed: {0:#?}")]
     ParseFailure(#[from] Nope),
 
     #[error("parse failed: {0}")]

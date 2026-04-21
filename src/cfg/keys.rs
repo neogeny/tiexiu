@@ -4,6 +4,13 @@
 pub use crate::util::cfg;
 pub use cfg::*;
 
+pub type CfgA = cfg::CfgA<Cfg>;
+pub type CfgBox = cfg::CfgBox<Cfg>;
+
+pub fn config_all(input: &CfgA) -> CfgBox {
+    CfgBox::load_from_env(super::constants::ENV_PREFIX).merge(input)
+}
+
 // NOTE! Order matters here! Debug < Mode < Trace
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Default)]
 pub enum Cfg {
@@ -28,13 +35,16 @@ pub enum Cfg {
     NoMemoization,
 }
 
-pub type CfgA = cfg::CfgA<Cfg>;
-pub type CfgBox = cfg::CfgBox<Cfg>;
-
 /// Specialized trait for types that can be configured with the project-specific CfgBox.
 pub trait Configurable {
     fn configure(&mut self, cfg: &CfgBox) {
         let _ = cfg;
+    }
+}
+
+impl From<&CfgA> for CfgBox {
+    fn from(cfga: &CfgA) -> Self {
+        config_all(cfga)
     }
 }
 

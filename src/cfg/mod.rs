@@ -5,7 +5,3 @@ pub mod constants;
 pub mod keys;
 
 pub use keys::*;
-
-pub fn cfg(input: &CfgA) -> CfgBox {
-    CfgBox::load_from_env(constants::ENV_PREFIX).merge(&CfgBox::new(input))
-}

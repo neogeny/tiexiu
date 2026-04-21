@@ -17,11 +17,11 @@ pub struct CfgBox<K: Ord + Clone + Default> {
     options: Box<[K]>,
 }
 
-impl<K: Ord + Clone + Default> From<&CfgA<K>> for CfgBox<K> {
-    fn from(cfg: &CfgA<K>) -> Self {
-        Self::new(cfg)
-    }
-}
+// impl<K: Ord + Clone + Default> From<&CfgA<K>> for CfgBox<K> {
+//     fn from(cfg: &CfgA<K>) -> Self {
+//         Self::new(cfg)
+//     }
+// }
 
 impl<'a, K: Ord + Clone + Default, const N: usize> From<&'a [K; N]> for CfgBox<K> {
     fn from(options: &'a [K; N]) -> Self {

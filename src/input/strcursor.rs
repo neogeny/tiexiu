@@ -67,7 +67,8 @@ impl StrCursor {
 
 impl Configurable for StrCursor {
     fn configure(&mut self, cfg: &CfgBox) {
-        if let Ok(patterns) = self.tokenizing_from_cfg(cfg) {
+        let cfg = config_all(cfg);
+        if let Ok(patterns) = self.tokenizing_from_cfg(&cfg) {
             self.set_tokenizing(&patterns);
         }
         self.heavy = CursorHeavy {
