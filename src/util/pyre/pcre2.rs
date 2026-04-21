@@ -13,7 +13,6 @@ use std::rc::Rc;
 #[derive(Debug, Clone)]
 pub struct Pattern {
     regex: Rc<Regex>,
-    anchored: Rc<Regex>,
     pattern: String,
 }
 
@@ -36,15 +35,8 @@ impl Pattern {
     pub fn new(pattern: &str) -> Result<Self> {
         let regex = RegexBuilder::new().utf(true).jit(true).build(pattern)?;
 
-        let anchored_pattern = format!(r"\A(?:{})", pattern);
-        let anchored = RegexBuilder::new()
-            .utf(true)
-            .jit(true)
-            .build(&anchored_pattern)?;
-
         Ok(Self {
             regex: Rc::new(regex),
-            anchored: Rc::new(anchored),
             pattern: pattern.to_string(),
         })
     }
@@ -62,14 +54,20 @@ impl Pattern {
     }
 
     pub fn match_<'a>(&self, text: &'a str) -> Option<Match<'a>> {
-        self.anchored
+        self.regex
             .captures(text.as_bytes())
             .ok()
             .flatten()
-            .map(|captures| Match {
-                haystack: text,
-                captures,
-                regex: self.anchored.clone(),
+            .and_then(|captures| {
+                if captures.get(0).is_some_and(|m| m.start() == 0) {
+                    Some(Match {
+                        haystack: text,
+                        captures,
+                        regex: self.regex.clone(),
+                    })
+                } else {
+                    None
+                }
             })
     }
 
@@ -92,16 +90,17 @@ impl Pattern {
                 break;
             }
             if let Ok(caps) = caps_res {
-                let m = caps.get(0).unwrap();
-                result.push(text[last_end..m.start()].to_string());
-                for i in 1..caps.len() {
-                    if let Some(cap) = caps.get(i) {
-                        result.push(text[cap.start()..cap.end()].to_string());
-                    } else {
-                        result.push(String::new());
+                if let Some(m) = caps.get(0) {
+                    result.push(text[last_end..m.start()].to_string());
+                    for i in 1..caps.len() {
+                        if let Some(cap) = caps.get(i) {
+                            result.push(text[cap.start()..cap.end()].to_string());
+                        } else {
+                            result.push(String::new());
+                        }
                     }
+                    last_end = m.end();
                 }
-                last_end = m.end();
             }
         }
         result.push(text[last_end..].to_string());
@@ -230,13 +229,9 @@ impl<'a> traits::Match<'a> for Match<'a> {
     }
 
     fn group_name(&self, name: &str) -> Option<&'a str> {
-        // Find index from capture_names
-        let idx = self
-            .regex
-            .capture_names()
-            .iter()
-            .position(|opt| opt.as_deref() == Some(name))?;
-        self.group(idx)
+        self.captures
+            .name(name)
+            .map(|m| self.haystack[m.start()..m.end()].as_ref())
     }
 
     fn groupdict(&self) -> HashMap<Box<str>, Option<&'a str>> {

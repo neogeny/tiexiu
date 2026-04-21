@@ -17,7 +17,6 @@ use std::collections::HashMap;
 #[derive(Debug, Clone)]
 pub struct Pattern {
     regex: Regex,
-    anchored: Regex,
 }
 
 #[derive(Debug)]
@@ -38,10 +37,8 @@ pub fn purge() {}
 
 impl Pattern {
     pub fn new(pattern: &str) -> Result<Self> {
-        let anchored = format!(r"\A(?:{})", pattern);
         Ok(Self {
             regex: Regex::new(pattern)?,
-            anchored: Regex::new(&anchored)?,
         })
     }
 
@@ -56,11 +53,17 @@ impl Pattern {
     }
 
     pub fn match_<'a>(&self, text: &'a str) -> Option<Match<'a>> {
-        match self.anchored.captures(text) {
-            Ok(Some(captures)) => Some(Match {
-                string: text,
-                captures,
-            }),
+        match self.regex.captures(text) {
+            Ok(Some(captures)) => {
+                if captures.get(0).is_some_and(|m| m.start() == 0) {
+                    Some(Match {
+                        string: text,
+                        captures,
+                    })
+                } else {
+                    None
+                }
+            }
             _ => None,
         }
     }

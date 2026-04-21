@@ -11,7 +11,6 @@ use std::collections::HashMap;
 #[derive(Debug, Clone)]
 pub struct Pattern {
     regex: Regex,
-    anchored: Regex,
     pattern: String,
 }
 
@@ -31,15 +30,8 @@ pub fn compile(pattern: &str) -> Result<Pattern> {
 
 impl Pattern {
     pub fn new(pattern: &str) -> Result<Self> {
-        let regex = RegexBuilder::new(pattern).unicode(true).build()?;
-
-        // Python's re.match only matches at the beginning of the string.
-        let anchored_pattern = format!(r"\A(?:{})", pattern);
-        let anchored = RegexBuilder::new(&anchored_pattern).unicode(true).build()?;
-
         Ok(Self {
-            regex,
-            anchored,
+            regex: RegexBuilder::new(pattern).unicode(true).build()?,
             pattern: pattern.to_string(),
         })
     }
@@ -52,9 +44,15 @@ impl Pattern {
     }
 
     pub fn match_<'a>(&self, text: &'a str) -> Option<Match<'a>> {
-        self.anchored.captures(text).map(|captures| Match {
-            haystack: text,
-            captures,
+        self.regex.captures(text).and_then(|captures| {
+            if captures.get(0).is_some_and(|m| m.start() == 0) {
+                Some(Match {
+                    haystack: text,
+                    captures,
+                })
+            } else {
+                None
+            }
         })
     }
 
