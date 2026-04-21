@@ -54,7 +54,7 @@ pub trait Configurable {
 
 impl From<&CfgA> for CfgBox {
     fn from(cfga: &CfgA) -> Self {
-        config(cfga)
+        CfgBox::new(cfga)
     }
 }
 
