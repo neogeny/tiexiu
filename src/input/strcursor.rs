@@ -4,6 +4,7 @@
 use super::Cursor;
 use super::error::Error;
 use super::tokenizing::TokenizingPatterns;
+use crate::cfg::keys::config;
 use crate::cfg::*;
 use crate::util::newlines::empty_line;
 use crate::util::pyre::Pattern;
@@ -67,7 +68,7 @@ impl StrCursor {
 
 impl Configurable for StrCursor {
     fn configure(&mut self, cfg: &CfgBox) {
-        let cfg = config_all(cfg);
+        let cfg = config(cfg);
         if let Ok(patterns) = self.tokenizing_from_cfg(&cfg) {
             self.set_tokenizing(&patterns);
         }
