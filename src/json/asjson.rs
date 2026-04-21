@@ -22,8 +22,7 @@ impl Tree {
 
     pub fn as_json(&self) -> Value {
         match self {
-            Tree::Bottom |
-            Tree::Nil => Value::Null,
+            Tree::Bottom | Tree::Nil => Value::Null,
             Tree::Text(t) => Value::String(t.to_string()),
             Tree::Seq(items) | Tree::Closed(items) => {
                 Value::Array(items.iter().map(Tree::as_json).collect())
