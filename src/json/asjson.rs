@@ -4,6 +4,17 @@
 use crate::trees::{KeyValue, Tree, TreeMap};
 use serde_json::{Map, Value};
 
+use serde::{Serialize, Serializer};
+
+impl Serialize for Tree {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        self.as_json().serialize(serializer)
+    }
+}
+
 impl Tree {
     pub fn as_json_str(&self) -> String {
         serde_json::to_string_pretty(&self.as_json()).unwrap()
@@ -11,22 +22,22 @@ impl Tree {
 
     pub fn as_json(&self) -> Value {
         match self {
+            Tree::Bottom |
             Tree::Nil => Value::Null,
-            Tree::Bottom => Value::Object({
-                let mut m = Map::new();
-                m.insert("Bottom".into(), Value::Null);
-                m
-            }),
             Tree::Text(t) => Value::String(t.to_string()),
             Tree::Seq(items) | Tree::Closed(items) => {
                 Value::Array(items.iter().map(Tree::as_json).collect())
             }
             Tree::Map(m) => {
-                let obj = map_to_json_obj(m);
+                let mut obj = Map::new();
+                for (k, v) in m.entries.iter() {
+                    obj.insert(k.to_string(), v.as_json());
+                }
                 Value::Object(obj)
             }
             Tree::Node { typename, tree } => {
                 let mut obj = Map::new();
+                obj.insert("typename".into(), Value::String(typename.to_string()));
                 obj.insert(typename.to_string(), tree.as_json());
                 Value::Object(obj)
             }
@@ -55,19 +66,13 @@ impl Tree {
             Value::Object(obj) => {
                 if obj.len() == 1 {
                     let (key, value) = obj.iter().next()?;
-                    if key == "Bottom" {
-                        return Some(Tree::Bottom);
-                    }
-                    if key == "Named" || key == "NamedAsList" {
-                        let tree = Tree::from_json(value)?;
-                        let kv = KeyValue(key.clone().into(), tree.into());
-                        return Some(Tree::Named(kv));
-                    }
-                    if let Some(tree) = Tree::from_json(value) {
-                        return Some(Tree::Node {
-                            typename: key.clone().into(),
-                            tree: tree.into(),
-                        });
+                    if key == "typename" {
+                        if let Some(tree) = Tree::from_json(value) {
+                            return Some(Tree::Node {
+                                typename: key.clone().into(),
+                                tree: tree.into(),
+                            });
+                        }
                     }
                 }
                 let mut m = TreeMap::new();
@@ -80,14 +85,6 @@ impl Tree {
             _ => None,
         }
     }
-}
-
-fn map_to_json_obj(m: &TreeMap) -> Map<String, Value> {
-    let mut obj = Map::new();
-    for (k, v) in m.entries.iter() {
-        obj.insert(k.to_string(), v.as_json());
-    }
-    obj
 }
 
 #[cfg(test)]
