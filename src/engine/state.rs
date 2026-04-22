@@ -4,10 +4,11 @@
 //! A translation of the TatSu module with the same name
 
 use super::memo::MemoCache;
-use super::trace::{NULL_TRACER, Tracer};
+use super::trace::{Tracer, NULL_TRACER};
 use crate::input::Cursor;
 use crate::parser::TokenStack;
 use crate::trees::Tree;
+use crate::util::fuse::Fuse;
 use crate::util::pyre::Pattern;
 use std::collections::HashMap;
 
@@ -25,6 +26,7 @@ pub struct Alert {
 
 #[derive(Debug, Clone)]
 pub struct ParseState<U: Cursor + Clone> {
+    fuse: Fuse,
     pub cursor: U,
     pub ast: Tree,
     pub cst: Tree,
@@ -69,6 +71,7 @@ impl<U: Cursor + Clone> ParseState<U> {
             last_node: Tree::Nil,
             alerts: Vec::new(),
             callstack: CallStack::new(),
+            fuse: Fuse::default(),
         }
     }
 
@@ -81,15 +84,25 @@ impl<U: Cursor + Clone> ParseState<U> {
             last_node: Tree::Nil,
             alerts: other.alerts.clone(),
             callstack: other.callstack.clone(),
+            fuse: Fuse::default(),
         }
     }
 
-    pub fn merge(&mut self, prev: &Self) -> &mut Self {
+    pub fn merge(&mut self, prev: &mut Self) -> &mut Self {
+        prev.pop();
         self.ast = prev.ast.clone();
         self.extend(prev.cst.clone());
         self.alerts.extend(prev.alerts.clone());
         self.cursor.reset(prev.cursor.mark());
         self
+    }
+
+    pub fn pop(&mut self) {
+        self.fuse.burn();
+    }
+
+    pub fn is_popped(&self) -> bool {
+        self.fuse.is_burnt()
     }
 
     pub fn node(&self) -> Tree {
@@ -145,11 +158,14 @@ impl<U: Cursor + Clone> ParseStateStack<U> {
     }
 
     pub fn undo(&mut self) -> ParseState<U> {
-        self.state_stack.pop().expect("empty state stack")
+        let mut prev = self.state_stack.pop().expect("empty state stack")
+        prev.pop();
+        prev
     }
 
     pub fn pop(&mut self) -> ParseState<U> {
-        let prev = self.state_stack.pop().expect("empty state stack");
+        let mut prev = self.state_stack.pop().expect("empty state stack");
+        prev.pop();
         self.state_mut().cursor.reset(prev.cursor.mark());
         prev
     }
@@ -167,8 +183,8 @@ impl<U: Cursor + Clone> ParseStateStack<U> {
     }
 
     pub fn merge(&mut self) -> &mut ParseState<U> {
-        let prev = self.pop();
-        self.state_mut().merge(&prev)
+        let mut prev = self.pop();
+        self.state_mut().merge(&mut prev)
     }
 
     pub fn alert(&mut self, level: usize, message: String) -> Alert {
