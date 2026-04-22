@@ -6,7 +6,7 @@
 use super::memo::MemoCache;
 use super::trace::{NULL_TRACER, Tracer};
 use crate::input::Cursor;
-use crate::parser::TokenList;
+use crate::parser::TokenStack;
 use crate::trees::Tree;
 use crate::util::pyre::Pattern;
 use std::collections::HashMap;
@@ -15,7 +15,7 @@ pub const _AT_: &str = "__value__";
 
 pub type PatternCache = HashMap<String, Pattern>;
 
-pub type CallStack = TokenList;
+pub type CallStack = TokenStack;
 
 #[derive(Debug, Clone)]
 pub struct Alert {

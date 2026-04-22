@@ -9,7 +9,7 @@ pub mod indent;
 pub mod into;
 pub mod newlines;
 pub mod pyre;
-pub mod tokenlist;
+pub mod tokenstack;
 
 pub use cfg::CfgBox;
 pub use error::*;

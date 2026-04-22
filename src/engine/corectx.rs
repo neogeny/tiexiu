@@ -123,8 +123,7 @@ where
     }
 
     fn enter(&mut self, name: &str) {
-        let stack = self.state.callstack.clone();
-        self.state_mut().callstack = stack.push(name);
+        self.state_mut().callstack.push(name);
     }
 
     fn leave(&mut self) {
