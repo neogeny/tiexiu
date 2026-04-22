@@ -123,11 +123,16 @@ where
     }
 
     fn enter(&mut self, name: &str) {
-        self.state_mut().callstack.push(name.into());
+        let stack = self.state.callstack.clone();
+        self.state_mut().callstack = stack.push(name);
     }
 
     fn leave(&mut self) {
-        self.state_mut().callstack.pop();
+        let stack = self.state.callstack.clone();
+        self.state_mut().callstack = match stack.tail() {
+            Some(tail) => tail.clone(),
+            None => CallStack::new(),
+        }
     }
 
     fn tracer(&self) -> &dyn Tracer {
@@ -198,7 +203,7 @@ mod tests {
 
         ctx.enter("rule");
         let stack = ctx.callstack();
-        assert!(stack.contains(&"rule".into()));
+        assert!(stack.to_vec().contains(&"rule"));
     }
 
     #[test]

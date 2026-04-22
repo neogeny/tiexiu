@@ -53,10 +53,7 @@ pub trait Tracer: Debug {
         let lookahead = ctx.cursor().lookahead(ctx.mark()).replace(" ", "·");
         let callstack = style(
             ctx.callstack()
-                .iter()
-                .rev()
-                .map(|s| s.to_string())
-                .collect::<Vec<_>>()
+                .to_vec()
                 .join(style("←").green().to_string().as_str()),
         )
         .white()
@@ -68,7 +65,7 @@ pub trait Tracer: Debug {
 
         let pos = style(format!("[{line}:{col}]→")).black().bright();
 
-        let msg = format!("{event_symbol}{msg} {callstack}\"{source}\"\n{pos}{lookahead}");
+        let msg = format!("{event_symbol}{msg} {callstack}<|•\"{source}\"\n{pos}{lookahead}");
         self.trace(msg.as_str());
     }
 

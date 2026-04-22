@@ -6,6 +6,7 @@
 use super::memo::MemoCache;
 use super::trace::{NULL_TRACER, Tracer};
 use crate::input::Cursor;
+use crate::parser::TokenList;
 use crate::trees::Tree;
 use crate::util::pyre::Pattern;
 use std::collections::HashMap;
@@ -14,7 +15,7 @@ pub const _AT_: &str = "__value__";
 
 pub type PatternCache = HashMap<String, Pattern>;
 
-pub type CallStack = Vec<Box<str>>;
+pub type CallStack = TokenList;
 
 #[derive(Debug, Clone)]
 pub struct Alert {
@@ -67,7 +68,7 @@ impl<U: Cursor + Clone> ParseState<U> {
             cutseen: false,
             last_node: Tree::Nil,
             alerts: Vec::new(),
-            callstack: CallStack::from(&["<|•".into()]),
+            callstack: CallStack::new(),
         }
     }
 

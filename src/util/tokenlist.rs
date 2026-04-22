@@ -38,7 +38,7 @@ impl TokenList {
         TokenList::Atom(a.into())
     }
 
-    pub fn insert(self, a: &str) -> Self {
+    pub fn push(self, a: &str) -> Self {
         let atom = TokenList::atom(a);
         match self {
             TokenList::Nil => atom,
