@@ -169,38 +169,13 @@ pub trait Ctx: CtxI + Clone + Debug {
 
     fn call(mut self, name: &str, rule: &Rule) -> ParseResult<Self> {
         let start = self.mark();
+        let key = self.key(name);
+
         self.enter(name);
         self.tracer().trace_entry(&self);
 
-        if !rule.is_token() {
-            self.next_token();
-        }
-
-        let key = self.key(name);
-        if let Some(memo) = self.memo(&key) {
-            return match memo.tree {
-                Tree::Bottom => {
-                    let err = ParseError::FailedParse(name.into());
-                    self.tracer().trace_failure(&self, &err);
-                    self.leave();
-                    Err(self.failure(start, err))
-                }
-                _ => {
-                    self.reset(memo.mark);
-                    self.tracer().trace_success(&self);
-                    self.leave();
-                    self.undo_unpopped();
-                    Ok(Succ(self, memo.tree))
-                }
-            };
-        }
-
         let cloned_ctx = self.push();
-        match if rule.is_left_recursive() {
-            cloned_ctx.call_recursive(&key, rule)
-        } else {
-            rule.parse(cloned_ctx)
-        } {
+        match cloned_ctx.do_call(name, rule) {
             Ok(Succ(mut new_ctx, tree)) => {
                 new_ctx.leave();
                 if rule.is_name()
@@ -221,6 +196,38 @@ pub trait Ctx: CtxI + Clone + Debug {
                 self.memoize(&key, &Tree::Bottom);
                 Err(nope)
             }
+        }
+    }
+
+    fn do_call(mut self, name: &str, rule: &Rule) -> ParseResult<Self> {
+        let start = self.mark();
+        let key = self.key(name);
+        if !rule.is_token() {
+            self.next_token();
+        }
+
+        if let Some(memo) = self.memo(&key) {
+            return match memo.tree {
+                Tree::Bottom => {
+                    let err = ParseError::FailedParse(name.into());
+                    self.tracer().trace_failure(&self, &err);
+                    self.leave();
+                    Err(self.failure(start, err))
+                }
+                _ => {
+                    self.reset(memo.mark);
+                    self.tracer().trace_success(&self);
+                    self.leave();
+                    self.undo_unpopped();
+                    Ok(Succ(self, memo.tree))
+                }
+            };
+        }
+
+        if rule.is_left_recursive() {
+            self.call_recursive(&key, rule)
+        } else {
+            rule.parse(self)
         }
     }
 
