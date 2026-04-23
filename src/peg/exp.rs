@@ -134,8 +134,7 @@ impl Exp {
     pub fn parse<C: Ctx>(&self, ctx: C) -> ParseResult<C> {
         match self.do_parse(ctx) {
             Err(err) => Err(err),
-            Ok(Succ(mut ctx, mut tree)) => {
-                ctx.undo_unpopped();
+            Ok(Succ(ctx, mut tree)) => {
                 tree.define(&self.df);
                 Ok(Succ(ctx, tree))
             }
@@ -249,24 +248,34 @@ impl Exp {
                 Ok(Succ(new_ctx, Tree::Nil))
             }
             ExpKind::Lookahead(exp) => {
-                let _ = exp.parse(ctx.push())?;
+                let new_ctx = ctx.push();
+                let _ = exp.parse(new_ctx)?;
+                ctx.pop();
                 Ok(Succ(ctx, Tree::Nil))
             }
             ExpKind::NegativeLookahead(exp) => {
-                if let Ok(Succ(_, _)) = exp.parse(ctx.push()) {
+                let new_ctx = ctx.push();
+                if let Ok(Succ(_, _)) = exp.parse(new_ctx) {
+                    ctx.pop();
                     Err(ctx.failure(start, ParseError::NotExpecting(self.lookahead_str())))
                 } else {
+                    ctx.pop();
                     Ok(Succ(ctx, Tree::Nil))
                 }
             }
             ExpKind::SkipTo(exp) => loop {
-                match exp.parse(ctx.push()) {
+                let new_ctx = ctx.push();
+                match exp.parse(new_ctx) {
                     Err(f) => {
+                        ctx.pop(); // Pop the failed branch
                         if !ctx.dot() {
                             return Err(f);
                         }
                     }
-                    ok => break ok,
+                    Ok(Succ(mut inner_ctx, tree)) => {
+                        ctx = ctx.merge(&mut inner_ctx); // Merge the successful state
+                        break Ok(Succ(ctx, tree));
+                    }
                 }
             },
 
@@ -375,6 +384,7 @@ mod tests {
     use crate::engine::strctx::StrCtx;
     use crate::input::StrCursor;
     use crate::peg::Rule;
+    use std::mem::size_of;
 
     const TARGET: usize = 64;
 

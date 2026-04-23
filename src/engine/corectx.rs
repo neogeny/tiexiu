@@ -42,7 +42,7 @@ where
     U: Cursor + Clone,
 {
     fn drop(&mut self) {
-        self.undo_unpopped();
+        self.undo_unmerged();
     }
 }
 
@@ -191,6 +191,10 @@ where
         self
     }
 
+    fn push(&mut self) -> Self {
+        self.clone()
+    }
+
     fn done(&self) -> bool {
         self.state.is_popped()
     }
@@ -198,7 +202,6 @@ where
     fn pop(&mut self) {
         self.state_mut().pop();
     }
-
     fn undo(&mut self) {
         self.state_mut().pop();
     }

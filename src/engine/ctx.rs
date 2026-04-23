@@ -161,7 +161,7 @@ pub trait Ctx: CtxI + Clone + Debug {
     // NOTE These only make sense over owned self
     fn pop(&mut self) {}
     fn undo(&mut self) {}
-    fn undo_unpopped(&mut self) {
+    fn undo_unmerged(&mut self) {
         if !self.done() {
             self.undo();
         }
@@ -192,8 +192,10 @@ pub trait Ctx: CtxI + Clone + Debug {
                 Ok(Succ(self.merge(&mut new_ctx), tree))
             }
             Err(nope) => {
+                self.leave();
                 self.tracer().trace_failure(&self, &nope.source);
                 self.memoize(&key, &Tree::Bottom);
+                self.undo_unmerged();
                 Err(nope)
             }
         }
@@ -210,15 +212,10 @@ pub trait Ctx: CtxI + Clone + Debug {
             return match memo.tree {
                 Tree::Bottom => {
                     let err = ParseError::FailedParse(name.into());
-                    self.tracer().trace_failure(&self, &err);
-                    self.leave();
                     Err(self.failure(start, err))
                 }
                 _ => {
                     self.reset(memo.mark);
-                    self.tracer().trace_success(&self);
-                    self.leave();
-                    self.undo_unpopped();
                     Ok(Succ(self, memo.tree))
                 }
             };
@@ -261,19 +258,17 @@ pub trait Ctx: CtxI + Clone + Debug {
                     ctx.memoize(key, &tree);
                     high_water_mark = mark;
                     best_cst = Some(tree);
-                    self = ctx;
+                    self = self.merge(&mut ctx);
                 }
             }
         }
 
         if let Some(tree) = best_cst {
-            self.tracer().trace_success(&self);
             Ok(Succ(self, tree))
         } else {
             let nope = last_failure.unwrap_or_else(|| {
                 self.failure(start_mark, ParseError::FailedParse(rule.name.clone()))
             });
-            self.tracer().trace_failure(&self, &nope.source);
             Err(nope)
         }
     }
