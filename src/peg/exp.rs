@@ -247,29 +247,19 @@ impl Exp {
                 Ok(Yeap(new_ctx, Tree::Nil))
             }
             ExpKind::Lookahead(exp) => match exp.parse(ctx.push()) {
-                Ok(Yeap(_, _)) => {
-                    ctx.undo();
-                    Ok(Yeap(ctx, Tree::Nil))
-                }
-                Err(nope) => {
-                    ctx.undo();
-                    Err(nope)
-                }
+                Ok(Yeap(_, _)) => Ok(Yeap(ctx, Tree::Nil)),
+                Err(nope) => Err(nope),
             },
             ExpKind::NegativeLookahead(exp) => {
                 if let Ok(Yeap(_, _)) = exp.parse(ctx.push()) {
-                    ctx.undo();
                     Err(ctx.failure(start, ParseError::NotExpecting(exp.lookahead_str())))
                 } else {
-                    ctx.undo();
                     Ok(Yeap(ctx, Tree::Nil))
                 }
             }
             ExpKind::SkipTo(exp) => loop {
-                let new_ctx = ctx.push();
-                match exp.parse(new_ctx) {
+                match exp.parse(ctx.push()) {
                     Err(nope) => {
-                        ctx.pop(); // Pop the failed branch
                         if !ctx.dot() {
                             return Err(nope);
                         }

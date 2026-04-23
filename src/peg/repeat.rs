@@ -13,10 +13,7 @@ impl Exp {
         let skip_ctx = ctx.push();
         match exp.parse(skip_ctx) {
             Ok(Yeap(new_ctx, _)) => ctx.merge(new_ctx),
-            Err(_) => {
-                ctx.undo();
-                ctx
-            }
+            Err(_) => ctx,
         }
     }
 
@@ -26,10 +23,7 @@ impl Exp {
                 res.push(tree);
                 Ok(ctx.merge(new_ctx))
             }
-            Err(nope) => {
-                ctx.undo();
-                Err((ctx, nope))
-            }
+            Err(nope) => Err((ctx, nope)),
         }
     }
 
@@ -42,7 +36,6 @@ impl Exp {
                 }
                 Err(mut nope) => {
                     if nope.take_cut() {
-                        ctx.undo();
                         return Err(nope);
                     }
                     return Ok(Yeap(ctx, Tree::Nil));
@@ -62,11 +55,9 @@ impl Exp {
             match pre.parse(ctx.push()) {
                 Err(mut nope) => {
                     if nope.take_cut() {
-                        ctx.undo();
                         return Err(nope);
                     }
                     // OK to match nothing
-                    ctx.pop();
                     return Ok(Yeap(ctx, Tree::Nil));
                 }
                 Ok(Yeap(new_ctx, pre_cst)) => {
@@ -81,7 +72,6 @@ impl Exp {
                         }
                         Err(mut nope) => {
                             nope.take_cut();
-                            ctx.undo();
                             return Err(nope); // the implicit cut after pre.parse()
                         }
                     }
@@ -194,11 +184,10 @@ mod tests {
         let exp = Exp::token("abc");
         let pre = Exp::token(",");
         let mut res = Vec::new();
-        if let Ok(Yeap(final_ctx, _)) = Exp::repeat_with_pre(ctx.push(), &exp, &pre, &mut res, true)
-        {
+        if let Ok(Yeap(final_ctx, _)) = Exp::repeat_with_pre(ctx, &exp, &pre, &mut res, true) {
             assert_eq!(res.len(), 4);
             assert!(
-                !final_ctx.cut_seen(),
+                final_ctx.cut_seen(),
                 "cut should be restored after repeat_with_pre"
             );
         } else {

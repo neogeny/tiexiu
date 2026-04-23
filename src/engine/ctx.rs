@@ -138,20 +138,18 @@ pub trait Ctx: CtxI + Clone + Debug {
     ///     self.cursor.goto(prev.cursor.pos)
     ///     return self
     /// ```
-    fn merge(mut self, other: Self) -> Self {
-        // NOTE:
-        //  * We don't construct the resulting CST/AST because Tree does it
-        //    when Tree.node() is called on success of a rule call
-        //  * Alerts are not implemented (no one knows what they're for)
-        //  * We should reset our cursor. Copy? Just the mark? The only
-        //    state kept by cursor is the mark.
-        //  * Our `cutseen` remains as was
-        //  * WARNING:
-        //      Don't know what to do about the callstack
-        //      All self.leave() does is pop it
-        self.cursor_mut().reset(other.cursor().mark());
-        self
-    }
+    // NOTE:
+    //  * We don't construct the resulting CST/AST because Tree does it
+    //    when Tree.node() is called on success of a rule call
+    //  * Alerts are not implemented (no one knows what they're for)
+    //  * We should reset our cursor. Copy? Just the mark? The only
+    //    state kept by cursor is the mark.
+    //  * Our `cutseen` remains as was
+    //  * WARNING:
+    //      Don't know what to do about the callstack
+    //      All self.leave() does is pop it
+    //      See CoreCtx for a reasonable override
+    fn merge(self, other: Self) -> Self;
 
     // NOTE
     //  Default to .clone(), but implementors can do more work.
@@ -165,15 +163,6 @@ pub trait Ctx: CtxI + Clone + Debug {
     fn push_state(&mut self);
 
     fn done(&self) -> bool;
-
-    // NOTE These only make sense over owned self
-    fn pop(&mut self) {}
-    fn undo(&mut self) {}
-    fn undo_unmerged(&mut self) {
-        if !self.done() {
-            self.undo();
-        }
-    }
 
     fn call(mut self, name: &str, rule: &Rule) -> ParseResult<Self> {
         let start = self.mark();
@@ -203,7 +192,6 @@ pub trait Ctx: CtxI + Clone + Debug {
                 self.leave();
                 self.tracer().trace_failure(&self, &nope.source);
                 self.memoize(&key, &Tree::Bottom);
-                self.undo_unmerged();
                 Err(nope)
             }
         }

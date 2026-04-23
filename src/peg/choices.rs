@@ -19,7 +19,6 @@ impl Exp {
                 }
                 Err(mut nope) => {
                     if nope.take_cut() {
-                        ctx.undo();
                         return Err(nope);
                     }
 
@@ -40,7 +39,6 @@ impl Exp {
             Ok(Yeap(new_ctx, tree)) => Ok(Yeap(ctx.merge(new_ctx), tree)),
             Err(mut nope) => {
                 if nope.take_cut() {
-                    ctx.undo();
                     return Err(nope);
                 }
                 Ok(Yeap(ctx, Tree::Nil))
