@@ -12,7 +12,10 @@ impl Exp {
         let skip_ctx = ctx.push();
         match exp.parse(skip_ctx) {
             Ok(Succ(new_ctx, _)) => ctx.merge(new_ctx),
-            Err(_) => ctx,
+            Err(_) => {
+                ctx.undo();
+                ctx
+            }
         }
     }
 
@@ -22,23 +25,26 @@ impl Exp {
                 res.push(tree);
                 Ok(ctx.merge(new_ctx))
             }
-            Err(f) => Err((ctx, f)),
+            Err(f) => {
+                ctx.undo();
+                Err((ctx, f))
+            }
         }
     }
 
     pub fn repeat<C: Ctx>(mut ctx: C, exp: &Exp, res: &mut Vec<Tree>) -> ParseResult<C> {
-        let mut loop_ctx = ctx.push();
         loop {
-            match exp.parse(loop_ctx.push()) {
+            match exp.parse(ctx.push()) {
                 Ok(Succ(new_ctx, tree)) => {
                     res.push(tree);
-                    loop_ctx = new_ctx;
+                    ctx = ctx.merge(new_ctx);
                 }
                 Err(mut f) => {
                     if f.take_cut() {
+                        ctx.undo();
                         return Err(f);
                     }
-                    return Ok(Succ(ctx.merge(loop_ctx), Tree::Nil));
+                    return Ok(Succ(ctx, Tree::Nil));
                 }
             }
         }
@@ -51,28 +57,30 @@ impl Exp {
         res: &mut Vec<Tree>,
         keep_pre: bool,
     ) -> ParseResult<C> {
-        let mut loop_ctx = ctx.push();
         loop {
-            match pre.parse(loop_ctx.push()) {
+            match pre.parse(ctx.push()) {
                 Err(mut f) => {
                     if f.take_cut() {
+                        ctx.undo();
                         return Err(f);
                     }
                     // OK to match nothing
-                    return Ok(Succ(ctx.merge(loop_ctx), Tree::Nil));
+                    ctx.pop();
+                    return Ok(Succ(ctx, Tree::Nil));
                 }
-                Ok(Succ(mut new_ctx, pre_cst)) => {
-                    match exp.parse(new_ctx.push()) {
+                Ok(Succ(new_ctx, pre_cst)) => {
+                    match exp.parse(new_ctx) {
                         // NOTE: pre.parse().is_ok() so exp.parse().is_ok_or(fail)
                         Ok(Succ(repeat_ctx, exp_cst)) => {
                             if keep_pre {
                                 res.push(pre_cst);
                             }
                             res.push(exp_cst);
-                            loop_ctx = repeat_ctx;
+                            ctx = ctx.merge(repeat_ctx);
                         }
                         Err(mut f) => {
                             f.take_cut();
+                            ctx.undo();
                             return Err(f); // the implicit cut after pre.parse()
                         }
                     }
@@ -85,12 +93,12 @@ impl Exp {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::engine;
     use crate::engine::CtxI;
+    use crate::engine::new_ctx;
     use crate::input::strcursor::StrCursor;
 
     fn setup(input: &str) -> impl Ctx {
-        engine::new_ctx(StrCursor::new(input), &[])
+        new_ctx(StrCursor::new(input), &[])
     }
 
     #[test]
@@ -185,10 +193,11 @@ mod tests {
         let exp = Exp::token("abc");
         let pre = Exp::token(",");
         let mut res = Vec::new();
-        if let Ok(Succ(final_ctx, _)) = Exp::repeat_with_pre(ctx, &exp, &pre, &mut res, true) {
+        if let Ok(Succ(final_ctx, _)) = Exp::repeat_with_pre(ctx.push(), &exp, &pre, &mut res, true)
+        {
             assert_eq!(res.len(), 4);
             assert!(
-                final_ctx.cut_seen(),
+                !final_ctx.cut_seen(),
                 "cut should be restored after repeat_with_pre"
             );
         } else {
