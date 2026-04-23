@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 pub use crate::cfg::*;
-pub use crate::engine::corectx::CoreCtx;
+pub use crate::engine::new_ctx;
 pub use crate::input::{Cursor, StrCursor};
 pub use crate::json::ToExpJson;
 pub use crate::peg::grammar::PrettyPrint;
@@ -29,7 +29,7 @@ where
     U: Cursor + Clone,
 {
     let boot = boot_grammar()?;
-    let ctx = CoreCtx::new(cursor, cfg);
+    let ctx = new_ctx(cursor, cfg);
 
     match boot.parse(ctx) {
         Ok(Succ(_, tree)) => Ok(tree),
@@ -125,12 +125,7 @@ pub fn boot_grammar_pretty(_cfg: &CfgA) -> Result<String> {
 
 pub fn parse_input(parser: &Grammar, text: &str, cfg: &CfgA) -> Result<Tree> {
     let cursor = StrCursor::new(text);
-    let mut ctx = CoreCtx::new(cursor, cfg);
-    let cfg = CfgBox::new(cfg);
-    if cfg.contains(&Cfg::Trace) {
-        ctx.set_trace(true);
-    }
-
+    let ctx = new_ctx(cursor, cfg);
     match parser.parse(ctx) {
         Ok(Succ(_, tree)) => Ok(tree),
         Err(failure) => Err(failure.into()),

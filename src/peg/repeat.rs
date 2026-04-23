@@ -87,14 +87,14 @@ impl Exp {
 mod tests {
     use super::*;
     use crate::engine::CtxI;
-    use crate::engine::corectx::CoreCtx;
+    use crate::engine::new_ctx;
     use crate::input::strcursor::StrCursor;
     use crate::peg::Grammar;
 
-    fn setup(input: &str) -> CoreCtx<'_, StrCursor> {
+    fn setup(input: &str) -> impl Ctx {
         let grammar = Box::leak(Box::new(Grammar::default()));
         let _ = grammar;
-        CoreCtx::new(StrCursor::new(input), &[])
+        new_ctx(StrCursor::new(input), &[])
     }
 
     #[test]
