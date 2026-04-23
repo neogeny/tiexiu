@@ -470,7 +470,13 @@ mod tests {
     #[test]
     fn test_simple_grammar() {
         use crate::api::compile;
-        let grammar = compile("start = 'a' ;", &[]).expect("compile failed");
+        let grammar = compile(
+            r"
+        start = 'a';
+        ",
+            &[],
+        )
+        .expect("compile failed");
         let result = grammar.railroads();
         eprintln!("simple grammar railroads:\n{}", result);
         assert!(!result.is_empty());
