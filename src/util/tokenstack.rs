@@ -7,12 +7,14 @@
 use std::fmt;
 use std::rc::Rc;
 
-pub type Token = Rc<str>;
+pub type Token = str;
+
+pub struct TokenStack(Rc<Node>);
 
 #[derive(Debug, Clone)]
 enum Node {
     Cons(Rc<Node>, Rc<Node>),
-    Atom(Token),
+    Atom(Rc<Token>),
     Nil,
 }
 
@@ -20,24 +22,21 @@ impl Node {
     fn new_with_tail(&self, a: &str) -> Self {
         match self {
             Node::Nil => Node::Atom(a.into()),
-            Node::Atom(_) => Node::Cons(Rc::new(self.clone()), Rc::new(Node::Atom(a.into()))),
-            Node::Cons(car, cdr) => Node::Cons(car.clone(), Rc::new(cdr.new_with_tail(a))),
+            Node::Atom(_) => Node::Cons(self.clone().into(), Node::Atom(a.into()).into()),
+            Node::Cons(car, cdr) => Node::Cons(car.clone(), cdr.new_with_tail(a).into()),
         }
     }
 }
 
-#[derive()]
-pub struct TokenStack(Rc<Node>);
-
 impl Default for TokenStack {
     fn default() -> Self {
-        Self(Rc::new(Node::Nil))
+        Self(Node::Nil.into())
     }
 }
 
 impl Clone for TokenStack {
     fn clone(&self) -> Self {
-        Self(Rc::clone(&self.0))
+        Self(self.0.clone())
     }
 }
 
@@ -55,29 +54,29 @@ impl fmt::Debug for TokenStack {
 
 impl TokenStack {
     pub fn new() -> Self {
-        Self(Rc::new(Node::Nil))
+        Self(Node::Nil.into())
     }
 
     pub fn atom(a: &str) -> Self {
-        Self(Rc::new(Node::Atom(a.into())))
+        Self(Node::Atom(a.into()).into())
     }
 
     /// Prepends a new atom to the list (O(1)).
     /// Reuses the existing list structure via Rc::clone.
     pub fn push(&mut self, a: &str) {
         let atom = Node::Atom(a.into());
-        let new_node = Node::Cons(Rc::new(atom), Rc::clone(&self.0));
-        self.0 = Rc::new(new_node);
+        let new_node = Node::Cons(atom.into(), self.0.clone());
+        self.0 = new_node.into();
     }
 
     /// Returns a new TokenList with the provided string as the last element (O(N)).
     pub fn new_with_tail(&self, a: &str) -> Self {
-        Self(Rc::new(self.0.new_with_tail(a)))
+        Self(self.0.new_with_tail(a).into())
     }
 
     pub fn tail(&self) -> Option<TokenStack> {
         match self.0.as_ref() {
-            Node::Cons(_, cdr) => Some(Self(Rc::clone(cdr))),
+            Node::Cons(_, cdr) => Some(Self(cdr.clone())),
             _ => None,
         }
     }
@@ -145,13 +144,13 @@ impl<'a> IntoIterator for &'a TokenStack {
     }
 }
 
-impl FromIterator<Token> for TokenStack {
-    fn from_iter<I: IntoIterator<Item = Token>>(iter: I) -> Self {
+impl FromIterator<Rc<Token>> for TokenStack {
+    fn from_iter<I: IntoIterator<Item = Rc<Token>>>(iter: I) -> Self {
         let mut list = TokenStack::new();
         for token in iter {
             let atom = Node::Atom(token);
-            let new_node = Node::Cons(Rc::new(atom), Rc::clone(&list.0));
-            list.0 = Rc::new(new_node);
+            let new_node = Node::Cons(atom.into(), list.0.clone());
+            list.0 = new_node.into();
         }
         list
     }
