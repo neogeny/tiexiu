@@ -247,19 +247,22 @@ impl Exp {
                 let Succ(new_ctx, _) = exp.parse(ctx)?;
                 Ok(Succ(new_ctx, Tree::Nil))
             }
-            ExpKind::Lookahead(exp) => {
-                let new_ctx = ctx.push();
-                let _ = exp.parse(new_ctx)?;
-                ctx.pop();
-                Ok(Succ(ctx, Tree::Nil))
-            }
+            ExpKind::Lookahead(exp) => match exp.parse(ctx.push()) {
+                Ok(Succ(_, _)) => {
+                    ctx.undo();
+                    Ok(Succ(ctx, Tree::Nil))
+                }
+                Err(f) => {
+                    ctx.undo();
+                    Err(f)
+                }
+            },
             ExpKind::NegativeLookahead(exp) => {
-                let new_ctx = ctx.push();
-                if let Ok(Succ(_, _)) = exp.parse(new_ctx) {
-                    ctx.pop();
-                    Err(ctx.failure(start, ParseError::NotExpecting(self.lookahead_str())))
+                if let Ok(Succ(_, _)) = exp.parse(ctx.push()) {
+                    ctx.undo();
+                    Err(ctx.failure(start, ParseError::NotExpecting(exp.lookahead_str())))
                 } else {
-                    ctx.pop();
+                    ctx.undo();
                     Ok(Succ(ctx, Tree::Nil))
                 }
             }
