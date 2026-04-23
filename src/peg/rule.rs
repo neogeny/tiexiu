@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::exp::Exp;
-use super::{ParseResult, Parser, Succ};
+use super::{ParseResult, Parser, Yeap};
 use crate::engine::Ctx;
 use crate::trees::Tree;
 use crate::trees::tree::FlagMap;
@@ -97,9 +97,9 @@ impl Rule {
     pub fn parse<C: Ctx>(&self, ctx: C) -> ParseResult<C> {
         let _text = ctx.cursor().textstr();
         match self.exp.parse(ctx) {
-            Ok(Succ(ctx, mut tree)) => {
+            Ok(Yeap(ctx, mut tree)) => {
                 tree = tree.into_node_tree();
-                Ok(Succ(
+                Ok(Yeap(
                     ctx,
                     if self.params.is_empty() {
                         tree

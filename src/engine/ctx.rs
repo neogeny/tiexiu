@@ -7,7 +7,8 @@ use crate::engine::state::CallStack;
 use crate::engine::trace::Tracer;
 use crate::input::Cursor;
 use crate::peg::error::ParseError;
-use crate::peg::{Nope, ParseResult, Rule, Succ};
+use crate::peg::nope::Nope;
+use crate::peg::{ParseResult, Rule, Yeap};
 use crate::trees::tree::Tree;
 use crate::util::pyre::{Pattern, escape};
 use std::fmt::Debug;
@@ -183,7 +184,7 @@ pub trait Ctx: CtxI + Clone + Debug {
 
         let cloned_ctx = self.push();
         match cloned_ctx.do_call(name, rule) {
-            Ok(Succ(mut new_ctx, tree)) => {
+            Ok(Yeap(mut new_ctx, tree)) => {
                 new_ctx.leave();
                 if rule.is_name()
                     && let Tree::Text(name) = &tree
@@ -196,7 +197,7 @@ pub trait Ctx: CtxI + Clone + Debug {
                 }
                 new_ctx.tracer().trace_success(&new_ctx);
                 new_ctx.memoize(&key, &tree);
-                Ok(Succ(self.merge(new_ctx), tree))
+                Ok(Yeap(self.merge(new_ctx), tree))
             }
             Err(nope) => {
                 self.leave();
@@ -223,7 +224,7 @@ pub trait Ctx: CtxI + Clone + Debug {
                 }
                 _ => {
                     self.reset(memo.mark);
-                    Ok(Succ(self, memo.tree))
+                    Ok(Yeap(self, memo.tree))
                 }
             };
         }
@@ -252,11 +253,11 @@ pub trait Ctx: CtxI + Clone + Debug {
             ctx.reset(start_mark);
 
             match rule.parse(ctx) {
-                Err(f) => {
-                    last_failure = Some(f);
+                Err(nope) => {
+                    last_failure = Some(nope);
                     break;
                 }
-                Ok(Succ(mut ctx, tree)) => {
+                Ok(Yeap(mut ctx, tree)) => {
                     let mark = ctx.mark();
                     if mark < high_water_mark {
                         break;
@@ -271,7 +272,7 @@ pub trait Ctx: CtxI + Clone + Debug {
         }
 
         if let Some(tree) = best_cst {
-            Ok(Succ(self, tree))
+            Ok(Yeap(self, tree))
         } else {
             let nope = last_failure.unwrap_or_else(|| {
                 self.failure(start_mark, ParseError::FailedParse(rule.name.clone()))

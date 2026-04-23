@@ -6,10 +6,12 @@ pub mod ctx;
 pub mod ctxproxy;
 pub mod error;
 pub mod memo;
-pub mod stackctx;
 pub mod state;
 pub mod strctx;
 pub mod trace;
+
+#[allow(dead_code)]
+pub mod stackctx;
 
 use crate::{CfgA, Cursor};
 pub use ctx::*;

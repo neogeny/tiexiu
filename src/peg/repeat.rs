@@ -2,16 +2,17 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::exp::Exp;
-use super::parser::Succ;
+use super::parser::Yeap;
 use crate::engine::Ctx;
-use crate::peg::{Nope, ParseResult};
+use crate::peg::ParseResult;
+use crate::peg::nope::Nope;
 use crate::trees::Tree;
 
 impl Exp {
     pub fn skip_exp<C: Ctx>(mut ctx: C, exp: &Exp) -> C {
         let skip_ctx = ctx.push();
         match exp.parse(skip_ctx) {
-            Ok(Succ(new_ctx, _)) => ctx.merge(new_ctx),
+            Ok(Yeap(new_ctx, _)) => ctx.merge(new_ctx),
             Err(_) => {
                 ctx.undo();
                 ctx
@@ -21,13 +22,13 @@ impl Exp {
 
     pub fn add_exp<C: Ctx>(mut ctx: C, exp: &Exp, res: &mut Vec<Tree>) -> Result<C, (C, Nope)> {
         match exp.parse(ctx.push()) {
-            Ok(Succ(new_ctx, tree)) => {
+            Ok(Yeap(new_ctx, tree)) => {
                 res.push(tree);
                 Ok(ctx.merge(new_ctx))
             }
-            Err(f) => {
+            Err(nope) => {
                 ctx.undo();
-                Err((ctx, f))
+                Err((ctx, nope))
             }
         }
     }
@@ -35,16 +36,16 @@ impl Exp {
     pub fn repeat<C: Ctx>(mut ctx: C, exp: &Exp, res: &mut Vec<Tree>) -> ParseResult<C> {
         loop {
             match exp.parse(ctx.push()) {
-                Ok(Succ(new_ctx, tree)) => {
+                Ok(Yeap(new_ctx, tree)) => {
                     res.push(tree);
                     ctx = ctx.merge(new_ctx);
                 }
-                Err(mut f) => {
-                    if f.take_cut() {
+                Err(mut nope) => {
+                    if nope.take_cut() {
                         ctx.undo();
-                        return Err(f);
+                        return Err(nope);
                     }
-                    return Ok(Succ(ctx, Tree::Nil));
+                    return Ok(Yeap(ctx, Tree::Nil));
                 }
             }
         }
@@ -59,29 +60,29 @@ impl Exp {
     ) -> ParseResult<C> {
         loop {
             match pre.parse(ctx.push()) {
-                Err(mut f) => {
-                    if f.take_cut() {
+                Err(mut nope) => {
+                    if nope.take_cut() {
                         ctx.undo();
-                        return Err(f);
+                        return Err(nope);
                     }
                     // OK to match nothing
                     ctx.pop();
-                    return Ok(Succ(ctx, Tree::Nil));
+                    return Ok(Yeap(ctx, Tree::Nil));
                 }
-                Ok(Succ(new_ctx, pre_cst)) => {
+                Ok(Yeap(new_ctx, pre_cst)) => {
                     match exp.parse(new_ctx) {
                         // NOTE: pre.parse().is_ok() so exp.parse().is_ok_or(fail)
-                        Ok(Succ(repeat_ctx, exp_cst)) => {
+                        Ok(Yeap(repeat_ctx, exp_cst)) => {
                             if keep_pre {
                                 res.push(pre_cst);
                             }
                             res.push(exp_cst);
                             ctx = ctx.merge(repeat_ctx);
                         }
-                        Err(mut f) => {
-                            f.take_cut();
+                        Err(mut nope) => {
+                            nope.take_cut();
                             ctx.undo();
-                            return Err(f); // the implicit cut after pre.parse()
+                            return Err(nope); // the implicit cut after pre.parse()
                         }
                     }
                 }
@@ -129,7 +130,7 @@ mod tests {
         let ctx = setup("abc abc abc");
         let exp = Exp::token("abc");
         let mut res = Vec::new();
-        if let Ok(Succ(final_ctx, _)) = Exp::repeat(ctx, &exp, &mut res) {
+        if let Ok(Yeap(final_ctx, _)) = Exp::repeat(ctx, &exp, &mut res) {
             assert_eq!(res.len(), 3);
             assert_eq!(final_ctx.cursor().mark(), 11);
         } else {
@@ -143,7 +144,7 @@ mod tests {
         let exp = Exp::token("abc");
         let pre = Exp::token(",");
         let mut res = Vec::new();
-        if let Ok(Succ(final_ctx, _)) = Exp::repeat_with_pre(ctx, &exp, &pre, &mut res, true) {
+        if let Ok(Yeap(final_ctx, _)) = Exp::repeat_with_pre(ctx, &exp, &pre, &mut res, true) {
             assert_eq!(res.len(), 4); // [",", "abc", ",", "abc"]
             assert_eq!(final_ctx.cursor().mark(), 8);
         } else {
@@ -157,7 +158,7 @@ mod tests {
         let exp = Exp::token("abc");
         let pre = Exp::token(",");
         let mut res = Vec::new();
-        if let Ok(Succ(final_ctx, _)) = Exp::repeat_with_pre(ctx, &exp, &pre, &mut res, false) {
+        if let Ok(Yeap(final_ctx, _)) = Exp::repeat_with_pre(ctx, &exp, &pre, &mut res, false) {
             assert_eq!(res.len(), 2); // ["abc", "abc"]
             assert_eq!(final_ctx.cursor().mark(), 8);
         } else {
@@ -173,7 +174,7 @@ mod tests {
 
         let exp = Exp::token("abc");
         let mut res = Vec::new();
-        if let Ok(Succ(final_ctx, _)) = Exp::repeat(ctx, &exp, &mut res) {
+        if let Ok(Yeap(final_ctx, _)) = Exp::repeat(ctx, &exp, &mut res) {
             assert_eq!(res.len(), 3);
             assert!(final_ctx.cut_seen(), "cut should be restored after repeat");
         } else {
@@ -193,7 +194,7 @@ mod tests {
         let exp = Exp::token("abc");
         let pre = Exp::token(",");
         let mut res = Vec::new();
-        if let Ok(Succ(final_ctx, _)) = Exp::repeat_with_pre(ctx.push(), &exp, &pre, &mut res, true)
+        if let Ok(Yeap(final_ctx, _)) = Exp::repeat_with_pre(ctx.push(), &exp, &pre, &mut res, true)
         {
             assert_eq!(res.len(), 4);
             assert!(
@@ -216,7 +217,7 @@ mod tests {
         let exp = Exp::token("abc");
         let pre = Exp::token(",");
         let mut res = Vec::new();
-        if let Ok(Succ(final_ctx, _)) = Exp::repeat_with_pre(ctx, &exp, &pre, &mut res, true) {
+        if let Ok(Yeap(final_ctx, _)) = Exp::repeat_with_pre(ctx, &exp, &pre, &mut res, true) {
             assert_eq!(res.len(), 4);
             assert!(
                 !final_ctx.cut_seen(),

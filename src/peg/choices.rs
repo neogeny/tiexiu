@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::exp::Exp;
-use super::parser::{ParseResult, Succ};
+use super::parser::{ParseResult, Yeap};
 use crate::engine::Ctx;
 use crate::peg::ParseError;
 use crate::trees::Tree;
@@ -14,8 +14,8 @@ impl Exp {
 
         for option in options.iter() {
             match option.parse(ctx.push()) {
-                Ok(Succ(new_ctx, tree)) => {
-                    return Ok(Succ(ctx.merge(new_ctx), tree));
+                Ok(Yeap(new_ctx, tree)) => {
+                    return Ok(Yeap(ctx.merge(new_ctx), tree));
                 }
                 Err(mut nope) => {
                     if nope.take_cut() {
@@ -37,13 +37,13 @@ impl Exp {
 
     pub fn parse_optional<C: Ctx>(&self, mut ctx: C, exp: &Exp) -> ParseResult<C> {
         match exp.parse(ctx.push()) {
-            Ok(Succ(new_ctx, tree)) => Ok(Succ(ctx.merge(new_ctx), tree)),
+            Ok(Yeap(new_ctx, tree)) => Ok(Yeap(ctx.merge(new_ctx), tree)),
             Err(mut nope) => {
                 if nope.take_cut() {
                     ctx.undo();
                     return Err(nope);
                 }
-                Ok(Succ(ctx, Tree::Nil))
+                Ok(Yeap(ctx, Tree::Nil))
             }
         }
     }

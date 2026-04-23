@@ -32,7 +32,7 @@ where
     let ctx = new_ctx(cursor, cfg);
 
     match boot.parse(ctx) {
-        Ok(Succ(_, tree)) => Ok(tree),
+        Ok(Yeap(_, tree)) => Ok(tree),
         Err(failure) => Err(failure.into()),
     }
 }
@@ -127,7 +127,7 @@ pub fn parse_input(parser: &Grammar, text: &str, cfg: &CfgA) -> Result<Tree> {
     let cursor = StrCursor::new(text);
     let ctx = new_ctx(cursor, cfg);
     match parser.parse(ctx) {
-        Ok(Succ(_, tree)) => Ok(tree),
+        Ok(Yeap(_, tree)) => Ok(tree),
         Err(failure) => Err(failure.into()),
     }
 }
