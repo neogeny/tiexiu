@@ -9,19 +9,23 @@ use crate::engine::trace::Tracer;
 use crate::input::Cursor;
 use crate::trees::Tree;
 use crate::util::pyre::Pattern;
-use std::cell::RefCell;
+use std::cell::{Ref, RefCell, RefMut};
 use std::rc::Rc;
 
 #[derive(Debug)]
 pub struct CtxProxy<C: Ctx> {
     pub inner: Rc<RefCell<C>>,
+    frozen: Option<usize>,
 }
 
 impl<C: Ctx> Clone for CtxProxy<C> {
     fn clone(&self) -> Self {
-        Self {
+        let mut cloned = Self {
             inner: self.inner.clone(),
-        }
+            frozen: None,
+        };
+        cloned.freeze();
+        cloned
     }
 }
 
@@ -29,7 +33,21 @@ impl<C: Ctx> CtxProxy<C> {
     pub fn new(inner: C) -> Self {
         Self {
             inner: Rc::new(RefCell::new(inner)),
+            frozen: None,
         }
+    }
+
+    pub fn inner(&self) -> Ref<'_, C> {
+        self.inner.borrow()
+    }
+
+    pub fn inner_mut(&mut self) -> RefMut<'_, C> {
+        self.frozen = None;
+        self.inner.borrow_mut()
+    }
+
+    pub fn freeze(&mut self) {
+        todo!("filetimes not resolved")
     }
 }
 
@@ -53,21 +71,24 @@ impl<C: Ctx> CtxI for CtxProxy<C> {
     }
 
     fn callstack(&self) -> CallStack {
+        if let Some(_id) = &self.frozen {}
         self.inner.borrow().callstack()
     }
 
     fn mark(&self) -> usize {
+        if let Some(_id) = &self.frozen {}
         self.inner.borrow().mark()
     }
 
     fn cut_seen(&self) -> bool {
+        if let Some(_id) = &self.frozen {}
         self.inner.borrow().cut_seen()
     }
 }
 
 impl<C: Ctx> Configurable for CtxProxy<C> {
     fn configure(&mut self, cfg: &CfgBox) {
-        self.inner.borrow_mut().configure(cfg);
+        self.inner_mut().configure(cfg);
     }
 }
 
@@ -81,11 +102,11 @@ impl<C: Ctx> Ctx for CtxProxy<C> {
     }
 
     fn enter(&mut self, name: &str) {
-        self.inner.borrow_mut().enter(name);
+        self.inner_mut().enter(name);
     }
 
     fn leave(&mut self) {
-        self.inner.borrow_mut().leave();
+        self.inner_mut().leave();
     }
 
     fn tracer(&self) -> &dyn Tracer {
@@ -97,23 +118,23 @@ impl<C: Ctx> Ctx for CtxProxy<C> {
     }
 
     fn get_pattern(&mut self, pattern: &str) -> Pattern {
-        self.inner.borrow_mut().get_pattern(pattern)
+        self.inner_mut().get_pattern(pattern)
     }
 
     fn memo(&mut self, key: &Key) -> Option<Memo> {
-        self.inner.borrow_mut().memo(key)
+        self.inner_mut().memo(key)
     }
 
     fn memoize(&mut self, key: &Key, tree: &Tree) {
-        self.inner.borrow_mut().memoize(key, tree);
+        self.inner_mut().memoize(key, tree);
     }
 
     fn cut(&mut self) {
-        self.inner.borrow_mut().cut();
+        self.inner_mut().cut();
     }
 
     fn prune_cache(&mut self) {
-        self.inner.borrow_mut().prune_cache();
+        self.inner_mut().prune_cache();
     }
 
     fn is_keyword(&self, name: &str) -> bool {
@@ -121,17 +142,18 @@ impl<C: Ctx> Ctx for CtxProxy<C> {
     }
 
     fn set_keywords(&mut self, keywords: &[Box<str>]) {
-        self.inner.borrow_mut().set_keywords(keywords);
+        self.inner_mut().set_keywords(keywords);
     }
 
     fn merge(self, other: Self) -> Self {
         Self {
             inner: other.inner.clone(),
+            frozen: None,
         }
     }
 
     fn push_state(&mut self) {
-        self.inner.borrow_mut().push_state();
+        self.inner_mut().push_state();
     }
 
     fn done(&self) -> bool {
@@ -139,10 +161,10 @@ impl<C: Ctx> Ctx for CtxProxy<C> {
     }
 
     fn pop(&mut self) {
-        self.inner.borrow_mut().pop();
+        self.inner_mut().pop();
     }
 
     fn undo(&mut self) {
-        self.inner.borrow_mut().undo();
+        self.inner_mut().undo();
     }
 }

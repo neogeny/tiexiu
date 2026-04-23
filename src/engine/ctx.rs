@@ -22,6 +22,10 @@ pub trait CtxI: Configurable {
 }
 
 pub trait Ctx: CtxI + Clone + Debug {
+    fn id(&self) -> usize {
+        self as *const Self as usize
+    }
+
     fn cursor_mut(&mut self) -> &mut dyn Cursor;
     fn enter(&mut self, name: &str);
     fn leave(&mut self);
