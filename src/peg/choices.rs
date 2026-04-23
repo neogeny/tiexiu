@@ -14,8 +14,8 @@ impl Exp {
 
         for option in options.iter() {
             match option.parse(ctx.push()) {
-                Ok(Succ(mut new_ctx, tree)) => {
-                    return Ok(Succ(ctx.merge(&mut new_ctx), tree));
+                Ok(Succ(new_ctx, tree)) => {
+                    return Ok(Succ(ctx.merge(new_ctx), tree));
                 }
                 Err(mut f) => {
                     if f.take_cut() {
@@ -34,7 +34,7 @@ impl Exp {
 
     pub fn parse_optional<C: Ctx>(&self, mut ctx: C, exp: &Exp) -> ParseResult<C> {
         match exp.parse(ctx.push()) {
-            Ok(Succ(mut new_ctx, tree)) => Ok(Succ(ctx.merge(&mut new_ctx), tree)),
+            Ok(Succ(new_ctx, tree)) => Ok(Succ(ctx.merge(new_ctx), tree)),
             Err(mut f) => {
                 if f.take_cut() {
                     ctx.undo();

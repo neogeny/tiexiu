@@ -11,16 +11,16 @@ impl Exp {
     pub fn skip_exp<C: Ctx>(mut ctx: C, exp: &Exp) -> C {
         let skip_ctx = ctx.push();
         match exp.parse(skip_ctx) {
-            Ok(Succ(mut new_ctx, _)) => ctx.merge(&mut new_ctx),
+            Ok(Succ(new_ctx, _)) => ctx.merge(new_ctx),
             Err(_) => ctx,
         }
     }
 
     pub fn add_exp<C: Ctx>(mut ctx: C, exp: &Exp, res: &mut Vec<Tree>) -> Result<C, (C, Nope)> {
         match exp.parse(ctx.push()) {
-            Ok(Succ(mut new_ctx, tree)) => {
+            Ok(Succ(new_ctx, tree)) => {
                 res.push(tree);
-                Ok(ctx.merge(&mut new_ctx))
+                Ok(ctx.merge(new_ctx))
             }
             Err(f) => Err((ctx, f)),
         }
@@ -29,9 +29,9 @@ impl Exp {
     pub fn repeat<C: Ctx>(mut ctx: C, exp: &Exp, res: &mut Vec<Tree>) -> ParseResult<C> {
         loop {
             match exp.parse(ctx.push()) {
-                Ok(Succ(mut new_ctx, tree)) => {
+                Ok(Succ(new_ctx, tree)) => {
                     res.push(tree);
-                    ctx = ctx.merge(&mut new_ctx);
+                    ctx = ctx.merge(new_ctx);
                 }
                 Err(mut f) => {
                     if f.take_cut() {
@@ -64,12 +64,12 @@ impl Exp {
                 Ok(Succ(new_ctx, pre_cst)) => {
                     match exp.parse(new_ctx) {
                         // NOTE: pre.parse().is_ok() so exp.parse().is_ok_or(fail)
-                        Ok(Succ(mut repeat_ctx, exp_cst)) => {
+                        Ok(Succ(repeat_ctx, exp_cst)) => {
                             if keep_pre {
                                 res.push(pre_cst);
                             }
                             res.push(exp_cst);
-                            ctx = ctx.merge(&mut repeat_ctx);
+                            ctx = ctx.merge(repeat_ctx);
                         }
                         Err(mut f) => {
                             f.take_cut();

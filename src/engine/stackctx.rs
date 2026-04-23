@@ -32,6 +32,10 @@ where
         ctx
     }
 
+    pub fn proxy(self) -> CtxProxy {
+        CtxProxy::new(self)
+    }
+
     #[inline]
     fn state(&self) -> &ParseState<U> {
         self.states.state()

@@ -272,8 +272,8 @@ impl Exp {
                             return Err(f);
                         }
                     }
-                    Ok(Succ(mut inner_ctx, tree)) => {
-                        ctx = ctx.merge(&mut inner_ctx); // Merge the successful state
+                    Ok(Succ(inner_ctx, tree)) => {
+                        ctx = ctx.merge(inner_ctx); // Merge the successful state
                         break Ok(Succ(ctx, tree));
                     }
                 }

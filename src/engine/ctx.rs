@@ -133,7 +133,7 @@ pub trait Ctx: CtxI + Clone + Debug {
     ///     self.cursor.goto(prev.cursor.pos)
     ///     return self
     /// ```
-    fn merge(mut self, other: &mut Self) -> Self {
+    fn merge(mut self, other: Self) -> Self {
         // NOTE:
         //  * We don't construct the resulting CST/AST because Tree does it
         //    when Tree.node() is called on success of a rule call
@@ -189,7 +189,7 @@ pub trait Ctx: CtxI + Clone + Debug {
                 }
                 new_ctx.tracer().trace_success(&new_ctx);
                 new_ctx.memoize(&key, &tree);
-                Ok(Succ(self.merge(&mut new_ctx), tree))
+                Ok(Succ(self.merge(new_ctx), tree))
             }
             Err(nope) => {
                 self.leave();
@@ -258,7 +258,7 @@ pub trait Ctx: CtxI + Clone + Debug {
                     ctx.memoize(key, &tree);
                     high_water_mark = mark;
                     best_cst = Some(tree);
-                    self = self.merge(&mut ctx);
+                    self = self.merge(ctx);
                 }
             }
         }
