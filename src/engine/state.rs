@@ -7,7 +7,6 @@ use super::memo::MemoCache;
 use super::trace::{NULL_TRACER, Tracer};
 use crate::input::Cursor;
 use crate::parser::TokenStack;
-use crate::trees::Tree;
 use crate::util::fuse::Fuse;
 use crate::util::pyre::Pattern;
 use std::collections::HashMap;
@@ -21,17 +20,14 @@ pub type CallStack = TokenStack;
 #[derive(Debug, Clone)]
 pub struct Alert {
     pub level: usize,
-    pub message: String,
+    pub message: Box<str>,
 }
 
 #[derive(Debug)]
 pub struct ParseState<U: Cursor + Clone> {
     fuse: Fuse,
     pub cursor: U,
-    pub ast: Tree,
-    pub cst: Tree,
     pub cutseen: bool,
-    pub last_node: Tree,
     pub alerts: Vec<Alert>,
     pub callstack: CallStack,
 }
@@ -52,7 +48,6 @@ pub struct ParseStateStack<U: Cursor + Clone> {
 impl<U: Cursor + Clone> Clone for ParseState<U> {
     fn clone(&self) -> Self {
         let mut clone = Self::new(self.cursor.clone());
-        clone.ast = self.ast.clone();
         clone.callstack = self.callstack.clone();
         clone
     }
@@ -86,10 +81,7 @@ impl<U: Cursor + Clone> ParseState<U> {
     pub fn new(cursor: U) -> Self {
         Self {
             cursor,
-            ast: Tree::Nil,
-            cst: Tree::Nil,
             cutseen: false,
-            last_node: Tree::Nil,
             alerts: Vec::new(),
             callstack: CallStack::new(),
             fuse: Fuse::default(),
@@ -99,10 +91,7 @@ impl<U: Cursor + Clone> ParseState<U> {
     pub fn from_state(other: &Self) -> Self {
         Self {
             cursor: other.cursor.clone(),
-            ast: other.ast.clone(),
-            cst: Tree::Nil,
             cutseen: false,
-            last_node: Tree::Nil,
             alerts: other.alerts.clone(),
             callstack: other.callstack.clone(),
             fuse: Fuse::default(),
@@ -111,8 +100,6 @@ impl<U: Cursor + Clone> ParseState<U> {
 
     pub fn merge(&mut self, prev: &mut Self) -> &mut Self {
         prev.burn();
-        self.ast = prev.ast.clone();
-        self.extend(prev.cst.clone());
         self.alerts.extend(prev.alerts.clone());
         self.cursor.reset(prev.cursor.mark());
         self.callstack = prev.callstack.clone();
@@ -137,33 +124,6 @@ impl<U: Cursor + Clone> ParseState<U> {
     pub fn is_popped(&self) -> bool {
         self.fuse.is_burnt()
     }
-
-    pub fn node(&self) -> Tree {
-        // NOTE: In Python this checks if _AT_ in ast.
-        if !matches!(self.ast, Tree::Nil) {
-            // Check for __value__ in Tree::Map
-            if let Tree::Map(m) = &self.ast {
-                if let Some(val) = m.get(_AT_) {
-                    return val.clone();
-                }
-            }
-            self.ast.clone()
-        } else {
-            self.cst.clone()
-        }
-    }
-
-    pub fn append(&mut self, node: Tree) -> Tree {
-        self.last_node = node.clone();
-        self.cst = self.cst.clone().append(node.clone());
-        node
-    }
-
-    pub fn extend(&mut self, node: Tree) -> Tree {
-        self.last_node = node.clone();
-        self.cst = self.cst.clone().merge(node.clone());
-        node
-    }
 }
 
 impl<U: Cursor + Clone> ParseStateStack<U> {
@@ -181,10 +141,6 @@ impl<U: Cursor + Clone> ParseStateStack<U> {
     #[track_caller]
     pub fn state_mut(&mut self) -> &mut ParseState<U> {
         self.state_stack.last_mut().expect("empty state stack")
-    }
-
-    pub fn node(&self) -> Tree {
-        self.state().node()
     }
 
     #[track_caller]
@@ -218,8 +174,11 @@ impl<U: Cursor + Clone> ParseStateStack<U> {
         self.state_mut().merge(&mut prev)
     }
 
-    pub fn alert(&mut self, level: usize, message: String) -> Alert {
-        let alert = Alert { level, message };
+    pub fn alert(&mut self, level: usize, message: &str) -> Alert {
+        let alert = Alert {
+            level,
+            message: message.into(),
+        };
         self.state_mut().alerts.push(alert.clone());
         alert
     }
