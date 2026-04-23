@@ -52,7 +52,7 @@ pub trait Ctx: CtxI + Clone + Debug {
         self.cursor_mut().next()
     }
 
-    fn get_pattern(&self, pattern: &str) -> Pattern;
+    fn get_pattern(&mut self, pattern: &str) -> Pattern;
 
     fn match_token(&mut self, token: &str) -> bool {
         // WARNING: this may belong in Cursor, but the Ctx chain holds the regex caching

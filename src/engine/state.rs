@@ -36,7 +36,7 @@ pub struct ParseState<U: Cursor + Clone> {
     pub callstack: CallStack,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct HeavyState<'t> {
     pub memos: MemoCache,
     pub patterns: PatternCache,

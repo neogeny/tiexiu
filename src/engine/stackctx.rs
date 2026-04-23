@@ -6,11 +6,12 @@ use super::memo::{Key, Memo};
 use super::state::{CallStack, HeavyState, ParseState, ParseStateStack};
 use super::trace::{CONSOLE_TRACER, NULL_TRACER, Tracer};
 use crate::cfg::*;
+use crate::engine::ctxproxy::CtxProxy;
 use crate::input::Cursor;
 use crate::trees::Tree;
 use crate::util::pyre::Pattern;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct StackCtx<'c, U>
 where
     U: Cursor + Clone,
@@ -32,7 +33,7 @@ where
         ctx
     }
 
-    pub fn proxy(self) -> CtxProxy {
+    pub fn proxy(self) -> CtxProxy<Self> {
         CtxProxy::new(self)
     }
 
@@ -117,7 +118,7 @@ where
         self.heavy.tracer
     }
 
-    fn get_pattern(&self, pattern: &str) -> Pattern {
+    fn get_pattern(&mut self, pattern: &str) -> Pattern {
         self.heavy.get_pattern(pattern)
     }
 
@@ -131,7 +132,7 @@ where
     }
 
     fn cut(&mut self) {
-        self.tracer().trace_cut(self.cursor());
+        self.tracer().trace_cut(self);
         self.state_mut().cutseen = true;
         self.prune_cache();
     }
@@ -142,17 +143,14 @@ where
     }
 
     fn is_keyword(&self, name: &str) -> bool {
-        self.heavy
-            .keywords
-            .binary_search(&name.into())
-            .is_ok()
+        self.heavy.keywords.binary_search(&name.into()).is_ok()
     }
 
     fn set_keywords(&mut self, keywords: &[Box<str>]) {
         self.heavy.keywords = keywords.into()
     }
 
-    fn merge(mut self, _other: &mut Self) -> Self {
+    fn merge(mut self, _other: Self) -> Self {
         self.states.merge();
         self
     }

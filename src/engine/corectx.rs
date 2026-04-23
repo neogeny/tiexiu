@@ -143,7 +143,7 @@ where
         self.heavy.borrow().tracer
     }
 
-    fn get_pattern(&self, pattern: &str) -> Pattern {
+    fn get_pattern(&mut self, pattern: &str) -> Pattern {
         self.with_heavy_mut(|heavy| heavy.get_pattern(pattern))
     }
 
@@ -257,7 +257,7 @@ mod tests {
     #[test]
     fn get_pattern_caches() {
         let cursor = StrCursor::new("test");
-        let ctx = CoreCtx::new(cursor, &[]);
+        let mut ctx = CoreCtx::new(cursor, &[]);
 
         let p1 = ctx.get_pattern(r"\d+");
         let p2 = ctx.get_pattern(r"\d+");

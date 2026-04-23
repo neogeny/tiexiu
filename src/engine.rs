@@ -6,6 +6,7 @@ pub mod ctx;
 pub mod ctxproxy;
 pub mod error;
 pub mod memo;
+pub mod stackctx;
 pub mod state;
 pub mod strctx;
 pub mod trace;
@@ -20,5 +21,7 @@ pub mod prelude {
 }
 
 pub fn new_ctx<'c, U: Cursor + Clone + 'c>(cursor: U, cfga: &'c CfgA) -> impl Ctx {
+    // let _: stackctx::StackCtx<U>;
     corectx::CoreCtx::new(cursor, cfga)
+    // stackctx::StackCtx::new(cursor, cfga).proxy()
 }

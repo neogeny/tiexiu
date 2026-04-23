@@ -12,9 +12,17 @@ use crate::util::pyre::Pattern;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct CtxProxy<C: Ctx> {
     pub inner: Rc<RefCell<C>>,
+}
+
+impl<C: Ctx> Clone for CtxProxy<C> {
+    fn clone(&self) -> Self {
+        Self {
+            inner: self.inner.clone(),
+        }
+    }
 }
 
 impl<C: Ctx> CtxProxy<C> {
@@ -22,6 +30,12 @@ impl<C: Ctx> CtxProxy<C> {
         Self {
             inner: Rc::new(RefCell::new(inner)),
         }
+    }
+}
+
+impl<C: Ctx> Drop for CtxProxy<C> {
+    fn drop(&mut self) {
+        self.undo_unmerged();
     }
 }
 
@@ -81,7 +95,7 @@ impl<C: Ctx> Ctx for CtxProxy<C> {
         }
     }
 
-    fn get_pattern(&self, pattern: &str) -> Pattern {
+    fn get_pattern(&mut self, pattern: &str) -> Pattern {
         self.inner.borrow_mut().get_pattern(pattern)
     }
 
