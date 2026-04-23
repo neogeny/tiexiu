@@ -24,7 +24,7 @@ pub struct Alert {
     pub message: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ParseState<U: Cursor + Clone> {
     fuse: Fuse,
     pub cursor: U,
@@ -47,6 +47,15 @@ pub struct HeavyState<'t> {
 #[derive(Debug, Clone)]
 pub struct ParseStateStack<U: Cursor + Clone> {
     pub state_stack: Vec<ParseState<U>>,
+}
+
+impl<U: Cursor + Clone> Clone for ParseState<U> {
+    fn clone(&self) -> Self {
+        let mut clone = Self::new(self.cursor.clone());
+        clone.ast = self.ast.clone();
+        clone.callstack = self.callstack.clone();
+        clone
+    }
 }
 
 impl<'t> Default for HeavyState<'t> {

@@ -27,9 +27,7 @@ where
     U: Cursor + Clone,
 {
     fn clone(&self) -> Self {
-        let mut new_state = (*self.state).clone();
-        // NOTE: new state, owns the cuts
-        new_state.cutseen = false;
+        let new_state = (*self.state).clone();
         Self {
             state: Cow::Owned(new_state),
             heavy: self.heavy.clone(),
