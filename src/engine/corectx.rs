@@ -27,9 +27,7 @@ where
     U: Cursor + Clone,
 {
     fn clone(&self) -> Self {
-        let mut new_state = (*self.state).clone();
-        // NOTE: new state, owns the cuts
-        new_state.cutseen = false;
+        let new_state = (*self.state).clone();
         Self {
             state: Cow::Owned(new_state),
             heavy: self.heavy.clone(),
@@ -42,7 +40,7 @@ where
     U: Cursor + Clone,
 {
     fn drop(&mut self) {
-        self.undo_unpopped();
+        self.undo_unmerged();
     }
 }
 
@@ -133,23 +131,15 @@ where
     }
     fn leave(&mut self) {
         let stack = self.state.callstack.clone();
-        self.state_mut().callstack = match stack.tail() {
-            Some(tail) => tail.clone(),
-            None => CallStack::new(),
-        }
+        self.state_mut().callstack = stack.tail().unwrap_or_default()
     }
 
     fn tracer(&self) -> &dyn Tracer {
         self.heavy.borrow().tracer
     }
 
-    fn get_pattern(&self, pattern: &str) -> Pattern {
-        self.heavy
-            .borrow_mut()
-            .patterns
-            .entry(pattern.to_string())
-            .or_insert_with(|| Pattern::new(pattern).unwrap())
-            .clone()
+    fn get_pattern(&mut self, pattern: &str) -> Pattern {
+        self.with_heavy_mut(|heavy| heavy.get_pattern(pattern))
     }
 
     fn memo(&mut self, key: &Key) -> Option<Memo> {
@@ -186,9 +176,13 @@ where
         self.heavy.borrow_mut().keywords = keywords.into()
     }
 
-    fn merge(mut self, other: &mut Self) -> Self {
+    fn merge(mut self, mut other: Self) -> Self {
         self.state_mut().merge(other.state_mut());
         self
+    }
+
+    fn push_state(&mut self) {
+        // NOTE: we count on clone
     }
 
     fn done(&self) -> bool {
@@ -196,11 +190,11 @@ where
     }
 
     fn pop(&mut self) {
-        self.state_mut().pop();
+        self.state_mut().burn();
     }
 
     fn undo(&mut self) {
-        self.state_mut().pop();
+        self.state_mut().burn();
     }
 }
 
@@ -258,7 +252,7 @@ mod tests {
     #[test]
     fn get_pattern_caches() {
         let cursor = StrCursor::new("test");
-        let ctx = CoreCtx::new(cursor, &[]);
+        let mut ctx = CoreCtx::new(cursor, &[]);
 
         let p1 = ctx.get_pattern(r"\d+");
         let p2 = ctx.get_pattern(r"\d+");

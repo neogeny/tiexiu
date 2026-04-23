@@ -22,6 +22,10 @@ pub trait CtxI: Configurable {
 }
 
 pub trait Ctx: CtxI + Clone + Debug {
+    fn id(&self) -> usize {
+        self as *const Self as usize
+    }
+
     fn cursor_mut(&mut self) -> &mut dyn Cursor;
     fn enter(&mut self, name: &str);
     fn leave(&mut self);
@@ -52,7 +56,7 @@ pub trait Ctx: CtxI + Clone + Debug {
         self.cursor_mut().next()
     }
 
-    fn get_pattern(&self, pattern: &str) -> Pattern;
+    fn get_pattern(&mut self, pattern: &str) -> Pattern;
 
     fn match_token(&mut self, token: &str) -> bool {
         // WARNING: this may belong in Cursor, but the Ctx chain holds the regex caching
@@ -133,7 +137,7 @@ pub trait Ctx: CtxI + Clone + Debug {
     ///     self.cursor.goto(prev.cursor.pos)
     ///     return self
     /// ```
-    fn merge(mut self, other: &mut Self) -> Self {
+    fn merge(mut self, other: Self) -> Self {
         // NOTE:
         //  * We don't construct the resulting CST/AST because Tree does it
         //    when Tree.node() is called on success of a rule call
@@ -153,15 +157,18 @@ pub trait Ctx: CtxI + Clone + Debug {
     //  This should work with both cloned Ctx and with a separate
     //  StateStack.
     fn push(&mut self) -> Self {
+        self.push_state();
         self.clone()
     }
+
+    fn push_state(&mut self);
 
     fn done(&self) -> bool;
 
     // NOTE These only make sense over owned self
     fn pop(&mut self) {}
     fn undo(&mut self) {}
-    fn undo_unpopped(&mut self) {
+    fn undo_unmerged(&mut self) {
         if !self.done() {
             self.undo();
         }
@@ -169,38 +176,13 @@ pub trait Ctx: CtxI + Clone + Debug {
 
     fn call(mut self, name: &str, rule: &Rule) -> ParseResult<Self> {
         let start = self.mark();
+        let key = self.key(name);
+
         self.enter(name);
         self.tracer().trace_entry(&self);
 
-        if !rule.is_token() {
-            self.next_token();
-        }
-
-        let key = self.key(name);
-        if let Some(memo) = self.memo(&key) {
-            return match memo.tree {
-                Tree::Bottom => {
-                    let err = ParseError::FailedParse(name.into());
-                    self.tracer().trace_failure(&self, &err);
-                    self.leave();
-                    Err(self.failure(start, err))
-                }
-                _ => {
-                    self.reset(memo.mark);
-                    self.tracer().trace_success(&self);
-                    self.leave();
-                    self.undo_unpopped();
-                    Ok(Succ(self, memo.tree))
-                }
-            };
-        }
-
         let cloned_ctx = self.push();
-        match if rule.is_left_recursive() {
-            cloned_ctx.call_recursive(&key, rule)
-        } else {
-            rule.parse(cloned_ctx)
-        } {
+        match cloned_ctx.do_call(name, rule) {
             Ok(Succ(mut new_ctx, tree)) => {
                 new_ctx.leave();
                 if rule.is_name()
@@ -214,13 +196,42 @@ pub trait Ctx: CtxI + Clone + Debug {
                 }
                 new_ctx.tracer().trace_success(&new_ctx);
                 new_ctx.memoize(&key, &tree);
-                Ok(Succ(self.merge(&mut new_ctx), tree))
+                Ok(Succ(self.merge(new_ctx), tree))
             }
             Err(nope) => {
+                self.leave();
                 self.tracer().trace_failure(&self, &nope.source);
                 self.memoize(&key, &Tree::Bottom);
+                self.undo_unmerged();
                 Err(nope)
             }
+        }
+    }
+
+    fn do_call(mut self, name: &str, rule: &Rule) -> ParseResult<Self> {
+        let start = self.mark();
+        let key = self.key(name);
+        if !rule.is_token() {
+            self.next_token();
+        }
+
+        if let Some(memo) = self.memo(&key) {
+            return match memo.tree {
+                Tree::Bottom => {
+                    let err = ParseError::FailedParse(name.into());
+                    Err(self.failure(start, err))
+                }
+                _ => {
+                    self.reset(memo.mark);
+                    Ok(Succ(self, memo.tree))
+                }
+            };
+        }
+
+        if rule.is_left_recursive() {
+            self.call_recursive(&key, rule)
+        } else {
+            rule.parse(self)
         }
     }
 
@@ -254,19 +265,17 @@ pub trait Ctx: CtxI + Clone + Debug {
                     ctx.memoize(key, &tree);
                     high_water_mark = mark;
                     best_cst = Some(tree);
-                    self = ctx;
+                    self = self.merge(ctx);
                 }
             }
         }
 
         if let Some(tree) = best_cst {
-            self.tracer().trace_success(&self);
             Ok(Succ(self, tree))
         } else {
             let nope = last_failure.unwrap_or_else(|| {
                 self.failure(start_mark, ParseError::FailedParse(rule.name.clone()))
             });
-            self.tracer().trace_failure(&self, &nope.source);
             Err(nope)
         }
     }

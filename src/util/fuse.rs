@@ -23,8 +23,11 @@ impl Fuse {
         self.0.is_none()
     }
 
+    #[track_caller]
     pub fn burn(&mut self) {
-        // WARNING: Could panic! here if alread fused
+        // if self.0.is_none() {
+        //     panic!("Fuse already burnt");
+        // }
         self.0 = None;
     }
 }

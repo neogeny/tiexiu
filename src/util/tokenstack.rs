@@ -26,7 +26,7 @@ impl Node {
     }
 }
 
-#[derive(Debug)]
+#[derive()]
 pub struct TokenStack(Rc<Node>);
 
 impl Default for TokenStack {
@@ -43,8 +43,13 @@ impl Clone for TokenStack {
 
 impl fmt::Display for TokenStack {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let items: Vec<_> = self.iter().collect();
-        write!(f, "[{}]", items.join(" "))
+        write!(f, "[{}]", self.to_vec().join(" "))
+    }
+}
+
+impl fmt::Debug for TokenStack {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "[{}]", self.to_vec().join(" "))
     }
 }
 

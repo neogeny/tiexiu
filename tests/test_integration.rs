@@ -4,8 +4,8 @@
 //! features that can be tested without Python-specific semantics.
 
 use tiexiu::Result;
+use tiexiu::engine;
 use tiexiu::engine::CtxI;
-use tiexiu::engine::corectx::CoreCtx;
 use tiexiu::input::StrCursor;
 
 // =============================================================================
@@ -23,7 +23,7 @@ mod basic_grammar {
         "#;
         let grammar = compile(grammar, &[])?;
         let tree = parse_input(&grammar, "hello", &[])?;
-        assert!(matches!(tree, trees::Tree::Node { .. }));
+        assert!(matches!(tree, Tree::Node { .. }));
         Ok(())
     }
 
@@ -38,7 +38,7 @@ mod basic_grammar {
         "#;
         let grammar = compile(grammar, &[])?;
         let tree = parse_input(&grammar, "a", &[])?;
-        assert!(matches!(tree, trees::Tree::Node { .. }));
+        assert!(matches!(tree, Tree::Node { .. }));
         Ok(())
     }
 
@@ -65,7 +65,7 @@ mod basic_grammar {
         "#;
         let grammar = compile(grammar, &[])?;
         let tree = parse_input(&grammar, "", &[])?;
-        assert!(matches!(tree, trees::Tree::Node { .. }));
+        assert!(matches!(tree, Tree::Node { .. }));
         Ok(())
     }
 }
@@ -720,6 +720,8 @@ mod round_trips {
 
 mod input_positions {
     use super::*;
+    use tiexiu::engine::new_ctx;
+    use tiexiu::input::strcursor::StrCursor;
     use tiexiu::parse_input;
 
     #[test]
@@ -730,7 +732,7 @@ mod input_positions {
         let grammar = tiexiu::compile(grammar, &[])?;
 
         let cursor = StrCursor::new("hello");
-        let ctx = CoreCtx::new(cursor, &[]);
+        let ctx = new_ctx(cursor, &[]);
 
         match grammar.parse(ctx) {
             Ok(state) => {
@@ -773,7 +775,7 @@ mod error_handling {
         let grammar = tiexiu::compile(grammar, &[])?;
 
         let cursor = StrCursor::new("b");
-        let ctx = CoreCtx::new(cursor, &[]);
+        let ctx = engine::new_ctx(cursor, &[]);
 
         let result = grammar.parse(ctx);
         assert!(result.is_err());
@@ -788,7 +790,7 @@ mod error_handling {
         let grammar = tiexiu::compile(grammar, &[])?;
 
         let cursor = StrCursor::new("a");
-        let ctx = CoreCtx::new(cursor, &[]);
+        let ctx = engine::new_ctx(cursor, &[]);
 
         let result = grammar.parse(ctx);
         assert!(result.is_err());
@@ -803,7 +805,7 @@ mod error_handling {
         let grammar = tiexiu::compile(grammar, &[])?;
 
         let cursor = StrCursor::new("");
-        let ctx = CoreCtx::new(cursor, &[]);
+        let ctx = engine::new_ctx(cursor, &[]);
 
         let result = grammar.parse(ctx);
         assert!(result.is_err());

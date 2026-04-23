@@ -11,16 +11,16 @@ impl Exp {
     pub fn skip_exp<C: Ctx>(mut ctx: C, exp: &Exp) -> C {
         let skip_ctx = ctx.push();
         match exp.parse(skip_ctx) {
-            Ok(Succ(mut new_ctx, _)) => ctx.merge(&mut new_ctx),
+            Ok(Succ(new_ctx, _)) => ctx.merge(new_ctx),
             Err(_) => ctx,
         }
     }
 
     pub fn add_exp<C: Ctx>(mut ctx: C, exp: &Exp, res: &mut Vec<Tree>) -> Result<C, (C, Nope)> {
         match exp.parse(ctx.push()) {
-            Ok(Succ(mut new_ctx, tree)) => {
+            Ok(Succ(new_ctx, tree)) => {
                 res.push(tree);
-                Ok(ctx.merge(&mut new_ctx))
+                Ok(ctx.merge(new_ctx))
             }
             Err(f) => Err((ctx, f)),
         }
@@ -38,7 +38,7 @@ impl Exp {
                     if f.take_cut() {
                         return Err(f);
                     }
-                    return Ok(Succ(ctx.merge(&mut loop_ctx), Tree::Nil));
+                    return Ok(Succ(ctx.merge(loop_ctx), Tree::Nil));
                 }
             }
         }
@@ -59,7 +59,7 @@ impl Exp {
                         return Err(f);
                     }
                     // OK to match nothing
-                    return Ok(Succ(ctx.merge(&mut loop_ctx), Tree::Nil));
+                    return Ok(Succ(ctx.merge(loop_ctx), Tree::Nil));
                 }
                 Ok(Succ(mut new_ctx, pre_cst)) => {
                     match exp.parse(new_ctx.push()) {
@@ -85,15 +85,12 @@ impl Exp {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::engine;
     use crate::engine::CtxI;
-    use crate::engine::corectx::CoreCtx;
     use crate::input::strcursor::StrCursor;
-    use crate::peg::Grammar;
 
-    fn setup(input: &str) -> CoreCtx<'_, StrCursor> {
-        let grammar = Box::leak(Box::new(Grammar::default()));
-        let _ = grammar;
-        CoreCtx::new(StrCursor::new(input), &[])
+    fn setup(input: &str) -> impl Ctx {
+        engine::new_ctx(StrCursor::new(input), &[])
     }
 
     #[test]

@@ -24,7 +24,7 @@ pub struct Alert {
     pub message: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ParseState<U: Cursor + Clone> {
     fuse: Fuse,
     pub cursor: U,
@@ -36,12 +36,26 @@ pub struct ParseState<U: Cursor + Clone> {
     pub callstack: CallStack,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct HeavyState<'t> {
     pub memos: MemoCache,
     pub patterns: PatternCache,
     pub keywords: Box<[Box<str>]>,
     pub tracer: &'t dyn Tracer,
+}
+
+#[derive(Debug, Clone)]
+pub struct ParseStateStack<U: Cursor + Clone> {
+    pub state_stack: Vec<ParseState<U>>,
+}
+
+impl<U: Cursor + Clone> Clone for ParseState<U> {
+    fn clone(&self) -> Self {
+        let mut clone = Self::new(self.cursor.clone());
+        clone.ast = self.ast.clone();
+        clone.callstack = self.callstack.clone();
+        clone
+    }
 }
 
 impl<'t> Default for HeavyState<'t> {
@@ -58,6 +72,13 @@ impl<'t> HeavyState<'t> {
             keywords: [].into(),
             tracer: &NULL_TRACER,
         }
+    }
+
+    pub fn get_pattern(&mut self, pattern: &str) -> Pattern {
+        self.patterns
+            .entry(pattern.to_string())
+            .or_insert_with(|| Pattern::new(pattern).unwrap())
+            .clone()
     }
 }
 
@@ -89,16 +110,28 @@ impl<U: Cursor + Clone> ParseState<U> {
     }
 
     pub fn merge(&mut self, prev: &mut Self) -> &mut Self {
-        prev.pop();
+        prev.burn();
         self.ast = prev.ast.clone();
         self.extend(prev.cst.clone());
         self.alerts.extend(prev.alerts.clone());
         self.cursor.reset(prev.cursor.mark());
+        self.callstack = prev.callstack.clone();
         self
     }
 
-    pub fn pop(&mut self) {
+    pub fn burn(&mut self) {
         self.fuse.burn();
+    }
+
+    pub fn pop(&mut self, into: &mut Self) {
+        into.callstack = self.callstack.clone();
+        into.cursor.reset(self.cursor.mark());
+        self.burn();
+    }
+
+    pub fn undo(&mut self, into: &mut Self) {
+        into.callstack = self.callstack.clone();
+        self.burn();
     }
 
     pub fn is_popped(&self) -> bool {
@@ -133,11 +166,6 @@ impl<U: Cursor + Clone> ParseState<U> {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct ParseStateStack<U: Cursor + Clone> {
-    pub state_stack: Vec<ParseState<U>>,
-}
-
 impl<U: Cursor + Clone> ParseStateStack<U> {
     pub fn new(cursor: U) -> Self {
         Self {
@@ -145,10 +173,12 @@ impl<U: Cursor + Clone> ParseStateStack<U> {
         }
     }
 
+    #[track_caller]
     pub fn state(&self) -> &ParseState<U> {
         self.state_stack.last().expect("empty state stack")
     }
 
+    #[track_caller]
     pub fn state_mut(&mut self) -> &mut ParseState<U> {
         self.state_stack.last_mut().expect("empty state stack")
     }
@@ -157,16 +187,17 @@ impl<U: Cursor + Clone> ParseStateStack<U> {
         self.state().node()
     }
 
+    #[track_caller]
     pub fn undo(&mut self) -> ParseState<U> {
         let mut prev = self.state_stack.pop().expect("empty state stack");
-        prev.pop();
+        prev.undo(self.state_mut());
         prev
     }
 
+    #[track_caller]
     pub fn pop(&mut self) -> ParseState<U> {
         let mut prev = self.state_stack.pop().expect("empty state stack");
-        prev.pop();
-        self.state_mut().cursor.reset(prev.cursor.mark());
+        prev.pop(self.state_mut());
         prev
     }
 
