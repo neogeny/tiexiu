@@ -11,13 +11,13 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 impl From<&str> for Error {
     fn from(msg: &str) -> Self {
-        Error::MessageFromTest(msg.to_string())
+        Error::AndNowAMessageFromYourFriendlyTest(msg.to_string())
     }
 }
 
 impl From<String> for Error {
     fn from(msg: String) -> Self {
-        Error::MessageFromTest(msg)
+        Error::AndNowAMessageFromYourFriendlyTest(msg)
     }
 }
 
@@ -50,6 +50,6 @@ pub enum Error {
     #[error("Library failure: {0}")]
     Library(#[from] crate::util::Error),
 
-    #[error("A test function says that: {0}")]
-    MessageFromTest(String),
+    #[error("And now a message from your friendly test:\n{0}")]
+    AndNowAMessageFromYourFriendlyTest(String),
 }

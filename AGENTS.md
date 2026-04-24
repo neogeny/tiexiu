@@ -13,7 +13,9 @@ apply: always
 * **Project Summary**: Red and and study the documents inn [./corpus/summaries](./corpus/summaries/) for brief project descriptions created by collaborators for collaborators.
 * **Source Mapping:** Cross-reference the Python source in [./tatsu/tatsu/](./tatsu/tatsu/) and [./tatsu/tests/](./tatsu/tests/) to ensure the Rust implementation aligns with TatSu's logic and goals.
 * **Code Modification:** Do not use `sed` or `awk` for bulk directory/glob modifications. Target specific files one-by-one only when structural tools are insufficient.
-* **Strict Compliance:** Adhere strictly to [RULES.md](RULES.md).
+* **Ownership of the Asserts:** The User is the sole owner of files and other assets. Never modify any file or asset without the explicit consent from the User. 
+* **Shared Understanding:** You will interview the User relentlessly about every aspect of a plan until it is certain that there is a shared understainding. Walk down each branch of the possible design tree, resolving dependencies between decisions one-by-one.
+* **Strict Compliance:** Adhere strictly to all the rules specified in the mentioned documents.
 
 ## Rust Implementation Standards
 * **Error Handling:** Return `Result` for invalid parameter values. Reserve `panic!` for internal logic bugs or unrecoverable state.

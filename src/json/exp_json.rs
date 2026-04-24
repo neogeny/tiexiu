@@ -113,14 +113,11 @@ impl Rule {
             .collect();
         obj.insert("params".into(), Value::Array(params));
 
-        obj.insert("is_name".into(), Value::Bool(self.is_identifier()));
-        obj.insert("is_tokn".into(), Value::Bool(self.has_token_flag()));
+        obj.insert("is_name".into(), Value::Bool(self.is_name()));
+        obj.insert("is_tokn".into(), Value::Bool(self.has_is_tokn_flag()));
         obj.insert("no_memo".into(), Value::Bool(self.has_no_memo_flag()));
-        obj.insert("is_memo".into(), Value::Bool(self.has_memo_flag()));
-        obj.insert(
-            "is_lrec".into(),
-            Value::Bool(self.has_left_recursion_flag()),
-        );
+        obj.insert("is_memo".into(), Value::Bool(self.has_is_memo_flag()));
+        obj.insert("is_lrec".into(), Value::Bool(self.has_is_lrec_flag()));
 
         Value::Object(obj)
     }

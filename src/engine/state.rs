@@ -3,7 +3,7 @@
 
 //! A translation of the TatSu module with the same name
 
-use super::memo::MemoCache;
+use super::memo::{KeyTrack, MemoCache};
 use super::trace::{NULL_TRACER, Tracer};
 use crate::input::Cursor;
 use crate::parser::TokenStack;
@@ -29,6 +29,7 @@ pub struct ParseState<U: Cursor + Clone> {
     pub cursor: U,
     pub cutseen: bool,
     pub callstack: CallStack,
+    pub keytrack: KeyTrack,
 }
 
 #[derive(Debug, Clone)]
@@ -83,6 +84,7 @@ impl<U: Cursor + Clone> ParseState<U> {
             cutseen: false,
             callstack: CallStack::new(),
             fuse: Fuse::default(),
+            keytrack: KeyTrack::default(),
         }
     }
 
@@ -92,6 +94,7 @@ impl<U: Cursor + Clone> ParseState<U> {
             cutseen: false,
             callstack: other.callstack.clone(),
             fuse: Fuse::default(),
+            keytrack: KeyTrack::default(),
         }
     }
 

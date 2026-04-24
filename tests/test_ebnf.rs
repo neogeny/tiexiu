@@ -35,9 +35,18 @@ fn test_ebnf_parsing() -> tiexiu::Result<()> {
 
     eprintln!("GRAMMAR\n{:#?}", g);
 
-    let tree = g.parse_input("3", &[Cfg::Trace])?;
+    let mut tree;
+
+    tree = g.parse_input("3", &[Cfg::Trace])?;
+    eprintln!("{:#?}", tree);
+    eprintln!("{:#?}", tree.as_json());
+    eprintln!("{:#}", tree.as_json_str());
+
+    tree = g.parse_input("3 * (2 + 5)", &[Cfg::Trace])?;
     eprintln!("{:#?}", tree);
 
-    Err(Error::MessageFromTest("aborted".to_string()))
+    Err(Error::AndNowAMessageFromYourFriendlyTest(
+        "aborted".to_string(),
+    ))
     // Ok(())
 }

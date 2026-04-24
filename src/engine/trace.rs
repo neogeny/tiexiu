@@ -94,13 +94,17 @@ pub trait Tracer: Debug {
     }
 
     fn trace_match(&self, ctx: &dyn CtxI, token: &str, name: &str) -> bool {
-        let msg = style(format!("'{token}'/{name}/")).green().to_string();
+        let mut tag = name.to_string();
+        if !tag.is_empty() {
+            tag = format!("/{tag}/");
+        }
+        let msg = style(format!("'{token}'{tag}")).green().to_string();
         self.trace_event(ctx, Event::Match, &msg);
         true
     }
 
     fn trace_no_match(&self, ctx: &dyn CtxI, name: &str) -> bool {
-        let msg = style(format!("'/{name}/")).red().to_string();
+        let msg = style(format!("/{name}/")).red().to_string();
         self.trace_event(ctx, Event::NoMatch, &msg);
         false
     }

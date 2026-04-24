@@ -21,11 +21,11 @@ impl TryFrom<Grammar> for TatSuModel {
                     name: rule.name.to_string(),
                     params: rule.params.iter().map(|p| p.clone().into()).collect(),
                     exp: TatSuModel::from(rule.exp.clone()).into(),
-                    is_name: rule.is_identifier(),
-                    is_tokn: rule.has_token_flag(),
+                    is_name: rule.has_is_name_flag(),
+                    is_tokn: rule.has_is_tokn_flag(),
                     no_memo: rule.has_no_memo_flag(),
-                    is_memo: rule.has_memo_flag(),
-                    is_lrec: rule.has_left_recursion_flag(),
+                    is_memo: rule.has_is_memo_flag(),
+                    is_lrec: rule.has_is_lrec_flag(),
                 }
             })
             .collect();

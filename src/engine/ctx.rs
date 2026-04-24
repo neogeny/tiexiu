@@ -30,6 +30,8 @@ pub trait Ctx: CtxI + Clone + Debug {
     fn cursor_mut(&mut self) -> &mut dyn Cursor;
     fn enter(&mut self, name: &str);
     fn leave(&mut self);
+    fn track(&mut self, key: &Key) -> usize;
+    fn untrack(&mut self, key: &Key) -> usize;
     fn tracer(&self) -> &dyn Tracer;
 
     #[track_caller]
@@ -44,9 +46,21 @@ pub trait Ctx: CtxI + Clone + Debug {
     fn at_end(&mut self) -> bool {
         self.cursor().at_end()
     }
-    fn eof_check(&mut self) -> bool {
+    fn parse_eof(&mut self) -> bool {
+        self.enter("＄");
+        self.tracer().trace_entry(self);
+
         self.next_token();
-        self.cursor().at_end()
+        let result = self.cursor().at_end();
+
+        if result {
+            self.tracer().trace_success(self);
+        } else {
+            self.tracer().trace_failure(self, &ParseError::ExpectingEof);
+        }
+        self.leave();
+
+        result
     }
 
     fn dot(&mut self) -> bool {
@@ -108,12 +122,8 @@ pub trait Ctx: CtxI + Clone + Debug {
         self.cursor_mut().next_token();
     }
 
-    fn key(&mut self, name: &str) -> Key {
-        MemoCache::key(self.mark(), name, true)
-    }
-
-    fn rule_key(&mut self, rule: &Rule) -> Key {
-        MemoCache::rule_key(self.mark(), rule)
+    fn key(&mut self, name: &str, memo: bool) -> Key {
+        MemoCache::key(self.mark(), name, memo)
     }
 
     fn memo(&mut self, key: &Key) -> Option<Memo>;
@@ -172,32 +182,31 @@ pub trait Ctx: CtxI + Clone + Debug {
 
     fn call(mut self, name: &str, rule: &Rule) -> ParseResult<Self> {
         let start = self.mark();
-        let key = self.rule_key(rule);
+        let key = self.key(name, rule.is_memoizable());
 
         self.enter(name);
         self.tracer().trace_entry(&self);
 
-        let cloned_ctx = self.push();
-        match cloned_ctx.do_call(name, rule) {
-            Ok(Yeap(mut new_ctx, tree)) => {
-                new_ctx.leave();
+        match self.push().do_call(name, rule) {
+            Ok(Yeap(mut ctx, tree)) => {
+                ctx.leave();
                 if rule.is_name()
                     && let Tree::Text(name) = &tree
-                    && self.is_keyword(name)
+                    && ctx.is_keyword(name)
                 {
-                    self.memoize(&key, &Tree::Bottom, start);
+                    ctx.memoize(&key, &Tree::Bottom, ctx.mark());
                     let error = ParseError::ReservedWord(name.clone());
-                    self.tracer().trace_failure(&self, &error);
+                    ctx.tracer().trace_failure(&ctx, &error);
                     return Err(self.failure(start, error));
                 }
-                new_ctx.tracer().trace_success(&new_ctx);
-                new_ctx.memoize(&key, &tree, self.mark());
-                Ok(Yeap(self.merge(new_ctx), tree))
+                ctx.tracer().trace_success(&ctx);
+                ctx.memoize(&key, &tree, ctx.mark());
+                Ok(Yeap(ctx, tree))
             }
             Err(nope) => {
                 self.leave();
                 self.tracer().trace_failure(&self, &nope.source);
-                self.memoize(&key, &Tree::Bottom, start);
+                self.memoize(&key, &Tree::Bottom, self.mark());
                 Err(nope)
             }
         }
@@ -205,11 +214,10 @@ pub trait Ctx: CtxI + Clone + Debug {
 
     fn do_call(mut self, name: &str, rule: &Rule) -> ParseResult<Self> {
         let start = self.mark();
-        let key = self.rule_key(rule);
+        let key = self.key(name, rule.is_memoizable());
         if !rule.is_token() {
             self.next_token();
         }
-
         if let Some(memo) = self.memo(&key) {
             return match memo.tree {
                 Tree::Bottom => {
@@ -236,43 +244,55 @@ pub trait Ctx: CtxI + Clone + Debug {
             panic!("Recursive call on non-LRec rule");
         }
 
-        let startmark = self.mark();
-        let mut lastmark = startmark;
-        let mut lasttree: Option<Tree> = None;
+        let start = self.mark();
+        let mut lastmark = start;
+        let mut lasttree: Tree = Tree::Nil;
         let mut lastnope: Option<Nope> = None;
 
-        self.memoize(key, &Tree::Bottom, startmark);
+        self.memoize(key, &Tree::Bottom, start);
         loop {
             // NOTE this is in TatSu and not in pegen
             //  self.clear_error_memos();
-            let mut ctx = self.push();
-            ctx.reset(startmark);
-            match rule.parse(ctx) {
+            self.reset(start);
+
+            self.track(key);
+            let result = rule.parse(self.push());
+            self.untrack(key);
+
+            match result {
                 Err(nope) => {
                     lastnope = Some(nope);
                     break;
                 }
-                Ok(Yeap(mut ctx, tree)) => {
+                Ok(Yeap(ctx, tree)) => {
                     let endmark = ctx.mark();
+                    let endtree = tree;
                     if endmark <= lastmark {
                         break;
                     }
-                    ctx.memoize(key, &tree, endmark);
-                    lasttree = Some(tree);
                     lastmark = endmark;
+                    lasttree = endtree;
                     self = self.merge(ctx);
+                    self.memoize(key, &lasttree, lastmark);
                 }
             }
         }
 
-        if let Some(tree) = lasttree && tree != Tree::Bottom {
-            self.reset(lastmark);
-            Ok(Yeap(self, tree))
-        } else {
-            let nope = lastnope.unwrap_or(
-                self.failure(startmark, ParseError::FailedParse(rule.name.clone()))
-            );
-            Err(nope)
+        self.reset(lastmark);
+        self.memoize(key, &lasttree, lastmark);
+
+        if lasttree == Tree::Bottom {
+            let nope = lastnope.unwrap_or(self.failure(
+                start,
+                ParseError::FailedRecursion(
+                    key.name.clone(),
+                    start,
+                    lastmark,
+                    lasttree.clone().into(),
+                ),
+            ));
+            return Err(nope);
         }
+        Ok(Yeap(self, lasttree))
     }
 }

@@ -86,7 +86,7 @@ mod tests {
 
         let mut ctx2 = ctx1.clone();
 
-        let key = ctx1.key("hello");
+        let key = ctx1.key("hello", true);
 
         ctx1.memoize(&key, &Tree::Nil, ctx1.mark());
 
@@ -114,7 +114,7 @@ mod tests {
         assert_ne!(ctx1.cursor().mark(), ctx2.cursor().mark());
 
         let entry = Tree::Bottom;
-        let key = ctx1.key("world");
+        let key = ctx1.key("world", true);
         ctx2.memoize(&key, &entry, ctx1.mark());
         assert!(
             ctx1.memo(&key).is_some(),

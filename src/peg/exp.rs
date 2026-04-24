@@ -130,6 +130,7 @@ impl Exp {
             .into_boxed_str()
     }
 
+    // #[track_caller]
     pub fn parse<C: Ctx>(&self, ctx: C) -> ParseResult<C> {
         match self.do_parse(ctx) {
             Err(err) => Err(err),
@@ -140,7 +141,6 @@ impl Exp {
         }
     }
 
-    // #[track_caller]
     fn do_parse<C: Ctx>(&self, mut ctx: C) -> ParseResult<C> {
         let start = ctx.mark();
         match &self.kind {
@@ -184,7 +184,7 @@ impl Exp {
                 }
             }
             ExpKind::Eof => {
-                if ctx.eof_check() {
+                if ctx.parse_eof() {
                     Ok(Yeap(ctx, Tree::Nil))
                 } else {
                     Err(ctx.failure(start, ParseError::ExpectingEof))

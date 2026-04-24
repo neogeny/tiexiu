@@ -25,7 +25,10 @@ fmt:
 test: fmt clippy
     cargo nextest run --lib --no-fail-fast
 
-build:
+build: fmt clippy
+    cargo build
+
+release_build:
     cargo build --release
 
 book:

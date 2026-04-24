@@ -122,9 +122,25 @@ where
     fn enter(&mut self, name: &str) {
         self.state_mut().callstack.push(name);
     }
+
     fn leave(&mut self) {
         let stack = self.state.callstack.clone();
         self.state_mut().callstack = stack.tail().unwrap_or_default()
+    }
+
+    fn track(&mut self, key: &Key) -> usize {
+        let depth = self.state_mut().keytrack.track(key);
+        if depth > 64 {
+            panic!(
+                "UNBOUND LEFT RECURSION OF {} AT {}@{}",
+                depth, key.name, key.mark
+            );
+        }
+        depth
+    }
+
+    fn untrack(&mut self, key: &Key) -> usize {
+        self.state_mut().keytrack.untrack(key)
     }
 
     fn tracer(&self) -> &dyn Tracer {

@@ -120,32 +120,15 @@ impl Rule {
     }
 
     pub fn is_memoizable(&self) -> bool {
-        self.is_left_recursive() 
-            || !self.flag(FLAG_NO_MEMO) && self.flag(FLAG_IS_MEMO)
+        self.is_left_recursive() || self.flag(FLAG_IS_MEMO) && !self.flag(FLAG_NO_MEMO)
     }
 
-    pub fn is_identifier(&self) -> bool {
-        self.flag(FLAG_IS_NAME)
-    }
-
-    pub fn has_token_flag(&self) -> bool {
-        self.flag(FLAG_IS_TOKN)
-    }
-
-    pub fn has_no_memo_flag(&self) -> bool {
-        self.flag(FLAG_NO_MEMO)
-    }
-
-    pub fn has_memo_flag(&self) -> bool {
-        self.flag(FLAG_IS_MEMO)
-    }
-
-    pub fn has_left_recursion_flag(&self) -> bool {
-        self.flag(FLAG_IS_LREC)
+    pub fn is_name(&self) -> bool {
+        self.has_is_name_flag()
     }
 
     pub fn is_token(&self) -> bool {
-        self.has_token_flag()
+        self.has_is_tokn_flag()
             || self
                 .name
                 .chars()
@@ -153,8 +136,24 @@ impl Rule {
                 .is_some_and(|c| c.is_uppercase())
     }
 
-    pub fn is_name(&self) -> bool {
+    pub fn has_is_name_flag(&self) -> bool {
         self.flag(FLAG_IS_NAME)
+    }
+
+    pub fn has_is_tokn_flag(&self) -> bool {
+        self.flag(FLAG_IS_TOKN)
+    }
+
+    pub fn has_no_memo_flag(&self) -> bool {
+        self.flag(FLAG_NO_MEMO)
+    }
+
+    pub fn has_is_memo_flag(&self) -> bool {
+        self.flag(FLAG_IS_MEMO)
+    }
+
+    pub fn has_is_lrec_flag(&self) -> bool {
+        self.flag(FLAG_IS_LREC)
     }
 
     pub fn reset_left_recursion(&mut self) {

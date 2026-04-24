@@ -1,14 +1,13 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::Rule;
 use crate::trees::tree::Tree;
 use std::collections::HashMap;
 
-#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Clone, Default, Debug, Eq, PartialEq, Hash)]
 pub struct Key {
     pub mark: usize,
-    pub name: String,
+    pub name: Box<str>,
     pub memo: bool,
 }
 
@@ -23,9 +22,39 @@ pub struct MemoCache {
     memos: HashMap<Key, Memo>,
 }
 
+#[derive(Clone, Default, Debug)]
+pub struct KeyTrack {
+    pub key: Key,
+    pub depth: usize,
+}
+
 impl Default for MemoCache {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl KeyTrack {
+    pub fn track(&mut self, key: &Key) -> usize {
+        if *key == self.key {
+            self.depth += 1;
+        } else {
+            self.key = key.clone();
+            self.depth = 1;
+        }
+        self.depth
+    }
+
+    pub fn untrack(&mut self, key: &Key) -> usize {
+        if *key == self.key {
+            self.depth = self.depth.saturating_sub(1);
+            if self.depth == 0 {
+                self.key = Key::default();
+            }
+            self.depth
+        } else {
+            0
+        }
     }
 }
 
@@ -45,16 +74,8 @@ impl MemoCache {
     pub fn key(mark: usize, name: &str, memo: bool) -> Key {
         Key {
             mark,
-            name: name.to_string(),
+            name: name.into(),
             memo,
-        }
-    }
-
-    pub fn rule_key(mark: usize, rule: &Rule) -> Key {
-        Key {
-            mark,
-            name: rule.name.to_string(),
-            memo: rule.is_memoizable(),
         }
     }
 
