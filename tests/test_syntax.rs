@@ -3,7 +3,7 @@
 
 //! Tests translated from TatSu's grammar/syntax_test.py
 
-use tiexiu::Result;
+use tiexiu::{Cfg, Result};
 use tiexiu::api::{compile, parse_grammar};
 use tiexiu::engine;
 use tiexiu::input::StrCursor;
@@ -26,6 +26,8 @@ fn parse_input(grammar: &Grammar, input: &str) -> Result<tiexiu::trees::Tree> {
 fn test_update_ast() -> Result<()> {
     // TODO: cause of failure - verify AST construction
     let grammar = r#"
+        @@grammar:: grammar
+
         start = 'test' $ ;
     "#;
 
@@ -35,7 +37,7 @@ fn test_update_ast() -> Result<()> {
 
     assert_eq!(parser.name.to_string(), "grammar");
     assert!(!parser.analyzed);
-    assert!(parser.get_directives().is_empty());
+    assert_eq!(parser.get_directives().len(), 1);
     assert!(parser.keywords.is_empty());
 
     for rule in parser.rules() {
@@ -87,7 +89,7 @@ fn test_optional_closure() -> Result<()> {
     "#;
 
     let model = compile(grammar, &[])?;
-    let _ast = parse_input(&model, "xyyzz")?;
+    let _ast = parse_input(&model, "x y y z z")?;
     Ok(())
 }
 
@@ -98,7 +100,7 @@ fn test_optional_sequence() -> Result<()> {
         start = '1' ['2' '3'] '4' $ ;
     "#;
 
-    let model = compile(grammar, &[])?;
+    let model = compile(grammar, &[Cfg::Wsp("".to_string())])?;
     let _ast = parse_input(&model, "1234")?;
     Ok(())
 }
@@ -111,7 +113,7 @@ fn test_group_ast() -> Result<()> {
     "#;
 
     let model = compile(grammar, &[])?;
-    let _ast = parse_input(&model, "1234")?;
+    let _ast = parse_input(&model, "1 2 3 4")?;
     Ok(())
 }
 

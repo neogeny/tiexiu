@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::memo::{Key, Memo, MemoCache};
+use crate::SYM_ETX;
 use crate::cfg::Configurable;
 use crate::engine::state::CallStack;
 use crate::engine::trace::Tracer;
@@ -47,7 +48,7 @@ pub trait Ctx: CtxI + Clone + Debug {
         self.cursor().at_end()
     }
     fn parse_eof(&mut self) -> bool {
-        self.enter("＄");
+        self.enter(SYM_ETX);
         self.tracer().trace_entry(self);
 
         self.next_token();
@@ -59,7 +60,6 @@ pub trait Ctx: CtxI + Clone + Debug {
             self.tracer().trace_failure(self, &ParseError::ExpectingEof);
         }
         self.leave();
-
         result
     }
 
@@ -74,7 +74,6 @@ pub trait Ctx: CtxI + Clone + Debug {
     fn get_pattern(&mut self, pattern: &str) -> Pattern;
 
     fn match_token(&mut self, token: &str) -> bool {
-        // WARNING: this may belong in Cursor, but the Ctx chain holds the regex caching
         self.next_token();
         let result = {
             let wordlike = token.chars().all(|c| c.is_alphanumeric());

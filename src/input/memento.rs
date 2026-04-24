@@ -62,6 +62,7 @@ impl Memento {
         let blue_pipe = style("|").blue().bold();
         let arrow = style("-->").blue().bold();
 
+        writeln!(f)?;
         // 1. Main Error Line: error: <msg>
         writeln!(f, "\n{}: {}", err_label, style(&self.msg).bold())?;
 

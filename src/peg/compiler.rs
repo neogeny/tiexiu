@@ -160,10 +160,7 @@ impl GrammarCompiler {
                 Exp::choice(exps)
             }
             "Option" => self.parse_exp(tree)?,
-            "Closure" => {
-                let inner = map_get(tree, &typename, "exp")?;
-                Exp::closure(self.parse_exp(inner)?)
-            }
+            "Closure" => Exp::closure(self.parse_exp(tree)?),
             "Comment" => Exp::nil(),
             "Constant" => Exp::constant(&tree.value()),
             "Cut" => Exp::cut(),
@@ -180,20 +177,13 @@ impl GrammarCompiler {
             }
             "Grammar" => Exp::nil(),
             "GrammarSemantics" => Exp::nil(),
-            "Group" => {
-                let inner = map_get(tree, &typename, "exp")?;
-                Exp::group(self.parse_exp(inner)?)
-            }
+            "Group" => Exp::group(self.parse_exp(tree)?),
             "Join" => {
                 let exp = map_get(tree, &typename, "exp")?;
                 let sep = map_get(tree, &typename, "sep")?;
                 Exp::join(self.parse_exp(exp)?, self.parse_exp(sep)?)
             }
-            "LeftJoin" => Exp::nil(),
-            "Lookahead" => {
-                let inner = map_get(tree, &typename, "exp")?;
-                Exp::lookahead(self.parse_exp(inner)?)
-            }
+            "Lookahead" => Exp::lookahead(self.parse_exp(tree)?),
             "Model" => Exp::nil(),
             "ModelContext" => Exp::nil(),
             "NULL" => Exp::nil(),
@@ -208,16 +198,10 @@ impl GrammarCompiler {
                 let inner = map_get(tree, &typename, "exp")?;
                 Exp::named_list(&name, self.parse_exp(inner)?)
             }
-            "NegativeLookahead" => {
-                let inner = map_get(tree, &typename, "exp")?;
-                Exp::negative_lookahead(self.parse_exp(inner)?)
-            }
-            "Optional" => {
-                let inner = map_get(tree, &typename, "exp")?;
-                Exp::optional(self.parse_exp(inner)?)
-            }
-            "Override" => Exp::nil(),
-            "OverrideList" => Exp::nil(),
+            "NegativeLookahead" => Exp::negative_lookahead(self.parse_exp(tree)?),
+            "Optional" => Exp::optional(self.parse_exp(tree)?),
+            "Override" => Exp::override_node(self.parse_exp(tree)?),
+            "OverrideList" => Exp::override_list(self.parse_exp(tree)?),
             "Pattern" => Exp::pattern(&tree.value()),
             "Patterns" => {
                 let items = tree.get_list("tree");
@@ -231,21 +215,17 @@ impl GrammarCompiler {
                     Exp::choice(exps)
                 }
             }
-            "PositiveClosure" => {
-                let inner = map_get(tree, &typename, "exp")?;
-                Exp::positive_closure(self.parse_exp(inner)?)
-            }
+            "PositiveClosure" => Exp::positive_closure(self.parse_exp(tree)?),
             "PositiveGather" => {
                 let exp = map_get(tree, &typename, "exp")?;
                 let sep = map_get(tree, &typename, "sep")?;
                 Exp::positive_gather(self.parse_exp(exp)?, self.parse_exp(sep)?)
             }
-            "PositiveJoin" => {
+            "PositiveJoin" | "RightJoin" | "LeftJoin" => {
                 let exp = map_get(tree, &typename, "exp")?;
                 let sep = map_get(tree, &typename, "sep")?;
                 Exp::positive_join(self.parse_exp(exp)?, self.parse_exp(sep)?)
             }
-            "RightJoin" => Exp::nil(),
             "Rule" => Exp::nil(),
             "RuleInclude" => {
                 let name = map_get(tree, &typename, "name")?.value();
@@ -262,14 +242,8 @@ impl GrammarCompiler {
                     .collect::<CompileResult<_>>()?;
                 Exp::sequence(exps)
             }
-            "SkipGroup" => {
-                let inner = map_get(tree, &typename, "exp")?;
-                Exp::skip_group(self.parse_exp(inner)?)
-            }
-            "SkipTo" => {
-                let inner = map_get(tree, &typename, "exp")?;
-                Exp::skip_to(self.parse_exp(inner)?)
-            }
+            "SkipGroup" => Exp::skip_group(self.parse_exp(tree)?),
+            "SkipTo" => Exp::skip_to(self.parse_exp(tree)?),
             "Synth" => Exp::nil(),
             "Token" => Exp::token(&tree.value()),
             "Void" => Exp::void(),
