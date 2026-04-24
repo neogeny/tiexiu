@@ -1,0 +1,1 @@
+I accidentally erased your changes to tokenstck.str. Please do them again. This try to make AtomStack a trait that TokenStack implements. I need that the interface keeps being confortable for the type's user as it is now. If it's not possible to have that, then the generica was a bad idea.
