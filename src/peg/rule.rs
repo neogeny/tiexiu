@@ -120,7 +120,8 @@ impl Rule {
     }
 
     pub fn is_memoizable(&self) -> bool {
-        !self.flag(FLAG_NO_MEMO) && self.flag(FLAG_IS_MEMO)
+        self.is_left_recursive() 
+            || !self.flag(FLAG_NO_MEMO) && self.flag(FLAG_IS_MEMO)
     }
 
     pub fn is_identifier(&self) -> bool {

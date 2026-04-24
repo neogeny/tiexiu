@@ -139,10 +139,15 @@ where
         self.with_heavy_mut(|heavy| heavy.memos.memo(key))
     }
 
-    fn memoize(&mut self, key: &Key, tree: &Tree) {
-        let mark = self.cursor().mark();
+    fn memoize(&mut self, key: &Key, tree: &Tree, lastmark: usize) {
         self.with_heavy_mut(|heavy| {
-            heavy.memos.memoize(key, tree, mark);
+            heavy.memos.memoize(key, tree, lastmark);
+        });
+    }
+
+    fn clear_error_memos(&mut self) {
+        self.with_heavy_mut(|heavy| {
+            heavy.memos.clear_error_memos();
         });
     }
 

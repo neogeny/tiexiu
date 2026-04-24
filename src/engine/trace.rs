@@ -5,6 +5,7 @@ use super::CtxI;
 use crate::peg::ParseError;
 use console::style;
 use std::fmt::Debug;
+use std::io::Write;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct NullTracer {}
@@ -17,6 +18,8 @@ impl Tracer for NullTracer {}
 impl Tracer for ConsoleTracer {
     fn trace(&self, msg: &str) {
         eprintln!("{}", msg);
+        std::io::stderr().flush().ok();
+        std::io::stdout().flush().ok();
     }
 }
 

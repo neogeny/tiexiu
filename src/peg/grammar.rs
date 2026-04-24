@@ -8,6 +8,7 @@ use super::rule::{Rule, RuleMap, RuleRef};
 use crate::cfg::*;
 use crate::engine::Ctx;
 use crate::peg::ParseError::RuleNotFound;
+use crate::{StrCursor, Tree, Yeap, new_ctx};
 use std::rc::Rc;
 
 pub type KeywordRef = Box<str>;
@@ -117,6 +118,15 @@ impl Grammar {
         match self.get_rule(start) {
             Ok(rule) => rule.parse(ctx),
             Err(err) => Err(ctx.failure(start_mark, err)),
+        }
+    }
+
+    pub fn parse_input(&self, text: &str, cfg: &CfgA) -> crate::error::Result<Tree> {
+        let cursor = StrCursor::new(text);
+        let ctx = new_ctx(cursor, cfg);
+        match self.parse(ctx) {
+            Ok(Yeap(_, tree)) => Ok(tree),
+            Err(failure) => Err(failure.into()),
         }
     }
 

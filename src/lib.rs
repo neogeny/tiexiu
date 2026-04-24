@@ -17,6 +17,8 @@ pub mod ui;
 pub mod util;
 
 pub use api::*;
+#[allow(unused_imports)]
+pub use cfg::*;
 pub use error::{Error, Result};
 
 #[cfg(feature = "pyo3")]

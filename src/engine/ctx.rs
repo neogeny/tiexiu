@@ -109,12 +109,18 @@ pub trait Ctx: CtxI + Clone + Debug {
     }
 
     fn key(&mut self, name: &str) -> Key {
-        MemoCache::key(self.mark(), name)
+        MemoCache::key(self.mark(), name, true)
+    }
+
+    fn rule_key(&mut self, rule: &Rule) -> Key {
+        MemoCache::rule_key(self.mark(), rule)
     }
 
     fn memo(&mut self, key: &Key) -> Option<Memo>;
 
-    fn memoize(&mut self, key: &Key, tree: &Tree);
+    fn memoize(&mut self, key: &Key, tree: &Tree, lastmark: usize);
+
+    fn clear_error_memos(&mut self);
 
     fn cut(&mut self); // Only cut() remains
 
@@ -166,7 +172,7 @@ pub trait Ctx: CtxI + Clone + Debug {
 
     fn call(mut self, name: &str, rule: &Rule) -> ParseResult<Self> {
         let start = self.mark();
-        let key = self.key(name);
+        let key = self.rule_key(rule);
 
         self.enter(name);
         self.tracer().trace_entry(&self);
@@ -179,19 +185,19 @@ pub trait Ctx: CtxI + Clone + Debug {
                     && let Tree::Text(name) = &tree
                     && self.is_keyword(name)
                 {
-                    self.memoize(&key, &Tree::Bottom);
+                    self.memoize(&key, &Tree::Bottom, start);
                     let error = ParseError::ReservedWord(name.clone());
                     self.tracer().trace_failure(&self, &error);
                     return Err(self.failure(start, error));
                 }
                 new_ctx.tracer().trace_success(&new_ctx);
-                new_ctx.memoize(&key, &tree);
+                new_ctx.memoize(&key, &tree, self.mark());
                 Ok(Yeap(self.merge(new_ctx), tree))
             }
             Err(nope) => {
                 self.leave();
                 self.tracer().trace_failure(&self, &nope.source);
-                self.memoize(&key, &Tree::Bottom);
+                self.memoize(&key, &Tree::Bottom, start);
                 Err(nope)
             }
         }
@@ -199,7 +205,7 @@ pub trait Ctx: CtxI + Clone + Debug {
 
     fn do_call(mut self, name: &str, rule: &Rule) -> ParseResult<Self> {
         let start = self.mark();
-        let key = self.key(name);
+        let key = self.rule_key(rule);
         if !rule.is_token() {
             self.next_token();
         }
@@ -230,41 +236,42 @@ pub trait Ctx: CtxI + Clone + Debug {
             panic!("Recursive call on non-LRec rule");
         }
 
-        self.memoize(key, &Tree::Bottom);
-        let start_mark = self.mark();
-        let mut best_cst: Option<Tree> = None;
-        let mut high_water_mark = start_mark;
-        let mut last_failure: Option<Nope> = None;
+        let startmark = self.mark();
+        let mut lastmark = startmark;
+        let mut lasttree: Option<Tree> = None;
+        let mut lastnope: Option<Nope> = None;
 
+        self.memoize(key, &Tree::Bottom, startmark);
         loop {
+            // NOTE this is in TatSu and not in pegen
+            //  self.clear_error_memos();
             let mut ctx = self.push();
-            ctx.reset(start_mark);
-
+            ctx.reset(startmark);
             match rule.parse(ctx) {
                 Err(nope) => {
-                    last_failure = Some(nope);
+                    lastnope = Some(nope);
                     break;
                 }
                 Ok(Yeap(mut ctx, tree)) => {
-                    let mark = ctx.mark();
-                    if mark < high_water_mark {
+                    let endmark = ctx.mark();
+                    if endmark <= lastmark {
                         break;
                     }
-
-                    ctx.memoize(key, &tree);
-                    high_water_mark = mark;
-                    best_cst = Some(tree);
+                    ctx.memoize(key, &tree, endmark);
+                    lasttree = Some(tree);
+                    lastmark = endmark;
                     self = self.merge(ctx);
                 }
             }
         }
 
-        if let Some(tree) = best_cst {
+        if let Some(tree) = lasttree && tree != Tree::Bottom {
+            self.reset(lastmark);
             Ok(Yeap(self, tree))
         } else {
-            let nope = last_failure.unwrap_or_else(|| {
-                self.failure(start_mark, ParseError::FailedParse(rule.name.clone()))
-            });
+            let nope = lastnope.unwrap_or(
+                self.failure(startmark, ParseError::FailedParse(rule.name.clone()))
+            );
             Err(nope)
         }
     }

@@ -88,7 +88,7 @@ mod tests {
 
         let key = ctx1.key("hello");
 
-        ctx1.memoize(&key, &Tree::Nil);
+        ctx1.memoize(&key, &Tree::Nil, ctx1.mark());
 
         let retrieved = ctx2.memo(&key);
 
@@ -115,7 +115,7 @@ mod tests {
 
         let entry = Tree::Bottom;
         let key = ctx1.key("world");
-        ctx2.memoize(&key, &entry);
+        ctx2.memoize(&key, &entry, ctx1.mark());
         assert!(
             ctx1.memo(&key).is_some(),
             "Shared cache link was broken by a Copy-on-Write state split"

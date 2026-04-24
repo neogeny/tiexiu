@@ -1,5 +1,5 @@
-use tiexiu::compile;
 use tiexiu::util::indent::dedent_all;
+use tiexiu::{Cfg, Error, compile};
 
 #[test]
 // #[ignore]
@@ -33,5 +33,11 @@ fn test_ebnf_parsing() -> tiexiu::Result<()> {
     assert_eq!(g.rules.len(), 5, "Unexpected number of rules");
     assert_eq!(g.keywords.len(), 4, "Unexpected number of keywords");
 
-    Ok(())
+    eprintln!("GRAMMAR\n{:#?}", g);
+
+    let tree = g.parse_input("3", &[Cfg::Trace])?;
+    eprintln!("{:#?}", tree);
+
+    Err(Error::MessageFromTest("aborted".to_string()))
+    // Ok(())
 }
