@@ -3,6 +3,7 @@ pub mod error;
 mod fmt;
 pub mod fold;
 pub mod map;
+pub mod short;
 pub mod tree;
 
 pub use error::Error;

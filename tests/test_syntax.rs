@@ -3,11 +3,11 @@
 
 //! Tests translated from TatSu's grammar/syntax_test.py
 
-use tiexiu::{Cfg, Result};
 use tiexiu::api::{compile, parse_grammar};
 use tiexiu::engine;
 use tiexiu::input::StrCursor;
 use tiexiu::peg::{ExpKind, Grammar};
+use tiexiu::{Cfg, Result};
 
 fn parse_input(grammar: &Grammar, input: &str) -> Result<tiexiu::trees::Tree> {
     let cursor = StrCursor::new(input);
