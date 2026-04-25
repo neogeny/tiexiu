@@ -48,7 +48,7 @@ regex = ["dep:regex"]
 [dependencies]
 indexmap = "2.13"
 thiserror = "2.0.18"
-fancy-regex = "0.17"
+fancy-regex = "0.18"
 console = "0.16.3"
 
 # --- PyO3 Dependencies ---
