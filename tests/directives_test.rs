@@ -27,18 +27,24 @@ fn whitespace_directive() -> Result<()> {
     Ok(())
 }
 
+// Whitespace None directive - disables automatic whitespace handling.
+// ISSUE: The @@whitespace :: None directive should disable automatic
+// whitespace between tokens. With this directive, `'a' 'b'` should match
+// "ab" without requiring a space.
+// Expected: Grammar with @@whitespace :: None parses "ab" as ["a", "b"]
+// Actual: ParseFailure - directive may not be implemented or not working.
+// This suggests the @@whitespace :: None handling is not implemented.
 #[test]
-    #[ignore = "whitespace None directive not implemented"]
-    fn whitespace_none_directive() -> Result<()> {
-        let grammar = r#"
-            @@whitespace :: None
-            start: 'a' 'b'
-        "#;
-        let grammar = tiexiu::compile(grammar, &[])?;
-        let tree = parse_input(&grammar, "ab", &[])?;
-        assert_eq!(tree.to_value(), json!(["a", "b"]));
-        Ok(())
-    }
+fn whitespace_none_directive() -> Result<()> {
+    let grammar = r#"
+        @@whitespace :: None
+        start: 'a' 'b'
+    "#;
+    let grammar = tiexiu::compile(grammar, &[])?;
+    let tree = parse_input(&grammar, "ab", &[])?;
+    assert_eq!(tree.to_value(), json!(["a", "b"]));
+    Ok(())
+}
 
 #[test]
 fn default_whitespace() -> Result<()> {

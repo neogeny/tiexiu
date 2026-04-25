@@ -43,18 +43,23 @@ fn pattern_with_anchors() -> Result<()> {
     Ok(())
 }
 
+// Case-insensitive pattern matching via @@ignorecase directive.
+// ISSUE: The grammar with @@ignorecase :: True should match "HELLO" with /hello/,
+// but currently the pattern matching is case-sensitive regardless of the directive.
+// Expected: Pattern /hello/ matches "HELLO" when @@ignorecase :: True is set.
+// Actual: Pattern does not match, parse fails with ExpectedPattern error.
+// This suggests the @@ignorecase directive is not being applied to pattern matching.
 #[test]
-    #[ignore = "ignorecase directive not working"]
-    fn pattern_case_insensitive() -> Result<()> {
-        let grammar = r#"
-            @@ignorecase :: True
-            start: /hello/
-        "#;
-        let grammar = tiexiu::compile(grammar, &[])?;
-        let tree = parse_input(&grammar, "HELLO", &[])?;
-        assert_eq!(tree.to_value(), json!("HELLO"));
-        Ok(())
-    }
+fn pattern_case_insensitive() -> Result<()> {
+    let grammar = r#"
+        @@ignorecase :: True
+        start: /hello/
+    "#;
+    let grammar = tiexiu::compile(grammar, &[])?;
+    let tree = parse_input(&grammar, "HELLO", &[])?;
+    assert_eq!(tree.to_value(), json!("HELLO"));
+    Ok(())
+}
 
 #[test]
 fn regex_character_classes() -> Result<()> {
