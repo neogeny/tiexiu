@@ -126,8 +126,7 @@ fn named_value(kind: &str, keyval: &KeyValue) -> Value {
 
 fn map_entries_value(m: &TreeMap) -> Value {
     Value::Array(
-        m.entries
-            .iter()
+        m.iter()
             .map(|(key, value)| {
                 named(
                     "Entry",
@@ -170,7 +169,7 @@ fn map_from_entries(value: &Value) -> Result<TreeMap, TreeJsonError> {
         let object = expect_object(entry, "entry")?;
         let key = expect_string(field(object, "key")?, "key")?;
         let tree = Tree::from_serde_json_value(field(object, "value")?)?;
-        m.entries.insert(key.into(), tree);
+        m.insert(key, tree);
     }
     Ok(m)
 }

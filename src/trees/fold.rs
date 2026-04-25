@@ -25,7 +25,7 @@ impl<O> Translates<O> for Tree {
                 trans.translate(self, outputs.as_slice())
             },
             Tree::Map(map) => {
-                let outputs: Vec<O> = map.entries
+                let outputs: Vec<O> = map
                     .iter()
                     .map(
                         |(k, v)|

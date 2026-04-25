@@ -29,7 +29,7 @@ impl Tree {
             }
             Tree::Map(m) => {
                 let mut obj = Map::new();
-                for (k, v) in m.entries.iter() {
+                for (k, v) in m.iter() {
                     obj.insert(k.to_string(), v.to_value());
                 }
                 Value::Object(obj)

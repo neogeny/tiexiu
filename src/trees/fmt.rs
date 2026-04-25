@@ -15,8 +15,7 @@ impl Debug for Tree {
 impl fmt::Display for TreeMap {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // Collect and sort keys for a stable, predictable string
-        let mut keys: Vec<&str> = self.entries.keys().map(|k| k.deref()).collect();
-        keys.sort();
+        let keys: Vec<&str> = self.iter().map(|(k, _)| k.deref()).collect();
 
         write!(f, "m(&[")?;
         for (i, key) in keys.iter().enumerate() {
@@ -24,7 +23,7 @@ impl fmt::Display for TreeMap {
                 write!(f, ", ")?;
             }
             // Safe to unwrap because we just got the key from the map
-            write!(f, "({:?}, {})", key, self.entries.get(*key).unwrap())?;
+            write!(f, "({:?}, {})", key, self.get(key).unwrap())?;
         }
         write!(f, "])")
     }
@@ -66,23 +65,22 @@ impl fmt::Display for Tree {
 
 #[cfg(test)]
 mod tests {
-    use crate::trees::{KeyValue, MapEntries, Tree, TreeMap};
+    use crate::trees::{KeyValue, Tree, TreeMap};
     use indexmap::IndexMap;
 
     #[test]
     fn test_treemap_display() {
-        let mut map = MapEntries::new();
+        let mut map = IndexMap::new();
         map.insert("key1".into(), Tree::Text("value1".into()));
         map.insert("key2".into(), Tree::Text("value2".into()));
-        let map = TreeMap { entries: map };
+        let entries: Vec<_> = map.into_iter().collect();
+        let map: TreeMap = entries.into();
         assert_eq!(
             map.to_string(),
             "m(&[(\"key1\", t(\"value1\")), (\"key2\", t(\"value2\"))])"
         );
 
-        let empty_map = TreeMap {
-            entries: IndexMap::new(),
-        };
+        let empty_map = TreeMap::new();
         assert_eq!(empty_map.to_string(), "m(&[])");
     }
 
@@ -120,9 +118,10 @@ mod tests {
         );
 
         // Tags
-        let mut map = MapEntries::new();
+        let mut map = IndexMap::new();
         map.insert("a".into(), Tree::Text("1".into()));
-        let map = TreeMap { entries: map };
+        let entries: Vec<_> = map.into_iter().collect();
+        let map: TreeMap = entries.into();
         assert_eq!(
             Tree::Map(map.into()).to_string(),
             "m(m(&[(\"a\", t(\"1\"))]))"

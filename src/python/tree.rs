@@ -30,7 +30,7 @@ fn to_python(tree: &Tree, py: Python<'_>) -> PyResult<Py<PyAny>> {
         }
         Tree::Map(m) => {
             let dict = PyDict::new(py);
-            for (k, v) in &m.entries {
+            for (k, v) in m.iter() {
                 let key: String = (*k).clone().into();
                 dict.set_item(&key, to_python(v, py)?)?;
             }
@@ -41,7 +41,7 @@ fn to_python(tree: &Tree, py: Python<'_>) -> PyResult<Py<PyAny>> {
             let dict = PyDict::new(py);
             dict.set_item("__class__", &name)?;
             if let Tree::Map(m) = tree.as_ref() {
-                for (k, v) in &m.entries {
+                for (k, v) in m.iter() {
                     let key: String = (*k).clone().into();
                     dict.set_item(&key, to_python(v, py)?)?
                 }

@@ -4,14 +4,30 @@
 use super::tree::Tree;
 use crate::cfg::types::Define;
 use crate::types::Str;
-use indexmap::IndexMap;
+use std::rc::Rc;
 
-pub type MapEntries = IndexMap<Str, Tree>;
+/// A lean, ordered association list for AST nodes.
+/// Uses a single allocation to maximize cache locality for lookups.
+pub type TreeEntrySlice = Rc<[(Str, Tree)]>;
 
-/// A structured mapping for AST nodes.
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct TreeMap {
-    pub entries: MapEntries,
+    entries: TreeEntrySlice,
+}
+
+// Support for bulk construction via .into()
+impl From<Vec<(Str, Tree)>> for TreeMap {
+    fn from(vec: Vec<(Str, Tree)>) -> Self {
+        TreeMap {
+            entries: vec.into(),
+        }
+    }
+}
+
+impl From<TreeMap> for Vec<(Str, Tree)> {
+    fn from(tree_map: TreeMap) -> Self {
+        tree_map.entries.as_ref().to_vec()
+    }
 }
 
 impl TreeMap {
@@ -19,16 +35,26 @@ impl TreeMap {
         Self::default()
     }
 
+    /// Returns an iterator over the map entries as borrowed pairs.
+    pub fn iter(&self) -> std::slice::Iter<'_, (Str, Tree)> {
+        self.entries.iter()
+    }
+
     pub fn is_empty(&self) -> bool {
         self.entries.is_empty()
     }
 
+    /// Optimized linear lookup for small N.
+    /// Bypasses hashing and stays within the L1 cache.
     pub fn get(&self, key: &str) -> Option<&Tree> {
-        self.entries.get(key)
+        self.entries
+            .iter()
+            .find(|(k, _)| k.as_ref() == key)
+            .map(|(_, v)| v)
     }
 
     pub fn update(&mut self, other: &TreeMap) {
-        for (key, value) in &other.entries {
+        for (key, value) in other.entries.iter() {
             if let Tree::Seq(items) = value {
                 for item in items.iter() {
                     self.insert_as_list(key, item.clone());
@@ -44,34 +70,51 @@ impl TreeMap {
     }
 
     pub fn define(&mut self, keys: &[Define]) {
+        let mut entries: Vec<(Str, Tree)> = self.entries.as_ref().to_vec();
         for (k, aslist) in keys {
             let key = self.safe_key(k);
-            if *aslist {
-                self.entries.entry(key).or_insert(Tree::list(&[]));
-            } else {
-                self.entries.entry(key).or_insert(Tree::Nil);
+            if !entries.iter().any(|(k, _)| k == &key) {
+                let val = if *aslist { Tree::list(&[]) } else { Tree::Nil };
+                entries.push((key, val));
             }
         }
+        self.entries = entries.into();
     }
 
     pub fn insert(&mut self, key: &str, item: Tree) {
         let key = self.safe_key(key);
-        let mut new = item;
-        if let Some(current) = self.entries.get(&key) {
-            new = current.clone().append(new);
-        }
-        self.entries.insert(key, new);
+        let mut entries: Vec<(Str, Tree)> = self.entries.as_ref().to_vec();
+
+        let new_val = if let Some(current) = entries.iter().find(|(k, _)| k == &key) {
+            current.1.clone().append(item)
+        } else {
+            item
+        };
+
+        self.update_or_push(&mut entries, key, new_val);
+        self.entries = entries.into();
     }
 
     pub fn insert_as_list(&mut self, key: &str, item: Tree) {
         let key = self.safe_key(key);
-        let mut new = item;
-        if let Some(current) = self.entries.get(&key) {
-            new = current.clone().append_as_list(new);
+        let mut entries: Vec<(Str, Tree)> = self.entries.as_ref().to_vec();
+
+        let new_val = if let Some(current) = entries.iter().find(|(k, _)| k == &key) {
+            current.1.clone().append_as_list(item)
         } else {
-            new = Tree::Seq([new].into());
+            Tree::Seq([item].into())
+        };
+
+        self.update_or_push(&mut entries, key, new_val);
+        self.entries = entries.into();
+    }
+
+    fn update_or_push(&self, entries: &mut Vec<(Str, Tree)>, key: Str, val: Tree) {
+        if let Some(existing) = entries.iter_mut().find(|(k, _)| k == &key) {
+            existing.1 = val;
+        } else {
+            entries.push((key, val));
         }
-        self.entries.insert(key, new);
     }
 
     fn safe_key(&self, key: &str) -> Str {

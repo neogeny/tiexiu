@@ -255,7 +255,7 @@ impl Tree {
             Tree::Override(inner) | Tree::OverrideAsList(inner) => inner.width(),
             Tree::Nil | Tree::Bottom => 0,
             Tree::Seq(items) | Tree::Closed(items) => items.iter().map(|item| item.width()).sum(),
-            Tree::Map(map) => map.entries.values().map(|node| node.width()).sum(),
+            Tree::Map(map) => map.iter().map(|(_, node)| node.width()).sum(),
             Tree::Named(pair) | Tree::NamedAsList(pair) => {
                 let KeyValue(_, val) = pair;
                 val.width()
