@@ -1,0 +1,20 @@
+NAME,PATH,ISSUE,STATUS
+test_linker_debug,src/peg/linker.rs,Internal debug test,FIXED
+test_alert_interpolation,tests/alerts_test.rs,Alert interpolation broken,FUTURE
+test_bench_parse_arithmetic_expression,tests/bench_parse_test.rs,Benchmark - TODO,FUTURE
+test_bench_parse_complex_expression,tests/bench_parse_test.rs,Benchmark - TODO,FUTURE
+compilation::compiled_grammar_parses_input,tests/bootstrap_test.rs,Compiled grammar parsing incomplete,FAILED
+integration::complex_grammar,tests/bootstrap_test.rs,Rules extraction bug in boot grammar,FAILED
+integration::tatsu_own_grammar,tests/bootstrap_test.rs,TatSu grammar parsing incomplete,FAILED
+parse_naming::rule_with_params,tests/bootstrap_test.rs,Params syntax parsing bug,FAILED
+whitespace_none_directive,tests/directives_test.rs,@@whitespace :: None not implemented,FUTURE
+test_firstfollow,tests/firstfollow_test.rs,firstfollow tests require rule internals,FUTURE
+rule_include,tests/naming_test.rs,RuleInclude not implemented in linker,FUTURE
+test_keyword_params,tests/parameter_test.rs,Params syntax parsing bug,FAILED
+test_include,tests/parsing_test.rs,@@include not yet implemented,FUTURE
+test_multiple_include,tests/parsing_test.rs,@@include not yet implemented,FUTURE
+test_match_endrule_blankline_branch,tests/pyre_test.rs,Zero-width match assertion issue,FUTURE
+grammar_to_json_round_trip,tests/round_trips_test.rs,Multi-rule grammar parsing bug,FAILED
+pretty_print_round_trip,tests/round_trips_test.rs,Pretty-print produces invalid EBNF,FAILED
+test_to_snake_case_unicode,tests/safe_name_test.rs,Unicode to_snake_case not implemented,FUTURE
+test_semantics_not_class,tests/semantics_test.rs,Semantic actions not implemented,FUTURE

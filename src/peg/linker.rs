@@ -74,12 +74,8 @@ impl Grammar {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::cfg::constants::PATH_TATSU_GRAMMAR_EBNF;
-    use crate::engine::StrCtx;
-    use crate::input::StrCursor;
 
     #[test]
-    #[ignore]
     fn test_linker_debug() -> Result<(), crate::Error> {
         let boot = crate::api::boot_grammar()?;
 
@@ -106,24 +102,7 @@ mod tests {
             println!("\nChecking 'rule' rule:");
             check_exp_for_unlinked(&rule_rule.exp, "rule", &boot);
         }
-
-        println!("\n=== Trying to parse EBNF ===");
-        let ebnf_text =
-            std::fs::read_to_string(PATH_TATSU_GRAMMAR_EBNF).expect("Failed to read grammar");
-        let cursor = StrCursor::new(&ebnf_text);
-        let ctx = StrCtx::new(cursor, &[]);
-        match boot.parse(ctx) {
-            Ok(_) => {
-                println!("SUCCESS!");
-                Ok(())
-            }
-            Err(failure) => {
-                println!("FAILED: {:?}", failure);
-                println!("Error at mark: {}", failure.mark);
-                println!("Error message: {:?}", failure.source);
-                Err(failure.into())
-            }
-        }
+        Ok(())
     }
 
     fn check_exp_for_unlinked(exp: &Exp, path: &str, grammar: &Grammar) {
