@@ -1,6 +1,6 @@
 orphan
 
-:   
+:
 
 # Grammar Syntax
 
@@ -67,7 +67,7 @@ The expressions, in reverse order of operator precedence, can be any of
 the following.
 
 > **note**
-> 
+>
 > Because **TieXiu** now supports free-form [EBNF][], there must not be empty lines within expressions.
 
 [EBNF]: https://en.wikipedia.org/wiki/Extended_Backus–Naur_form
@@ -459,7 +459,7 @@ complete rule or choice be the
 [AST](http://en.wikipedia.org/wiki/Abstract_syntax_tree) for `e`.
 
 > **note**
-> 
+>
 >As with `name=e`, the effect of `=e` is scoped to the enclosing *option*, *group*, *optional*, or *closure*, and will apply only when the enclosure parses successfully.
 
 This expression is useful to recover only part of the right hand side of
@@ -492,6 +492,17 @@ arglist: '(' +=arg {',' +=arg}* ')'
 
 The *end of text* symbol. Verify that the end of the input text has been
 reached.
+
+### `$->`
+
+The *end of line* symbol. Verify that the end of the current line has
+been reached. This is useful for parsing line-based formats, such as
+configuration files, or for parsing comments.
+
+The `$->` (EOL) expression will consume the whitespace up to and including the next line break, using the Python semantics of `os.linesep`. The match interprets whitespace using the Python definition as implemented by `str .isspace()`, so beware when a particular definition of *whitespace* is part of the language being parsed.
+
+Comments, as defined for the grammar, will also be skipped by the `$->` expression in search of a newline, which means that newlines consummed by the comments patterns will not be *"seen"* by `$->`.
+
 
 ## Rules with Arguments
 
