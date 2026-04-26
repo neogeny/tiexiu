@@ -171,7 +171,7 @@ where
     fn cut(&mut self) {
         self.tracer().trace_cut(self);
         self.state_mut().cutseen = true;
-        self.prune_cache();
+        // self.prune_cache();
     }
 
     fn prune_cache(&mut self) {

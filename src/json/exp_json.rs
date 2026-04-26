@@ -136,143 +136,142 @@ impl Exp {
 impl ExpKind {
     pub fn to_serde_value(&self) -> Value {
         let mut obj = Map::new();
+        let tag = TATSU_TYPE_TAG.to_string();
 
         match self {
             Self::EmptyClosure => {
-                obj.insert("__class__".into(), Value::String("EmptyClosure".into()));
+                obj.insert(tag, Value::String("EmptyClosure".into()));
             }
             ExpKind::Nil | ExpKind::Void => {
-                obj.insert("__class__".into(), Value::String("Void".into()));
+                obj.insert(tag, Value::String("Void".into()));
             }
             ExpKind::Fail => {
-                obj.insert("__class__".into(), Value::String("Fail".into()));
+                obj.insert(tag, Value::String("Fail".into()));
             }
             ExpKind::Dot => {
-                obj.insert("__class__".into(), Value::String("Dot".into()));
+                obj.insert(tag, Value::String("Dot".into()));
             }
             ExpKind::Call { name, .. } => {
-                obj.insert("__class__".into(), Value::String("Call".into()));
+                obj.insert(tag, Value::String("Call".into()));
                 obj.insert("name".into(), Value::String(name.as_ref().to_string()));
             }
             ExpKind::Token(s) => {
-                obj.insert("__class__".into(), Value::String("Token".into()));
+                obj.insert(tag, Value::String("Token".into()));
                 obj.insert("token".into(), Value::String(s.as_ref().to_string()));
             }
             ExpKind::Pattern(s) => {
-                obj.insert("__class__".into(), Value::String("Pattern".into()));
+                obj.insert(tag, Value::String("Pattern".into()));
                 obj.insert("pattern".into(), Value::String(s.as_ref().to_string()));
             }
             ExpKind::Constant(s) => {
-                obj.insert("__class__".into(), Value::String("Constant".into()));
+                obj.insert(tag, Value::String("Constant".into()));
                 obj.insert("literal".into(), Value::String(s.as_ref().to_string()));
             }
             ExpKind::Alert(s, level) => {
-                obj.insert("__class__".into(), Value::String("Alert".into()));
+                obj.insert(tag, Value::String("Alert".into()));
                 obj.insert("literal".into(), Value::String(s.as_ref().to_string()));
                 obj.insert("level".into(), Value::Number((*level).into()));
             }
             ExpKind::Named(name, inner) => {
-                obj.insert("__class__".into(), Value::String("Named".into()));
+                obj.insert(tag, Value::String("Named".into()));
                 obj.insert("name".into(), Value::String(name.as_ref().to_string()));
                 obj.insert("exp".into(), inner.to_json_exp());
             }
             ExpKind::NamedList(name, inner) => {
-                obj.insert("__class__".into(), Value::String("NamedList".into()));
+                obj.insert(tag, Value::String("NamedList".into()));
                 obj.insert("name".into(), Value::String(name.as_ref().to_string()));
                 obj.insert("exp".into(), inner.to_json_exp());
             }
             ExpKind::Override(inner) => {
-                obj.insert("__class__".into(), Value::String("Override".into()));
+                obj.insert(tag, Value::String("Override".into()));
                 obj.insert("exp".into(), inner.to_json_exp());
             }
             ExpKind::OverrideList(inner) => {
-                obj.insert("__class__".into(), Value::String("OverrideList".into()));
+                obj.insert(tag, Value::String("OverrideList".into()));
                 obj.insert("exp".into(), inner.to_json_exp());
             }
             ExpKind::Group(inner) => {
-                obj.insert("__class__".into(), Value::String("Group".into()));
+                obj.insert(tag, Value::String("Group".into()));
                 obj.insert("exp".into(), inner.to_json_exp());
             }
             ExpKind::SkipGroup(inner) => {
-                obj.insert("__class__".into(), Value::String("SkipGroup".into()));
+                obj.insert(tag, Value::String("SkipGroup".into()));
                 obj.insert("exp".into(), inner.to_json_exp());
             }
             ExpKind::Lookahead(inner) => {
-                obj.insert("__class__".into(), Value::String("Lookahead".into()));
+                obj.insert(tag, Value::String("Lookahead".into()));
                 obj.insert("exp".into(), inner.to_json_exp());
             }
             ExpKind::NegativeLookahead(inner) => {
-                obj.insert(
-                    "__class__".into(),
-                    Value::String("NegativeLookahead".into()),
-                );
+                obj.insert(tag, Value::String("NegativeLookahead".into()));
                 obj.insert("exp".into(), inner.to_json_exp());
             }
             ExpKind::SkipTo(inner) => {
-                obj.insert("__class__".into(), Value::String("SkipTo".into()));
+                obj.insert(tag, Value::String("SkipTo".into()));
                 obj.insert("exp".into(), inner.to_json_exp());
             }
             ExpKind::Sequence(arr) => {
-                obj.insert("__class__".into(), Value::String("Sequence".into()));
+                obj.insert(tag, Value::String("Sequence".into()));
                 let seq: Vec<Value> = arr.iter().map(|e| e.to_json_exp()).collect();
                 obj.insert("sequence".into(), Value::Array(seq));
             }
             ExpKind::Choice(arr) => {
-                obj.insert("__class__".into(), Value::String("Choice".into()));
+                obj.insert(tag, Value::String("Choice".into()));
                 let opts: Vec<Value> = arr.iter().map(|e| e.to_json_exp()).collect();
                 obj.insert("options".into(), Value::Array(opts));
             }
             ExpKind::Alt(inner) => {
-                obj.insert("__class__".into(), Value::String("Option".into()));
+                obj.insert(tag, Value::String("Option".into()));
                 obj.insert("exp".into(), inner.to_json_exp());
             }
             ExpKind::Optional(inner) => {
-                obj.insert("__class__".into(), Value::String("Optional".into()));
+                obj.insert(tag, Value::String("Optional".into()));
                 obj.insert("exp".into(), inner.to_json_exp());
             }
             ExpKind::Closure(inner) => {
-                obj.insert("__class__".into(), Value::String("Closure".into()));
+                obj.insert(tag, Value::String("Closure".into()));
                 obj.insert("exp".into(), inner.to_json_exp());
             }
             ExpKind::PositiveClosure(inner) => {
-                obj.insert("__class__".into(), Value::String("PositiveClosure".into()));
+                obj.insert(tag, Value::String("PositiveClosure".into()));
                 obj.insert("exp".into(), inner.to_json_exp());
             }
             ExpKind::Join { exp, sep } => {
-                obj.insert("__class__".into(), Value::String("Join".into()));
+                obj.insert(tag, Value::String("Join".into()));
                 obj.insert("exp".into(), exp.to_json_exp());
                 obj.insert("sep".into(), sep.to_json_exp());
             }
             ExpKind::PositiveJoin { exp, sep } => {
-                obj.insert("__class__".into(), Value::String("PositiveJoin".into()));
+                obj.insert(tag, Value::String("PositiveJoin".into()));
                 obj.insert("exp".into(), exp.to_json_exp());
                 obj.insert("sep".into(), sep.to_json_exp());
             }
             ExpKind::Gather { exp, sep } => {
-                obj.insert("__class__".into(), Value::String("Gather".into()));
+                obj.insert(tag, Value::String("Gather".into()));
                 obj.insert("exp".into(), exp.to_json_exp());
                 obj.insert("sep".into(), sep.to_json_exp());
             }
             ExpKind::PositiveGather { exp, sep } => {
-                obj.insert("__class__".into(), Value::String("PositiveGather".into()));
+                obj.insert(tag, Value::String("PositiveGather".into()));
                 obj.insert("exp".into(), exp.to_json_exp());
                 obj.insert("sep".into(), sep.to_json_exp());
             }
-            ExpKind::RuleInclude { name, exp } => {
-                obj.insert("__class__".into(), Value::String("RuleInclude".into()));
+            ExpKind::RuleInclude { name, exp: _ } => {
+                obj.insert(tag, Value::String("RuleInclude".into()));
                 obj.insert("name".into(), Value::String(name.as_ref().to_string()));
-                if let Some(inner) = exp {
-                    obj.insert("exp".into(), inner.to_json_exp());
-                }
+                // NOTE: Hide the linked exp in transitions
+                // if let Some(inner) = exp {
+                //     obj.insert("exp".into(), inner.to_json_exp());
+                // }
             }
             ExpKind::Eof => {
-                obj.insert("__class__".into(), Value::String("EOF".into()));
+                obj.insert(tag, Value::String("EOF".into()));
             }
             ExpKind::Eol => {
-                obj.insert("__class__".into(), Value::String("EOL".into()));
+                obj.insert(tag, Value::String("EOL".into()));
             }
             ExpKind::Cut => {
-                obj.insert("__class__".into(), Value::String("Cut".into()));
+                obj.insert(tag, Value::String("Cut".into()));
             }
         }
 

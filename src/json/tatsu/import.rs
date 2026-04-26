@@ -90,10 +90,7 @@ impl TryFrom<TatSuModel> for Exp {
             TatSuModel::Grammar { .. } | TatSuModel::Rule { .. } => {
                 Err(JsonError::UnsupportedModel(format!("{:?}", model)))
             }
-            TatSuModel::RuleInclude { name, exp } => {
-                let inner_exp = Exp::try_from(*exp)?;
-                Ok(Exp::rule_include_with(&name, inner_exp))
-            }
+            TatSuModel::RuleInclude { name, exp: _ } => Ok(Exp::rule_include(&name)),
             TatSuModel::LeftJoin { .. } => Err(JsonError::UnsupportedModel("LeftJoin".into())),
             TatSuModel::RightJoin { .. } => Err(JsonError::UnsupportedModel("RightJoin".into())),
 

@@ -162,7 +162,7 @@ impl Grammar {
         }
 
         let name = path.get_string("name")?;
-        let analyzed = path.opt_bool("analyzed", false);
+        let _analyzed = path.opt_bool("analyzed", false);
 
         let rules = path.get_array("rules")?;
         let rule_vec: Result<Vec<_>, _> = rules
@@ -192,7 +192,7 @@ impl Grammar {
                 .collect::<Vec<_>>()
                 .as_slice(),
         );
-        grammar.analyzed = analyzed;
+        grammar.analyzed = false;
         grammar.set_directives(directives);
         grammar.keywords = keywords.into();
         grammar.initialize();
@@ -353,22 +353,7 @@ impl Exp {
             )),
             "RuleInclude" => {
                 let name = path.get_string("name")?;
-                let exp = path
-                    .get_obj()
-                    .ok()
-                    .and_then(|o| o.get("exp"))
-                    .and_then(|v| {
-                        if v.is_null() {
-                            None
-                        } else {
-                            Some(Exp::from_serde_json_value(v))
-                        }
-                    });
-                match exp {
-                    Some(Ok(inner)) => Ok(Exp::rule_include_with(&name, inner)),
-                    Some(Err(e)) => Err(e),
-                    None => Ok(Exp::rule_include(&name)),
-                }
+                Ok(Exp::rule_include(&name))
             }
             "Void" => Ok(Exp::void()),
             "Cut" => Ok(Exp::cut()),

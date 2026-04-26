@@ -8,6 +8,7 @@ use super::rule::{Rule, RuleMap, RuleRef};
 use crate::cfg::*;
 use crate::engine::Ctx;
 use crate::peg::ParseError::RuleNotFound;
+use crate::rule::RuleName;
 use crate::types::{Ref, Str};
 use crate::{StrCursor, Tree, Yeap, new_ctx};
 use std::rc::Rc;
@@ -58,6 +59,7 @@ impl Grammar {
     pub fn initialize(&mut self) {
         self.mark_left_recursion();
         self.link();
+        self.analyzed = true;
     }
 
     pub fn get_directives(&self) -> &GrammarDirectives {
@@ -94,31 +96,31 @@ impl Grammar {
             .is_ok()
     }
 
-    pub fn start_rule(&self) -> Result<&Rule, ParseError> {
+    pub fn start_rule(&self) -> Result<RuleName, ParseError> {
         if self.rules.is_empty() {
             return Err(ParseError::NoRulesInGrammar);
         }
         let start = "start";
-        self.rules
-            .get(start)
-            .map(|r| r.as_ref())
-            .or_else(|| self.rules.get_index(0).map(|(_, r)| r.as_ref()))
-            .ok_or_else(|| RuleNotFound(start.into()))
+        match self.rules.get(start) {
+            Some(rule) => Ok(rule.name.clone()),
+            None => self
+                .rules
+                .get_index(0)
+                .map_or(Err(RuleNotFound(start.into())), |(_, r)| Ok(r.name.clone())),
+        }
     }
 
-    pub fn parse<C: Ctx>(&self, mut ctx: C) -> ParseResult<C> {
-        let start_mark = ctx.mark();
-        ctx.configure(&self.directives);
-        ctx.set_keywords(&self.keywords);
+    pub fn parse<C: Ctx>(&self, ctx: C) -> ParseResult<C> {
         match self.start_rule() {
-            Ok(rule) => rule.parse(ctx),
-            Err(err) => Err(ctx.failure(start_mark, err)),
+            Ok(start) => self.parse_from(start.as_ref(), ctx),
+            Err(e) => Err(ctx.failure(ctx.mark(), e)),
         }
     }
 
     pub fn parse_from<C: Ctx>(&self, start: &str, mut ctx: C) -> ParseResult<C> {
         let start_mark = ctx.mark();
         ctx.configure(&self.directives);
+        ctx.set_keywords(&self.keywords);
         match self.get_rule(start) {
             Ok(rule) => rule.parse(ctx),
             Err(err) => Err(ctx.failure(start_mark, err)),

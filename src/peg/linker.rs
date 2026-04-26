@@ -32,9 +32,8 @@ impl Grammar {
             }
 
             ExpKind::RuleInclude { name, exp } => {
-                if exp.is_none()
-                    && let Ok(rule) = grammar.get_rule(name)
-                {
+                // if exp.is_none() WARNING Always link!
+                if let Ok(rule) = grammar.get_rule(name) {
                     *exp = Some(rule.exp.clone().into());
                 }
             }

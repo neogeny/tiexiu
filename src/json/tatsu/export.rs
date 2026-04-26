@@ -156,11 +156,9 @@ impl From<Exp> for TatSuModel {
                 exp: TatSuModel::from(*exp).into(),
                 sep: TatSuModel::from(*sep).into(),
             },
-            ExpKind::RuleInclude { name, exp } => TatSuModel::RuleInclude {
+            ExpKind::RuleInclude { name, exp: _ } => TatSuModel::RuleInclude {
                 name: name.into(),
-                exp: exp
-                    .map_or(TatSuModel::Void, |e| TatSuModel::from(*e))
-                    .into(),
+                exp: None,
             },
             _ => unreachable!("Conversion for variant not implemented"),
         }

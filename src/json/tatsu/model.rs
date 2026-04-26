@@ -11,8 +11,8 @@ fn default_false() -> bool {
     false
 }
 
-fn default_void() -> Box<TatSuModel> {
-    TatSuModel::Void.into()
+fn default_none() -> Option<Box<TatSuModel>> {
+    None
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -31,8 +31,8 @@ pub enum TatSuModel {
     },
     RuleInclude {
         name: String,
-        #[serde(default = "default_void")]
-        exp: Box<TatSuModel>, // HERE
+        #[serde(default = "default_none")]
+        exp: Option<Box<TatSuModel>>, // HERE
     },
     Rule {
         name: String,

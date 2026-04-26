@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+pub const TATSU_TYPE_TAG: &str = "__class__";
 pub const ENV_PREFIX: &str = "TIEXIU";
 
 // Paths for unit tests

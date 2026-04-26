@@ -53,14 +53,18 @@ pub trait Tracer: Debug {
             Event::NoMatch => style("≢").red(),
         }
         .to_string();
+        let stack_symbol: String = match event {
+            Event::Success => style("→").green(),
+            Event::Failure => style("→").red(),
+            Event::NoMatch => style("←").red(),
+            Event::Match => style("←").green(),
+            _ => style("←").yellow(),
+        }
+        .to_string();
         let lookahead = ctx.cursor().lookahead(ctx.mark()).replace(" ", "·");
-        let callstack = style(
-            ctx.callstack()
-                .to_vec()
-                .join(style("←").green().to_string().as_str()),
-        )
-        .white()
-        .bold();
+        let callstack = style(ctx.callstack().to_vec().join(stack_symbol.as_str()))
+            .white()
+            .bold();
 
         let location = ctx.cursor().location();
         let source = location.source.to_string();

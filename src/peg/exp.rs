@@ -107,7 +107,7 @@ pub enum ExpKind {
 
         // NOTE
         //   No recursion, but a repetition that may be large
-        #[derivative(Debug(format_with = "debug_none"))]
+        // #[derivative(Debug(format_with = "debug_none"))]
         exp: Option<ERef>,
     },
 }
@@ -151,7 +151,10 @@ impl Exp {
             ExpKind::EmptyClosure => Ok(Yeap(ctx, Tree::from(vec![]).closed())),
             ExpKind::Nil => Ok(Yeap(ctx, Tree::Nil)),
             ExpKind::RuleInclude { name, exp } => match exp {
-                None => Err(ctx.failure(start, ParseError::RuleNotLinked(name.clone()))),
+                None => {
+                    // Err(ctx.failure(start, ParseError::RuleNotLinked(name.clone())))
+                    panic!("Unlinked rule {name}")
+                }
                 Some(exp) => exp.parse(ctx),
             },
             ExpKind::Call { name, rule } => match rule {
