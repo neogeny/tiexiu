@@ -72,7 +72,7 @@ impl Grammar {
             .iter()
             .find(|k| matches!(k, Cfg::Grammar(_)))
         {
-            self.name = name.clone().into_boxed_str();
+            self.name = name.clone().into();
         }
     }
 
@@ -83,7 +83,7 @@ impl Grammar {
         vec.dedup();
 
         // 3. Shrink to fit and freeze as a boxed slice
-        self.keywords = vec.into_boxed_slice();
+        self.keywords = vec.into();
     }
 
     /// Check if a string is a reserved keyword.

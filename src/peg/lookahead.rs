@@ -29,7 +29,7 @@ impl Exp {
 
         let mut vec: Vec<Str> = lookaheads.iter().cloned().collect();
         vec.sort();
-        self.la = Some(vec.into_boxed_slice().into());
+        self.la = Some(vec.into());
 
         lookaheads
     }

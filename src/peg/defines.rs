@@ -25,12 +25,12 @@ impl Exp {
                 exp._defines(names);
             }
             ExpKind::Sequence(arr) => {
-                for exp in arr.iter() {
+                for exp in &**arr {
                     exp._defines(names);
                 }
             }
             ExpKind::Choice(arr) => {
-                for exp in arr.iter() {
+                for exp in &**arr {
                     exp._defines(names);
                 }
             }

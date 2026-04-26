@@ -11,7 +11,6 @@ use crate::types::Ref;
 use crate::util::pyre;
 use derivative::Derivative;
 use std::fmt;
-use std::ops::Deref;
 use std::rc::Rc;
 
 pub type ERef = Ref<Exp>;
@@ -128,9 +127,9 @@ impl Exp {
     pub fn lookahead_str(&self) -> Str {
         self.la
             .as_ref()
-            .map(|la| la.iter().map(AsRef::as_ref).collect::<Vec<_>>().join(" "))
+            .map(|la| la.iter().map(|s| s.as_ref()).collect::<Vec<_>>().join(" "))
             .unwrap_or_default()
-            .into_boxed_str()
+            .into()
     }
 
     // #[track_caller]
@@ -176,7 +175,7 @@ impl Exp {
             ExpKind::Fail => Err(ctx.failure(start, ParseError::Fail)),
             ExpKind::Dot => {
                 if let Some(c) = ctx.next() {
-                    Ok(Yeap(ctx, Tree::text(c.to_string().as_str())))
+                    Ok(Yeap(ctx, Tree::Text(c.to_string().into())))
                 } else {
                     Err(ctx.failure(start, ParseError::NoMoreInput))
                 }
@@ -198,9 +197,9 @@ impl Exp {
 
             ExpKind::Token(token) => {
                 if ctx.match_token(token) {
-                    Ok(Yeap(ctx, Tree::Text(token.deref().into())))
+                    Ok(Yeap(ctx, Tree::Text(token.clone())))
                 } else {
-                    Err(ctx.failure(start, ParseError::ExpectedToken(token.deref().into())))
+                    Err(ctx.failure(start, ParseError::ExpectedToken(token.clone())))
                 }
             }
             ExpKind::Pattern(pattern) => {
@@ -209,14 +208,12 @@ impl Exp {
                 } else {
                     Err(ctx.failure(
                         start,
-                        ParseError::ExpectedPattern(
-                            pyre::truncate_pattern(pattern, 16).to_string(),
-                        ),
+                        ParseError::ExpectedPattern(pyre::truncate_pattern(pattern, 16).into()),
                     ))
                 }
             }
-            ExpKind::Constant(literal) => Ok(Yeap(ctx, Tree::Text(literal.deref().into()))),
-            ExpKind::Alert(literal, _) => Ok(Yeap(ctx, Tree::Text(literal.deref().into()))),
+            ExpKind::Constant(literal) => Ok(Yeap(ctx, Tree::Text(literal.clone()))),
+            ExpKind::Alert(literal, _) => Ok(Yeap(ctx, Tree::Text(literal.clone()))),
 
             ExpKind::Named(name, exp) => match exp.parse(ctx) {
                 Ok(Yeap(ctx, mut tree)) => {
@@ -278,7 +275,7 @@ impl Exp {
 
             ExpKind::Sequence(sequence) => {
                 let mut results = Vec::new();
-                for exp in sequence.iter() {
+                for exp in &**sequence {
                     match exp.parse(ctx) {
                         Ok(Yeap(new_ctx, tree)) => {
                             results.push(tree);
