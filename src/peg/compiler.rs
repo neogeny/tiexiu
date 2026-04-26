@@ -77,7 +77,7 @@ impl GrammarCompiler {
 
     pub fn compile_grammar(&mut self, tree: &Tree, cfga: &CfgA) -> CompileResult<Grammar> {
         let cfg = config(cfga);
-        let _debug = cfg.contains(&Key::Debug);
+        let _debug = cfg.contains(&CfgKey::Debug);
         let map = parse_node_check(tree, "Grammar")?;
 
         let mut rulemap: RuleMap = RuleMap::new();

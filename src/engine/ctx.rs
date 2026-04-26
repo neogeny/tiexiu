@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::memo::{Key, Memo, MemoCache};
+use super::memo::{Memo, MemoCache, MemoKey};
 use crate::SYM_ETX;
 use crate::cfg::Configurable;
 use crate::engine::state::CallStack;
@@ -32,8 +32,8 @@ pub trait Ctx: CtxI + Clone + Debug {
     fn cursor_mut(&mut self) -> &mut dyn Cursor;
     fn enter(&mut self, name: &str);
     fn leave(&mut self);
-    fn track(&mut self, key: &Key) -> usize;
-    fn untrack(&mut self, key: &Key) -> usize;
+    fn track(&mut self, key: &MemoKey) -> usize;
+    fn untrack(&mut self, key: &MemoKey) -> usize;
     fn tracer(&self) -> &dyn Tracer;
 
     #[track_caller]
@@ -122,13 +122,13 @@ pub trait Ctx: CtxI + Clone + Debug {
         self.cursor_mut().next_token();
     }
 
-    fn key(&mut self, name: &str, memo: bool) -> Key {
+    fn key(&mut self, name: &str, memo: bool) -> MemoKey {
         MemoCache::key(self.mark(), name, memo)
     }
 
-    fn memo(&mut self, key: &Key) -> Option<Memo>;
+    fn memo(&mut self, key: &MemoKey) -> Option<Memo>;
 
-    fn memoize(&mut self, key: &Key, tree: &Tree, lastmark: usize);
+    fn memoize(&mut self, key: &MemoKey, tree: &Tree, lastmark: usize);
 
     fn clear_error_memos(&mut self);
 
@@ -238,7 +238,7 @@ pub trait Ctx: CtxI + Clone + Debug {
         }
     }
 
-    fn call_recursive(mut self, key: &Key, rule: &Rule) -> ParseResult<Self> {
+    fn call_recursive(mut self, key: &MemoKey, rule: &Rule) -> ParseResult<Self> {
         self.tracer().trace_recursion(&self);
         if !rule.is_left_recursive() {
             panic!("Recursive call on non-LRec rule");

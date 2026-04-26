@@ -6,7 +6,7 @@ use crate::types::Str;
 use std::collections::HashMap;
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Hash)]
-pub struct Key {
+pub struct MemoKey {
     pub mark: usize,
     pub name: Str,
     pub memo: bool,
@@ -20,12 +20,12 @@ pub struct Memo {
 
 #[derive(Clone, Debug)]
 pub struct MemoCache {
-    memos: HashMap<Key, Memo>,
+    memos: HashMap<MemoKey, Memo>,
 }
 
 #[derive(Clone, Default, Debug)]
 pub struct KeyTrack {
-    pub key: Key,
+    pub key: MemoKey,
     pub depth: usize,
 }
 
@@ -36,7 +36,7 @@ impl Default for MemoCache {
 }
 
 impl KeyTrack {
-    pub fn track(&mut self, key: &Key) -> usize {
+    pub fn track(&mut self, key: &MemoKey) -> usize {
         if *key == self.key {
             self.depth += 1;
         } else {
@@ -46,11 +46,11 @@ impl KeyTrack {
         self.depth
     }
 
-    pub fn untrack(&mut self, key: &Key) -> usize {
+    pub fn untrack(&mut self, key: &MemoKey) -> usize {
         if *key == self.key {
             self.depth = self.depth.saturating_sub(1);
             if self.depth == 0 {
-                self.key = Key::default();
+                self.key = MemoKey::default();
             }
             self.depth
         } else {
@@ -72,19 +72,19 @@ impl MemoCache {
 }
 
 impl MemoCache {
-    pub fn key(mark: usize, name: &str, memo: bool) -> Key {
-        Key {
+    pub fn key(mark: usize, name: &str, memo: bool) -> MemoKey {
+        MemoKey {
             mark,
             name: name.into(),
             memo,
         }
     }
 
-    pub fn memo(&mut self, key: &Key) -> Option<Memo> {
+    pub fn memo(&mut self, key: &MemoKey) -> Option<Memo> {
         self.memos.get(key).cloned()
     }
 
-    pub fn memoize(&mut self, key: &Key, tree: &Tree, mark: usize) {
+    pub fn memoize(&mut self, key: &MemoKey, tree: &Tree, mark: usize) {
         if !key.memo {
             return;
         }

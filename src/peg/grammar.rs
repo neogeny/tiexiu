@@ -67,10 +67,10 @@ impl Grammar {
     pub fn set_directives(&mut self, directives: GrammarDirectives) {
         self.directives = directives;
         // In the new CfgK model, we can find the grammar name directly using binary search.
-        if let Some(Key::Grammar(name)) = self
+        if let Some(CfgKey::Grammar(name)) = self
             .directives
             .iter()
-            .find(|k| matches!(k, Key::Grammar(_)))
+            .find(|k| matches!(k, CfgKey::Grammar(_)))
         {
             self.name = name.clone().into();
         }

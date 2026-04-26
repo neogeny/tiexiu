@@ -91,7 +91,7 @@ impl Configurable for StrCursor {
             self.set_tokenizing(&patterns);
         }
         self.heavy = CursorHeavy {
-            ignorecase: cfg.contains(&Key::IgnoreCase),
+            ignorecase: cfg.contains(&CfgKey::IgnoreCase),
             patterns: self.heavy.patterns.clone(),
         }
         .into()

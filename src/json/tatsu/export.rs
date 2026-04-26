@@ -35,19 +35,21 @@ impl TryFrom<Grammar> for TatSuModel {
             .iter()
             .filter_map(|opt| {
                 let (name, value) = match opt {
-                    Key::Grammar(name) => (
+                    CfgKey::Grammar(name) => (
                         STR_GRAMMAR_NAME,
                         serde_json::Value::String(name.to_string()),
                     ),
-                    Key::Wsp(p) => (STR_WHITESPACE, serde_json::Value::String(p.to_string())),
-                    Key::Cmt(p) => (STR_COMMENTS, serde_json::Value::String(p.to_string())),
-                    Key::Eol(p) => (STR_EOL_COMMENTS, serde_json::Value::String(p.to_string())),
-                    Key::NameChars(p) => (STR_NAMECHARS, serde_json::Value::String(p.to_string())),
-                    Key::IgnoreCase => (STR_IGNORECASE, serde_json::Value::Bool(true)),
-                    Key::NoNameGuard => (STR_NAMEGUARD, serde_json::Value::Bool(false)),
-                    Key::NoLeftRecursion => (STR_LEFTREC, serde_json::Value::Bool(false)),
-                    Key::NoParseInfo => (STR_PARSEINFO, serde_json::Value::Bool(false)),
-                    Key::NoMemoization => (STR_MEMOIZATION, serde_json::Value::Bool(false)),
+                    CfgKey::Wsp(p) => (STR_WHITESPACE, serde_json::Value::String(p.to_string())),
+                    CfgKey::Cmt(p) => (STR_COMMENTS, serde_json::Value::String(p.to_string())),
+                    CfgKey::Eol(p) => (STR_EOL_COMMENTS, serde_json::Value::String(p.to_string())),
+                    CfgKey::NameChars(p) => {
+                        (STR_NAMECHARS, serde_json::Value::String(p.to_string()))
+                    }
+                    CfgKey::IgnoreCase => (STR_IGNORECASE, serde_json::Value::Bool(true)),
+                    CfgKey::NoNameGuard => (STR_NAMEGUARD, serde_json::Value::Bool(false)),
+                    CfgKey::NoLeftRecursion => (STR_LEFTREC, serde_json::Value::Bool(false)),
+                    CfgKey::NoParseInfo => (STR_PARSEINFO, serde_json::Value::Bool(false)),
+                    CfgKey::NoMemoization => (STR_MEMOIZATION, serde_json::Value::Bool(false)),
                     _ => return None,
                 };
                 Some((name.to_string(), value))

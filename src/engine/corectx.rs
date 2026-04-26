@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 pub use super::ctx::{Ctx, CtxI};
-use super::memo::{Key, Memo};
+use super::memo::{Memo, MemoKey};
 use super::state::{CallStack, HeavyState, ParseState};
 use super::trace::{CONSOLE_TRACER, NULL_TRACER, Tracer};
 use crate::cfg::*;
@@ -105,7 +105,7 @@ where
     fn configure(&mut self, cfg: &Cfg) {
         self.cursor_mut().configure(cfg);
 
-        if cfg.contains(&Key::Trace) {
+        if cfg.contains(&crate::cfg::CfgKey::Trace) {
             self.set_trace(true);
         }
     }
@@ -129,7 +129,7 @@ where
         self.state_mut().callstack = stack.tail().unwrap_or_default()
     }
 
-    fn track(&mut self, key: &Key) -> usize {
+    fn track(&mut self, key: &MemoKey) -> usize {
         let depth = self.state_mut().keytrack.track(key);
         if depth > 64 {
             panic!(
@@ -140,7 +140,7 @@ where
         depth
     }
 
-    fn untrack(&mut self, key: &Key) -> usize {
+    fn untrack(&mut self, key: &MemoKey) -> usize {
         self.state_mut().keytrack.untrack(key)
     }
 
@@ -152,11 +152,11 @@ where
         self.with_heavy_mut(|heavy| heavy.get_pattern(pattern))
     }
 
-    fn memo(&mut self, key: &Key) -> Option<Memo> {
+    fn memo(&mut self, key: &MemoKey) -> Option<Memo> {
         self.with_heavy_mut(|heavy| heavy.memos.memo(key))
     }
 
-    fn memoize(&mut self, key: &Key, tree: &Tree, lastmark: usize) {
+    fn memoize(&mut self, key: &MemoKey, tree: &Tree, lastmark: usize) {
         self.with_heavy_mut(|heavy| {
             heavy.memos.memoize(key, tree, lastmark);
         });

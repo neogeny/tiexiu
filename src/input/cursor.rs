@@ -64,9 +64,9 @@ pub trait Cursor: Debug + Configurable {
 
         for opt in cfg.iter() {
             match opt {
-                Key::Wsp(p) => wsp = p.as_str(),
-                Key::Cmt(p) => cmt = p.as_str(),
-                Key::Eol(p) => eol = p.as_str(),
+                CfgKey::Wsp(p) => wsp = p.as_str(),
+                CfgKey::Cmt(p) => cmt = p.as_str(),
+                CfgKey::Eol(p) => eol = p.as_str(),
                 _ => {}
             }
         }

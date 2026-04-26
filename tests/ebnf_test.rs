@@ -1,5 +1,5 @@
 use tiexiu::util::indent::dedent_all;
-use tiexiu::{Key, compile};
+use tiexiu::{CfgKey, compile};
 
 #[test]
 // #[ignore]
@@ -37,12 +37,12 @@ fn test_ebnf_parsing() -> tiexiu::Result<()> {
 
     let mut tree;
 
-    tree = g.parse_input("3", &[Key::Trace])?;
+    tree = g.parse_input("3", &[CfgKey::Trace])?;
     eprintln!("{:#?}", tree);
     eprintln!("{:#?}", tree.to_json());
     eprintln!("{:#}", tree.to_json_string()?);
 
-    tree = g.parse_input("3 * (2 + 5)", &[Key::Trace])?;
+    tree = g.parse_input("3 * (2 + 5)", &[CfgKey::Trace])?;
     eprintln!("{:#?}", tree);
 
     // Err(Error::AndNowAMessageFromYourFriendlyTest(
