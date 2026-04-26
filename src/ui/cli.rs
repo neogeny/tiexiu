@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::api::{boot_grammar_json, boot_grammar_pretty, compile, load, parse_input};
+use crate::cfg::CfgA;
 pub use crate::json::exp_json::*;
 pub use crate::peg::pretty::*;
 pub use crate::tools::rails::*;
-use crate::{Result, boot_grammar};
+use crate::{Cfg, Result, boot_grammar, config};
 use clap;
 use clap::builder::styling::{AnsiColor, Styles};
 use clap::{Parser, Subcommand};
@@ -54,6 +55,11 @@ pub struct Cli {
         global = true
     )]
     pub color: clap::ColorChoice,
+
+
+    /// Display a detailed trace of the parsing process.
+    #[arg(long, default_value_t = false, global = true)]
+    pub trace: bool,
 }
 
 #[derive(Subcommand)]
@@ -85,10 +91,6 @@ pub enum Commands {
         /// The files to be parsed.
         #[arg(required = true)]
         inputs: Vec<PathBuf>,
-
-        /// Display a detailed trace of the parsing process.
-        #[arg(short, long)]
-        trace: bool,
     },
 
     /// Grammar transformations
@@ -119,6 +121,12 @@ pub fn cli() -> Result<()> {
     let cli = Cli::parse();
     let use_color = configure_color(cli.color);
 
+    let mut cfg = config(&[]);
+    if cli.trace {
+        cfg = cfg.add(Cfg::Trace);
+    }
+    let cfga: &CfgA = &cfg;
+
     let (content, lang) = match cli.command {
         Commands::Boot {
             model,
@@ -127,24 +135,24 @@ pub fn cli() -> Result<()> {
             ..
         } => {
             if pretty {
-                (boot_grammar_pretty(&[])?, "ebnf")
+                (boot_grammar_pretty(cfga)?, "ebnf")
             } else if model {
                 (format!("{:#?}", boot_grammar()?), "rs")
             } else if railroads {
                 (boot_grammar()?.railroads(), "apl")
             } else {
                 // Since json is default_value_t = true, this is the fallthrough
-                (boot_grammar_json(&[])?, "json")
+                (boot_grammar_json(cfga)?, "json")
             }
         }
         Commands::Run {
             grammar, inputs, ..
         } => {
-            let parser = load_grammar_from_path(&grammar)?;
+            let parser = load_grammar_from_path(&grammar, cfga)?;
             let mut output = String::new();
             for input in inputs {
                 let text = std::fs::read_to_string(&input)?;
-                let tree = parse_input(&parser, &text, &[])?;
+                let tree = parse_input(&parser, &text, cfga)?;
                 output.push_str(format!("{}", tree.into_node_tree()).as_str());
                 output.push('\n');
             }
@@ -157,7 +165,7 @@ pub fn cli() -> Result<()> {
             railroads,
             ..
         } => {
-            let parser = load_grammar_from_path(&grammar)?;
+            let parser = load_grammar_from_path(&grammar, cfga)?;
             if json {
                 (parser.to_json_exp_string()?, "json")
             } else if model {
@@ -180,16 +188,16 @@ pub fn cli() -> Result<()> {
     Ok(())
 }
 
-fn load_grammar_from_path(grammar: &PathBuf) -> Result<crate::peg::Grammar> {
+fn load_grammar_from_path(grammar: &PathBuf, cfga: &CfgA) -> Result<crate::peg::Grammar> {
     let grammar_text = std::fs::read_to_string(grammar)?;
     let parser = if grammar
         .extension()
         .and_then(|ext| ext.to_str())
         .is_some_and(|ext| ext.eq_ignore_ascii_case("json"))
     {
-        load(&grammar_text, &[])?
+        load(&grammar_text, cfga)?
     } else {
-        compile(&grammar_text, &[])?
+        compile(&grammar_text, cfga)?
     };
     Ok(parser)
 }

@@ -108,6 +108,14 @@ impl<K: Ord + Clone + Default> CfgBox<K> {
         }
     }
 
+    pub fn add(&self, key: K) -> Self {
+        if self.contains(&key) {
+            self.clone()
+        } else {
+            self.merge(&CfgBox::new(&[key]))
+        }
+    }
+
     pub fn contains(&self, key: &K) -> bool {
         self.cfga.binary_search(key).is_ok()
     }
