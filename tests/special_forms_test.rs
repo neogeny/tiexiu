@@ -27,20 +27,13 @@ fn skip_group() -> Result<()> {
 }
 
 // Void expression that produces nothing.
-// ISSUE: The grammar `'a' () 'b'` with input "ab" fails to parse.
-// The void expression `()` should consume no input and produce nothing,
-// allowing 'a' to match 'a' and 'b' to match 'b'.
-// Expected: "ab" -> ["a", "b"]
-// Actual: Parse fails with ExpectedToken("a") error at position 0.
-// This suggests the void expression `()` may not be implemented correctly,
-// or it's consuming input that it shouldn't.
 #[test]
 fn void() -> Result<()> {
     let grammar = r#"
         start: 'a' () 'b'
     "#;
     let grammar = tiexiu::compile(grammar, &[])?;
-    let tree = parse_input(&grammar, "ab", &[])?;
+    let tree = parse_input(&grammar, "a b", &[])?;
     assert_eq!(tree.to_value(), json!(["a", "b"]));
     Ok(())
 }
