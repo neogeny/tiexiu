@@ -5,19 +5,19 @@ use super::ENV_PREFIX;
 pub use crate::util::cfg;
 pub use cfg::*;
 
-pub type CfgA = cfg::CfgA<Cfg>;
-pub type CfgBox = cfg::CfgBox<Cfg>;
+pub type CfgA = cfg::CfgA<Key>;
+pub type Cfg = cfg::Cfg<Key>;
 
 /// Configuration Key are addditive, so the default is empty
 const DEFAULT_CFGA: &CfgA = &[];
 
 /// Add configurations over default and env
-pub fn config(cfga: &CfgA) -> CfgBox {
+pub fn config(cfga: &CfgA) -> Cfg {
     // NOTE:
     //  Configurations are meant to be mostly one-time
     //  except for options passed by library users through
-    CfgBox::from(DEFAULT_CFGA)
-        .merge(&CfgBox::load_from_env(ENV_PREFIX))
+    Cfg::from(DEFAULT_CFGA)
+        .merge(&Cfg::load_from_env(ENV_PREFIX))
         .merge(&cfga.into())
 }
 
@@ -25,15 +25,15 @@ pub trait CfgBoxWrapper {
     fn trace(&self) -> bool;
 }
 
-impl CfgBoxWrapper for CfgBox {
+impl CfgBoxWrapper for Cfg {
     fn trace(&self) -> bool {
-        self.contains(&Cfg::Trace)
+        self.contains(&Key::Trace)
     }
 }
 
 // NOTE! Order matters here! Debug < Mode < Trace
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Default)]
-pub enum Cfg {
+pub enum Key {
     #[default]
     None,
 
@@ -57,59 +57,59 @@ pub enum Cfg {
 
 /// Specialized trait for types that can be configured with the project-specific CfgBox.
 pub trait Configurable {
-    fn configure(&mut self, cfg: &CfgBox) {
+    fn configure(&mut self, cfg: &Cfg) {
         let _ = cfg;
     }
 }
 
-impl From<&CfgA> for CfgBox {
+impl From<&CfgA> for Cfg {
     fn from(cfga: &CfgA) -> Self {
-        CfgBox::new(cfga)
+        Cfg::new(cfga)
     }
 }
 
-impl CfgMapper<Cfg> for Cfg {
-    fn map(key: &str, value: &str) -> Option<Cfg> {
+impl CfgMapper<Key> for Key {
+    fn map(key: &str, value: &str) -> Option<Key> {
         use super::constants::*;
         let is_truthy = !is_falsy(value);
 
         match (key.to_lowercase().as_str(), value) {
-            ("trace", "1") => Some(Cfg::Trace),
-            ("debug", "1") => Some(Cfg::Debug),
-            ("verbose", "1") => Some(Cfg::Verbose),
+            ("trace", "1") => Some(Key::Trace),
+            ("debug", "1") => Some(Key::Debug),
+            ("verbose", "1") => Some(Key::Verbose),
 
-            (STR_GRAMMAR_NAME, name) => Some(Cfg::Grammar(name.to_string())),
-            (STR_WHITESPACE, pattern) => Some(Cfg::Wsp(pattern.to_string())),
-            (STR_COMMENTS, pattern) => Some(Cfg::Cmt(pattern.to_string())),
-            (STR_EOL_COMMENTS, pattern) => Some(Cfg::Eol(pattern.to_string())),
+            (STR_GRAMMAR_NAME, name) => Some(Key::Grammar(name.to_string())),
+            (STR_WHITESPACE, pattern) => Some(Key::Wsp(pattern.to_string())),
+            (STR_COMMENTS, pattern) => Some(Key::Cmt(pattern.to_string())),
+            (STR_EOL_COMMENTS, pattern) => Some(Key::Eol(pattern.to_string())),
 
-            (STR_IGNORECASE, _) if is_truthy => Some(Cfg::IgnoreCase),
-            (STR_NAMEGUARD, _) if !is_truthy => Some(Cfg::NoNameGuard),
-            (STR_LEFTREC, _) if !is_truthy => Some(Cfg::NoLeftRecursion),
-            (STR_PARSEINFO, _) if !is_truthy => Some(Cfg::NoParseInfo),
-            (STR_MEMOIZATION, _) if !is_truthy => Some(Cfg::NoMemoization),
-            (STR_NAMECHARS, pattern) => Some(Cfg::NameChars(pattern.to_string())),
+            (STR_IGNORECASE, _) if is_truthy => Some(Key::IgnoreCase),
+            (STR_NAMEGUARD, _) if !is_truthy => Some(Key::NoNameGuard),
+            (STR_LEFTREC, _) if !is_truthy => Some(Key::NoLeftRecursion),
+            (STR_PARSEINFO, _) if !is_truthy => Some(Key::NoParseInfo),
+            (STR_MEMOIZATION, _) if !is_truthy => Some(Key::NoMemoization),
+            (STR_NAMECHARS, pattern) => Some(Key::NameChars(pattern.to_string())),
 
             _ => None,
         }
     }
 
-    fn unmap(value: &Cfg) -> Option<(&str, &str)> {
+    fn unmap(value: &Key) -> Option<(&str, &str)> {
         use super::constants::*;
         let true_str = "True";
         let false_str = "False";
         match value {
-            Cfg::Grammar(v) => Some((STR_GRAMMAR_NAME, v.as_str())),
-            Cfg::Wsp(v) => Some((STR_WHITESPACE, v.as_str())),
-            Cfg::Cmt(v) => Some((STR_COMMENTS, v.as_str())),
-            Cfg::Eol(v) => Some((STR_EOL_COMMENTS, v.as_str())),
-            Cfg::NameChars(v) => Some((STR_NAMECHARS, v.as_str())),
+            Key::Grammar(v) => Some((STR_GRAMMAR_NAME, v.as_str())),
+            Key::Wsp(v) => Some((STR_WHITESPACE, v.as_str())),
+            Key::Cmt(v) => Some((STR_COMMENTS, v.as_str())),
+            Key::Eol(v) => Some((STR_EOL_COMMENTS, v.as_str())),
+            Key::NameChars(v) => Some((STR_NAMECHARS, v.as_str())),
 
-            Cfg::IgnoreCase => Some((STR_IGNORECASE, true_str)),
-            Cfg::NoNameGuard => Some((STR_NAMEGUARD, false_str)),
-            Cfg::NoLeftRecursion => Some((STR_LEFTREC, false_str)),
-            Cfg::NoParseInfo => Some((STR_PARSEINFO, false_str)),
-            Cfg::NoMemoization => Some((STR_MEMOIZATION, false_str)),
+            Key::IgnoreCase => Some((STR_IGNORECASE, true_str)),
+            Key::NoNameGuard => Some((STR_NAMEGUARD, false_str)),
+            Key::NoLeftRecursion => Some((STR_LEFTREC, false_str)),
+            Key::NoParseInfo => Some((STR_PARSEINFO, false_str)),
+            Key::NoMemoization => Some((STR_MEMOIZATION, false_str)),
             _ => None,
         }
     }
@@ -129,11 +129,11 @@ mod tests {
 
     #[test]
     fn test_cfg_box_is_alias() -> Result<()> {
-        let options = [Cfg::Trace, Cfg::Debug];
-        let cfg = CfgBox::new(&options);
+        let options = [Key::Trace, Key::Debug];
+        let cfg = Cfg::new(&options);
 
-        assert!(cfg.contains(&Cfg::Trace));
-        assert!(cfg.contains(&Cfg::Debug));
+        assert!(cfg.contains(&Key::Trace));
+        assert!(cfg.contains(&Key::Debug));
         Ok(())
     }
 
@@ -145,20 +145,20 @@ mod tests {
             env::set_var("TIEXIU_PARSEINFO", "False");
         }
 
-        let cfg = Cfg::load_from_env("TIEXIU_");
+        let cfg = Key::load_from_env("TIEXIU_");
 
-        assert!(cfg.contains(&Cfg::Trace));
-        assert!(cfg.contains(&Cfg::Wsp(r"\s+".to_string())));
-        assert!(cfg.contains(&Cfg::NoParseInfo));
+        assert!(cfg.contains(&Key::Trace));
+        assert!(cfg.contains(&Key::Wsp(r"\s+".to_string())));
+        assert!(cfg.contains(&Key::NoParseInfo));
         Ok(())
     }
 
     #[test]
     fn test_bool_mapping() -> Result<()> {
-        assert_eq!(Cfg::map("ignorecase", "True"), Some(Cfg::IgnoreCase));
-        assert_eq!(Cfg::map("parseinfo", "False"), Some(Cfg::NoParseInfo));
-        assert_eq!(Cfg::map("parseinfo", "True"), None);
-        assert_eq!(Cfg::map("left_recursion", "0"), Some(Cfg::NoLeftRecursion));
+        assert_eq!(Key::map("ignorecase", "True"), Some(Key::IgnoreCase));
+        assert_eq!(Key::map("parseinfo", "False"), Some(Key::NoParseInfo));
+        assert_eq!(Key::map("parseinfo", "True"), None);
+        assert_eq!(Key::map("left_recursion", "0"), Some(Key::NoLeftRecursion));
         Ok(())
     }
 }

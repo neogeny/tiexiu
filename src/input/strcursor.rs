@@ -85,13 +85,13 @@ impl StrCursor {
 }
 
 impl Configurable for StrCursor {
-    fn configure(&mut self, cfg: &CfgBox) {
+    fn configure(&mut self, cfg: &Cfg) {
         let cfg = config(cfg);
         if let Ok(patterns) = self.tokenizing_from_cfg(&cfg) {
             self.set_tokenizing(&patterns);
         }
         self.heavy = CursorHeavy {
-            ignorecase: cfg.contains(&Cfg::IgnoreCase),
+            ignorecase: cfg.contains(&Key::IgnoreCase),
             patterns: self.heavy.patterns.clone(),
         }
         .into()

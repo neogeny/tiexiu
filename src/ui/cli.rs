@@ -6,7 +6,7 @@ use crate::cfg::CfgA;
 pub use crate::json::exp_json::*;
 pub use crate::peg::pretty::*;
 pub use crate::tools::rails::*;
-use crate::{Cfg, Result, boot_grammar, config};
+use crate::{Key, Result, boot_grammar, config};
 use clap;
 use clap::builder::styling::{AnsiColor, Styles};
 use clap::{Parser, Subcommand};
@@ -122,7 +122,7 @@ pub fn cli() -> Result<()> {
 
     let mut cfg = config(&[]);
     if cli.trace {
-        cfg = cfg.add(Cfg::Trace);
+        cfg = cfg.add(Key::Trace);
     }
     let cfga: &CfgA = &cfg;
 

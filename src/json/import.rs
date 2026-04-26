@@ -210,7 +210,7 @@ impl Grammar {
                         Value::Number(n) => n.to_string(),
                         _ => v.to_string(),
                     };
-                    CfgBox::map(k.as_str(), val_str.as_str())
+                    Cfg::map(k.as_str(), val_str.as_str())
                 })
                 .collect();
             return Ok(res);

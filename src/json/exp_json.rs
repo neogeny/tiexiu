@@ -70,16 +70,16 @@ impl Grammar {
             .iter()
             .filter_map(|opt| {
                 let (name, value) = match opt {
-                    Cfg::Grammar(name) => (STR_GRAMMAR_NAME, name.as_str()),
-                    Cfg::Wsp(p) => (STR_WHITESPACE, p.as_str()),
-                    Cfg::Cmt(p) => (STR_COMMENTS, p.as_str()),
-                    Cfg::Eol(p) => (STR_EOL_COMMENTS, p.as_str()),
-                    Cfg::NameChars(p) => (STR_NAMECHARS, p.as_str()),
-                    Cfg::IgnoreCase => (STR_IGNORECASE, "True"),
-                    Cfg::NoNameGuard => (STR_NAMEGUARD, "False"),
-                    Cfg::NoLeftRecursion => (STR_LEFTREC, "False"),
-                    Cfg::NoParseInfo => (STR_PARSEINFO, "False"),
-                    Cfg::NoMemoization => (STR_MEMOIZATION, "False"),
+                    Key::Grammar(name) => (STR_GRAMMAR_NAME, name.as_str()),
+                    Key::Wsp(p) => (STR_WHITESPACE, p.as_str()),
+                    Key::Cmt(p) => (STR_COMMENTS, p.as_str()),
+                    Key::Eol(p) => (STR_EOL_COMMENTS, p.as_str()),
+                    Key::NameChars(p) => (STR_NAMECHARS, p.as_str()),
+                    Key::IgnoreCase => (STR_IGNORECASE, "True"),
+                    Key::NoNameGuard => (STR_NAMEGUARD, "False"),
+                    Key::NoLeftRecursion => (STR_LEFTREC, "False"),
+                    Key::NoParseInfo => (STR_PARSEINFO, "False"),
+                    Key::NoMemoization => (STR_MEMOIZATION, "False"),
                     _ => return None,
                 };
                 let mut d_obj = Map::new();

@@ -13,7 +13,7 @@ pub type CfgA<K> = [K];
 /// 1. Sorted by value (for binary search).
 /// 2. Unique values.
 #[derive(Clone, Default)]
-pub struct CfgBox<K: Ord + Clone + Default> {
+pub struct Cfg<K: Ord + Clone + Default> {
     cfga: Box<CfgA<K>>,
 }
 
@@ -23,7 +23,7 @@ pub struct CfgBox<K: Ord + Clone + Default> {
 //     }
 // }
 
-impl<'a, K: Ord + Clone + Default, const N: usize> From<&'a [K; N]> for CfgBox<K> {
+impl<'a, K: Ord + Clone + Default, const N: usize> From<&'a [K; N]> for Cfg<K> {
     fn from(options: &'a [K; N]) -> Self {
         Self::new(options.as_slice())
     }
@@ -31,7 +31,7 @@ impl<'a, K: Ord + Clone + Default, const N: usize> From<&'a [K; N]> for CfgBox<K
 
 /// Has use for a Cfg
 pub trait Configurable<K: Ord + Clone + Default> {
-    fn configure(&mut self, cfg: &CfgBox<K>) {
+    fn configure(&mut self, cfg: &Cfg<K>) {
         let _ = cfg;
     }
 }
@@ -44,7 +44,7 @@ pub trait CfgMapper<K: Ord + Clone + Default> {
     }
 
     /// Loads configuration from environment variables using this mapper.
-    fn load_from_env(prefix: &str) -> CfgBox<K> {
+    fn load_from_env(prefix: &str) -> Cfg<K> {
         env::vars()
             .filter(|(key, _)| key.starts_with(prefix))
             .filter_map(|(key, val)| {
@@ -58,7 +58,7 @@ pub trait CfgMapper<K: Ord + Clone + Default> {
     }
 }
 
-impl<K: Ord + Clone + Default> CfgMapper<K> for CfgBox<K>
+impl<K: Ord + Clone + Default> CfgMapper<K> for Cfg<K>
 where
     K: CfgMapper<K>,
 {
@@ -71,7 +71,7 @@ where
     }
 }
 
-impl<K: Ord + Clone + Default> FromIterator<K> for CfgBox<K> {
+impl<K: Ord + Clone + Default> FromIterator<K> for Cfg<K> {
     fn from_iter<I: IntoIterator<Item = K>>(iter: I) -> Self {
         let set: BTreeSet<K> = iter.into_iter().collect();
         Self {
@@ -80,7 +80,7 @@ impl<K: Ord + Clone + Default> FromIterator<K> for CfgBox<K> {
     }
 }
 
-impl<K: Ord + Clone + Default> CfgBox<K> {
+impl<K: Ord + Clone + Default> Cfg<K> {
     /// Creates a new Cfg ensuring all invariants (Sorted, Unique).
     pub fn new(options: &CfgA<K>) -> Self {
         let set: BTreeSet<K> = options.iter().cloned().collect();
@@ -99,7 +99,7 @@ impl<K: Ord + Clone + Default> CfgBox<K> {
     }
 
     /// Merges two configurations (Set Union).
-    pub fn merge(&self, other: &CfgBox<K>) -> Self {
+    pub fn merge(&self, other: &Cfg<K>) -> Self {
         let mut set: BTreeSet<K> = self.cfga.iter().cloned().collect();
         set.extend(other.iter().cloned());
 
@@ -112,7 +112,7 @@ impl<K: Ord + Clone + Default> CfgBox<K> {
         if self.contains(&key) {
             self.clone()
         } else {
-            self.merge(&CfgBox::new(&[key]))
+            self.merge(&Cfg::new(&[key]))
         }
     }
 
@@ -133,14 +133,14 @@ impl<K: Ord + Clone + Default> CfgBox<K> {
     }
 }
 
-impl<K: Ord + Clone + Default> Deref for CfgBox<K> {
+impl<K: Ord + Clone + Default> Deref for Cfg<K> {
     type Target = [K];
     fn deref(&self) -> &Self::Target {
         &self.cfga
     }
 }
 
-impl<K: Ord + Clone + Default + fmt::Debug> fmt::Debug for CfgBox<K> {
+impl<K: Ord + Clone + Default + fmt::Debug> fmt::Debug for Cfg<K> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_set().entries(self.iter()).finish()
     }
@@ -180,7 +180,7 @@ mod tests {
     #[test]
     fn test_invariants() -> Result<()> {
         let options = [TestOpt::Trace, TestOpt::Strict, TestOpt::Trace];
-        let cfg = CfgBox::new(&options);
+        let cfg = Cfg::new(&options);
 
         assert_eq!(cfg.cfga.len(), 2); // Unique keys
         assert!(cfg.contains(&TestOpt::Trace));
@@ -194,8 +194,8 @@ mod tests {
 
     #[test]
     fn test_merge_logic() -> Result<()> {
-        let base = CfgBox::new(&[TestOpt::Trace]);
-        let over = CfgBox::new(&[TestOpt::Memoize]);
+        let base = Cfg::new(&[TestOpt::Trace]);
+        let over = Cfg::new(&[TestOpt::Memoize]);
         let merged = base.merge(&over);
 
         assert!(merged.contains(&TestOpt::Trace));
@@ -212,7 +212,7 @@ mod tests {
             env::set_var("TEST_OTHER", "skip");
         }
 
-        let cfg: CfgBox<TestOpt> = TestOpt::load_from_env("TEST_");
+        let cfg: Cfg<TestOpt> = TestOpt::load_from_env("TEST_");
         assert!(cfg.contains(&TestOpt::Trace));
         assert!(cfg.contains(&TestOpt::Strict));
         assert_eq!(cfg.cfga.len(), 2);
@@ -221,7 +221,7 @@ mod tests {
 
     #[test]
     fn test_cfg_is_mapper() -> Result<()> {
-        let cfg = CfgBox::<TestOpt>::load_from_env("EMPTY_");
+        let cfg = Cfg::<TestOpt>::load_from_env("EMPTY_");
         assert!(cfg.is_empty());
         Ok(())
     }
@@ -229,10 +229,10 @@ mod tests {
     #[test]
     fn test_conversions() -> Result<()> {
         let options_a = [TestOpt::Trace, TestOpt::Debug];
-        let cfg_from_a: CfgBox<TestOpt> = (&options_a).into(); // CfgA -> Cfg
+        let cfg_from_a: Cfg<TestOpt> = (&options_a).into(); // CfgA -> Cfg
         assert!(cfg_from_a.contains(&TestOpt::Trace));
 
-        let cfg_new = CfgBox::new(&options_a); // CfgA -> Cfg via new
+        let cfg_new = Cfg::new(&options_a); // CfgA -> Cfg via new
         assert!(cfg_new.contains(&TestOpt::Debug));
 
         let slice_from_cfg: &[TestOpt] = &cfg_from_a; // Cfg -> &[K] via Deref
@@ -244,7 +244,7 @@ mod tests {
         let iter_from_cfg = cfg_from_a.iter(); // Cfg -> Iterator
         assert_eq!(iter_from_cfg.count(), 2);
 
-        let vec_from_iter: CfgBox<TestOpt> =
+        let vec_from_iter: Cfg<TestOpt> =
             vec![TestOpt::Trace, TestOpt::Memoize].into_iter().collect(); // Vec<K> -> Cfg via FromIterator
         assert!(vec_from_iter.contains(&TestOpt::Memoize));
         Ok(())

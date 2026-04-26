@@ -35,19 +35,19 @@ impl TryFrom<Grammar> for TatSuModel {
             .iter()
             .filter_map(|opt| {
                 let (name, value) = match opt {
-                    Cfg::Grammar(name) => (
+                    Key::Grammar(name) => (
                         STR_GRAMMAR_NAME,
                         serde_json::Value::String(name.to_string()),
                     ),
-                    Cfg::Wsp(p) => (STR_WHITESPACE, serde_json::Value::String(p.to_string())),
-                    Cfg::Cmt(p) => (STR_COMMENTS, serde_json::Value::String(p.to_string())),
-                    Cfg::Eol(p) => (STR_EOL_COMMENTS, serde_json::Value::String(p.to_string())),
-                    Cfg::NameChars(p) => (STR_NAMECHARS, serde_json::Value::String(p.to_string())),
-                    Cfg::IgnoreCase => (STR_IGNORECASE, serde_json::Value::Bool(true)),
-                    Cfg::NoNameGuard => (STR_NAMEGUARD, serde_json::Value::Bool(false)),
-                    Cfg::NoLeftRecursion => (STR_LEFTREC, serde_json::Value::Bool(false)),
-                    Cfg::NoParseInfo => (STR_PARSEINFO, serde_json::Value::Bool(false)),
-                    Cfg::NoMemoization => (STR_MEMOIZATION, serde_json::Value::Bool(false)),
+                    Key::Wsp(p) => (STR_WHITESPACE, serde_json::Value::String(p.to_string())),
+                    Key::Cmt(p) => (STR_COMMENTS, serde_json::Value::String(p.to_string())),
+                    Key::Eol(p) => (STR_EOL_COMMENTS, serde_json::Value::String(p.to_string())),
+                    Key::NameChars(p) => (STR_NAMECHARS, serde_json::Value::String(p.to_string())),
+                    Key::IgnoreCase => (STR_IGNORECASE, serde_json::Value::Bool(true)),
+                    Key::NoNameGuard => (STR_NAMEGUARD, serde_json::Value::Bool(false)),
+                    Key::NoLeftRecursion => (STR_LEFTREC, serde_json::Value::Bool(false)),
+                    Key::NoParseInfo => (STR_PARSEINFO, serde_json::Value::Bool(false)),
+                    Key::NoMemoization => (STR_MEMOIZATION, serde_json::Value::Bool(false)),
                     _ => return None,
                 };
                 Some((name.to_string(), value))

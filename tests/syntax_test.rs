@@ -9,7 +9,7 @@ use tiexiu::engine;
 use tiexiu::input::StrCursor;
 use tiexiu::peg::{ExpKind, Grammar};
 use tiexiu::trees::short::*;
-use tiexiu::{Cfg, Result};
+use tiexiu::{Key, Result};
 
 fn parse_input(grammar: &Grammar, input: &str) -> Result<tiexiu::trees::Tree> {
     let cursor = StrCursor::new(input);
@@ -112,7 +112,7 @@ fn test_optional_sequence() -> Result<()> {
         start = '1' ['2' '3'] '4' $ ;
     "#;
 
-    let model = compile(grammar, &[Cfg::Wsp("".to_string())])?;
+    let model = compile(grammar, &[Key::Wsp("".to_string())])?;
     let mut ast;
 
     ast = parse_input(&model, "1 2 3 4")?;

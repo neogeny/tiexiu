@@ -102,10 +102,10 @@ impl<'c, U> Configurable for CoreCtx<'c, U>
 where
     U: Cursor + Clone,
 {
-    fn configure(&mut self, cfg: &CfgBox) {
+    fn configure(&mut self, cfg: &Cfg) {
         self.cursor_mut().configure(cfg);
 
-        if cfg.contains(&Cfg::Trace) {
+        if cfg.contains(&Key::Trace) {
             self.set_trace(true);
         }
     }

@@ -56,7 +56,7 @@ pub trait Cursor: Debug + Configurable {
 
     fn set_tokenizing(&mut self, patterns: &TokenizingPatterns);
 
-    fn tokenizing_from_cfg(&self, cfg: &CfgBox) -> Result<TokenizingPatterns, Error> {
+    fn tokenizing_from_cfg(&self, cfg: &Cfg) -> Result<TokenizingPatterns, Error> {
         type P = TokenizingPatterns;
         let mut wsp = P::DEFAULT_WSP;
         let mut cmt = P::DEFAULT_CMT;
@@ -64,9 +64,9 @@ pub trait Cursor: Debug + Configurable {
 
         for opt in cfg.iter() {
             match opt {
-                Cfg::Wsp(p) => wsp = p.as_str(),
-                Cfg::Cmt(p) => cmt = p.as_str(),
-                Cfg::Eol(p) => eol = p.as_str(),
+                Key::Wsp(p) => wsp = p.as_str(),
+                Key::Cmt(p) => cmt = p.as_str(),
+                Key::Eol(p) => eol = p.as_str(),
                 _ => {}
             }
         }

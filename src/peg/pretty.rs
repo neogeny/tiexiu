@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::cfg::Cfg;
+use crate::cfg::Key;
 use crate::cfg::constants::*;
 use crate::peg::exp::{Exp, ExpKind};
 use crate::peg::{Grammar, Rule};
@@ -63,17 +63,17 @@ impl PrettyPrint for Grammar {
             .directives
             .iter()
             .filter_map(|d| match d {
-                Cfg::Grammar(_) => Some(format!("@@{} :: {}", STR_GRAMMAR_NAME, self.name)),
-                Cfg::Wsp(v) => Some(format!("@@{} :: /{}/", STR_WHITESPACE, v)),
-                Cfg::Cmt(v) => Some(format!("@@{} :: /{}/", STR_COMMENTS, v)),
-                Cfg::Eol(v) => Some(format!("@@{} :: /{}/", STR_EOL_COMMENTS, v)),
-                Cfg::NameChars(v) => Some(format!("@@{} :: \"{}\"", STR_NAMECHARS, v)),
+                Key::Grammar(_) => Some(format!("@@{} :: {}", STR_GRAMMAR_NAME, self.name)),
+                Key::Wsp(v) => Some(format!("@@{} :: /{}/", STR_WHITESPACE, v)),
+                Key::Cmt(v) => Some(format!("@@{} :: /{}/", STR_COMMENTS, v)),
+                Key::Eol(v) => Some(format!("@@{} :: /{}/", STR_EOL_COMMENTS, v)),
+                Key::NameChars(v) => Some(format!("@@{} :: \"{}\"", STR_NAMECHARS, v)),
 
-                Cfg::IgnoreCase => Some(format!("@@{} :: True", STR_IGNORECASE)),
-                Cfg::NoNameGuard => Some(format!("@@{} :: False", STR_NAMEGUARD)),
-                Cfg::NoLeftRecursion => Some(format!("@@{} :: False", STR_LEFTREC)),
-                Cfg::NoParseInfo => Some(format!("@@{} :: False", STR_PARSEINFO)),
-                Cfg::NoMemoization => Some(format!("@@{} :: False", STR_MEMOIZATION)),
+                Key::IgnoreCase => Some(format!("@@{} :: True", STR_IGNORECASE)),
+                Key::NoNameGuard => Some(format!("@@{} :: False", STR_NAMEGUARD)),
+                Key::NoLeftRecursion => Some(format!("@@{} :: False", STR_LEFTREC)),
+                Key::NoParseInfo => Some(format!("@@{} :: False", STR_PARSEINFO)),
+                Key::NoMemoization => Some(format!("@@{} :: False", STR_MEMOIZATION)),
                 _ => None,
             })
             .collect();

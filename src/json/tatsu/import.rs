@@ -66,7 +66,7 @@ impl TryFrom<TatSuModel> for Grammar {
                 .iter()
                 .filter_map(|(k, v)| {
                     let val_str = v.as_str().map(|s| s.to_string()).unwrap_or(v.to_string());
-                    CfgBox::map(k.as_str(), val_str.as_str())
+                    Cfg::map(k.as_str(), val_str.as_str())
                 })
                 .collect();
             let mut grammar = Grammar::new(name.as_str(), rule_vec.as_slice());
