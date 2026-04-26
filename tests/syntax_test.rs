@@ -75,7 +75,7 @@ fn test_ast_assignment() -> Result<()> {
     let parser = compile(grammar, &[])?;
     let ast = parse_input(&parser, "a")?;
     // {"a"}* produces ["a"], @: makes rule return it directly
-    assert_eq!(ast.to_value(), json!(["a"]));
+    assert_eq!(ast.to_json(), json!(["a"]));
 
     // f uses @+:
     let grammar = r#"
@@ -85,7 +85,7 @@ fn test_ast_assignment() -> Result<()> {
     let parser = compile(grammar, &[])?;
     let ast = parse_input(&parser, "a")?;
     // {"a"}* produces ["a"], @+ wraps in another list
-    assert_eq!(ast.to_value(), json!([["a"]]));
+    assert_eq!(ast.to_json(), json!([["a"]]));
 
     Ok(())
 }
@@ -102,7 +102,7 @@ fn test_optional_closure() -> Result<()> {
         ast,
         m(&[("foo", s(&[t("x"), c(&[t("y"), t("y")]), t("z"), t("z")]))])
     );
-    assert_eq!(ast.to_value(), json!({"foo":["x", ["y","y"], "z", "z"]}));
+    assert_eq!(ast.to_json(), json!({"foo":["x", ["y","y"], "z", "z"]}));
     Ok(())
 }
 

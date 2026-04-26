@@ -15,7 +15,7 @@ fn simple_pattern() -> Result<()> {
     "#;
     let grammar = tiexiu::compile(grammar, &[])?;
     let tree = parse_input(&grammar, "123", &[])?;
-    assert_eq!(tree.to_value(), json!("123"));
+    assert_eq!(tree.to_json(), json!("123"));
     Ok(())
 }
 
@@ -27,7 +27,7 @@ fn pattern_with_letters() -> Result<()> {
     "#;
     let grammar = tiexiu::compile(grammar, &[])?;
     let tree = parse_input(&grammar, "hello", &[])?;
-    assert_eq!(tree.to_value(), json!("hello"));
+    assert_eq!(tree.to_json(), json!("hello"));
     Ok(())
 }
 
@@ -39,7 +39,7 @@ fn pattern_with_anchors() -> Result<()> {
     "#;
     let grammar = tiexiu::compile(grammar, &[])?;
     let tree = parse_input(&grammar, "start", &[])?;
-    assert_eq!(tree.to_value(), json!("start"));
+    assert_eq!(tree.to_json(), json!("start"));
     Ok(())
 }
 
@@ -53,7 +53,7 @@ fn pattern_case_insensitive() -> Result<()> {
     "#;
     let grammar = tiexiu::compile(grammar, &[])?;
     let tree = parse_input(&grammar, "HELLO", &[])?;
-    assert_eq!(tree.to_value(), json!("HELLO"));
+    assert_eq!(tree.to_json(), json!("HELLO"));
     Ok(())
 }
 
@@ -64,6 +64,6 @@ fn regex_character_classes() -> Result<()> {
     "#;
     let grammar = tiexiu::compile(grammar, &[])?;
     let tree = parse_input(&grammar, "hello_world", &[])?;
-    assert_eq!(tree.to_value(), json!("hello_world"));
+    assert_eq!(tree.to_json(), json!("hello_world"));
     Ok(())
 }

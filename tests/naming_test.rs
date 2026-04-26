@@ -11,7 +11,7 @@ fn named_capture() -> Result<()> {
     "#;
     let grammar = tiexiu::compile(grammar, &[])?;
     let tree = parse_input(&grammar, "hello", &[])?;
-    assert_eq!(tree.to_value(), json!({"name": "hello"}));
+    assert_eq!(tree.to_json(), json!({"name": "hello"}));
     Ok(())
 }
 
@@ -22,7 +22,7 @@ fn override_singleton() -> Result<()> {
     "#;
     let grammar = tiexiu::compile(grammar, &[])?;
     let tree = parse_input(&grammar, "hello", &[])?;
-    assert_eq!(tree.to_value(), json!("hello"));
+    assert_eq!(tree.to_json(), json!("hello"));
     Ok(())
 }
 

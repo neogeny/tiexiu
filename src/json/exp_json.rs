@@ -15,17 +15,21 @@ use crate::peg::rule::Rule;
 use serde_json::{Map, Value};
 
 pub trait ToExpJson {
-    fn to_json_exp(&self) -> Value;
+    fn to_json(&self) -> Value;
 
-    fn to_json_exp_string(&self) -> Result<String> {
-        match serde_json::to_string_pretty(&self.to_json_exp()) {
+    fn to_json_str(&self) -> Result<Box<str>> {
+        self.to_json_string().map(|s| s.into_boxed_str())
+    }
+
+    fn to_json_string(&self) -> Result<String> {
+        match serde_json::to_string_pretty(&self.to_json()) {
             Ok(s) => Ok(s),
             Err(e) => Err(JsonError::Json(e)),
         }
     }
 
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self.to_json_exp_string() {
+        match self.to_json_string() {
             Ok(json) => write!(f, "{}", json),
             Err(_) => Err(std::fmt::Error),
         }
@@ -33,19 +37,19 @@ pub trait ToExpJson {
 }
 
 impl ToExpJson for Grammar {
-    fn to_json_exp(&self) -> Value {
+    fn to_json(&self) -> Value {
         Grammar::to_json_exp(self)
     }
 }
 
 impl ToExpJson for Rule {
-    fn to_json_exp(&self) -> Value {
+    fn to_json(&self) -> Value {
         Rule::to_json_exp(self)
     }
 }
 
 impl ToExpJson for Exp {
-    fn to_json_exp(&self) -> Value {
+    fn to_json(&self) -> Value {
         Exp::to_json_exp(self)
     }
 }

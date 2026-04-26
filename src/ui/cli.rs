@@ -56,7 +56,6 @@ pub struct Cli {
     )]
     pub color: clap::ColorChoice,
 
-
     /// Display a detailed trace of the parsing process.
     #[arg(long, default_value_t = false, global = true)]
     pub trace: bool,
@@ -167,7 +166,7 @@ pub fn cli() -> Result<()> {
         } => {
             let parser = load_grammar_from_path(&grammar, cfga)?;
             if json {
-                (parser.to_json_exp_string()?, "json")
+                (parser.to_json_string()?, "json")
             } else if model {
                 (format!("{:#?}", parser), "rs")
             } else if railroads {

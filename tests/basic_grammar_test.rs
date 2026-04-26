@@ -11,7 +11,7 @@ fn simple_grammar() -> Result<()> {
     "#;
     let grammar = compile(grammar, &[])?;
     let tree = parse_input(&grammar, "hello", &[])?;
-    assert_eq!(tree.to_value(), json!("hello"));
+    assert_eq!(tree.to_json(), json!("hello"));
     Ok(())
 }
 
@@ -28,7 +28,7 @@ fn multiple_rules() -> Result<()> {
     "#;
     let grammar = compile(grammar, &[])?;
     let tree = parse_input(&grammar, "a", &[])?;
-    assert_eq!(tree.to_value(), json!("a"));
+    assert_eq!(tree.to_json(), json!("a"));
     Ok(())
 }
 
@@ -41,7 +41,7 @@ fn rule_references() -> Result<()> {
     "#;
     let grammar = compile(grammar, &[])?;
     let tree = parse_input(&grammar, "hello world", &[])?;
-    assert_eq!(tree.to_value(), json!(["hello", "world"]));
+    assert_eq!(tree.to_json(), json!(["hello", "world"]));
     Ok(())
 }
 

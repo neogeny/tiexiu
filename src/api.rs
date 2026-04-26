@@ -51,7 +51,7 @@ pub fn compile(grammar: &str, cfg: &CfgA) -> Result<Grammar> {
 
 pub fn compile_to_json(grammar: &str, cfg: &CfgA) -> Result<String> {
     let compiled = compile(grammar, cfg)?;
-    compiled.to_json_exp_string().map_err(Error::from)
+    compiled.to_json_string().map_err(Error::from)
 }
 
 pub fn compile_with<U>(cursor: U, cfg: &CfgA) -> Result<Grammar>
@@ -67,7 +67,7 @@ where
     U: Cursor + Clone,
 {
     let compiled = compile_with(cursor, cfg)?;
-    compiled.to_json_exp_string().map_err(Error::from)
+    compiled.to_json_string().map_err(Error::from)
 }
 
 pub fn load(json: &str, _cfg: &CfgA) -> Result<Grammar> {
@@ -76,7 +76,7 @@ pub fn load(json: &str, _cfg: &CfgA) -> Result<Grammar> {
 
 pub fn load_as_json(json: &str, cfg: &CfgA) -> Result<String> {
     let grammar = load(json, cfg)?;
-    grammar.to_json_exp_string().map_err(Error::from)
+    grammar.to_json_string().map_err(Error::from)
 }
 
 pub fn load_tree(json: &str, _cfg: &CfgA) -> Result<Tree> {
@@ -107,12 +107,12 @@ pub fn load_boot(_cfg: &CfgA) -> Result<Grammar> {
 
 pub fn load_boot_as_json(cfg: &CfgA) -> Result<String> {
     let grammar = load_boot(cfg)?;
-    grammar.to_json_exp_string().map_err(Error::from)
+    grammar.to_json_string().map_err(Error::from)
 }
 
 pub fn boot_grammar_json(_cfg: &CfgA) -> Result<String> {
     let boot = boot_grammar()?;
-    match boot.to_json_exp_string() {
+    match boot.to_json_string() {
         Ok(s) => Ok(s),
         Err(e) => Err(e.into()),
     }
@@ -134,7 +134,7 @@ pub fn parse_input(parser: &Grammar, text: &str, cfg: &CfgA) -> Result<Tree> {
 
 pub fn parse_input_to_json_str(parser: &Grammar, text: &str, cfg: &CfgA) -> Result<String> {
     let tree = parse_input(parser, text, cfg)?;
-    match tree.to_string_pretty() {
+    match tree.to_json_string() {
         Ok(string) => Ok(string),
         Err(err) => Err(err.into()),
     }

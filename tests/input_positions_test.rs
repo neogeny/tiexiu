@@ -35,6 +35,6 @@ fn multiline_input() -> Result<()> {
     let grammar = tiexiu::compile(grammar, &[])?;
 
     let tree = parse_input(&grammar, "hello\nworld", &[])?;
-    assert_eq!(tree.to_value(), json!(["hello", "world"]));
+    assert_eq!(tree.to_json(), json!(["hello", "world"]));
     Ok(())
 }

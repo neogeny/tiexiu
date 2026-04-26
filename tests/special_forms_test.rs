@@ -34,7 +34,7 @@ fn void() -> Result<()> {
     "#;
     let grammar = tiexiu::compile(grammar, &[])?;
     let tree = parse_input(&grammar, "a b", &[])?;
-    assert_eq!(tree.to_value(), json!(["a", "b"]));
+    assert_eq!(tree.to_json(), json!(["a", "b"]));
     Ok(())
 }
 
@@ -46,7 +46,7 @@ fn eof() -> Result<()> {
     let grammar = tiexiu::compile(grammar, &[])?;
     let tree = parse_input(&grammar, "a", &[])?;
     // EOF anchors to end
-    assert_eq!(tree.to_value(), json!("a"));
+    assert_eq!(tree.to_json(), json!("a"));
     Ok(())
 }
 
@@ -58,7 +58,7 @@ fn dot() -> Result<()> {
     let grammar = tiexiu::compile(grammar, &[])?;
     let tree = parse_input(&grammar, "ab", &[])?;
     // Dot matches any character
-    assert_eq!(tree.to_value(), json!(["a", "b"]));
+    assert_eq!(tree.to_json(), json!(["a", "b"]));
     Ok(())
 }
 

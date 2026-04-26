@@ -24,7 +24,7 @@ mod parse_grammar {
 
         let parser = tiexiu::compile(grammar, &[])?;
         let tree = tiexiu::parse_input(&parser, "hello", &[])?;
-        let val = tree.to_value();
+        let val = tree.to_json();
         assert_eq!(val, serde_json::json!("hello"));
 
         let res = tiexiu::parse_input(&parser, "world", &[]);
@@ -411,7 +411,7 @@ mod compilation {
         )?;
 
         let tree = parse_input(&grammar, "hello world", &[])?;
-        let _val = tree.to_value();
+        let _val = tree.to_json();
         Ok(())
     }
 }

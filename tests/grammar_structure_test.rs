@@ -24,7 +24,7 @@ fn first_rule_is_default() -> Result<()> {
     "#;
     let grammar = tiexiu::compile(grammar, &[])?;
     let tree = parse_input(&grammar, "a", &[])?;
-    assert_eq!(tree.to_value(), json!("a"));
+    assert_eq!(tree.to_json(), json!("a"));
     Ok(())
 }
 

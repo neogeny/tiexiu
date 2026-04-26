@@ -11,7 +11,7 @@ fn token_sequence() -> Result<()> {
     "#;
     let grammar = tiexiu::compile(grammar, &[])?;
     let tree = parse_input(&grammar, "hello world", &[])?;
-    assert_eq!(tree.to_value(), json!(["hello", "world"]));
+    assert_eq!(tree.to_json(), json!(["hello", "world"]));
     Ok(())
 }
 
@@ -23,10 +23,10 @@ fn optional_token() -> Result<()> {
     let grammar = tiexiu::compile(grammar, &[])?;
 
     let tree = parse_input(&grammar, "a b", &[])?;
-    assert_eq!(tree.to_value(), json!(["a", "b"]));
+    assert_eq!(tree.to_json(), json!(["a", "b"]));
 
     let tree = parse_input(&grammar, "a", &[])?;
-    assert_eq!(tree.to_value(), json!("a"));
+    assert_eq!(tree.to_json(), json!("a"));
     Ok(())
 }
 
@@ -37,7 +37,7 @@ fn closure_tokens() -> Result<()> {
     "#;
     let grammar = tiexiu::compile(grammar, &[])?;
     let tree = parse_input(&grammar, "aaa", &[])?;
-    eprintln!("closure result: {:?}", tree.to_value());
+    eprintln!("closure result: {:?}", tree.to_json());
     Ok(())
 }
 
@@ -49,7 +49,7 @@ fn positive_closure() -> Result<()> {
     let grammar = tiexiu::compile(grammar, &[])?;
 
     let tree = parse_input(&grammar, "a a a", &[])?;
-    assert_eq!(tree.to_value(), json!(["a", "a", "a"]));
+    assert_eq!(tree.to_json(), json!(["a", "a", "a"]));
     Ok(())
 }
 
@@ -60,8 +60,8 @@ fn choice_alternatives() -> Result<()> {
     "#;
     let grammar = tiexiu::compile(grammar, &[])?;
 
-    assert_eq!(parse_input(&grammar, "a", &[])?.to_value(), json!("a"));
-    assert_eq!(parse_input(&grammar, "b", &[])?.to_value(), json!("b"));
-    assert_eq!(parse_input(&grammar, "c", &[])?.to_value(), json!("c"));
+    assert_eq!(parse_input(&grammar, "a", &[])?.to_json(), json!("a"));
+    assert_eq!(parse_input(&grammar, "b", &[])?.to_json(), json!("b"));
+    assert_eq!(parse_input(&grammar, "c", &[])?.to_json(), json!("c"));
     Ok(())
 }
