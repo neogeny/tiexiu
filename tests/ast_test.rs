@@ -3,8 +3,8 @@
 
 //! Tests for AST/Tree functionality
 
-use tiexiu::trees::Tree;
 use tiexiu::Result;
+use tiexiu::trees::Tree;
 
 #[test]
 fn test_ast_pickling() -> Result<()> {

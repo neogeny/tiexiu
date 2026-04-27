@@ -6,7 +6,7 @@ use crate::cfg::CfgA;
 pub use crate::json::exp_json::*;
 pub use crate::peg::pretty::*;
 pub use crate::tools::rails::*;
-use crate::{boot_grammar, config, CfgKey, Result};
+use crate::{CfgKey, Result, boot_grammar, config};
 use clap;
 use clap::builder::styling::{AnsiColor, Styles};
 use clap::{Parser, Subcommand};
@@ -227,7 +227,7 @@ pub fn pygmentize(content: &str, extension: &str, use_color: bool) {
     use syntect::easy::HighlightLines;
     use syntect::highlighting::ThemeSet;
     use syntect::parsing::SyntaxSet;
-    use syntect::util::{as_24_bit_terminal_escaped, LinesWithEndings};
+    use syntect::util::{LinesWithEndings, as_24_bit_terminal_escaped};
 
     let ps = SyntaxSet::load_defaults_newlines();
     let ts = ThemeSet::load_defaults();

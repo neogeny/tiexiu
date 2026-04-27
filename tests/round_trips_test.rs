@@ -23,7 +23,6 @@ fn grammar_to_json_round_trip() -> Result<()> {
 }
 
 #[test]
-#[ignore = "pretty-print output not valid EBNF"]
 fn pretty_print_round_trip() -> Result<()> {
     let grammar_text = r#"
         @@grammar :: Test
@@ -31,12 +30,11 @@ fn pretty_print_round_trip() -> Result<()> {
     "#;
 
     let grammar = compile(grammar_text, &[])?;
-    let pretty1 = grammar.to_string();
+    let pretty1 = grammar.pretty_print();
 
     let grammar2 = compile(&pretty1, &[])?;
-    let pretty2 = grammar2.to_string();
+    let pretty2 = grammar2.pretty_print();
 
-    assert!(!pretty1.is_empty());
-    assert!(!pretty2.is_empty());
+    assert_eq!(pretty1, pretty2);
     Ok(())
 }

@@ -6,17 +6,25 @@
 //! These are skeletal tests - they will not compile until TieXiu
 //! implements the full EBNF parsing bootstrap.
 
+use serde_json::json;
 use tiexiu::Result;
 use tiexiu::api::parse;
 
 #[test]
-#[ignore = "TODO: broken, check the Python original"]
+#[ignore = "TODO: interpolation not yet implemented"]
 fn test_alert_interpolation() -> Result<()> {
     let grammar = r#"
-        start = a:number b: number i:^`"seen: {a}, {b}"` $ ;
-        number::int = /\d+/ ;
+        start = a:number b: number i:^`seen: {a}, {b}` $ ;
+        number = /\d+/ ;
     "#;
 
-    let _ast = parse(grammar, "42 69", &[])?;
+    let ast = parse(grammar, "42 69", &[])?;
+    eprintln!("{:#?}", ast);
+    assert_eq!(
+        ast.to_json(),
+        json!(
+            {"a":"42", "b":"69", "i": "seen: 42, 69"}
+        )
+    );
     Ok(())
 }

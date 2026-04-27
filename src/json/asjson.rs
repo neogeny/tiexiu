@@ -37,11 +37,11 @@ impl Tree {
         serde_json::to_string_pretty(&self.to_json())
     }
 
-    pub fn to_json(&self) -> Value {
-        self.to_value()
+    pub fn to_value(&self) -> Value {
+        self.to_json()
     }
 
-    pub fn to_value(&self) -> Value {
+    pub fn to_json(&self) -> Value {
         match self {
             Tree::Bottom | Tree::Nil => Value::Null,
             Tree::Text(t) => Value::String(t.to_string()),
@@ -56,6 +56,9 @@ impl Tree {
                 Value::Object(obj)
             }
             Tree::Node { typename, tree } => {
+                if typename.as_ref() == "Constant" || typename.as_ref() == "Alert" {
+                    return tree.to_json();
+                }
                 let mut obj = Map::new();
                 obj.insert("typename".into(), Value::String(typename.to_string()));
                 obj.insert("tree".to_string(), tree.to_json());

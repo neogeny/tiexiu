@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::ExpKind;
 use crate::api::error::{CompileError, CompileResult};
 use crate::cfg::types::FlagMap;
 use crate::cfg::*;
@@ -149,7 +150,15 @@ impl GrammarCompiler {
         let (typename, tree) = parse_node(tree)?;
         let typename = typename.to_string();
         let exp: Exp = match typename.as_str() {
-            "Alert" => Exp::alert(&map_get(tree, &typename, "msg")?.value(), 0),
+            "Alert" => {
+                let msgtree = map_get(tree, &typename, "message")?;
+                let msgexp = self.parse_exp(msgtree)?;
+                if let ExpKind::Constant(m) = msgexp.kind {
+                    Exp::alert(&m, 0)
+                } else {
+                    Exp::alert(&msgexp.to_string(), 0)
+                }
+            }
             "BasedRule" => Exp::nil(),
             "Box" => Exp::nil(),
             "Call" => Exp::call(&tree.value()),

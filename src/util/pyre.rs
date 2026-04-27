@@ -26,10 +26,10 @@ pub use pattern::*;
 // Priority: pcre2 > regex > fancy (fallback)
 // #[cfg(feature = "pcre2")]
 // pub use pcre2::*;
-// 
+//
 // #[cfg(all(not(feature = "pcre2"), feature = "regex"))]
 // pub use regex::*;
-// 
+//
 // #[cfg(not(any(feature = "pcre2", feature = "regex")))]
 pub use fancy::*;
 
