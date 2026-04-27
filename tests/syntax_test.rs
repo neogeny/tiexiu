@@ -37,7 +37,7 @@ fn test_update_ast() -> Result<()> {
     let parser = compile(grammar, &[])?;
 
     assert_eq!(parser.name.to_string(), "grammar");
-    assert!(!parser.analyzed);
+    assert!(parser.analyzed);
     assert_eq!(parser.get_directives().len(), 1);
     assert!(parser.keywords.is_empty());
 

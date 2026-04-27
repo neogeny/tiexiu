@@ -216,8 +216,8 @@ mod tests {
     }
 
     #[test]
-    fn grammar_not_analyzed() {
+    fn grammar_analyzed() {
         let grammar = Grammar::new("Test", &[]);
-        assert!(!grammar.analyzed);
+        assert!(grammar.analyzed);
     }
 }
