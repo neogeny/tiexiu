@@ -1,5 +1,4 @@
 name: Release
-
 on:
   workflow_dispatch:
     inputs:
@@ -38,14 +37,23 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Build wheels
+      - name: Build wheels (Linux & macOS)
+        if: matrix.os != 'windows-latest'
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          # --zig is a flag for the maturin command, not an input to the action
           args: --release --out dist --features pyo3 --zig
           sccache: 'true'
           container: off
+
+      - name: Build wheels (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          # Removed --zig for Windows compatibility
+          args: --release --out dist --features pyo3
+          sccache: 'true'
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

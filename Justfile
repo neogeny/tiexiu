@@ -62,3 +62,6 @@ pyo3:
 
 release:
     gh workflow run release.yml -f publish=false
+
+publish:
+    gh workflow run release.yml -f publish=true
