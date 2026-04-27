@@ -1,18 +1,31 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-//! Tests for parameters - uses compile() which has BUG
+//! Tests for parameters
 
-use tiexiu::Result;
 use tiexiu::api::compile;
+use tiexiu::util::indent::dedent_all;
+use tiexiu::*;
 
 #[test]
-#[ignore = "grammar parsing bug with params"]
-fn test_keyword_params() -> Result<()> {
-    let grammar = r#"
-        start = rule[param] ;
-        rule[:param] = 'test' ;
-    "#;
-    compile(grammar, &[])?;
+fn test_numbers_and_unicode() -> Result<()> {
+    let grammar = dedent_all(
+        r#"
+        rúle[1, -23, 4.56, 7.89e-11, Añez]: "a"
+
+        rúlé[Añez]: "ñ"
+
+        "#,
+    );
+
+    let tree = parse_grammar(grammar.as_ref(), &[])?;
+    eprintln!("{:#?}", tree);
+    eprintln!("{}", tree.to_json_string_pretty()?);
+
+    let model = compile(grammar.as_ref(), &[])?;
+    eprintln!("{:#?}", model);
+
+    let pretty = model.pretty_print();
+    assert_eq!(grammar.trim(), pretty.trim());
     Ok(())
 }
