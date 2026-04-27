@@ -1,17 +1,18 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::exp::Exp;
-use super::parser::{ParseResult, Yeap};
+use crate::Exp;
 use crate::engine::Ctx;
 use crate::peg::ParseError;
+use crate::peg::error::ParseResult;
+use crate::peg::error::{Nope, Yeap};
 use crate::trees::Tree;
 use crate::types::Ref;
 
 impl Exp {
     pub fn parse_choice<C: Ctx>(&self, mut ctx: C, options: &[Exp]) -> ParseResult<C> {
         let start = ctx.mark();
-        let mut furthest: Option<crate::peg::Nope> = None;
+        let mut furthest: Option<Nope> = None;
 
         for option in options.iter() {
             match option.parse(ctx.push()) {

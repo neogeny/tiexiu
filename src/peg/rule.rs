@@ -1,10 +1,11 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use super::Parser;
 use super::exp::Exp;
-use super::{ParseResult, Parser, Yeap};
 use crate::cfg::types::FlagMap;
 use crate::engine::Ctx;
+use crate::peg::error::{ParseResult, Yeap};
 use crate::trees::Tree;
 use crate::types::{Ref, Str};
 use indexmap::IndexMap;

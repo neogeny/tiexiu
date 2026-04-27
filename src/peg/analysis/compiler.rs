@@ -1,12 +1,12 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::error::{CompileError, CompileResult};
-use super::{Exp, Grammar, Rule};
+use crate::api::error::{CompileError, CompileResult};
 use crate::cfg::types::FlagMap;
 use crate::cfg::*;
 use crate::peg::grammar::KeywordRef;
 use crate::peg::rule::{RuleMap, RuleRef};
+use crate::peg::{Exp, Grammar, Rule};
 use crate::trees::{Tree, TreeMap};
 use crate::types::Str;
 

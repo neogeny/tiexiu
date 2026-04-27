@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::error::ParseError;
-use super::parser::{ParseResult, Parser};
+use super::error::{ParseError, ParseResult, Yeap};
+use super::parser::Parser;
 pub use super::pretty::*;
 use super::rule::{Rule, RuleMap, RuleRef};
 use crate::cfg::*;
@@ -10,7 +10,7 @@ use crate::engine::Ctx;
 use crate::peg::ParseError::RuleNotFound;
 use crate::rule::RuleName;
 use crate::types::{Ref, Str};
-use crate::{StrCursor, Tree, Yeap, new_ctx};
+use crate::{StrCursor, Tree, new_ctx};
 use std::rc::Rc;
 
 pub type KeywordRef = Str;

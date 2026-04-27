@@ -1,11 +1,9 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::exp::Exp;
-use super::parser::Yeap;
+use crate::Exp;
 use crate::engine::Ctx;
-use crate::peg::ParseResult;
-use crate::peg::nope::Nope;
+use crate::peg::error::*;
 use crate::trees::Tree;
 
 impl Exp {

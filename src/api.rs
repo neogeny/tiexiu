@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::api::error::Yeap;
 pub use crate::cfg::*;
 pub use crate::engine::new_ctx;
 pub use crate::input::{Cursor, StrCursor};

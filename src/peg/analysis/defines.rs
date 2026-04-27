@@ -1,11 +1,11 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::exp::{Exp, ExpKind};
 use crate::cfg::types::DefineSet;
+use crate::exp::{Exp, ExpKind};
 
 impl Exp {
-    pub(super) fn cache_defines(&mut self) {
+    pub(in crate::peg) fn cache_defines(&mut self) {
         let mut names: DefineSet = DefineSet::new();
         self._defines(&mut names);
         self.df = Some(names.into_iter().collect::<Vec<_>>().into());

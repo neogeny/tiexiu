@@ -1,12 +1,12 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::Grammar;
-use super::exp::{Exp, ExpKind};
+use crate::Grammar;
+use crate::exp::{Exp, ExpKind};
 use std::rc::Rc;
 
 impl Grammar {
-    pub(super) fn link(&mut self) {
+    pub(in crate::peg) fn link(&mut self) {
         let len = self.rules.len();
         let mut all_exps: Vec<*mut Exp> = Vec::with_capacity(len);
 

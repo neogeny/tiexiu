@@ -1,10 +1,10 @@
 // copyright (c) 2026 juancarlo añez (apalala@gmail.com)
 // spdx-license-identifier: mit or apache-2.0
 
-use super::exp::{Exp, ExpKind};
 use crate::cfg::types::{Str, StrSet};
+use crate::exp::{Exp, ExpKind};
 impl Exp {
-    pub(super) fn cache_lookahead(&mut self) -> StrSet {
+    pub(in crate::peg) fn cache_lookahead(&mut self) -> StrSet {
         let mut lookaheads = StrSet::new();
 
         match &self.kind {

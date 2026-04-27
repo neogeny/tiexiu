@@ -1,11 +1,12 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::ParseError;
-use crate::engine::CtxI;
+use super::parse_error::ParseError;
+use crate::Tree;
+use crate::cfg::types::{Ref, Str};
 use crate::engine::state::CallStack;
+use crate::engine::{Ctx, CtxI};
 use crate::input::memento::Memento;
-use crate::types::{Ref, Str};
 use std::fmt::Debug;
 use std::panic::Location;
 
@@ -79,5 +80,52 @@ impl Nope {
         if !was_cut {
             self.cutseen = false;
         }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Yeap<C: Ctx>(pub C, pub Tree);
+
+impl<C: Ctx> Yeap<C> {
+    #[inline]
+    pub fn ctx(self) -> C {
+        self.0
+    }
+
+    #[inline]
+    pub fn tree(self) -> Tree {
+        self.1
+    }
+
+    #[inline]
+    pub fn ctx_ref(&self) -> &C {
+        &self.0
+    }
+
+    #[inline]
+    pub fn cst_ref(&self) -> &Tree {
+        &self.1
+    }
+}
+
+pub type ParseResult<C> = Result<Yeap<C>, Nope>;
+
+#[cfg(test)]
+mod tests {
+    use crate::engine::strctx::StrCtx;
+    use crate::peg::error::nope::{Nope, Yeap};
+
+    const TARGET: usize = 64;
+
+    #[test]
+    fn test_succ_size() {
+        let size = size_of::<Yeap<StrCtx>>();
+        assert!(size <= TARGET, "Succ size is {} > {} bytes", size, TARGET);
+    }
+
+    #[test]
+    fn test_fail_size() {
+        let size = size_of::<Nope>();
+        assert!(size <= TARGET, "Fail size is {} > {} bytes", size, TARGET);
     }
 }
