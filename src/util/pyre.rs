@@ -15,16 +15,22 @@ pub mod regex;
 pub use error::*;
 pub use pattern::*;
 
+// NOTE
+//   This library will use fancy_regex at all levels
+//      - Rich regular expression syntax
+//      - Reasonable regex build times
+//      - A reliable bridge with the Python `re` of TatSu
+//  _
+//  Other implementations are kept as legacy
 // Selection of the default backend
 // Priority: pcre2 > regex > fancy (fallback)
-
-#[cfg(feature = "pcre2")]
-pub use pcre2::*;
-
-#[cfg(all(not(feature = "pcre2"), feature = "regex"))]
-pub use regex::*;
-
-#[cfg(not(any(feature = "pcre2", feature = "regex")))]
+// #[cfg(feature = "pcre2")]
+// pub use pcre2::*;
+// 
+// #[cfg(all(not(feature = "pcre2"), feature = "regex"))]
+// pub use regex::*;
+// 
+// #[cfg(not(any(feature = "pcre2", feature = "regex")))]
 pub use fancy::*;
 
 pub fn truncate_pattern(pattern: &str, limit: usize) -> &str {
