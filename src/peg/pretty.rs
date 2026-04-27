@@ -204,7 +204,7 @@ impl PrettyPrint for ExpKind {
                     .collect::<Vec<_>>();
                 let folded = writer.fold(0, &pretty, "", "", "").take();
                 if folded.lines().count() > 1 {
-                    return format!("\n{}", folded);
+                    return folded.to_string();
                 }
                 pretty.join(" ")
             }
