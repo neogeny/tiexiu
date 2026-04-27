@@ -29,8 +29,11 @@ jobs:
             target: x86_64-pc-windows-msvc
           - os: macos-latest
             target: aarch64-apple-darwin
-          - os: macos-13 # Explicitly use the Intel runner to avoid cross-compilation linking issues
+#          - os: macos-13 # Explicitly use the Intel runner to avoid cross-compilation linking issues
+#            target: x86_64-apple-darwin
+          - os: macos-latest # This runner now builds the Intel wheel via cross-compilation
             target: x86_64-apple-darwin
+
 
     steps:
       - uses: actions/checkout@v6
