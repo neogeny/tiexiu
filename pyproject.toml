@@ -42,6 +42,7 @@ tiexiu = { workspace = true }
 [dependency-groups]
 dev = [
     "maturin>=1.13.1",
+    "ruff>=0.15.12",
     "tiexiu",
     "uv>=0.11.7",
 ]
