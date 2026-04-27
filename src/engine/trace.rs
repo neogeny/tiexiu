@@ -3,7 +3,7 @@
 
 use super::CtxI;
 use crate::peg::ParseError;
-use console::style;
+use console::{style, Term};
 use std::fmt::Debug;
 use std::io::Write;
 
@@ -43,6 +43,13 @@ pub trait Tracer: Debug {
 
     fn trace_event(&self, ctx: &dyn CtxI, event: Event, msg: &str) {
         console::set_colors_enabled(true);
+
+        let term = Term::stdout();
+        let (_rows, cols) = if let Some((r, c)) = term.size_checked() {
+            (r.into(), c.into())
+        } else {
+            (24usize, 80usize)
+        };
         let event_symbol: String = match event {
             Event::Entry => style("↙").yellow(),
             Event::Success => style("≡").green(),
@@ -62,9 +69,13 @@ pub trait Tracer: Debug {
         }
         .to_string();
         let lookahead = ctx.cursor().lookahead(ctx.mark()).replace(" ", "·");
-        let callstack = style(ctx.callstack().to_vec().join(stack_symbol.as_str()))
-            .white()
-            .bold();
+        let mut callstack = ctx.callstack().to_vec().join(stack_symbol.as_str());
+        if callstack.chars().count() > cols {
+            let safe_index = callstack.floor_char_boundary(cols - 4);
+            callstack.truncate(safe_index);
+            callstack.push_str("...");
+        }
+        let scallstack = style(callstack) .white().bold();
 
         let location = ctx.cursor().location();
         let source = location.source.to_string();
@@ -72,7 +83,7 @@ pub trait Tracer: Debug {
 
         let pos = style(format!("[{line}:{col}]→")).black().bright();
 
-        let msg = format!("{event_symbol}{msg} {callstack}<|•\"{source}\"\n{pos}{lookahead}");
+        let msg = format!("{event_symbol}{msg} {scallstack}<|•\"{source}\"\n{pos}{lookahead}");
         self.trace(msg.as_str());
     }
 
