@@ -26,14 +26,14 @@ impl Tree {
     }
 
     pub fn to_json_str(&self) -> serde_json::Result<Box<str>> {
-        self.to_string_pretty().map(|s| s.into_boxed_str())
+        self.to_json_string_pretty().map(|s| s.into_boxed_str())
     }
 
     pub fn to_json_string(&self) -> serde_json::Result<String> {
-        self.to_string_pretty()
+        self.to_json_string_pretty()
     }
 
-    pub fn to_string_pretty(&self) -> serde_json::Result<String> {
+    pub fn to_json_string_pretty(&self) -> serde_json::Result<String> {
         serde_json::to_string_pretty(&self.to_json())
     }
 
@@ -58,7 +58,7 @@ impl Tree {
             Tree::Node { typename, tree } => {
                 let mut obj = Map::new();
                 obj.insert("typename".into(), Value::String(typename.to_string()));
-                obj.insert(typename.to_string(), tree.to_json());
+                obj.insert("tree".to_string(), tree.to_json());
                 Value::Object(obj)
             }
             Tree::Named(KeyValue(name, tree)) => {
