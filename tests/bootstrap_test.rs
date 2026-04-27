@@ -20,7 +20,7 @@ mod parse_grammar {
         "#;
         let tree = parse_grammar(grammar, &[])?;
         eprintln!("TREE:\n{:#?}", tree);
-        assert!(tree.to_model_json_string()?.contains("Simple"));
+        assert!(tree.to_json_string()?.contains("Simple"));
 
         let parser = tiexiu::compile(grammar, &[])?;
         let tree = tiexiu::parse_input(&parser, "hello", &[])?;
@@ -43,7 +43,7 @@ mod parse_grammar {
             c: 'c'
         "#;
         let tree = parse_grammar(grammar, &[])?;
-        let json = tree.to_model_json_string()?;
+        let json = tree.to_json_string()?;
         assert!(json.contains("rules"));
         Ok(())
     }
@@ -57,7 +57,7 @@ mod parse_grammar {
             start: 'hello'
         "#;
         let tree = parse_grammar(grammar, &[])?;
-        let json = tree.to_model_json_string()?;
+        let json = tree.to_json_string()?;
         assert!(json.contains("directive"));
         Ok(())
     }
@@ -76,7 +76,7 @@ mod parse_expressions {
         // TODO: cause of failure - verify expression parsing
         let grammar = r#"@@grammar :: T start: 'foo' 'bar'"#;
         let tree = parse_grammar(grammar, &[])?;
-        let json = tree.to_model_json_string()?;
+        let json = tree.to_json_string()?;
         assert!(json.contains("Token"));
         Ok(())
     }
@@ -86,7 +86,7 @@ mod parse_expressions {
         // TODO: cause of failure - verify expression parsing
         let grammar = r#"@@grammar :: P start: /\d+/"#;
         let tree = parse_grammar(grammar, &[])?;
-        let json = tree.to_model_json_string()?;
+        let json = tree.to_json_string()?;
         assert!(json.contains("Pattern"));
         Ok(())
     }
@@ -96,7 +96,7 @@ mod parse_expressions {
         // TODO: cause of failure - verify expression parsing
         let grammar = r#"@@grammar :: S start: 'a' 'b' 'c'"#;
         let tree = parse_grammar(grammar, &[])?;
-        let json = tree.to_model_json_string()?;
+        let json = tree.to_json_string()?;
         assert!(json.contains("Sequence"));
         Ok(())
     }
@@ -106,7 +106,7 @@ mod parse_expressions {
         // TODO: cause of failure - verify expression parsing
         let grammar = r#"@@grammar :: C start: 'a' | 'b' | 'c'"#;
         let tree = parse_grammar(grammar, &[])?;
-        let json = tree.to_model_json_string()?;
+        let json = tree.to_json_string()?;
         assert!(json.contains("Choice"));
         Ok(())
     }
@@ -116,7 +116,7 @@ mod parse_expressions {
         // TODO: cause of failure - verify expression parsing
         let grammar = r#"@@grammar :: O start: 'a' 'b'? 'c'"#;
         let tree = parse_grammar(grammar, &[])?;
-        let json = tree.to_model_json_string()?;
+        let json = tree.to_json_string()?;
         assert!(json.contains("Optional"));
         Ok(())
     }
@@ -126,7 +126,7 @@ mod parse_expressions {
         // TODO: cause of failure - verify expression parsing
         let grammar = r#"@@grammar :: Cl start: 'a'*"#;
         let tree = parse_grammar(grammar, &[])?;
-        let json = tree.to_model_json_string()?;
+        let json = tree.to_json_string()?;
         assert!(json.contains("Closure"));
         Ok(())
     }
@@ -136,7 +136,7 @@ mod parse_expressions {
         // TODO: cause of failure - verify expression parsing
         let grammar = r#"@@grammar :: PC start: 'a'+"#;
         let tree = parse_grammar(grammar, &[])?;
-        let json = tree.to_model_json_string()?;
+        let json = tree.to_json_string()?;
         assert!(json.contains("PositiveClosure"));
         Ok(())
     }
@@ -146,7 +146,7 @@ mod parse_expressions {
         // TODO: cause of failure - verify expression parsing
         let grammar = r#"@@grammar :: G start: ('a' 'b')*"#;
         let tree = parse_grammar(grammar, &[])?;
-        let json = tree.to_model_json_string()?;
+        let json = tree.to_json_string()?;
         assert!(json.contains("Group"));
         Ok(())
     }
@@ -165,7 +165,7 @@ mod parse_constraints {
         // TODO: cause of failure - verify constraint parsing
         let grammar = r#"@@grammar :: L start: &'a' 'a'"#;
         let tree = parse_grammar(grammar, &[])?;
-        let json = tree.to_model_json_string()?;
+        let json = tree.to_json_string()?;
         assert!(json.contains("Lookahead"));
         Ok(())
     }
@@ -175,7 +175,7 @@ mod parse_constraints {
         // TODO: cause of failure - verify constraint parsing
         let grammar = r#"@@grammar :: NL start: !'b' 'a'"#;
         let tree = parse_grammar(grammar, &[])?;
-        let json = tree.to_model_json_string()?;
+        let json = tree.to_json_string()?;
         assert!(json.contains("NegativeLookahead"));
         Ok(())
     }
@@ -185,7 +185,7 @@ mod parse_constraints {
         // TODO: cause of failure - verify cut parsing
         let grammar = r#"@@grammar :: Cu start: 'a' ~ 'b'"#;
         let tree = parse_grammar(grammar, &[])?;
-        let json = tree.to_model_json_string()?;
+        let json = tree.to_json_string()?;
         assert!(json.contains("Cut"));
         Ok(())
     }
@@ -203,7 +203,7 @@ mod parse_naming {
         // TODO: cause of failure - verify naming parsing
         let grammar = r#"@@grammar :: N start: name='a'"#;
         let tree = parse_grammar(grammar, &[])?;
-        let json = tree.to_model_json_string()?;
+        let json = tree.to_json_string()?;
         assert!(json.contains("Named"));
         assert!(json.contains("name"));
         Ok(())
@@ -218,7 +218,7 @@ mod parse_naming {
             foo: 'x'
         "#;
         let tree = parse_grammar(grammar, &[])?;
-        let json = tree.to_model_json_string()?;
+        let json = tree.to_json_string()?;
         assert!(json.contains("Call"));
         Ok(())
     }
@@ -232,7 +232,7 @@ mod parse_naming {
             base: 'x'
         "#;
         let tree = parse_grammar(grammar, &[])?;
-        let json = tree.to_model_json_string()?;
+        let json = tree.to_json_string()?;
         assert!(json.contains("RuleInclude"));
         Ok(())
     }
@@ -264,7 +264,7 @@ mod parse_special {
         // TODO: cause of failure - verify special form parsing
         let grammar = r#"@@grammar :: V start: 'a' () 'b'"#;
         let tree = parse_grammar(grammar, &[])?;
-        let json = tree.to_model_json_string()?;
+        let json = tree.to_json_string()?;
         assert!(json.contains("Void"));
         Ok(())
     }
@@ -274,7 +274,7 @@ mod parse_special {
         // TODO: cause of failure - verify special form parsing
         let grammar = r#"@@grammar :: E start: 'a' $"#;
         let tree = parse_grammar(grammar, &[])?;
-        let json = tree.to_model_json_string()?;
+        let json = tree.to_json_string()?;
         assert!(json.contains("EOF"));
         Ok(())
     }
@@ -295,7 +295,7 @@ mod parse_special {
         // TODO: cause of failure - verify special form parsing
         let grammar = r#"@@grammar :: Cst start: `constant`"#;
         let tree = parse_grammar(grammar, &[])?;
-        let json = tree.to_model_json_string()?;
+        let json = tree.to_json_string()?;
         assert!(json.contains("Constant"));
         Ok(())
     }
@@ -305,7 +305,7 @@ mod parse_special {
         // TODO: cause of failure - verify join parsing
         let grammar = r#"@@grammar :: J start: ','%{'a'}*"#;
         let tree = parse_grammar(grammar, &[])?;
-        let json = tree.to_model_json_string()?;
+        let json = tree.to_json_string()?;
         assert!(json.contains("Join"));
         Ok(())
     }
@@ -315,7 +315,7 @@ mod parse_special {
         // TODO: cause of failure - verify gather parsing
         let grammar = r#"@@grammar :: Gt start: ','.{'a'}*"#;
         let tree = parse_grammar(grammar, &[])?;
-        let json = tree.to_model_json_string()?;
+        let json = tree.to_json_string()?;
         assert!(json.contains("Gather"));
         Ok(())
     }
@@ -325,7 +325,7 @@ mod parse_special {
         // TODO: cause of failure - verify special form parsing
         let grammar = r#"@@grammar :: Sk start: (?: 'a' 'b')*"#;
         let tree = parse_grammar(grammar, &[])?;
-        let json = tree.to_model_json_string()?;
+        let json = tree.to_json_string()?;
         assert!(json.contains("SkipGroup"));
         Ok(())
     }
@@ -335,7 +335,7 @@ mod parse_special {
         // TODO: cause of failure - verify special form parsing
         let grammar = r#"@@grammar :: Al start: ^^`danger`"#;
         let tree = parse_grammar(grammar, &[])?;
-        let json = tree.to_model_json_string()?;
+        let json = tree.to_json_string()?;
         assert!(json.contains("Alert"));
         Ok(())
     }
@@ -383,7 +383,7 @@ mod integration {
         let tatsu_grammar = std::fs::read_to_string(PATH_TATSU_GRAMMAR_EBNF)?;
 
         let tree = parse_grammar(&tatsu_grammar, &[])?;
-        let json = tree.to_model_json_string()?;
+        let json = tree.to_json_string()?;
 
         assert!(json.contains("Grammar"));
         assert!(json.contains("rules"));

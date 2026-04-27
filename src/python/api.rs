@@ -44,7 +44,7 @@ pub(crate) fn parse_grammar_to_json(
     } else {
         Vec::new()
     };
-    let result = crate::api::parse_grammar_as_json(grammar, &cfg)
+    let result = crate::api::parse_grammar_to_json_string(grammar, &cfg)
         .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
     Ok(result)
 }
@@ -60,7 +60,7 @@ pub(crate) fn compile_to_json(
     } else {
         Vec::new()
     };
-    let result = crate::api::compile_to_json(grammar, &cfg)
+    let result = crate::api::compile_to_json_string(grammar, &cfg)
         .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
     Ok(result)
 }
@@ -73,7 +73,7 @@ pub(crate) fn pretty(grammar: &str, kwargs: Option<&Bound<'_, PyDict>>) -> PyRes
     } else {
         Vec::new()
     };
-    let result = crate::api::pretty(grammar, &cfg)
+    let result = crate::api::grammar_pretty(grammar, &cfg)
         .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
     Ok(result)
 }

@@ -20,9 +20,14 @@ pub fn parse_grammar(grammar: &str, cfg: &CfgA) -> Result<Tree> {
     parse_grammar_with(StrCursor::new(grammar), cfg)
 }
 
-pub fn parse_grammar_as_json(grammar: &str, cfg: &CfgA) -> Result<String> {
+pub fn parse_grammar_to_json(grammar: &str, cfg: &CfgA) -> Result<serde_json::Value> {
     let tree = parse_grammar(grammar, cfg)?;
-    tree.to_model_json_string().map_err(Error::from)
+    Ok(tree.to_json())
+}
+
+pub fn parse_grammar_to_json_string(grammar: &str, cfg: &CfgA) -> Result<String> {
+    let tree = parse_grammar(grammar, cfg)?;
+    Ok(tree.to_json_string()?)
 }
 
 pub fn parse_grammar_with<U>(cursor: U, cfg: &CfgA) -> Result<Tree>
@@ -38,21 +43,26 @@ where
     }
 }
 
-pub fn parse_grammar_with_as_json<U>(cursor: U, cfg: &CfgA) -> Result<String>
+pub fn parse_grammar_to_json_with<U>(cursor: U, cfg: &CfgA) -> Result<serde_json::Value>
 where
     U: Cursor + Clone,
 {
     let tree = parse_grammar_with(cursor, cfg)?;
-    tree.to_model_json_string().map_err(Error::from)
+    Ok(tree.to_json())
 }
 
 pub fn compile(grammar: &str, cfg: &CfgA) -> Result<Grammar> {
     compile_with(StrCursor::new(grammar), cfg)
 }
 
-pub fn compile_to_json(grammar: &str, cfg: &CfgA) -> Result<String> {
+pub fn compile_to_json(grammar: &str, cfg: &CfgA) -> Result<serde_json::Value> {
     let compiled = compile(grammar, cfg)?;
-    compiled.to_json_string().map_err(Error::from)
+    Ok(compiled.to_json())
+}
+
+pub fn compile_to_json_string(grammar: &str, cfg: &CfgA) -> Result<String> {
+    let compiled = compile(grammar, cfg)?;
+    Ok(compiled.to_json_string()?)
 }
 
 pub fn compile_with<U>(cursor: U, cfg: &CfgA) -> Result<Grammar>
@@ -63,43 +73,43 @@ where
     Ok(Grammar::compile(&tree, cfg)?)
 }
 
-pub fn compile_with_as_json<U>(cursor: U, cfg: &CfgA) -> Result<String>
+pub fn compile_to_json_with<U>(cursor: U, cfg: &CfgA) -> Result<serde_json::Value>
 where
     U: Cursor + Clone,
 {
     let compiled = compile_with(cursor, cfg)?;
-    compiled.to_json_string().map_err(Error::from)
+    Ok(compiled.to_json())
 }
 
 pub fn load(json: &str, _cfg: &CfgA) -> Result<Grammar> {
     Ok(Grammar::serde_from_json(json)?)
 }
 
-pub fn load_as_json(json: &str, cfg: &CfgA) -> Result<String> {
+pub fn load_to_json(json: &str, cfg: &CfgA) -> Result<serde_json::Value> {
     let grammar = load(json, cfg)?;
-    grammar.to_json_string().map_err(Error::from)
+    Ok(grammar.to_json())
 }
 
 pub fn load_tree(json: &str, _cfg: &CfgA) -> Result<Tree> {
-    Tree::from_model_json(json).map_err(Error::from)
+    Tree::from_json_str(json).map_err(Error::from)
 }
 
-pub fn load_tree_as_json(json: &str, cfg: &CfgA) -> Result<String> {
+pub fn load_tree_to_json(json: &str, cfg: &CfgA) -> Result<serde_json::Value> {
     let tree = load_tree(json, cfg)?;
-    tree.to_model_json_string().map_err(Error::from)
+    Ok(tree.to_json())
 }
 
-pub fn pretty(grammar: &str, cfg: &CfgA) -> Result<String> {
+pub fn grammar_pretty(grammar: &str, cfg: &CfgA) -> Result<String> {
     let grammar = compile(grammar, cfg)?;
     Ok(grammar.pretty_print())
 }
 
 pub fn pretty_tree(tree: &Tree, _cfg: &CfgA) -> Result<String> {
-    Ok(tree.to_model_json_string()?)
+    Ok(tree.to_json_string()?)
 }
 
 pub fn pretty_tree_json(tree: &Tree, _cfg: &CfgA) -> Result<String> {
-    tree.to_model_json_string().map_err(Error::from)
+    tree.to_json_string().map_err(Error::from)
 }
 
 pub fn load_boot(_cfg: &CfgA) -> Result<Grammar> {

@@ -4,6 +4,7 @@
 use crate::trees::{KeyValue, Tree, TreeMap};
 use serde_json::{Map, Value};
 
+use crate::json::error::JsonError;
 use serde::{Serialize, Serializer};
 
 impl Serialize for Tree {
@@ -16,6 +17,14 @@ impl Serialize for Tree {
 }
 
 impl Tree {
+    pub fn from_json_str(json: &str) -> Result<Self, JsonError> {
+        let mut deserializer = serde_json::Deserializer::from_str(json);
+        let value: Value = serde_path_to_error::deserialize(&mut deserializer)
+            .map_err(|err| JsonError::JsonPath(err.path().to_string(), err.into_inner()))?;
+        let tree = Self::from_json(&value);
+        Ok(tree)
+    }
+
     pub fn to_json_str(&self) -> serde_json::Result<Box<str>> {
         self.to_string_pretty().map(|s| s.into_boxed_str())
     }
@@ -66,34 +75,37 @@ impl Tree {
         }
     }
 
-    pub fn from_json(value: &Value) -> Option<Self> {
+    pub fn from_json(value: &Value) -> Self {
         match value {
-            Value::Null => Some(Tree::Nil),
-            Value::String(s) => Some(Tree::Text(s.clone().into())),
+            Value::Null => Tree::Nil,
+            Value::String(s) => Tree::Text(s.clone().into()),
             Value::Array(arr) => {
-                let items: Vec<Tree> = arr.iter().map(Tree::from_json).collect::<Option<_>>()?;
-                Some(Tree::Seq(items.into()))
+                let items: Vec<Tree> = arr.iter().map(Tree::from_json).collect();
+                Tree::Seq(items.into())
             }
             Value::Object(obj) => {
-                if obj.len() == 1 {
-                    let (key, value) = obj.iter().next()?;
-                    if key == "typename" {
-                        if let Some(tree) = Tree::from_json(value) {
-                            return Some(Tree::Node {
-                                typename: key.clone().into(),
-                                tree: tree.into(),
-                            });
-                        }
-                    }
+                if obj.len() == 1
+                    && let Some((key, value)) = obj.iter().next()
+                    && key == "typename"
+                {
+                    let tree = Tree::from_json(value);
+                    return Tree::Node {
+                        typename: key.clone().into(),
+                        tree: tree.into(),
+                    };
                 }
                 let mut m = TreeMap::new();
                 for (key, value) in obj {
-                    let tree = Tree::from_json(value)?;
+                    let tree = Tree::from_json(value);
                     m.insert(key, tree);
                 }
-                Some(Tree::Map(m.into()))
+                Tree::Map(m.into())
             }
-            _ => None,
+            Value::Bool(yesno) => {
+                // FIXME!
+                Tree::text(yesno.to_string().as_str())
+            }
+            Value::Number(n) => Tree::text(n.to_string().as_str()),
         }
     }
 }
@@ -117,7 +129,7 @@ mod tests {
         for tree in cases {
             let json = tree.to_json();
             let round_tripped = Tree::from_json(&json);
-            assert_eq!(round_tripped, Some(tree.clone()));
+            assert_eq!(round_tripped, tree.clone());
         }
     }
 }

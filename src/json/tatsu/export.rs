@@ -160,7 +160,8 @@ impl From<Exp> for TatSuModel {
                 name: name.into(),
                 exp: None,
             },
-            _ => unreachable!("Conversion for variant not implemented"),
+            ExpKind::EmptyClosure => TatSuModel::EmptyClosure,
+            ExpKind::Fail => TatSuModel::Fail,
         }
     }
 }

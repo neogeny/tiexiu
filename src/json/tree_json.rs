@@ -27,11 +27,11 @@ pub enum TreeJsonError {
 }
 
 impl Tree {
-    pub fn to_model_json_string(&self) -> Result<String, serde_json::Error> {
+    pub fn _to_model_json_string(&self) -> Result<String, serde_json::Error> {
         serde_json::to_string_pretty(&self.to_model_json())
     }
 
-    pub fn from_model_json(json: &str) -> Result<Self, TreeJsonError> {
+    pub fn _from_model_json(json: &str) -> Result<Self, TreeJsonError> {
         let value: Value = serde_json::from_str(json)
             .map_err(|_| TreeJsonError::ExpectedObject("tree JSON document"))?;
         Self::from_serde_json_value(&value)

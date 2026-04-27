@@ -157,6 +157,7 @@ impl TryFrom<TatSuModel> for Exp {
             TatSuModel::Override { exp } => Ok(Exp::override_node(Exp::try_from(*exp)?)),
             TatSuModel::OverrideList { exp } => Ok(Exp::override_list(Exp::try_from(*exp)?)),
             TatSuModel::SkipGroup { exp } => Ok(Exp::skip_group(Exp::try_from(*exp)?)),
+            TatSuModel::Fail => Ok(Exp::fail()),
         }
     }
 }

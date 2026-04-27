@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::json::error::JsonError;
-use crate::json::tree_json::TreeJsonError;
 use crate::peg::ParseError;
 use crate::peg::error::{CompileError, Nope};
 
@@ -28,9 +27,9 @@ pub enum Error {
     #[error("JSON import/export failed: {0}")]
     JsonModel(#[from] JsonError),
 
-    #[error("tree JSON mapping failed: {0}")]
-    TreeJson(#[from] TreeJsonError),
-
+    // FIXME
+    // #[error("tree JSON mapping failed: {0}")]
+    // TreeJson(#[from] TreeJsonError),
     #[error("grammar compilation failed: {0}")]
     Compile(#[from] CompileError),
 

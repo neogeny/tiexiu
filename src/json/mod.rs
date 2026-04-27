@@ -4,7 +4,7 @@ pub mod error;
 pub mod exp_json;
 pub mod import;
 pub mod tatsu;
-pub mod tree_json;
+mod tree_json;
 pub mod tryfrom;
 
 pub use exp_json::ToExpJson;

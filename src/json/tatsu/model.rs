@@ -88,6 +88,7 @@ pub enum TatSuModel {
         // exp: Option<Box<TatSuModel>>, // HERE
     },
     Void,
+    Fail,
     Cut,
     EOL,
     EOF,
