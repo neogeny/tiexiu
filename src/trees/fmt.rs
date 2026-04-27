@@ -3,14 +3,7 @@
 
 use crate::trees::{KeyValue, Tree, TreeMap};
 use std::fmt;
-use std::fmt::Debug;
 use std::ops::Deref;
-
-impl Debug for Tree {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self)
-    }
-}
 
 impl fmt::Display for TreeMap {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
