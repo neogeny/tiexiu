@@ -3,7 +3,7 @@
 
 use super::CtxI;
 use crate::peg::ParseError;
-use console::{style, Term};
+use console::{Term, style};
 use std::fmt::Debug;
 use std::io::Write;
 
@@ -75,7 +75,7 @@ pub trait Tracer: Debug {
             callstack.truncate(safe_index);
             callstack.push_str("...");
         }
-        let scallstack = style(callstack) .white().bold();
+        let scallstack = style(callstack).white().bold();
 
         let location = ctx.cursor().location();
         let source = location.source.to_string();
