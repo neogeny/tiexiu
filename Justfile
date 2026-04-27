@@ -59,3 +59,6 @@ pytest: pyo3
 
 pyo3:
     uv run maturin build
+
+release:
+    gh workflow run release.yml -f publish=false
