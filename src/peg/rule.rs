@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::Parser;
 use super::exp::Exp;
+use super::Parser;
 use crate::cfg::types::FlagMap;
 use crate::engine::Ctx;
 use crate::peg::error::{ParseResult, Yeap};
@@ -100,7 +100,7 @@ impl Rule {
         let _text = ctx.cursor().textstr();
         match self.exp.parse(ctx) {
             Ok(Yeap(ctx, mut tree)) => {
-                tree = tree.into_node_tree();
+                tree = tree.node_tree();
                 Ok(Yeap(
                     ctx,
                     if self.params.is_empty() {
