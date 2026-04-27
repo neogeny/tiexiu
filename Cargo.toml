@@ -44,6 +44,8 @@ pyo3 = ["dep:pyo3", "dep:pythonize"]
 pcre2 = ["dep:pcre2"]
 regex = ["dep:regex"]
 
+interpolation = ["dep:strfmt", "dep:evalexpr"]
+
 # --- Core Library Dependencies ---
 [dependencies]
 indexmap = "2.13"
@@ -67,12 +69,13 @@ pcre2 = { version = "0.2.11", optional = true }
 regex = { version = "1.12.3", optional = true }
 unicode-width = "0.2.2"
 derivative = "2.2.0"
-evalexpr = "13.1.0"
 pythonize = {
     version = "0.28.0",
     features = ["arbitrary_precision", "serde_json"],
     optional = true
 }
+evalexpr = { version = "13.1.0", optional = true }
+strfmt = { version = "0.2.5", optional = true }
 
 # --- Debug & Benchmarking ---
 [dev-dependencies]
