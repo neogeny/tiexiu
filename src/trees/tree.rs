@@ -95,54 +95,6 @@ impl Tree {
         }
     }
 
-    pub fn value(&self) -> Str {
-        match self {
-            Tree::Text(text) => text.clone(),
-            _ => format!("{:#?}", self).into(),
-        }
-    }
-
-    pub fn list_value(&self) -> Rc<[Tree]> {
-        match self {
-            Tree::Seq(items) | Tree::List(items) => items.clone(),
-            _ => [].into(),
-        }
-    }
-
-    pub fn str_list_value(&self) -> Ref<[Str]> {
-        self.list_value().iter().map(|t| t.value()).collect()
-    }
-
-    pub fn map_value(&self) -> Option<&TreeMap> {
-        match self {
-            Tree::Map(map) => Some(map),
-            _ => None,
-        }
-    }
-
-    pub fn get(&self, key: &str) -> Option<&Tree> {
-        match self {
-            Tree::Map(map) => map.get(key),
-            _ => None,
-        }
-    }
-
-    pub fn get_value(&self, key: &str) -> Str {
-        self.get(key)
-            .map(|n| n.value())
-            .unwrap_or_else(|| "".into())
-    }
-
-    pub fn get_list(&self, key: &str) -> Rc<[Tree]> {
-        self.get(key)
-            .map(|n| n.list_value().clone())
-            .unwrap_or_else(|| [].into())
-    }
-
-    pub fn get_str_list(&self, key: &str) -> Ref<[Str]> {
-        self.get_list(key).iter().map(|t| t.value()).collect()
-    }
-
     pub fn closed(self) -> Self {
         match self {
             Tree::Seq(items) => Tree::List(items),
@@ -262,6 +214,54 @@ impl Tree {
             }
             Tree::Node { typename: _, tree } => tree.width(),
         }
+    }
+
+    pub fn value(&self) -> Str {
+        match self {
+            Tree::Text(text) => text.clone(),
+            _ => format!("{:#?}", self).into(),
+        }
+    }
+
+    pub fn list_value(&self) -> Rc<[Tree]> {
+        match self {
+            Tree::Seq(items) | Tree::List(items) => items.clone(),
+            _ => [].into(),
+        }
+    }
+
+    pub fn str_list_value(&self) -> Ref<[Str]> {
+        self.list_value().iter().map(|t| t.value()).collect()
+    }
+
+    pub fn map_value(&self) -> Option<&TreeMap> {
+        match self {
+            Tree::Map(map) => Some(map),
+            _ => None,
+        }
+    }
+
+    pub fn get(&self, key: &str) -> Option<&Tree> {
+        match self {
+            Tree::Map(map) => map.get(key),
+            _ => None,
+        }
+    }
+
+    pub fn get_value(&self, key: &str) -> Str {
+        self.get(key)
+            .map(|n| n.value())
+            .unwrap_or_else(|| "".into())
+    }
+
+    pub fn get_list(&self, key: &str) -> Rc<[Tree]> {
+        self.get(key)
+            .map(|n| n.list_value().clone())
+            .unwrap_or_else(|| [].into())
+    }
+
+    pub fn get_str_list(&self, key: &str) -> Ref<[Str]> {
+        self.get_list(key).iter().map(|t| t.value()).collect()
     }
 }
 
