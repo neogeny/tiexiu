@@ -64,6 +64,8 @@ impl Tree {
                 obj.insert("tree".to_string(), tree.to_json());
                 Value::Object(obj)
             }
+
+            // NOTE These bellow should never
             Tree::Named(KeyValue(name, tree)) => {
                 let mut obj = Map::new();
                 obj.insert(name.to_string(), tree.to_json());

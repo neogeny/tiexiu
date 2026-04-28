@@ -29,7 +29,7 @@ fn test_build() {
 
     if let Ok(Yeap(_, tree)) = seq.parse(ctx) {
         println!("{}", tree);
-        println!("{}", tree.node_tree());
+        println!("{}", tree.cook());
     }
 }
 

@@ -100,7 +100,7 @@ impl Rule {
         let _text = ctx.cursor().textstr();
         match self.exp.parse(ctx) {
             Ok(Yeap(ctx, mut tree)) => {
-                tree = tree.node_tree();
+                tree = tree.cook();
                 Ok(Yeap(
                     ctx,
                     if self.params.is_empty() {

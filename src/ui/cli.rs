@@ -152,7 +152,7 @@ pub fn cli() -> Result<()> {
             for input in inputs {
                 let text = std::fs::read_to_string(&input)?;
                 let tree = parse_input(&parser, &text, cfga)?;
-                output.push_str(format!("{}", tree.node_tree()).as_str());
+                output.push_str(format!("{}", tree.cook()).as_str());
                 output.push('\n');
             }
             (output, "text")

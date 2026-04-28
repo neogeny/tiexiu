@@ -2,5 +2,5 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 mod choices;
-pub mod exp;
+pub mod expressions;
 mod repeat;
