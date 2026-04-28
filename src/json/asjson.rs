@@ -56,13 +56,33 @@ impl Tree {
                 Value::Object(obj)
             }
             Tree::Node { typename, tree } => {
+                let json_tree = tree.to_json();
                 if typename.as_ref() == "Constant" || typename.as_ref() == "Alert" {
-                    return tree.to_json();
+                    // NOTE TatSu does this on-the-fly during parsing
+                    //          tatus.contexts._engine.ParseEngine.constant()
+                    //      Do it here because TieXiu does no runtime semantics
+                    //      over the Tree built by parsing
+                    return json_tree;
                 }
-                let mut obj = Map::new();
-                obj.insert("typename".into(), Value::String(typename.to_string()));
-                obj.insert("tree".to_string(), tree.to_json());
-                Value::Object(obj)
+                if let Value::Object(child_map) = json_tree
+                    && !child_map.contains_key("__class__")
+                {
+                    // NOTE TatSu hijacks the child map this way
+                    //          tatsu.util.asjson.AsJSONMixin.__json__()
+                    let mut new_map = Map::new();
+                    new_map.insert("__class__".to_string(), Value::String(typename.to_string()));
+                    new_map.extend(child_map);
+                    // NOTE double insert to truly hijack the entry
+                    new_map.insert("__class__".to_string(), Value::String(typename.to_string()));
+                    Value::Object(new_map)
+                } else {
+                    let mut obj = Map::new();
+                    obj.insert("__class__".into(), Value::String(typename.to_string()));
+                    // NOTE In TatSu, 'ast' will be used for the content
+                    //          tatsu.objectmodel.basenode.BaseNode.__pub__()
+                    obj.insert("ast".into(), tree.to_json());
+                    Value::Object(obj)
+                }
             }
 
             // NOTE These bellow should never
