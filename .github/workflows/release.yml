@@ -28,7 +28,7 @@ jobs:
             args: --zig
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            args: "" # Native MSVC works best on Windows runners
+            args: ""
           - os: macos-latest
             target: aarch64-apple-darwin
             args: --zig
@@ -42,13 +42,15 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.12'
+          # Ensure 3.15 is available in the runner environment
+          python-version: '3.15'
 
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist --features pyo3 ${{ matrix.args }}
+          # Added -i python3.15 to force the interpreter link if not using abi3
+          args: --release --out dist --features pyo3 ${{ matrix.args }} -i python3.15
           sccache: 'true'
 
       - name: Upload artifacts
