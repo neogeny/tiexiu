@@ -102,31 +102,32 @@ fn test_node_parseinfo() -> Result<()> {
 }
 
 #[test]
-#[ignore = "this test does nothing"]
 fn test_parseinfo_directive() -> Result<()> {
     let grammar = r#"
         @@parseinfo :: True
         start = 'test' $ ;
     "#;
 
-    compile(grammar, &[])?;
+    let model = compile(grammar, &[])?;
+    let ast = tiexiu::parse_input(&model, "test", &[])?;
+    assert_eq!(ast.to_json(), json!("test"));
     Ok(())
 }
 
 #[test]
-#[ignore = "this test does nothing"]
 fn test_parseinfo_false_directive() -> Result<()> {
     let grammar = r#"
         @@parseinfo :: False
         start = 'test' $ ;
     "#;
 
-    compile(grammar, &[])?;
+    let model = compile(grammar, &[])?;
+    let ast = tiexiu::parse_input(&model, "test", &[])?;
+    assert_eq!(ast.to_json(), json!("test"));
     Ok(())
 }
 
 #[test]
-#[ignore = "this test does nothing"]
 fn test_cut_scope() -> Result<()> {
     let grammar = r#"
         start =
@@ -138,9 +139,11 @@ fn test_cut_scope() -> Result<()> {
             | ~ !()
             | 'abc';
 
-        two = `something` ;
+        two = 'something' ;
     "#;
 
-    compile(grammar, &[])?;
+    let model = compile(grammar, &[])?;
+    let ast = tiexiu::parse_input(&model, "something", &[])?;
+    assert_eq!(ast.to_json(), json!("something"));
     Ok(())
 }

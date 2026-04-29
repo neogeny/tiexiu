@@ -12,7 +12,8 @@ fn test_missing_rule() -> Result<()> {
         block = test ;
     "#;
 
-    let _result = tiexiu::api::compile(grammar, &[])?;
+    let result = tiexiu::api::compile(grammar, &[]);
+    assert!(result.is_err(), "Expected error for missing rule 'test'");
     Ok(())
 }
 

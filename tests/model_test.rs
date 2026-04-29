@@ -4,8 +4,8 @@
 //! Tests translated from TatSu's model_test.py
 
 use serde_json::json;
-use tiexiu::api::compile;
 use tiexiu::Result;
+use tiexiu::api::compile;
 
 #[test]
 fn test_children() -> Result<()> {

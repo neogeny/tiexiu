@@ -3,8 +3,8 @@
 
 //! Tests for lookahead - translated from TatSu's grammar/lookahead_test.py
 
-use tiexiu::api::compile;
 use tiexiu::Result;
+use tiexiu::api::compile;
 
 #[test]
 #[ignore = "skip_to (->) not fully implemented"]

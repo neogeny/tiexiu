@@ -4,7 +4,6 @@ use tiexiu::parse_input;
 use tiexiu::*;
 
 #[test]
-#[ignore = "grammar parsing bug with multi-rule grammars"]
 fn grammar_to_json_round_trip() -> Result<()> {
     let grammar_text = r#"
         @@grammar :: Test

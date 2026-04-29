@@ -4,8 +4,8 @@
 //! Tests for left recursion - translated from TatSu's grammar/left_recursion_test.py
 
 use serde_json::json;
-use tiexiu::api::compile;
 use tiexiu::Result;
+use tiexiu::api::compile;
 
 #[test]
 fn test_direct_left_recursion() -> Result<()> {

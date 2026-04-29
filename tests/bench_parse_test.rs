@@ -39,7 +39,6 @@ fn test_bench_compile_calc_grammar() -> Result<()> {
 }
 
 #[test]
-#[ignore = "TODO"]
 fn test_bench_parse_arithmetic_expression() -> tiexiu::Result<()> {
     // Benchmark: parse an arithmetic expression
     let model = compile(CALC_GRAMMAR, &[])?;
@@ -49,7 +48,6 @@ fn test_bench_parse_arithmetic_expression() -> tiexiu::Result<()> {
 }
 
 #[test]
-#[ignore = "TODO"]
 fn test_bench_parse_complex_expression() -> tiexiu::Result<()> {
     // Benchmark: parse a more complex nested expression
     let model = compile(CALC_GRAMMAR, &[])?;
