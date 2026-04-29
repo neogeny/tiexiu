@@ -3,12 +3,17 @@
 
 //! Tests translated from TatSu's parsing_test.py
 
-use tiexiu::Result;
+use serde_json::json;
 use tiexiu::api::compile;
+use tiexiu::{Result, parse};
 
 #[test]
-#[ignore = "@@include not yet implemented"]
+#[ignore = "@@include will not be implemented"]
 fn test_include() -> Result<()> {
+    // WARNING
+    //  Textual includes are a nightmare for bookkeeping and semantics.
+    //  The only reasonable approach would be a use/import feature, but
+    //  the use cases for that are currenly lacking.
     let grammar = r#"
         @@include :: "included.ebnf"
         start = item $ ;
@@ -25,7 +30,7 @@ fn test_include() -> Result<()> {
 }
 
 #[test]
-#[ignore = "@@include not yet implemented"]
+#[ignore = "@@include will not be implemented"]
 fn test_multiple_include() -> Result<()> {
     let grammar = r#"
         @@include :: "a.ebnf"
@@ -61,7 +66,9 @@ fn test_start() -> Result<()> {
         false = 'test' @:`False` $;
     "#;
 
-    compile(grammar, &[])?;
+    let tree = parse(grammar, "test", &[])?;
+    eprintln!("{:#?}", tree);
+    assert_eq!(tree.to_json(), json!("True"));
     Ok(())
 }
 
@@ -77,7 +84,9 @@ fn test_skip_whitespace() -> Result<()> {
         id = /[a-z]+/ ;
     "#;
 
-    compile(grammar, &[])?;
+    parse(grammar, "FOO something", &[])?;
+    assert!(parse(grammar, "somethiing", &[]).is_err());
+    assert!(parse(grammar, "FOO", &[]).is_err());
     Ok(())
 }
 
@@ -93,6 +102,7 @@ fn test_node_parseinfo() -> Result<()> {
 }
 
 #[test]
+#[ignore = "this test does nothing"]
 fn test_parseinfo_directive() -> Result<()> {
     let grammar = r#"
         @@parseinfo :: True
@@ -104,6 +114,7 @@ fn test_parseinfo_directive() -> Result<()> {
 }
 
 #[test]
+#[ignore = "this test does nothing"]
 fn test_parseinfo_false_directive() -> Result<()> {
     let grammar = r#"
         @@parseinfo :: False
@@ -115,6 +126,7 @@ fn test_parseinfo_false_directive() -> Result<()> {
 }
 
 #[test]
+#[ignore = "this test does nothing"]
 fn test_cut_scope() -> Result<()> {
     let grammar = r#"
         start =
