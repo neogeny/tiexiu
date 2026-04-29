@@ -24,10 +24,16 @@ impl Grammar {
     fn link_exp(exp: &mut Exp, grammar: &Grammar) {
         match &mut exp.kind {
             ExpKind::Call { name, rule } => {
-                if rule.is_none()
-                    && let Ok(r) = grammar.get_rule_ref(name)
-                {
+                // if rule.is_none()  // WARNING Always link
+                if let Ok(r) = grammar.get_rule_ref(name) {
                     *rule = Some(r);
+                } else {
+                    panic!(
+                        "Rule not found! '{}' in {} rules\n{:#?}",
+                        name,
+                        grammar.rules.len(),
+                        grammar.rules
+                    )
                 }
             }
 
