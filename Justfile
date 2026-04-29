@@ -3,7 +3,7 @@
 
 self := "TieXiu"
 shell := "xonsh"
-set shell := [shell, "-c"]
+set shell := ["xonsh", "-c"]
 
 default: check
 
@@ -54,13 +54,13 @@ run:
     {{shell}} --version
 
 
+pyo3: release_build
+    uv run maturin build --release
+
 pytest: pyo3
     uv run pytest -vv
 
-pyo3:
-    uv run maturin build
-
-release:
+release: pyo3
     gh workflow run release.yml -f publish=false
 
 publish:

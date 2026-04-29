@@ -12,6 +12,12 @@ repository = "https://github.com/neogeny/tiexiu"
 readme = "README.md"
 exclude = ["pyproject.toml", "__pycache__"]
 
+[profile.release]
+opt-level = 3        # Max optimizations (0-3)
+lto = true           # Link Time Optimization (smaller, faster binary)
+codegen-units = 1    # Better optimizations at the cost of slower build time
+panic = 'abort'      # Reduces binary size if you don't need stack unwinding
+
 [package.metadata.docs.rs]
 all-features = true
 
