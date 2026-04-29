@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "TieXiu"
-version = "0.1.1-alpha.10"
+version = "0.1.1-alpha.11"
 dependencies = [
  "clap",
  "codspeed-criterion-compat",

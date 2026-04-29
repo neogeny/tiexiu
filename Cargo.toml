@@ -3,7 +3,7 @@
 
 [package]
 name = "TieXiu"
-version = "0.1.1-alpha.10"
+version = "0.1.1-alpha.11"
 edition = "2024"
 authors = ["Juancarlo Añez <apalala@gmail.com>"]
 description = "A port of the TatSu PEG parser generator to Rust"
