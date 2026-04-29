@@ -1,6 +1,6 @@
-use tiexiu::util::pyre::Pattern;
 use tiexiu::Error;
 use tiexiu::Result;
+use tiexiu::util::pyre::Pattern;
 
 #[test]
 fn test_search_and_positions() -> Result<()> {

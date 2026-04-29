@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use thiserror::Error;
 use crate::peg::error::ParseFailure;
+use thiserror::Error;
 
 pub type Result<T> = std::result::Result<T, JsonError>;
 

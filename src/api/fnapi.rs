@@ -12,6 +12,12 @@ pub use crate::trees::Tree;
 pub use crate::{Error, Result};
 pub use serde_json::Value;
 
+pub use crate::api::ooapi::TieXiu;
+
+pub fn tiexiu() -> TieXiu {
+    TieXiu::new(&[])
+}
+
 pub fn parse_grammar(grammar: &str, cfg: &CfgA) -> Result<Tree> {
     parse_grammar_with(StrCursor::new(grammar), cfg)
 }

@@ -31,7 +31,7 @@ test: fix fmt clippy
 build: fix fmt clippy
     cargo build
 
-release_build:
+build_release:
     cargo build --release
 
 book:
@@ -54,14 +54,17 @@ run:
     {{shell}} --version
 
 
-pyo3: release_build
+pyo3: build
+    uv run maturin build
+
+pyo3_release: build_release
     uv run maturin build --release
 
 pytest: pyo3
     uv run pytest -vv
 
-release: pyo3
+release: pyo3_release
     gh workflow run release.yml -f publish=false
 
-publish:
+publish: pyo3_release
     gh workflow run release.yml -f publish=true

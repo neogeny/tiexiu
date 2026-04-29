@@ -1,12 +1,19 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::api::cache::CacheError;
+use crate::api::_globalcache::CacheError;
 use crate::json::error::JsonError;
 use crate::peg::ParseFailure;
 use crate::peg::error::{CompileError, Nope};
+use crate::util::ensure::Ensure;
 
 pub type Result<T> = std::result::Result<T, Error>;
+
+impl From<Ensure> for Error {
+    fn from(e: Ensure) -> Self {
+        Error::AndNowAMessageFromYourFriendlyTest(e.to_string())
+    }
+}
 
 impl From<&str> for Error {
     fn from(msg: &str) -> Self {

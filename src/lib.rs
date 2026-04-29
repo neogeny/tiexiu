@@ -30,6 +30,7 @@ use pyo3::prelude::*;
 #[pymodule]
 mod tiexiu {
     use super::python::api;
+    use super::python::ooapi::TieXiuPy;
     use pyo3::prelude::*;
 
     #[pymodule_init]
@@ -42,6 +43,16 @@ mod tiexiu {
         m.add_function(wrap_pyfunction!(api::boot_grammar_as_json, m)?)?;
         m.add_function(wrap_pyfunction!(api::parse, m)?)?;
         m.add_function(wrap_pyfunction!(api::parse_to_json, m)?)?;
+
+        m.add_class::<TieXiuPy>()?;
+
+        m.add_function(wrap_pyfunction!(tiexiu, m)?)?;
+
         Ok(())
+    }
+
+    #[pyfunction]
+    fn tiexiu() -> TieXiuPy {
+        TieXiuPy { cfg: Vec::new() }
     }
 }
