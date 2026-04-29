@@ -11,7 +11,7 @@ use crate::peg::ParseFailure::RuleNotFound;
 use crate::rule::RuleName;
 use crate::types::{Ref, Str};
 use crate::{StrCursor, Tree, new_ctx};
-use std::rc::Rc;
+use std::sync::Arc;
 
 pub type KeywordRef = Str;
 pub type GrammarKeywords = Ref<[KeywordRef]>;
@@ -167,7 +167,7 @@ impl Grammar {
     pub fn get_rule_mut(&mut self, name: &str) -> Result<&mut Rule, ParseFailure> {
         self.rules
             .get_mut(name)
-            .map(Rc::make_mut)
+            .map(Arc::make_mut)
             .ok_or_else(|| RuleNotFound(name.into()))
     }
 
@@ -176,7 +176,7 @@ impl Grammar {
     }
 
     pub fn rules_mut(&mut self) -> impl Iterator<Item = &mut Rule> {
-        self.rules.values_mut().map(Rc::make_mut)
+        self.rules.values_mut().map(Arc::make_mut)
     }
 }
 

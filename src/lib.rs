@@ -13,7 +13,6 @@ pub mod json;
 pub mod peg;
 pub mod tools;
 pub mod trees;
-pub mod ui;
 pub mod util;
 
 pub use api::*;

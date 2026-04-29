@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::ensure::EnsureError;
+use crate::util::ensure::Ensure;
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use std::sync::{Arc, Mutex, OnceLock, PoisonError};
@@ -16,7 +16,7 @@ pub enum CacheError {
     CompileFailure(String),
 
     #[error("Invariant failed in cache logic: {0}")]
-    Invariant(#[from] EnsureError),
+    Invariant(#[from] Ensure),
 }
 
 impl<T> From<PoisonError<T>> for CacheError {
@@ -30,6 +30,7 @@ pub type CacheResult<T> = Result<T, CacheError>;
 // The cache now stores Arcs for zero-copy retrieval.
 static CACHE: OnceLock<Mutex<HashMap<u64, Arc<CompiledGrammar>>>> = OnceLock::new();
 
+// pub type CompiledGrammar = Grammar;
 #[derive(Debug)]
 pub struct CompiledGrammar {
     pub name: String,
@@ -58,7 +59,7 @@ pub fn get(text: &str) -> CacheResult<Option<Arc<CompiledGrammar>>> {
 /// Ensures we don't hold the lock during the actual compilation.
 pub fn get_or_compile<F>(text: &str, compile_fn: F) -> CacheResult<Arc<CompiledGrammar>>
 where
-    F: FnOnce(&str) -> CacheResult<CompiledGrammar>
+    F: FnOnce(&str) -> CacheResult<CompiledGrammar>,
 {
     crate::ensure!(!text.is_empty())?;
     let hash = compute_hash(text);

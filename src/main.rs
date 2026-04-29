@@ -1,11 +1,13 @@
-use tiexiu::api::error::Yeap;
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
+
+mod ui;
+use tiexiu::api::error::Yeap;
 use tiexiu::engine::StrCtx;
 use tiexiu::error::Result;
 use tiexiu::input::StrCursor;
 use tiexiu::peg::{Exp, Grammar};
-use tiexiu::ui::cli;
+use ui::cli;
 
 #[allow(dead_code)]
 fn scope() -> (Exp, Exp) {

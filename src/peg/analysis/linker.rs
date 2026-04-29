@@ -3,7 +3,7 @@
 
 use crate::Grammar;
 use crate::exp::{Exp, ExpKind};
-use std::rc::Rc;
+use std::sync::Arc;
 
 impl Grammar {
     pub(in crate::peg) fn link(&mut self) {
@@ -11,7 +11,7 @@ impl Grammar {
         let mut all_exps: Vec<*mut Exp> = Vec::with_capacity(len);
 
         for rule_ref in self.rules.values_mut() {
-            let rule = Rc::make_mut(rule_ref);
+            let rule = Arc::make_mut(rule_ref);
             all_exps.push(&mut rule.exp as *mut Exp);
         }
 

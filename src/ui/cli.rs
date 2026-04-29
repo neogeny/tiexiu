@@ -1,16 +1,16 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::api::{boot_grammar_pretty, boot_grammar_to_json_string, compile, load, parse_input};
-use crate::cfg::CfgA;
-pub use crate::json::exp_json::*;
-pub use crate::peg::pretty::*;
-pub use crate::tools::rails::*;
-use crate::{CfgKey, Result, boot_grammar, config};
 use clap;
 use clap::builder::styling::{AnsiColor, Styles};
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
+use tiexiu::api::{boot_grammar_pretty, boot_grammar_to_json_string, compile, load, parse_input};
+use tiexiu::cfg::CfgA;
+use tiexiu::json::exp_json::*;
+use tiexiu::peg::pretty::*;
+use tiexiu::tools::rails::*;
+use tiexiu::{CfgKey, Grammar, Result, boot_grammar, config};
 
 fn cli_styles() -> Styles {
     Styles::styled()
@@ -187,7 +187,7 @@ pub fn cli() -> Result<()> {
     Ok(())
 }
 
-fn load_grammar_from_path(grammar: &PathBuf, cfga: &CfgA) -> Result<crate::peg::Grammar> {
+fn load_grammar_from_path(grammar: &PathBuf, cfga: &CfgA) -> Result<Grammar> {
     let grammar_text = std::fs::read_to_string(grammar)?;
     let parser = if grammar
         .extension()

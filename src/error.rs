@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::api::cache::CacheError;
 use crate::json::error::JsonError;
 use crate::peg::ParseFailure;
 use crate::peg::error::{CompileError, Nope};
@@ -44,6 +45,9 @@ pub enum Error {
 
     #[error("I/O failed: {0}")]
     Io(#[from] std::io::Error),
+
+    #[error("I/O failed: {0}")]
+    Cache(#[from] CacheError),
 
     #[error("Library failure: {0}")]
     Library(#[from] crate::util::Error),

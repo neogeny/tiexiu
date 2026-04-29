@@ -9,7 +9,7 @@ use crate::peg::error::{ParseResult, Yeap};
 use crate::trees::Tree;
 use crate::types::{Ref, Str};
 use indexmap::IndexMap;
-use std::rc::Rc;
+use std::sync::Arc;
 
 pub const FLAG_IS_NAME: &str = "is_name";
 pub const FLAG_IS_TOKN: &str = "is_tokn";
@@ -18,7 +18,7 @@ pub const FLAG_IS_MEMO: &str = "is_memo";
 pub const FLAG_IS_LREC: &str = "is_lrec";
 
 pub type RuleName = Str;
-pub type RuleRef = Rc<Rule>;
+pub type RuleRef = Arc<Rule>;
 pub type RuleIndex = IndexMap<Str, usize>;
 pub type Rules = Ref<[Rule]>;
 pub type RuleMap = IndexMap<RuleName, RuleRef>;

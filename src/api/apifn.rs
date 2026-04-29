@@ -1,11 +1,11 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::apifn::error::Yeap;
-pub use crate::cfg::CfgA;
+use crate::cfg::CfgA;
 use crate::engine::new_ctx;
-pub use crate::input::{Cursor, StrCursor};
+use crate::input::{Cursor, StrCursor};
 use crate::json::ToExpJson;
+use crate::peg::error::Yeap;
 use crate::peg::grammar::PrettyPrint;
 use crate::peg::*;
 pub use crate::trees::Tree;
