@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use thiserror::Error;
+use crate::peg::error::ParseFailure;
 
 pub type Result<T> = std::result::Result<T, JsonError>;
 
@@ -27,6 +28,9 @@ pub enum JsonError {
 
     #[error("Other error: {0}")]
     Other(String),
+
+    #[error("Parse failure: {0}")]
+    Parse(#[from] ParseFailure),
 }
 
 impl From<String> for JsonError {

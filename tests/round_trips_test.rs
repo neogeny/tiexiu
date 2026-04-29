@@ -1,21 +1,26 @@
 //! Round-trip Tests
 
-use tiexiu::parse_input;
 use tiexiu::*;
 
 #[test]
 fn grammar_to_json_round_trip() -> Result<()> {
+    // With semicolons between rules - should work
     let grammar_text = r#"
         @@grammar :: Test
-        start: foo bar
-        foo: 'x'
-        bar: 'y'
+        start: foo bar;
+        foo: 'x';
+        bar: 'y';
     "#;
 
     let grammar = compile(grammar_text, &[])?;
+    eprintln!("=== COMPILED GRAMMAR ===");
+    eprintln!("Name: {}", grammar.name);
+    eprintln!("Rules count: {}", grammar.rules.len());
+    for rule in grammar.rules() {
+        eprintln!("  Rule: {}", rule.name);
+    }
 
     let tree1 = parse_input(&grammar, "x y", &[])?;
-
     let j1 = tree1.to_json_string()?;
     assert!(j1.contains("x") && j1.contains("y"));
     Ok(())

@@ -8,6 +8,7 @@ use tiexiu::*;
 fn grammar_has_rules() -> Result<()> {
     let grammar = r#"
         start: choice
+        
         choice: 'a' | 'b' | 'c'
     "#;
     let grammar = tiexiu::compile(grammar, &[])?;

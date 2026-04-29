@@ -192,10 +192,9 @@ impl Grammar {
                 .collect::<Vec<_>>()
                 .as_slice(),
         );
-        grammar.analyzed = false;
         grammar.set_directives(directives);
-        grammar.keywords = keywords.into();
-        grammar.initialize();
+        grammar.set_keywords(keywords.as_slice());
+        grammar.initialize()?;
         Ok(grammar)
     }
 

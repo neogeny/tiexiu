@@ -116,4 +116,13 @@ pub enum CompileError {
 
     #[error("Unknown expression type '{0}'")]
     UnknownExpressionType(Str),
+
+    #[error("Linker error: {0}")]
+    Linker(String),
+}
+
+impl From<ParseFailure> for CompileError {
+    fn from(err: ParseFailure) -> Self {
+        CompileError::Linker(err.to_string())
+    }
 }

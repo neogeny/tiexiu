@@ -3,11 +3,10 @@
 
 //! Tests for lookahead - translated from TatSu's grammar/lookahead_test.py
 
-use tiexiu::Result;
 use tiexiu::api::compile;
+use tiexiu::Result;
 
 #[test]
-#[ignore = "skip_to (->) not fully implemented"]
 fn test_skip_to() -> Result<()> {
     let grammar = r#"
         start = 'x' ab $ ;

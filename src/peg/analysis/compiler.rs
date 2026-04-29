@@ -129,6 +129,7 @@ impl GrammarCompiler {
         let mut grammar = Grammar::new(&name, rules.as_slice());
         grammar.set_directives(directives);
         grammar.set_keywords(keywords.as_slice());
+        grammar.initialize()?;
         Ok(grammar)
     }
 

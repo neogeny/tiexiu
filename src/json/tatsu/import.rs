@@ -73,7 +73,7 @@ impl TryFrom<TatSuModel> for Grammar {
             grammar.analyzed = analyzed;
             grammar.set_directives(str_directives);
             grammar.keywords = keywords;
-            grammar.initialize();
+            grammar.initialize()?;
             Ok(grammar)
         } else {
             Err(JsonError::InvalidRoot)

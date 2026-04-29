@@ -1,12 +1,13 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::Grammar;
 use crate::exp::{Exp, ExpKind};
+use crate::grammar::Grammar;
+use crate::peg::error::ParseFailure;
 use std::sync::Arc;
 
 impl Grammar {
-    pub(in crate::peg) fn link(&mut self) {
+    pub(in crate::peg) fn link(&mut self) -> Result<(), ParseFailure> {
         let len = self.rules.len();
         let mut all_exps: Vec<*mut Exp> = Vec::with_capacity(len);
 
@@ -17,28 +18,19 @@ impl Grammar {
 
         for exp_ptr in all_exps {
             let exp = unsafe { &mut *exp_ptr };
-            Self::link_exp(exp, self);
+            Self::link_exp(exp, self)?;
         }
+        Ok(())
     }
 
-    fn link_exp(exp: &mut Exp, grammar: &Grammar) {
+    fn link_exp(exp: &mut Exp, grammar: &Grammar) -> Result<(), ParseFailure> {
         match &mut exp.kind {
             ExpKind::Call { name, rule } => {
-                // if rule.is_none()  // WARNING Always link
-                if let Ok(r) = grammar.get_rule_ref(name) {
-                    *rule = Some(r);
-                } else {
-                    panic!(
-                        "Rule not found! '{}' in {} rules\n{:#?}",
-                        name,
-                        grammar.rules.len(),
-                        grammar.rules
-                    )
-                }
+                let res = grammar.get_rule_ref(name)?;
+                *rule = Some(res);
             }
 
             ExpKind::RuleInclude { name, exp } => {
-                // if exp.is_none() WARNING Always link!
                 if let Ok(rule) = grammar.get_rule(name) {
                     *exp = Some(rule.exp.clone().into());
                 }
@@ -56,11 +48,11 @@ impl Grammar {
             | ExpKind::Alt(exp)
             | ExpKind::Optional(exp)
             | ExpKind::Closure(exp)
-            | ExpKind::PositiveClosure(exp) => Self::link_exp(exp, grammar),
+            | ExpKind::PositiveClosure(exp) => Self::link_exp(exp, grammar)?,
 
             ExpKind::Sequence(items) | ExpKind::Choice(items) => {
                 for item in items.iter_mut() {
-                    Self::link_exp(item, grammar);
+                    Self::link_exp(item, grammar)?;
                 }
             }
 
@@ -68,11 +60,12 @@ impl Grammar {
             | ExpKind::PositiveJoin { exp, sep }
             | ExpKind::Gather { exp, sep }
             | ExpKind::PositiveGather { exp, sep } => {
-                Self::link_exp(exp, grammar);
-                Self::link_exp(sep, grammar);
+                Self::link_exp(exp, grammar)?;
+                Self::link_exp(sep, grammar)?;
             }
             _ => {}
         }
+        Ok(())
     }
 }
 

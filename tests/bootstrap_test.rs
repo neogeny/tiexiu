@@ -9,8 +9,8 @@
 // =============================================================================
 
 mod parse_grammar {
-    use tiexiu::Result;
     use tiexiu::api::parse_grammar;
+    use tiexiu::Result;
 
     #[test]
     fn simple_grammar() -> Result<()> {
@@ -68,8 +68,8 @@ mod parse_grammar {
 // =============================================================================
 
 mod parse_expressions {
-    use tiexiu::Result;
     use tiexiu::api::*;
+    use tiexiu::Result;
 
     #[test]
     fn token() -> Result<()> {
@@ -157,8 +157,8 @@ mod parse_expressions {
 // =============================================================================
 
 mod parse_constraints {
-    use tiexiu::Result;
     use tiexiu::api::parse_grammar;
+    use tiexiu::Result;
 
     #[test]
     fn lookahead() -> Result<()> {
@@ -238,7 +238,6 @@ mod parse_naming {
     }
 
     #[test]
-    #[ignore = "grammar parsing bug with params syntax"]
     fn rule_with_params() -> Result<()> {
         let grammar = r#"
             @@grammar :: RWP
@@ -357,12 +356,11 @@ mod parse_special {
 // =============================================================================
 
 mod integration {
-    use tiexiu::Result;
     use tiexiu::api::parse_grammar;
     use tiexiu::cfg::constants::PATH_TATSU_GRAMMAR_EBNF;
+    use tiexiu::Result;
 
     #[test]
-    #[ignore = "grammar parsing bug with rules extraction"]
     fn complex_grammar() -> Result<()> {
         let grammar = r#"
             @@grammar :: Complex
@@ -389,7 +387,6 @@ mod integration {
     }
 
     #[test]
-    #[ignore = "TatSu grammar parsing is still work-in-progress"]
     fn tatsu_own_grammar() -> Result<()> {
         let tatsu_grammar = std::fs::read_to_string(PATH_TATSU_GRAMMAR_EBNF)?;
 
@@ -407,11 +404,10 @@ mod integration {
 // =============================================================================
 
 mod compilation {
-    use tiexiu::Result;
     use tiexiu::api::parse_input;
+    use tiexiu::Result;
 
     #[test]
-    #[ignore = "Compiled grammar parsing is still work-in-progress"]
     fn compiled_grammar_parses_input() -> Result<()> {
         let grammar = tiexiu::api::compile(
             r#"

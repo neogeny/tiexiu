@@ -45,21 +45,20 @@ impl Default for Grammar {
 impl Grammar {
     pub fn new(name: &str, rules: &[RuleRef]) -> Self {
         let rules: RuleMap = rules.iter().cloned().map(|r| (r.name.clone(), r)).collect();
-        let mut grammar = Self {
+        Self {
             name: name.into(),
             analyzed: false,
             rules,
             directives: GrammarDirectives::default(),
             keywords: [].into(),
-        };
-        grammar.initialize();
-        grammar
+        }
     }
 
-    pub fn initialize(&mut self) {
+    pub fn initialize(&mut self) -> Result<(), ParseFailure> {
         self.mark_left_recursion();
-        self.link();
+        self.link()?;
         self.analyzed = true;
+        Ok(())
     }
 
     pub fn get_directives(&self) -> &GrammarDirectives {
@@ -217,7 +216,8 @@ mod tests {
 
     #[test]
     fn grammar_analyzed() {
-        let grammar = Grammar::new("Test", &[]);
+        let mut grammar = Grammar::new("Test", &[]);
+        grammar.initialize().unwrap();
         assert!(grammar.analyzed);
     }
 }

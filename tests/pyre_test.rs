@@ -1,6 +1,6 @@
+use tiexiu::util::pyre::Pattern;
 use tiexiu::Error;
 use tiexiu::Result;
-use tiexiu::util::pyre::Pattern;
 
 #[test]
 fn test_search_and_positions() -> Result<()> {
@@ -78,7 +78,6 @@ fn test_match_endrule_unindented_branch() -> Result<()> {
 }
 
 #[test]
-#[ignore = "regex pattern behavior mismatch with zero-width assertions"]
 fn test_match_endrule_blankline_branch() -> Result<()> {
     let p = Pattern::new(r"\s*[;]|(?=\s*(?:\r?\n|\r)\S)|(?:\s*(?:\r?\n|\r)){2,}[;?]")?;
     let _ = p.match_("\n\n");
