@@ -1,22 +1,22 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::api::error::Yeap;
-pub use crate::cfg::*;
-pub use crate::engine::new_ctx;
+use crate::apifn::error::Yeap;
+pub use crate::cfg::CfgA;
+use crate::engine::new_ctx;
 pub use crate::input::{Cursor, StrCursor};
-pub use crate::json::ToExpJson;
-pub use crate::peg::grammar::PrettyPrint;
-pub use crate::peg::*;
+use crate::json::ToExpJson;
+use crate::peg::grammar::PrettyPrint;
+use crate::peg::*;
 pub use crate::trees::Tree;
-pub use crate::util;
 pub use crate::{Error, Result};
+pub use serde_json::Value;
 
 pub fn parse_grammar(grammar: &str, cfg: &CfgA) -> Result<Tree> {
     parse_grammar_with(StrCursor::new(grammar), cfg)
 }
 
-pub fn parse_grammar_to_json(grammar: &str, cfg: &CfgA) -> Result<serde_json::Value> {
+pub fn parse_grammar_to_json(grammar: &str, cfg: &CfgA) -> Result<Value> {
     let tree = parse_grammar(grammar, cfg)?;
     Ok(tree.to_json())
 }
@@ -39,7 +39,7 @@ where
     }
 }
 
-pub fn parse_grammar_to_json_with<U>(cursor: U, cfg: &CfgA) -> Result<serde_json::Value>
+pub fn parse_grammar_to_json_with<U>(cursor: U, cfg: &CfgA) -> Result<Value>
 where
     U: Cursor + Clone,
 {
@@ -51,7 +51,7 @@ pub fn compile(grammar: &str, cfg: &CfgA) -> Result<Grammar> {
     compile_with(StrCursor::new(grammar), cfg)
 }
 
-pub fn compile_to_json(grammar: &str, cfg: &CfgA) -> Result<serde_json::Value> {
+pub fn compile_to_json(grammar: &str, cfg: &CfgA) -> Result<Value> {
     let compiled = compile(grammar, cfg)?;
     Ok(compiled.to_json())
 }
@@ -69,7 +69,7 @@ where
     Ok(Grammar::compile(&tree, cfg)?)
 }
 
-pub fn compile_to_json_with<U>(cursor: U, cfg: &CfgA) -> Result<serde_json::Value>
+pub fn compile_to_json_with<U>(cursor: U, cfg: &CfgA) -> Result<Value>
 where
     U: Cursor + Clone,
 {
@@ -81,7 +81,7 @@ pub fn load(json: &str, _cfg: &CfgA) -> Result<Grammar> {
     Ok(Grammar::serde_from_json(json)?)
 }
 
-pub fn load_to_json(json: &str, cfg: &CfgA) -> Result<serde_json::Value> {
+pub fn load_to_json(json: &str, cfg: &CfgA) -> Result<Value> {
     let grammar = load(json, cfg)?;
     Ok(grammar.to_json())
 }
@@ -90,7 +90,7 @@ pub fn load_tree(json: &str, _cfg: &CfgA) -> Result<Tree> {
     Tree::from_json_str(json).map_err(Error::from)
 }
 
-pub fn load_tree_to_json(json: &str, cfg: &CfgA) -> Result<serde_json::Value> {
+pub fn load_tree_to_json(json: &str, cfg: &CfgA) -> Result<Value> {
     let tree = load_tree(json, cfg)?;
     Ok(tree.to_json())
 }
@@ -113,7 +113,7 @@ pub fn parse(grammar: &str, text: &str, cfg: &CfgA) -> Result<Tree> {
     parse_input(&parser, text, cfg)
 }
 
-pub fn parse_to_json(grammar: &str, text: &str, cfg: &CfgA) -> Result<serde_json::Value> {
+pub fn parse_to_json(grammar: &str, text: &str, cfg: &CfgA) -> Result<Value> {
     let parser = compile(grammar, cfg)?;
     parse_input_to_json(&parser, text, cfg)
 }
@@ -131,7 +131,7 @@ pub fn parse_input(parser: &Grammar, text: &str, cfg: &CfgA) -> Result<Tree> {
     }
 }
 
-pub fn parse_input_to_json(parser: &Grammar, text: &str, cfg: &CfgA) -> Result<serde_json::Value> {
+pub fn parse_input_to_json(parser: &Grammar, text: &str, cfg: &CfgA) -> Result<Value> {
     let tree = parse_input(parser, text, cfg)?;
     Ok(tree.to_json())
 }
@@ -152,7 +152,7 @@ pub fn load_boot(_cfg: &CfgA) -> Result<Grammar> {
     boot_grammar()
 }
 
-pub fn boot_grammar_to_json(cfg: &CfgA) -> Result<serde_json::Value> {
+pub fn boot_grammar_to_json(cfg: &CfgA) -> Result<Value> {
     let grammar = load_boot(cfg)?;
     Ok(grammar.to_json())
 }
