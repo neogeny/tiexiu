@@ -13,9 +13,12 @@ pub type CfgA<K> = [K];
 /// 1. Sorted by value (for binary search).
 /// 2. Unique values.
 #[derive(Clone, Default)]
-pub struct Cfg<K: Ord + Clone + Default> {
+pub struct Cfg<K: Ord + Clone + Default + Send + Sync> {
     cfga: Box<CfgA<K>>,
 }
+
+unsafe impl<K: Ord + Clone + Default + Send + Sync> Send for Cfg<K> {}
+unsafe impl<K: Ord + Clone + Default + Send + Sync> Sync for Cfg<K> {}
 
 // impl<K: Ord + Clone + Default> From<&CfgA<K>> for CfgBox<K> {
 //     fn from(cfg: &CfgA<K>) -> Self {
@@ -23,21 +26,21 @@ pub struct Cfg<K: Ord + Clone + Default> {
 //     }
 // }
 
-impl<'a, K: Ord + Clone + Default, const N: usize> From<&'a [K; N]> for Cfg<K> {
+impl<'a, K: Ord + Clone + Default + Send + Sync, const N: usize> From<&'a [K; N]> for Cfg<K> {
     fn from(options: &'a [K; N]) -> Self {
         Self::new(options.as_slice())
     }
 }
 
 /// Has use for a Cfg
-pub trait Configurable<K: Ord + Clone + Default> {
+pub trait Configurable<K: Ord + Clone + Default + Send + Sync> {
     fn configure(&mut self, cfg: &Cfg<K>) {
         let _ = cfg;
     }
 }
 
 /// Maps environment key-value pairs to a configuration type K.
-pub trait CfgMapper<K: Ord + Clone + Default> {
+pub trait CfgMapper<K: Ord + Clone + Default + Send + Sync> {
     fn map(key: &str, value: &str) -> Option<K>;
     fn unmap(_value: &K) -> Option<(&str, &str)> {
         None
@@ -58,7 +61,7 @@ pub trait CfgMapper<K: Ord + Clone + Default> {
     }
 }
 
-impl<K: Ord + Clone + Default> CfgMapper<K> for Cfg<K>
+impl<K: Ord + Clone + Default + Send + Sync> CfgMapper<K> for Cfg<K>
 where
     K: CfgMapper<K>,
 {
@@ -71,7 +74,7 @@ where
     }
 }
 
-impl<K: Ord + Clone + Default> FromIterator<K> for Cfg<K> {
+impl<K: Ord + Clone + Default + Send + Sync> FromIterator<K> for Cfg<K> {
     fn from_iter<I: IntoIterator<Item = K>>(iter: I) -> Self {
         let set: BTreeSet<K> = iter.into_iter().collect();
         Self {
@@ -80,7 +83,7 @@ impl<K: Ord + Clone + Default> FromIterator<K> for Cfg<K> {
     }
 }
 
-impl<K: Ord + Clone + Default> Cfg<K> {
+impl<K: Ord + Clone + Default + Send + Sync> Cfg<K> {
     /// Creates a new Cfg ensuring all invariants (Sorted, Unique).
     pub fn new(options: &CfgA<K>) -> Self {
         let set: BTreeSet<K> = options.iter().cloned().collect();
@@ -133,14 +136,14 @@ impl<K: Ord + Clone + Default> Cfg<K> {
     }
 }
 
-impl<K: Ord + Clone + Default> Deref for Cfg<K> {
+impl<K: Ord + Clone + Default + Send + Sync> Deref for Cfg<K> {
     type Target = [K];
     fn deref(&self) -> &Self::Target {
         &self.cfga
     }
 }
 
-impl<K: Ord + Clone + Default + fmt::Debug> fmt::Debug for Cfg<K> {
+impl<K: Ord + Clone + Default + Send + Sync + fmt::Debug> fmt::Debug for Cfg<K> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_set().entries(self.iter()).finish()
     }

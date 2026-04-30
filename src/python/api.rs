@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::cfg::*;
+use crate::python::GrammarPy;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
@@ -69,6 +70,19 @@ pub(crate) fn compile_to_json(
     pythonize::pythonize(py, &value)
         .map(|obj| obj.into())
         .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))
+}
+
+#[pyfunction]
+#[pyo3(signature = (grammar, **kwargs))]
+pub(crate) fn compile(grammar: &str, kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<GrammarPy> {
+    let cfg = if let Some(k) = kwargs {
+        pykwargs_to_cfg(k)
+    } else {
+        Vec::new()
+    };
+    let grammar = crate::api::compile(grammar, &cfg)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+    Ok(GrammarPy::new(grammar))
 }
 
 #[pyfunction]
@@ -242,4 +256,67 @@ pub(crate) fn grammar_pretty(
     let result = crate::api::grammar_pretty(grammar, &cfg)
         .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
     Ok(result)
+}
+
+#[pyfunction]
+#[pyo3(signature = (**kwargs))]
+pub(crate) fn boot_grammar(kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<GrammarPy> {
+    let _ = kwargs;
+    let grammar = crate::api::boot_grammar()
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+    Ok(GrammarPy::new(grammar))
+}
+
+#[pyfunction]
+#[pyo3(signature = (parser, text, **kwargs))]
+pub(crate) fn parse_input(
+    parser: &GrammarPy,
+    text: &str,
+    kwargs: Option<&Bound<'_, PyDict>>,
+) -> PyResult<Py<PyAny>> {
+    let cfg = if let Some(k) = kwargs {
+        pykwargs_to_cfg(k)
+    } else {
+        Vec::new()
+    };
+    let tree = crate::api::parse_input(parser.grammar(), text, &cfg)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+    super::tree::tree_to_py(tree)
+}
+
+#[pyfunction]
+#[pyo3(signature = (parser, text, **kwargs))]
+pub(crate) fn parse_input_to_json(
+    parser: &GrammarPy,
+    text: &str,
+    kwargs: Option<&Bound<'_, PyDict>>,
+) -> PyResult<Py<PyAny>> {
+    let cfg = if let Some(k) = kwargs {
+        pykwargs_to_cfg(k)
+    } else {
+        Vec::new()
+    };
+    let value = crate::api::parse_input_to_json(parser.grammar(), text, &cfg)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+    let py = unsafe { pyo3::Python::assume_attached() };
+    pythonize::pythonize(py, &value)
+        .map(|obj| obj.into())
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))
+}
+
+#[pyfunction]
+#[pyo3(signature = (parser, text, **kwargs))]
+pub(crate) fn parse_input_to_json_string(
+    parser: &GrammarPy,
+    text: &str,
+    kwargs: Option<&Bound<'_, PyDict>>,
+) -> PyResult<String> {
+    let cfg = if let Some(k) = kwargs {
+        pykwargs_to_cfg(k)
+    } else {
+        Vec::new()
+    };
+    let value = crate::api::parse_input_to_json_string(parser.grammar(), text, &cfg)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+    Ok(value)
 }

@@ -30,6 +30,7 @@ use pyo3::prelude::*;
 #[pymodule]
 mod tiexiu {
     use super::python::api;
+    use super::python::grammar::GrammarPy;
     use super::python::ooapi::TieXiuPy;
     use pyo3::prelude::*;
 
@@ -40,17 +41,23 @@ mod tiexiu {
         m.add_function(wrap_pyfunction!(api::parse_grammar_to_json_string, m)?)?;
         m.add_function(wrap_pyfunction!(api::compile_to_json, m)?)?;
         m.add_function(wrap_pyfunction!(api::compile_to_json_string, m)?)?;
+        m.add_function(wrap_pyfunction!(api::compile, m)?)?;
         m.add_function(wrap_pyfunction!(api::pretty, m)?)?;
         m.add_function(wrap_pyfunction!(api::grammar_pretty, m)?)?;
         m.add_function(wrap_pyfunction!(api::load_boot_as_json, m)?)?;
         m.add_function(wrap_pyfunction!(api::boot_grammar_to_json, m)?)?;
         m.add_function(wrap_pyfunction!(api::boot_grammar_to_json_string, m)?)?;
         m.add_function(wrap_pyfunction!(api::boot_grammar_pretty, m)?)?;
+        m.add_function(wrap_pyfunction!(api::boot_grammar, m)?)?;
+        m.add_function(wrap_pyfunction!(api::parse_input, m)?)?;
+        m.add_function(wrap_pyfunction!(api::parse_input_to_json, m)?)?;
+        m.add_function(wrap_pyfunction!(api::parse_input_to_json_string, m)?)?;
         m.add_function(wrap_pyfunction!(api::parse, m)?)?;
         m.add_function(wrap_pyfunction!(api::parse_to_json, m)?)?;
         m.add_function(wrap_pyfunction!(api::parse_to_json_string, m)?)?;
 
         m.add_class::<TieXiuPy>()?;
+        m.add_class::<GrammarPy>()?;
 
         m.add_function(wrap_pyfunction!(pegapi, m)?)?;
 

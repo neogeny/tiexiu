@@ -33,8 +33,9 @@ def parse_grammar_to_json_string(grammar: str, **kwargs: Any) -> str:
 
 
 def compile(grammar: str, **kwargs: Any) -> Any:
-    """NOT IMPLEMENTED - returns Grammar."""
-    raise NotImplementedError("compile returns Grammar, not yet implemented")
+    """Compile grammar, return Grammar object."""
+    import tiexiu.tiexiu as rust
+    return rust.compile(grammar, **kwargs)
 
 
 def compile_to_json(grammar: str, **kwargs: Any) -> Any:
@@ -80,8 +81,9 @@ def load_tree(json: str, **kwargs: Any) -> Any:
 
 
 def boot_grammar(**kwargs: Any) -> Any:
-    """NOT IMPLEMENTED - returns Grammar."""
-    raise NotImplementedError("boot_grammar returns Grammar, not yet implemented")
+    """Returns the bootstrap grammar."""
+    import tiexiu.tiexiu as rust
+    return rust.boot_grammar(**kwargs)
 
 
 def boot_grammar_to_json(**kwargs: Any) -> Any:
@@ -147,19 +149,22 @@ def parse_to_json_string(grammar: str, text: str, **kwargs: Any) -> str:
     return rust.parse_to_json_string(grammar, text, **kwargs)
 
 
-# def parse_input(parser: Any, text: str, **kwargs: Any) -> Any:
-#     """NOT IMPLEMENTED - requires Grammar object."""
-#     raise NotImplementedError("parse_input requires Grammar object, not yet implemented")
+def parse_input(parser: Any, text: str, **kwargs: Any) -> Any:
+    """Parse text with compiled grammar, return AST tree."""
+    import tiexiu.tiexiu as rust
+    return rust.parse_input(parser, text, **kwargs)
 
 
-# def parse_input_to_json(parser: Any, text: str, **kwargs: Any) -> Any:
-#     """NOT IMPLEMENTED - requires Grammar object."""
-#     raise NotImplementedError("parse_input_to_json requires Grammar object, not yet implemented")
+def parse_input_to_json(parser: Any, text: str, **kwargs: Any) -> Any:
+    """Parse text with compiled grammar to JSON (dict, list, etc.)."""
+    import tiexiu.tiexiu as rust
+    return rust.parse_input_to_json(parser, text, **kwargs)
 
 
-# def parse_input_to_json_string(parser: Any, text: str, **kwargs: Any) -> str:
-#     """NOT IMPLEMENTED - requires Grammar object."""
-#     raise NotImplementedError("parse_input_to_json_string requires Grammar object, not yet implemented")
+def parse_input_to_json_string(parser: Any, text: str, **kwargs: Any) -> str:
+    """Parse text with compiled grammar to JSON string."""
+    import tiexiu.tiexiu as rust
+    return rust.parse_input_to_json_string(parser, text, **kwargs)
 
 
 def pretty(grammar: str, **kwargs: Any) -> str:

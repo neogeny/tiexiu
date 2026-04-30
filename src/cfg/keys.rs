@@ -55,6 +55,9 @@ pub enum CfgKey {
     NoMemoization,
 }
 
+unsafe impl Send for CfgKey {}
+unsafe impl Sync for CfgKey {}
+
 /// Specialized trait for types that can be configured with the project-specific CfgBox.
 pub trait Configurable {
     fn configure(&mut self, cfg: &Cfg) {

@@ -57,3 +57,10 @@ def test_kwargs_int():
 def test_kwargs_float():
     tree = tiexiu.parse_grammar("start = /a/", precision=3.14)
     assert tree is not None
+
+
+def test_grammar_parse_input():
+    g = tiexiu.boot_grammar()
+    tree = g.parse_input("start = /hello/")
+    assert tree is not None
+    assert "Rule" in str(tree)
