@@ -5,7 +5,9 @@ use clap;
 use clap::builder::styling::{AnsiColor, Styles};
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
-use tiexiu::api::{boot_grammar_pretty, boot_grammar_to_json_string, compile, load, parse_input};
+use tiexiu::api::{
+    boot_grammar_pretty, boot_grammar_to_json_string, compile, load_grammar_from_json, parse_input,
+};
 use tiexiu::cfg::CfgA;
 use tiexiu::json::exp_json::*;
 use tiexiu::peg::pretty::*;
@@ -194,7 +196,7 @@ fn load_grammar_from_path(grammar: &PathBuf, cfga: &CfgA) -> Result<Grammar> {
         .and_then(|ext| ext.to_str())
         .is_some_and(|ext| ext.eq_ignore_ascii_case("json"))
     {
-        load(&grammar_text, cfga)?
+        load_grammar_from_json(&grammar_text, cfga)?
     } else {
         compile(&grammar_text, cfga)?
     };

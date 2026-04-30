@@ -66,7 +66,7 @@ impl Tree {
         }
     }
 
-    pub fn from_serde_json_value(value: &Value) -> Result<Self, TreeJsonError> {
+    fn from_serde_json_value(value: &Value) -> Result<Self, TreeJsonError> {
         let object = expect_object(value, "tree")?;
         let kind = expect_string(field(object, "type")?, "type")?;
 

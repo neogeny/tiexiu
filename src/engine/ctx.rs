@@ -190,6 +190,9 @@ pub trait Ctx: CtxI + Clone + Debug {
         let key = self.key(name, rule.is_memoizable());
 
         self.enter(name);
+        if !rule.is_token() {
+            self.next_token();
+        }
         self.tracer().trace_entry(&self);
 
         match self.push().do_call(name, rule) {
@@ -219,9 +222,6 @@ pub trait Ctx: CtxI + Clone + Debug {
 
     fn do_call(mut self, name: &str, rule: &Rule) -> ParseResult<Self> {
         let start = self.mark();
-        if !rule.is_token() {
-            self.next_token();
-        }
         let key = self.key(name, rule.is_memoizable());
         if let Some(memo) = self.memo(&key) {
             return match memo.tree {

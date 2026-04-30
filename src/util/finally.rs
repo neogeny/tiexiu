@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+/// ```
 /// pub fn example_operation() {
 ///     // Logic starts here
 ///     let _guard = Finally(Some(|| {
@@ -10,7 +11,7 @@
 ///
 ///     // If any code here returns early or panics, _guard is dropped.
 /// }
-///
+/// ```
 pub struct Finally<F: FnOnce()> {
     action: Option<F>,
 }

@@ -141,7 +141,7 @@ impl TieXiu {
     }
 
     pub fn load(&mut self, json: &str) -> Result<Grammar> {
-        Ok(Grammar::serde_from_json(json)?)
+        Ok(Grammar::from_tatsu_json(json)?)
     }
 
     pub fn load_to_json(&mut self, json: &str) -> Result<Value> {

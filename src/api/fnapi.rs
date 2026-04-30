@@ -83,21 +83,21 @@ where
     Ok(compiled.to_json())
 }
 
-pub fn load(json: &str, _cfg: &CfgA) -> Result<Grammar> {
-    Ok(Grammar::serde_from_json(json)?)
+pub fn load_grammar_from_json(json: &str, _cfg: &CfgA) -> Result<Grammar> {
+    Ok(Grammar::from_tatsu_json(json)?)
 }
 
-pub fn load_to_json(json: &str, cfg: &CfgA) -> Result<Value> {
-    let grammar = load(json, cfg)?;
+pub fn load_grammar_from_json_to_json(json: &str, cfg: &CfgA) -> Result<Value> {
+    let grammar = load_grammar_from_json(json, cfg)?;
     Ok(grammar.to_json())
 }
 
-pub fn load_tree(json: &str, _cfg: &CfgA) -> Result<Tree> {
+pub fn load_tree_from_json(json: &str, _cfg: &CfgA) -> Result<Tree> {
     Tree::from_json_str(json).map_err(Error::from)
 }
 
 pub fn load_tree_to_json(json: &str, cfg: &CfgA) -> Result<Value> {
-    let tree = load_tree(json, cfg)?;
+    let tree = load_tree_from_json(json, cfg)?;
     Ok(tree.to_json())
 }
 

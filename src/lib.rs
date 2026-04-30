@@ -19,6 +19,15 @@ pub use api::*;
 #[allow(unused_imports)]
 pub use error::{Error, Result};
 
+pub use peg::Exp;
+pub use peg::ExpKind;
+// re-exports
+/// A comment about why this is re-exported here
+pub use peg::Grammar;
+pub use peg::Rule;
+pub use trees::Tree;
+pub use trees::TreeMap;
+
 #[cfg(feature = "pyo3")]
 pub(crate) mod python;
 

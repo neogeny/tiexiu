@@ -13,7 +13,7 @@ pub trait IntoStr {
 
 /// The "Call-Site Anchor" trait.
 /// You implement this for anything that should be turnable into your
-/// internal storage types (Str or Rc<str>).
+/// internal storage types (`Str` or `Rc<str>`).
 pub trait ToInternalStr {
     fn to_internal(self) -> Str;
     fn to_rc(self) -> Rc<str>;
