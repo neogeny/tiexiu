@@ -6,15 +6,7 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("fancy-regex error: {0}")]
-    Fancy(#[from] fancy_regex::Error),
-
-    #[cfg(feature = "pcre2")]
-    #[error("pcre2 error: {0}")]
-    Pcre2(#[from] pcre2::Error),
-
-    #[cfg(feature = "regex")]
-    #[error("regex error: {0}")]
-    Regex(#[from] regex::Error),
+    PyReFancy(#[from] fancy_regex::Error),
 
     #[error("invalid regex pattern: {0}")]
     InvalidPattern(String),

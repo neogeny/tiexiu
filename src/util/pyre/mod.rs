@@ -20,7 +20,5 @@ pub fn truncate_pattern(pattern: &str, limit: usize) -> &str {
 }
 
 pub fn escape(pattern: &str) -> Box<str> {
-    {
-        fancy::escape(pattern)
-    }
+    fancy::escape(pattern)
 }
