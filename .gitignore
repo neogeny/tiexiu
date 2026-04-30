@@ -26,4 +26,6 @@ target
 # Develoment
 tmp
 Modelfile
-# tatsu/
+grammar/
+tatsu/
+.aider*
