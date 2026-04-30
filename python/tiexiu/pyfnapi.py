@@ -6,6 +6,12 @@ from typing import Any
 import tiexiu.tiexiu as rust
 
 
+def pegapi(**kwargs: Any) -> Any:
+    """Create TieXiu OO API instance."""
+    if kwargs:
+        return rust.pegapi(**kwargs)
+    return rust.pegapi()
+
 def parse_grammar(grammar: str, **kwargs: Any) -> Any:
     """Parse grammar string to AST tree."""
     return rust.parse_grammar(grammar, **kwargs)
@@ -138,10 +144,3 @@ def parse_input_to_json_string(parser: Any, text: str, **kwargs: Any) -> str:
 def pretty(grammar: str, **kwargs: Any) -> str:
     """Pretty print grammar."""
     return rust.pretty(grammar, **kwargs)
-
-
-def pegapi(**kwargs: Any) -> Any:
-    """Create TieXiu OO API instance."""
-    if kwargs:
-        return rust.pegapi(**kwargs)
-    return rust.pegapi()

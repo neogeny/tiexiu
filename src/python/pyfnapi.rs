@@ -3,6 +3,7 @@
 
 use super::pythonize;
 use crate::cfg::*;
+use crate::python::pyooapi::TieXiuPy;
 use crate::python::GrammarPy;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
@@ -21,6 +22,15 @@ fn pykwargs_to_cfg(kwargs: &Bound<'_, PyDict>) -> Vec<CfgKey> {
 
 fn pythonize_json_value(py: pyo3::Python<'_>, value: json::JsonValue) -> PyResult<Py<PyAny>> {
     pythonize(py, &value)
+}
+
+#[pyfunction]
+pub(crate) fn pegapi(py: Python<'_>) -> PyResult<Py<PyAny>> {
+    let tx_py = TieXiuPy(crate::api::pegapi());
+
+    let bound_obj = Bound::new(py, tx_py)?;
+
+    Ok(bound_obj.into_any().unbind())
 }
 
 #[pyfunction]

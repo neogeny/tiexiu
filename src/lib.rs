@@ -45,6 +45,7 @@ mod tiexiu {
 
     #[pymodule_init]
     fn init(m: &Bound<'_, PyModule>) -> PyResult<()> {
+        m.add_function(wrap_pyfunction!(pyfnapi::pegapi, m)?)?;
         m.add_function(wrap_pyfunction!(pyfnapi::parse_grammar, m)?)?;
         m.add_function(wrap_pyfunction!(pyfnapi::parse_grammar_to_json, m)?)?;
         m.add_function(wrap_pyfunction!(pyfnapi::parse_grammar_to_json_string, m)?)?;
