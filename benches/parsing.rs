@@ -102,7 +102,7 @@ fn bench_grammar_from_json(c: &mut Criterion) {
     let json = std::fs::read_to_string("grammar/calc.json").expect("calc.json missing");
 
     c.bench_function("grammar_load_calc_json", |b| {
-        b.iter(|| black_box(Grammar::serde_from_json(&json).unwrap()));
+        b.iter(|| black_box(Grammar::from_tatsu_json(&json).unwrap()));
     });
 }
 
