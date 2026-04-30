@@ -4,7 +4,7 @@
 //! Tests for parameters
 
 use tiexiu::api::compile;
-use tiexiu::dedent_all;
+use tiexiu::util::indent::dedent_all;
 use tiexiu::*;
 
 #[test]

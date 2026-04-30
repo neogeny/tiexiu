@@ -8,7 +8,6 @@ use crate::json::ToExpJson;
 use crate::peg::error::Yeap;
 use crate::peg::grammar::PrettyPrint;
 use crate::peg::*;
-use crate::tools::rails::text as rails_text;
 pub use crate::trees::Tree;
 pub use crate::{Error, Result};
 pub use serde_json::Value;
@@ -172,8 +171,4 @@ pub fn boot_grammar_to_json_string(cfg: &CfgA) -> Result<String> {
 pub fn boot_grammar_pretty(_cfg: &CfgA) -> Result<String> {
     let boot = boot_grammar()?;
     Ok(boot.pretty_print())
-}
-
-pub fn railroads(grammar: &Grammar, _cfg: &CfgA) -> Result<String> {
-    Ok(rails_text(grammar))
 }

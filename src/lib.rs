@@ -3,7 +3,6 @@
 
 #![allow(clippy::collapsible_if)]
 #![allow(clippy::collapsible_match)]
-#![allow(dead_code)]
 
 pub mod api;
 pub mod cfg;
@@ -12,9 +11,9 @@ pub mod error;
 pub mod input;
 pub mod json;
 pub mod peg;
-pub(crate) mod tools;
+pub mod tools;
 pub mod trees;
-pub(crate) mod util;
+pub mod util;
 
 pub use api::*;
 #[allow(unused_imports)]

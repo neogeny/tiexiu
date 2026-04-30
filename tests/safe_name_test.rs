@@ -4,7 +4,7 @@
 //! Tests translated from TatSu's util/safe_name_test.py
 
 use tiexiu::Result;
-use tiexiu::{safe_name, to_snake_case};
+use tiexiu::util::{safe_name, to_snake_case};
 
 #[test]
 fn test_safe_name_valid_cases() -> Result<()> {

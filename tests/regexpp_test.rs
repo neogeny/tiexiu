@@ -4,24 +4,24 @@
 //! Tests for regexpp
 
 use tiexiu::Result;
-use tiexiu::regexpp as r;
+use tiexiu::util::pyre::regexpp;
 
 #[test]
 fn test_regexpp_simple() -> Result<()> {
-    let result = r(r"\d+")?;
+    let result = regexpp(r"\d+")?;
     assert!(result.starts_with("r\"") || result.starts_with("r'"));
     Ok(())
 }
 
 #[test]
 fn test_regexpp_with_backslash() -> Result<()> {
-    let _ = r(r"\\d")?;
+    let _ = regexpp(r"\\d")?;
     Ok(())
 }
 
 #[test]
 fn test_regexpp_with_tab() -> Result<()> {
-    let result = r("a\tb")?;
+    let result = regexpp("a\tb")?;
     assert!(result.contains("\\t"));
     Ok(())
 }
