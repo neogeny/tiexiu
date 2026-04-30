@@ -7,7 +7,7 @@ use crate::peg::Grammar;
 pub const TATSU_GRAMMAR_JSON: &str = include_str!("../../grammar/tatsu.json");
 
 /// Loads the embedded TatSu grammar from its JSON representation.
-pub(crate) fn boot_grammar() -> Result<Grammar, JsonError> {
+pub fn boot_grammar() -> Result<Grammar, JsonError> {
     Grammar::serde_from_json(TATSU_GRAMMAR_JSON)
 }
 

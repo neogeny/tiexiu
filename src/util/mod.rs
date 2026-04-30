@@ -16,7 +16,4 @@ pub mod pyre;
 pub mod strtools;
 pub mod tokenstack;
 
-pub use cfg::Cfg;
 pub use error::*;
-pub use finally::finally;
-pub use strtools::{safe_name, to_snake_case};

@@ -5,11 +5,13 @@ use clap;
 use clap::builder::styling::{AnsiColor, Styles};
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
-use tiexiu::api::{boot_grammar_pretty, boot_grammar_to_json_string, compile, load, parse_input};
+use tiexiu::api::railroads as draw_railroads;
+use tiexiu::api::{
+    boot_grammar_pretty, boot_grammar_to_json_string, compile, compile_to_json, load, load_to_json,
+    parse_input,
+};
 use tiexiu::cfg::CfgA;
-use tiexiu::json::exp_json::*;
 use tiexiu::peg::pretty::*;
-use tiexiu::tools::rails::*;
 use tiexiu::{CfgKey, Grammar, Result, boot_grammar, config};
 
 fn cli_styles() -> Styles {
@@ -138,7 +140,7 @@ pub fn cli() -> Result<()> {
             } else if model {
                 (format!("{:#?}", boot_grammar()?), "rs")
             } else if railroads {
-                (boot_grammar()?.railroads(), "apl")
+                (draw_railroads(&boot_grammar()?, cfga)?, "apl")
             } else {
                 // Since json is default_value_t = true, this is the fallthrough
                 (boot_grammar_to_json_string(cfga)?, "json")
@@ -164,14 +166,26 @@ pub fn cli() -> Result<()> {
             railroads,
             ..
         } => {
-            let parser = load_grammar_from_path(&grammar, cfga)?;
+            let grammar_text = std::fs::read_to_string(&grammar)?;
             if json {
-                (parser.to_json_string()?, "json")
+                let result = if grammar
+                    .extension()
+                    .and_then(|ext| ext.to_str())
+                    .is_some_and(|ext| ext.eq_ignore_ascii_case("json"))
+                {
+                    serde_json::to_string(&load_to_json(&grammar_text, cfga)?)?
+                } else {
+                    serde_json::to_string(&compile_to_json(&grammar_text, cfga)?)?
+                };
+                (result, "json")
             } else if model {
+                let parser = load_grammar_from_path(&grammar, cfga)?;
                 (format!("{:#?}", parser), "rs")
             } else if railroads {
-                (parser.railroads(), "apl")
+                let parser = load_grammar_from_path(&grammar, cfga)?;
+                (draw_railroads(&parser, cfga)?, "apl")
             } else {
+                let parser = load_grammar_from_path(&grammar, cfga)?;
                 (parser.pretty_print(), "ebnf")
             }
         }

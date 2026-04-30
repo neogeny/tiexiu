@@ -1,4 +1,4 @@
-use tiexiu::util::indent::dedent_all;
+use tiexiu::dedent_all;
 use tiexiu::{CfgKey, compile};
 
 #[test]

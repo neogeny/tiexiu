@@ -19,13 +19,18 @@ pub struct DisasterReport {
     pub memento: Memento,
 }
 
-#[derive(Debug)]
 pub struct Nope {
     pub start: usize,
     pub mark: usize, // The position where the disaster occurred
     pub cutseen: bool,
     pub source: Ref<ParseFailure>,
     pub report: Ref<DisasterReport>,
+}
+
+impl std::fmt::Debug for Nope {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Display::fmt(self, f)
+    }
 }
 
 impl std::fmt::Display for Nope {

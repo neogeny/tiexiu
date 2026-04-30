@@ -23,10 +23,11 @@ pub enum TatSuModel {
         rules: Vec<TatSuModel>,
         // #[serde(default, skip_serializing_if = "std::collections::HashMap::is_empty")]
         directives: std::collections::HashMap<String, serde_json::Value>,
-        // #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        // #[serde(default, skip_serializing_if = "std::collections::HashMap::is_empty")]
+        #[serde(default)]
         keywords: Box<[Box<str>]>,
 
-        #[serde(default = "default_false")]
+        #[serde(default)]
         analyzed: bool,
     },
     RuleInclude {

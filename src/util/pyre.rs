@@ -13,7 +13,6 @@ pub mod pcre2;
 pub mod regex;
 
 pub use error::*;
-pub use pattern::*;
 
 // NOTE
 //   This library will use fancy_regex at all levels

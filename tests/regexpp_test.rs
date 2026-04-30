@@ -4,7 +4,7 @@
 //! Tests for regexpp
 
 use tiexiu::Result;
-use tiexiu::util::pyre::pattern::regexpp as r;
+use tiexiu::regexpp as r;
 
 #[test]
 fn test_regexpp_simple() -> Result<()> {
