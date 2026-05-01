@@ -9,7 +9,7 @@ use crate::input::memento::Memento;
 use std::fmt::Debug;
 use std::panic::Location;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct DisasterReport {
     pub pos: (usize, usize),
     pub la: Str,
@@ -17,6 +17,7 @@ pub struct DisasterReport {
     pub memento: Memento,
 }
 
+#[derive(Clone)]
 pub struct Nope {
     pub start: usize,
     pub mark: usize, // The position where the disaster occurred

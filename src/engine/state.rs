@@ -7,6 +7,7 @@ use super::memo::{KeyTrack, MemoCache};
 use super::trace::{NULL_TRACER, Tracer};
 use crate::input::Cursor;
 use crate::parser::TokenStack;
+use crate::peg::error::Nope;
 use crate::types::{Ref, Str, StrSet};
 use crate::util::fuse::Fuse;
 use crate::util::pyre::Pattern;
@@ -39,6 +40,7 @@ pub struct HeavyState<'t> {
     pub patterns: PatternCache,
     pub keywords: Ref<[Str]>,
     pub strings: StrSet,
+    pub furthest_failure: Option<Nope>,
     pub tracer: &'t dyn Tracer,
 }
 
@@ -68,6 +70,7 @@ impl<'t> HeavyState<'t> {
             patterns: PatternCache::new(),
             keywords: [].into(),
             strings: StrSet::new(),
+            furthest_failure: None,
             tracer: &NULL_TRACER,
         }
     }
@@ -87,6 +90,19 @@ impl<'t> HeavyState<'t> {
         let new: Str = s.into();
         self.strings.insert(new.clone());
         new
+    }
+
+    pub fn set_furthest_failure(&mut self, nope: &Nope) {
+        let furthest = self.furthest_failure.clone();
+        match furthest {
+            Some(prev) if nope.mark >= prev.mark => {
+                self.furthest_failure = Some(nope.clone());
+            }
+            None => {
+                self.furthest_failure = Some(nope.clone());
+            }
+            _ => {}
+        }
     }
 }
 

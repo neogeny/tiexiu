@@ -12,10 +12,11 @@ impl From<Ensure> for ParseFailure {
     }
 }
 
-#[derive(Error, Debug, Clone, PartialEq)]
+#[derive(Error, Default, Debug, Clone, PartialEq)]
 pub enum ParseFailure {
     /// Corresponds to Self::Fail
     #[error("Fail")]
+    #[default]
     Fail,
 
     /// Corresponds to Self::Dot (No more input)

@@ -41,9 +41,12 @@ pub trait Ctx: CtxI + Clone + Debug {
     }
 
     #[track_caller]
-    fn failure(&self, start: usize, source: ParseFailure) -> Nope {
+    fn failure(&mut self, start: usize, source: ParseFailure) -> Nope {
         Nope::new(start, self, source)
     }
+
+    fn furthest_failure(&self) -> Option<Nope>;
+    fn set_furthest_failure(&mut self, nope: &Nope);
 
     fn reset(&mut self, mark: usize) {
         self.cursor_mut().reset(mark);

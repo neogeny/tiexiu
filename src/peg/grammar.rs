@@ -109,7 +109,7 @@ impl Grammar {
         }
     }
 
-    pub fn parse<C: Ctx>(&self, ctx: C) -> ParseResult<C> {
+    pub fn parse<C: Ctx>(&self, mut ctx: C) -> ParseResult<C> {
         match self.start_rule() {
             Ok(start) => self.parse_from(start.as_ref(), ctx),
             Err(e) => Err(ctx.failure(ctx.mark(), e)),
@@ -121,7 +121,10 @@ impl Grammar {
         ctx.configure(&self.directives);
         ctx.set_keywords(&self.keywords);
         match self.get_rule(start) {
-            Ok(rule) => rule.parse(ctx),
+            Ok(rule) => match rule.parse(ctx.push()) {
+                Err(nope) => Err(ctx.furthest_failure().unwrap_or(nope)),
+                ok => ok,
+            },
             Err(err) => Err(ctx.failure(start_mark, err)),
         }
     }

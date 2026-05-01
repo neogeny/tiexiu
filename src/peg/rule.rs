@@ -100,13 +100,17 @@ impl Rule {
         }
     }
 
-    pub fn parse<C: Ctx>(&self, ctx: C) -> ParseResult<C> {
+    pub fn parse<C: Ctx>(&self, mut ctx: C) -> ParseResult<C> {
         let _text = ctx.cursor().textstr();
-        match self.exp.parse(ctx) {
-            Ok(Yeap(ctx, tree)) => {
+        match self.exp.parse(ctx.push()) {
+            Err(nope) => {
+                ctx.set_furthest_failure(&nope);
+                Err(nope)
+            }
+            Ok(Yeap(ok_ctx, tree)) => {
                 let folded = tree.fold();
                 Ok(Yeap(
-                    ctx,
+                    ctx.merge(ok_ctx),
                     if self.params.is_empty() {
                         folded
                     } else {
@@ -126,7 +130,6 @@ impl Rule {
                     },
                 ))
             }
-            err => err,
         }
     }
 

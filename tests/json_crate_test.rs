@@ -1,7 +1,6 @@
 // Tests for json crate loading grammar/java.json
 const GRAMMAR_JSON: &str = include_str!("../grammar/tatsu.json");
 
-
 #[test]
 fn test_json_crate_parse_grammar() {
     let parsed = json::parse(GRAMMAR_JSON).unwrap();

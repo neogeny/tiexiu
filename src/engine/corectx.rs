@@ -5,6 +5,7 @@ pub use super::ctx::{Ctx, CtxI};
 use super::memo::{Memo, MemoKey};
 use super::state::{CallStack, HeavyState, ParseState};
 use super::trace::{CONSOLE_TRACER, NULL_TRACER, Tracer};
+use crate::api::error::Nope;
 use crate::cfg::*;
 use crate::input::Cursor;
 use crate::trees::Tree;
@@ -150,6 +151,14 @@ where
 
     fn intern(&mut self, s: &str) -> Str {
         self.with_heavy_mut(|heavy| heavy.intern(s))
+    }
+
+    fn furthest_failure(&self) -> Option<Nope> {
+        self.heavy.borrow().furthest_failure.clone()
+    }
+
+    fn set_furthest_failure(&mut self, nope: &Nope) {
+        self.with_heavy_mut(|heavy| heavy.set_furthest_failure(nope));
     }
 
     fn get_pattern(&mut self, pattern: &str) -> Pattern {

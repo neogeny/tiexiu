@@ -10,6 +10,10 @@ use crate::trees::Tree;
 use crate::types::Ref;
 
 impl Exp {
+    pub fn la_boxed(&self) -> Box<[Ref<str>]> {
+        self.la.as_ref().map(|la| la.as_ref()).unwrap_or(&[]).into()
+    }
+
     pub fn parse_choice<C: Ctx>(&self, mut ctx: C, options: &[Exp]) -> ParseResult<C> {
         let start = ctx.mark();
         let mut furthest: Option<Nope> = None;
@@ -30,10 +34,9 @@ impl Exp {
                 }
             }
         }
-        let la_box: Box<[Ref<str>]> = self.la.as_ref().map(|la| la.as_ref()).unwrap_or(&[]).into();
-        Err(furthest.unwrap_or(ctx.failure(start, NoViableOption(la_box))))
+        Err(furthest.unwrap_or(ctx.failure(start, NoViableOption(self.la_boxed()))))
     }
-
+    
     pub fn parse_optional<C: Ctx>(&self, mut ctx: C, exp: &Exp) -> ParseResult<C> {
         match exp.parse(ctx.push()) {
             Ok(Yeap(new_ctx, tree)) => Ok(Yeap(ctx.merge(new_ctx), tree)),
