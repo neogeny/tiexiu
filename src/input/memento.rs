@@ -32,7 +32,7 @@ impl Memento {
     ) -> Self {
         // 1. Get absolute positions (1-indexed)
         let abs_start = Self::pos_at(text, start);
-        let abs_mark = Self::pos_at(text, mark);
+        let abs_mark = Self::pos_at(text, mark + 1);
 
         // 2. Define window boundaries (4 lines before the mark line)
         let mark_line_idx = abs_mark.0.saturating_sub(1);
@@ -86,7 +86,7 @@ impl Memento {
         writeln!(
             f,
             "  {} {}:{}:{}",
-            arrow, filepath, self.abs_start.0, self.abs_start.1
+            arrow, filepath, self.abs_mark.0, self.abs_mark.1
         )?;
 
         // 3. Leading Pipe

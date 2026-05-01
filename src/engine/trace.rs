@@ -61,9 +61,9 @@ pub trait Tracer: Debug {
             _ => style("←").yellow(),
         }
         .to_string();
-        let lookahead = style(
-            ctx.cursor().lookahead(ctx.mark()).replace(" ", "·")
-        ).black().bright();
+        let lookahead = style(ctx.cursor().lookahead(ctx.mark()).replace(" ", "·"))
+            .black()
+            .bright();
         let mut callstack = String::new();
         // let term = Term::stderr();
         // let (_rows, cols) = term.size();

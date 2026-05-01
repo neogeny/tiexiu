@@ -112,38 +112,38 @@ impl Exp {
             ExpKind::Constant(literal) => Ok(Yeap(ctx, Tree::Text(literal.clone()))),
             ExpKind::Alert(literal, _) => Ok(Yeap(ctx, Tree::Text(literal.clone()))),
 
-            ExpKind::Named(name, exp) => match exp.parse(ctx) {
-                Ok(Yeap(ctx, mut tree)) => {
+            ExpKind::Named(name, exp) => match exp.parse(ctx.push()) {
+                Ok(Yeap(new_ctx, mut tree)) => {
                     tree = Tree::named(name, tree);
-                    Ok(Yeap(ctx, tree))
+                    Ok(Yeap(ctx.merge(new_ctx), tree))
                 }
                 err => err,
             },
-            ExpKind::NamedList(name, exp) => match exp.parse(ctx) {
-                Ok(Yeap(ctx, mut tree)) => {
+            ExpKind::NamedList(name, exp) => match exp.parse(ctx.push()) {
+                Ok(Yeap(new_ctx, mut tree)) => {
                     tree = Tree::named_as_list(name, tree);
-                    Ok(Yeap(ctx, tree))
+                    Ok(Yeap(ctx.merge(new_ctx), tree))
                 }
                 err => err,
             },
-            ExpKind::Override(exp) => match exp.parse(ctx) {
-                Ok(Yeap(ctx, mut tree)) => {
+            ExpKind::Override(exp) => match exp.parse(ctx.push()) {
+                Ok(Yeap(new_ctx, mut tree)) => {
                     tree = Tree::override_with(tree);
-                    Ok(Yeap(ctx, tree))
+                    Ok(Yeap(ctx.merge(new_ctx), tree))
                 }
                 err => err,
             },
-            ExpKind::OverrideList(exp) => match exp.parse(ctx) {
-                Ok(Yeap(ctx, mut tree)) => {
+            ExpKind::OverrideList(exp) => match exp.parse(ctx.push()) {
+                Ok(Yeap(new_ctx, mut tree)) => {
                     tree = Tree::override_as_list(tree);
-                    Ok(Yeap(ctx, tree))
+                    Ok(Yeap(ctx.merge(new_ctx), tree))
                 }
                 err => err,
             },
             ExpKind::Group(exp) => exp.parse(ctx),
             ExpKind::SkipGroup(exp) => {
-                let Yeap(new_ctx, _) = exp.parse(ctx)?;
-                Ok(Yeap(new_ctx, Tree::Nil))
+                let Yeap(new_ctx, _) = exp.parse(ctx.push())?;
+                Ok(Yeap(ctx.merge(new_ctx), Tree::Nil))
             }
             ExpKind::Lookahead(exp) => match exp.parse(ctx.push()) {
                 Ok(Yeap(_, _)) => Ok(Yeap(ctx, Tree::Nil)),
@@ -173,10 +173,10 @@ impl Exp {
             ExpKind::Sequence(sequence) => {
                 let mut results = Vec::new();
                 for exp in &**sequence {
-                    match exp.parse(ctx) {
+                    match exp.parse(ctx.push()) {
                         Ok(Yeap(new_ctx, tree)) => {
                             results.push(tree);
-                            ctx = new_ctx;
+                            ctx = ctx.merge(new_ctx);
                         }
                         err => return err,
                     }
@@ -189,32 +189,32 @@ impl Exp {
 
             ExpKind::Closure(exp) => {
                 let mut res = Vec::new();
-                match Self::repeat(ctx, exp, &mut res) {
-                    Ok(Yeap(new_ctx, _)) => Ok(Yeap(new_ctx, Tree::from(res).closed())),
+                match Self::repeat(ctx.push(), exp, &mut res) {
+                    Ok(Yeap(new_ctx, _)) => Ok(Yeap(ctx.merge(new_ctx), Tree::from(res).closed())),
                     err => err,
                 }
             }
             ExpKind::PositiveClosure(exp) => {
                 let mut res: Vec<Tree> = Vec::new();
-                match exp.parse(ctx) {
+                match exp.parse(ctx.push()) {
                     Ok(Yeap(new_ctx, tree)) => {
-                        ctx = new_ctx;
+                        ctx = ctx.merge(new_ctx);
                         res.push(tree);
                     }
                     err => return err,
                 };
 
-                match Self::repeat(ctx, exp, &mut res) {
-                    Ok(Yeap(new_ctx, _)) => Ok(Yeap(new_ctx, Tree::from(res).closed())),
+                match Self::repeat(ctx.push(), exp, &mut res) {
+                    Ok(Yeap(new_ctx, _)) => Ok(Yeap(ctx.merge(new_ctx), Tree::from(res).closed())),
                     err => err,
                 }
             }
             ExpKind::Join { exp, sep } => {
                 let mut res: Vec<Tree> = Vec::new();
 
-                match Self::add_exp(ctx, exp, &mut res) {
+                match Self::add_exp(ctx.push(), exp, &mut res) {
                     Ok(new_ctx) => match Self::repeat_with_pre(new_ctx, exp, sep, &mut res, true) {
-                        Ok(Yeap(new_ctx, _)) => Ok(Yeap(new_ctx, Tree::from(res).closed())),
+                        Ok(Yeap(new_ctx, _)) => Ok(Yeap(ctx.merge(new_ctx), Tree::from(res).closed())),
                         err => err,
                     },
                     Err((_actx, nope)) => Err(nope),
@@ -223,25 +223,25 @@ impl Exp {
             ExpKind::PositiveJoin { exp, sep } => {
                 let mut res: Vec<Tree> = Vec::new();
 
-                match exp.parse(ctx) {
+                match exp.parse(ctx.push()) {
                     Ok(Yeap(new_ctx, tree)) => {
                         res.push(tree);
-                        ctx = new_ctx;
+                        ctx = ctx.merge(new_ctx);
                     }
                     err => return err,
                 };
 
-                match Self::repeat_with_pre(ctx, exp, sep, &mut res, true) {
-                    Ok(Yeap(new_ctx, _)) => Ok(Yeap(new_ctx, Tree::from(res).closed())),
+                match Self::repeat_with_pre(ctx.push(), exp, sep, &mut res, true) {
+                    Ok(Yeap(new_ctx, _)) => Ok(Yeap(ctx.merge(new_ctx), Tree::from(res).closed())),
                     err => err,
                 }
             }
             ExpKind::Gather { exp, sep } => {
                 let mut res: Vec<Tree> = Vec::new();
-                match Self::add_exp(ctx, exp, &mut res) {
+                match Self::add_exp(ctx.push(), exp, &mut res) {
                     Ok(new_ctx) => {
                         match Self::repeat_with_pre(new_ctx, exp, sep, &mut res, false) {
-                            Ok(Yeap(new_ctx, _)) => Ok(Yeap(new_ctx, Tree::from(res).closed())),
+                            Ok(Yeap(new_ctx, _)) => Ok(Yeap(ctx.merge(new_ctx), Tree::from(res).closed())),
                             err => err,
                         }
                     }
@@ -251,16 +251,16 @@ impl Exp {
             ExpKind::PositiveGather { exp, sep } => {
                 let mut res: Vec<Tree> = Vec::new();
 
-                match exp.parse(ctx) {
+                match exp.parse(ctx.push()) {
                     Ok(Yeap(new_ctx, tree)) => {
-                        ctx = new_ctx;
+                        ctx = ctx.merge(new_ctx);
                         res.push(tree);
                     }
                     err => return err,
                 };
 
-                match Self::repeat_with_pre(ctx, exp, sep, &mut res, false) {
-                    Ok(Yeap(new_ctx, _)) => Ok(Yeap(new_ctx, Tree::from(res).closed())),
+                match Self::repeat_with_pre(ctx.push(), exp, sep, &mut res, false) {
+                    Ok(Yeap(new_ctx, _)) => Ok(Yeap(ctx.merge(new_ctx), Tree::from(res).closed())),
                     err => err,
                 }
             }

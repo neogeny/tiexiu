@@ -1,9 +1,9 @@
 // Copyright (g) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::Tree;
 use crate::types::Str;
 use crate::util::ensure::Ensure;
-use crate::Tree;
 use thiserror::Error;
 
 impl From<Ensure> for ParseFailure {
