@@ -214,7 +214,9 @@ impl Exp {
 
                 match Self::add_exp(ctx.push(), exp, &mut res) {
                     Ok(new_ctx) => match Self::repeat_with_pre(new_ctx, exp, sep, &mut res, true) {
-                        Ok(Yeap(new_ctx, _)) => Ok(Yeap(ctx.merge(new_ctx), Tree::from(res).closed())),
+                        Ok(Yeap(new_ctx, _)) => {
+                            Ok(Yeap(ctx.merge(new_ctx), Tree::from(res).closed()))
+                        }
                         err => err,
                     },
                     Err((_actx, nope)) => Err(nope),
@@ -241,7 +243,9 @@ impl Exp {
                 match Self::add_exp(ctx.push(), exp, &mut res) {
                     Ok(new_ctx) => {
                         match Self::repeat_with_pre(new_ctx, exp, sep, &mut res, false) {
-                            Ok(Yeap(new_ctx, _)) => Ok(Yeap(ctx.merge(new_ctx), Tree::from(res).closed())),
+                            Ok(Yeap(new_ctx, _)) => {
+                                Ok(Yeap(ctx.merge(new_ctx), Tree::from(res).closed()))
+                            }
                             err => err,
                         }
                     }
