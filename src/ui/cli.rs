@@ -12,7 +12,7 @@ use tiexiu::api::{
 use tiexiu::cfg::CfgA;
 use tiexiu::peg::pretty::*;
 use tiexiu::tools::rails::*;
-use tiexiu::{CfgKey, Grammar, Result, boot_grammar, config};
+use tiexiu::{boot_grammar, config, CfgKey, Grammar, Result};
 
 fn cli_styles() -> Styles {
     Styles::styled()
@@ -92,6 +92,18 @@ pub enum Commands {
         /// The files to be parsed.
         #[arg(required = true)]
         inputs: Vec<PathBuf>,
+
+        /// Print the output tree in JSON format
+        #[arg(short, long, group = "format")]
+        json: bool,
+
+        /// Print the Rust code for the tree
+        #[arg(short, long)]
+        model: bool,
+
+        /// Print the Tree in "short" notation
+        #[arg(short, long)]
+        short: bool,
     },
 
     /// Grammar transformations
@@ -153,18 +165,28 @@ pub fn cli(out: &mut std::io::StdoutLock) -> Result<()> {
             }
         }
         Commands::Run {
-            grammar, inputs, ..
+            grammar, inputs, model, short, ..
         } => {
             let parser = load_grammar_from_path(&grammar, cfga)?;
+            let mut format = "rust";
             let mut output = String::new();
             for input in inputs {
                 cfg = cfg.add(CfgKey::Source(input.as_path().to_string_lossy().into()));
                 let text = std::fs::read_to_string(&input)?;
                 let tree = parse_input(&parser, &text, &cfg)?;
-                output.push_str(format!("{}", tree.fold()).as_str());
+                let this_output = if model {
+                    format!("{:#?}", tree).to_string()
+                } else if short {
+                    format!("{:#}", tree.fold()).to_string()
+                } else {
+                    format = "json";
+                    tree.to_json_string_pretty()
+                };
+
+                output.push_str(&this_output);
                 output.push('\n');
             }
-            (output, "text")
+            (output, format)
         }
         Commands::Grammar {
             grammar,
@@ -240,7 +262,7 @@ pub fn pygmentize(content: &str, extension: &str, use_color: bool) -> Result<Str
     use syntect::easy::HighlightLines;
     use syntect::highlighting::ThemeSet;
     use syntect::parsing::SyntaxSet;
-    use syntect::util::{LinesWithEndings, as_24_bit_terminal_escaped};
+    use syntect::util::{as_24_bit_terminal_escaped, LinesWithEndings};
 
     let ps = SyntaxSet::load_defaults_newlines();
     let ts = ThemeSet::load_defaults();
