@@ -1,22 +1,22 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::Exp;
 use crate::engine::Ctx;
 use crate::peg::error::*;
 use crate::trees::Tree;
+use crate::Exp;
 
 impl Exp {
-    pub fn skip_exp<C: Ctx>(mut ctx: C, exp: &Exp) -> C {
-        let skip_ctx = ctx.push();
+    pub fn skip_exp<C: Ctx>(ctx: C, exp: &Exp) -> C {
+        let skip_ctx = ctx.clone();
         match exp.parse(skip_ctx) {
             Ok(Yeap(new_ctx, _)) => ctx.merge(new_ctx),
             Err(_) => ctx,
         }
     }
 
-    pub fn add_exp<C: Ctx>(mut ctx: C, exp: &Exp, res: &mut Vec<Tree>) -> Result<C, (C, Nope)> {
-        match exp.parse(ctx.push()) {
+    pub fn add_exp<C: Ctx>(ctx: C, exp: &Exp, res: &mut Vec<Tree>) -> Result<C, (C, Nope)> {
+        match exp.parse(ctx.clone()) {
             Ok(Yeap(new_ctx, tree)) => {
                 res.push(tree);
                 Ok(ctx.merge(new_ctx))
@@ -32,10 +32,10 @@ impl Exp {
                     res.push(tree);
                     ctx = ctx.merge(new_ctx);
                 }
-                Err(mut nope) => {
-                    if nope.take_cut() {
-                        return Err(nope);
-                    }
+                Err(_nope) => {
+                    // if nope.take_cut() {
+                    //     return Err(nope);
+                    // }
                     return Ok(Yeap(ctx, Tree::Nil));
                 }
             }
@@ -83,8 +83,8 @@ impl Exp {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::engine::CtxI;
     use crate::engine::new_ctx;
+    use crate::engine::CtxI;
     use crate::input::strcursor::StrCursor;
 
     fn setup(input: &str) -> impl Ctx {

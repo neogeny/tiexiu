@@ -34,7 +34,8 @@ impl Exp {
                 }
             }
         }
-        Err(furthest.unwrap_or(ctx.failure(start, NoViableOption(self.la_boxed()))))
+        // Err(furthest.unwrap_or(ctx.failure(start, NoViableOption(self.la_boxed()))))
+        Err(ctx.failure(start, NoViableOption(self.la_boxed())))
     }
 
     pub fn parse_optional<C: Ctx>(&self, mut ctx: C, exp: &Exp) -> ParseResult<C> {

@@ -112,28 +112,28 @@ impl Exp {
             ExpKind::Constant(literal) => Ok(Yeap(ctx, Tree::Text(literal.clone()))),
             ExpKind::Alert(literal, _) => Ok(Yeap(ctx, Tree::Text(literal.clone()))),
 
-            ExpKind::Named(name, exp) => match exp.parse(ctx.push()) {
+            ExpKind::Named(name, exp) => match exp.parse(ctx.clone()) {
                 Ok(Yeap(new_ctx, mut tree)) => {
                     tree = Tree::named(name, tree);
                     Ok(Yeap(ctx.merge(new_ctx), tree))
                 }
                 err => err,
             },
-            ExpKind::NamedList(name, exp) => match exp.parse(ctx.push()) {
+            ExpKind::NamedList(name, exp) => match exp.parse(ctx.clone()) {
                 Ok(Yeap(new_ctx, mut tree)) => {
                     tree = Tree::named_as_list(name, tree);
                     Ok(Yeap(ctx.merge(new_ctx), tree))
                 }
                 err => err,
             },
-            ExpKind::Override(exp) => match exp.parse(ctx.push()) {
+            ExpKind::Override(exp) => match exp.parse(ctx.clone()) {
                 Ok(Yeap(new_ctx, mut tree)) => {
                     tree = Tree::override_with(tree);
                     Ok(Yeap(ctx.merge(new_ctx), tree))
                 }
                 err => err,
             },
-            ExpKind::OverrideList(exp) => match exp.parse(ctx.push()) {
+            ExpKind::OverrideList(exp) => match exp.parse(ctx.clone()) {
                 Ok(Yeap(new_ctx, mut tree)) => {
                     tree = Tree::override_as_list(tree);
                     Ok(Yeap(ctx.merge(new_ctx), tree))
@@ -142,7 +142,7 @@ impl Exp {
             },
             ExpKind::Group(exp) => exp.parse(ctx),
             ExpKind::SkipGroup(exp) => {
-                let Yeap(new_ctx, _) = exp.parse(ctx.push())?;
+                let Yeap(new_ctx, _) = exp.parse(ctx.clone())?;
                 Ok(Yeap(ctx.merge(new_ctx), Tree::Nil))
             }
             ExpKind::Lookahead(exp) => match exp.parse(ctx.push()) {
@@ -157,7 +157,7 @@ impl Exp {
                 }
             }
             ExpKind::SkipTo(exp) => loop {
-                match exp.parse(ctx.push()) {
+                match exp.parse(ctx.clone()) {
                     Err(nope) => {
                         if !ctx.dot() {
                             return Err(nope);
@@ -173,7 +173,7 @@ impl Exp {
             ExpKind::Sequence(sequence) => {
                 let mut results = Vec::new();
                 for exp in &**sequence {
-                    match exp.parse(ctx.push()) {
+                    match exp.parse(ctx.clone()) {
                         Ok(Yeap(new_ctx, tree)) => {
                             results.push(tree);
                             ctx = ctx.merge(new_ctx);
@@ -204,7 +204,7 @@ impl Exp {
                     err => return err,
                 };
 
-                match Self::repeat(ctx.push(), exp, &mut res) {
+                match Self::repeat(ctx.clone(), exp, &mut res) {
                     Ok(Yeap(new_ctx, _)) => Ok(Yeap(ctx.merge(new_ctx), Tree::from(res).closed())),
                     err => err,
                 }
@@ -243,8 +243,8 @@ impl Exp {
                 match Self::add_exp(ctx.push(), exp, &mut res) {
                     Ok(new_ctx) => {
                         match Self::repeat_with_pre(new_ctx, exp, sep, &mut res, false) {
-                            Ok(Yeap(new_ctx, _)) => {
-                                Ok(Yeap(ctx.merge(new_ctx), Tree::from(res).closed()))
+                            Ok(Yeap(rep_ctx, _)) => {
+                                Ok(Yeap(ctx.merge(rep_ctx), Tree::from(res).closed()))
                             }
                             err => err,
                         }
@@ -263,8 +263,8 @@ impl Exp {
                     err => return err,
                 };
 
-                match Self::repeat_with_pre(ctx.push(), exp, sep, &mut res, false) {
-                    Ok(Yeap(new_ctx, _)) => Ok(Yeap(ctx.merge(new_ctx), Tree::from(res).closed())),
+                match Self::repeat_with_pre(ctx.clone(), exp, sep, &mut res, false) {
+                    Ok(Yeap(rep_ctx, _)) => Ok(Yeap(ctx.merge(rep_ctx), Tree::from(res).closed())),
                     err => err,
                 }
             }

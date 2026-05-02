@@ -4,9 +4,8 @@
 use crate::engine::state::CallStack;
 use crate::types::Str;
 use console::style;
-use std::fmt;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Memento {
     /// The name of the source (e.g., file path)
     pub source: Str,
@@ -23,7 +22,7 @@ pub struct Memento {
 }
 
 impl Memento {
-    fn render(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn render(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let (line_num, col_num) = Self::pos_at(&self.text, self.mark);
 
         let err_label = style("error").red().bold();
@@ -87,8 +86,14 @@ impl Memento {
     }
 }
 
-impl fmt::Display for Memento {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl std::fmt::Display for Memento {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.render(f)
+    }
+}
+
+impl std::fmt::Debug for Memento {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Display::fmt(self, f)
     }
 }

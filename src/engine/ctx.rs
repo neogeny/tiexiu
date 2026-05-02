@@ -2,17 +2,17 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::memo::{Memo, MemoCache, MemoKey};
-use crate::SYM_ETX;
 use crate::cfg::Configurable;
 use crate::engine::state::CallStack;
 use crate::engine::trace::Tracer;
 use crate::input::Cursor;
-use crate::peg::Rule;
 use crate::peg::error::ParseFailure;
 use crate::peg::error::{Nope, ParseResult, Yeap};
+use crate::peg::Rule;
 use crate::trees::tree::Tree;
 use crate::types::Str;
-use crate::util::pyre::{Pattern, escape};
+use crate::util::pyre::{escape, Pattern};
+use crate::SYM_ETX;
 use std::fmt::Debug;
 
 pub trait CtxI: Configurable {
@@ -140,6 +140,7 @@ pub trait Ctx: CtxI + Clone + Debug {
     fn clear_error_memos(&mut self);
 
     fn cut(&mut self); // Only cut() remains
+    fn clear_cut(&mut self);
 
     fn prune_cache(&mut self);
 
@@ -179,11 +180,10 @@ pub trait Ctx: CtxI + Clone + Debug {
     //  This should work with both cloned Ctx and with a separate
     //  StateStack.
     fn push(&mut self) -> Self {
-        self.push_state();
-        self.clone()
+        let mut new = self.clone();
+        new.clear_cut();
+        new
     }
-
-    fn push_state(&mut self);
 
     fn done(&self) -> bool;
 
@@ -211,18 +211,19 @@ pub trait Ctx: CtxI + Clone + Debug {
                     ctx.memoize(&key, &Tree::Bottom, ctx.mark());
                     let error = ParseFailure::ReservedWord(name.clone());
                     ctx.tracer().trace_failure(&ctx, name);
-                    return Err(self.failure(start, error));
+                    return Err(ctx.failure(start, error));
                 }
                 ctx.tracer().trace_success(&ctx);
                 ctx.memoize(&key, &tree, ctx.mark());
                 Ok(Yeap(ctx, tree))
             }
-            Err(nope) => {
+            Err(mut nope) => {
                 if rule.should_trace() {
                     self.leave();
                 }
                 self.tracer().trace_failure(&self, name);
                 self.memoize(&key, &Tree::Bottom, self.mark());
+                nope.take_cut();
                 Err(nope)
             }
         }

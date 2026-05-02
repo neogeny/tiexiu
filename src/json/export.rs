@@ -15,15 +15,18 @@ use crate::peg::rule::Rule;
 use json::JsonValue;
 
 impl Grammar {
+    #[cfg(feature = "serde_json")]
+    pub fn to_json_serde(&self) -> serde_json::Value {
+        let json_str = self.to_json().dump();
+        serde_json::from_str(&json_str).unwrap_or(serde_json::Value::Null)
+    }
+
     pub fn to_json(&self) -> JsonValue {
         let mut obj = JsonValue::new_object();
 
         obj["__class__"] = JsonValue::String("Grammar".into());
         obj["name"] = JsonValue::String(self.name.clone().into());
         obj["analyzed"] = JsonValue::Boolean(self.analyzed);
-
-        let rules: Vec<JsonValue> = self.rules().map(|r| r.to_json()).collect();
-        obj["rules"] = JsonValue::Array(rules);
 
         let mut directives = JsonValue::new_object();
         for opt in self.get_directives().iter() {
@@ -50,13 +53,10 @@ impl Grammar {
             .collect();
         obj["keywords"] = JsonValue::Array(keywords);
 
-        obj
-    }
+        let rules: Vec<JsonValue> = self.rules().map(|r| r.to_json()).collect();
+        obj["rules"] = JsonValue::Array(rules);
 
-    #[cfg(feature = "serde_json")]
-    pub fn to_json_serde(&self) -> serde_json::Value {
-        let json_str = self.to_json().dump();
-        serde_json::from_str(&json_str).unwrap_or(serde_json::Value::Null)
+        obj
     }
 
     pub fn to_json_str(&self) -> Result<Box<str>> {
@@ -75,8 +75,6 @@ impl Rule {
         obj["__class__"] = JsonValue::String("Rule".into());
         obj["name"] = JsonValue::String(self.name.to_string());
 
-        obj["exp"] = self.exp.to_json();
-
         let params: Vec<JsonValue> = self
             .params
             .iter()
@@ -89,6 +87,8 @@ impl Rule {
         obj["no_memo"] = JsonValue::Boolean(self.has_no_memo_flag());
         obj["is_memo"] = JsonValue::Boolean(self.has_is_memo_flag());
         obj["is_lrec"] = JsonValue::Boolean(self.has_is_lrec_flag());
+
+        obj["exp"] = self.exp.to_json();
 
         obj
     }

@@ -4,7 +4,7 @@
 pub use super::ctx::{Ctx, CtxI};
 use super::memo::{Memo, MemoKey};
 use super::state::{CallStack, HeavyState, ParseState};
-use super::trace::{CONSOLE_TRACER, NULL_TRACER, Tracer};
+use super::trace::{Tracer, CONSOLE_TRACER, NULL_TRACER};
 use crate::api::error::Nope;
 use crate::cfg::*;
 use crate::input::Cursor;
@@ -15,28 +15,13 @@ use std::borrow::Cow;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct CoreCtx<'c, U>
 where
     U: Cursor + Clone,
 {
     pub state: Cow<'c, Ref<ParseState<U>>>,
     pub heavy: Rc<RefCell<HeavyState<'c>>>,
-}
-
-impl<'c, U> Clone for CoreCtx<'c, U>
-where
-    U: Cursor + Clone,
-{
-    fn clone(&self) -> Self {
-        let mut new_state = (*self.state).clone();
-        // NOTE: new state, owns the cuts
-        new_state.cutseen = false;
-        Self {
-            state: Cow::Owned(new_state),
-            heavy: self.heavy.clone(),
-        }
-    }
 }
 
 impl<'c, U> CoreCtx<'c, U>
@@ -187,6 +172,10 @@ where
         // self.prune_cache();
     }
 
+    fn clear_cut(&mut self) {
+        self.state_mut().cutseen = false;
+    }
+
     fn prune_cache(&mut self) {
         let cutpoint = self.mark();
         self.with_heavy_mut(|heavy| heavy.memos.prune(cutpoint));
@@ -207,10 +196,6 @@ where
     fn merge(mut self, mut other: Self) -> Self {
         self.state_mut().merge(other.state_mut());
         self
-    }
-
-    fn push_state(&mut self) {
-        // NOTE: we count on clone
     }
 
     fn done(&self) -> bool {
