@@ -123,6 +123,11 @@ pub fn cli(out: &mut std::io::StdoutLock) -> Result<()> {
     let cli = Cli::parse();
     let use_color = configure_color(cli.color);
 
+    console::set_colors_enabled(use_color);
+    console::set_colors_enabled_stderr(use_color);
+    console::set_true_colors_enabled(use_color);
+    console::set_true_colors_enabled_stderr(use_color);
+
     let mut cfg = config(&[]);
     if cli.trace {
         cfg = cfg.add(CfgKey::Trace);
@@ -219,7 +224,7 @@ fn configure_color(color: clap::ColorChoice) -> bool {
         clap::ColorChoice::Never => false,
         clap::ColorChoice::Auto => {
             std::io::IsTerminal::is_terminal(&std::io::stdout())
-            // && std::io::IsTerminal::is_terminal(&std::io::stderr())
+                && std::io::IsTerminal::is_terminal(&std::io::stderr())
         }
     }
 }

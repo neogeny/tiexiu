@@ -4,27 +4,25 @@
 use super::CtxI;
 use console::style;
 use std::fmt::Debug;
-use std::io::Write;
+// use std::io::Write;
+
+pub static NULL_TRACER: NullTracer = NullTracer {};
+pub static CONSOLE_TRACER: ConsoleTracer = ConsoleTracer {};
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct NullTracer {}
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+#[derive(Debug, Default, Clone)]
 pub struct ConsoleTracer {}
 
 impl Tracer for NullTracer {}
 
 impl Tracer for ConsoleTracer {
     fn trace(&self, msg: &str) {
-        eprintln!("{}", msg);
-        std::io::stderr().flush().ok();
-        std::io::stdout().flush().ok();
+        let term = console::Term::stderr();
+        term.write_line(msg).ok();
     }
 }
-
-pub static NULL_TRACER: NullTracer = NullTracer {};
-pub static CONSOLE_TRACER: ConsoleTracer = ConsoleTracer {};
-
 pub enum Event {
     Entry,
     Success,
@@ -41,8 +39,6 @@ pub trait Tracer: Debug {
     }
 
     fn trace_event(&self, ctx: &dyn CtxI, event: Event, msg: &str) {
-        console::set_colors_enabled(true);
-
         let event_symbol: String = match event {
             Event::Entry => style("↙").yellow(),
             Event::Success => style("≡").green(),
