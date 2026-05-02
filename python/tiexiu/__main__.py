@@ -4,7 +4,7 @@
 import tiexiu
 
 def main() -> None:
-    print(tiexiu.version)
+    print(tiexiu.__version__)
 
 if __name__ == '__main__':
     main()

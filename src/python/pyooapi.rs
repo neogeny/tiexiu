@@ -6,7 +6,7 @@ use crate::api::ooapi::TieXiu;
 use crate::cfg::*;
 use json::JsonValue;
 use pyo3::prelude::*;
-use pyo3::types::PyDict;
+use pyo3::types::*;
 
 fn pykwargs_to_cfg(kwargs: &Bound<'_, PyDict>) -> Vec<CfgKey> {
     let mut cfg: Vec<CfgKey> = Vec::new();
@@ -243,5 +243,21 @@ impl TieXiuPy {
         let py = unsafe { pyo3::Python::assume_attached() };
         pythonize_json_value(py, value)
             .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))
+    }
+    
+    #[pyo3(signature = (grammar, text, **kwargs))]
+    fn parse_to_json_string(
+        &mut self,
+        grammar: &str,
+        text: &str,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<Py<PyString>> {
+        update_cfg_from_kwargs(&mut self.0, kwargs);
+        let value = self
+            .0
+            .parse_to_json_string(grammar, text)
+            .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+        let py = unsafe { pyo3::Python::assume_attached() };
+        Ok(PyString::new(py, &value).into())
     }
 }

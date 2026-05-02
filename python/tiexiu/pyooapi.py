@@ -70,3 +70,10 @@ class TieXiu(Protocol):
     def parse_to_json(self, grammar: str, text: str, **kwargs: Any) -> Any:
         """Parse text with grammar to JSON."""
         ...
+
+    def parse_to_json_string(
+            self,
+            grammar: str,
+            text: str,
+            **kwargs: Any,
+    ) -> str: ...
