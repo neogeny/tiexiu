@@ -135,8 +135,8 @@ impl Configurable for StrCursor {
 }
 
 impl Cursor for StrCursor {
-    fn source(&self) -> String {
-        self.heavy.source.clone()
+    fn input_source(&self) -> &str {
+        self.heavy.source.as_str()
     }
 
     fn mark(&self) -> usize {
@@ -147,7 +147,7 @@ impl Cursor for StrCursor {
         self.offset = mark;
     }
 
-    fn textstr(&self) -> &str {
+    fn as_str(&self) -> &str {
         &self.text
     }
 

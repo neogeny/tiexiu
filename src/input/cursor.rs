@@ -4,24 +4,25 @@
 use crate::cfg::*;
 use crate::input::Error;
 use crate::input::tokenizing::TokenizingPatterns;
+use crate::types::Str;
 use crate::util::pyre::Pattern;
 use std::fmt::Debug;
 
 pub struct Location {
-    pub source: String,
+    pub source: Str,
     pub pos: (usize, usize),
 }
 
 pub trait Cursor: Debug + Configurable {
-    fn source(&self) -> String;
+    fn input_source(&self) -> &str;
     fn mark(&self) -> usize;
     fn reset(&mut self, mark: usize);
-    fn textstr(&self) -> &str;
+    fn as_str(&self) -> &str;
     fn ignore_case(&self) -> bool;
     fn name_guard(&self) -> bool;
 
     fn lookahead(&self, start: usize) -> &str {
-        self.textstr()[start..].lines().next().unwrap_or("")
+        self.as_str()[start..].lines().next().unwrap_or("")
     }
 
     fn at_end(&self) -> bool;
@@ -36,8 +37,8 @@ pub trait Cursor: Debug + Configurable {
     }
 
     fn pos_at(&self, mut mark: usize) -> (usize, usize) {
-        mark = mark.min(self.textstr().len());
-        let text = self.textstr();
+        mark = mark.min(self.as_str().len());
+        let text = self.as_str();
         let head = &text[0..mark];
         let line = head.lines().count();
         let col = head.lines().last().map_or(0, |l| l.chars().count());
@@ -51,7 +52,7 @@ pub trait Cursor: Debug + Configurable {
     fn location_at(&self, mark: usize) -> Location {
         let pos = self.pos_at(mark);
         Location {
-            source: self.source(),
+            source: self.input_source().into(),
             pos,
         }
     }

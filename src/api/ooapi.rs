@@ -127,7 +127,7 @@ impl TieXiu {
     where
         U: Cursor + Clone,
     {
-        let text = cursor.textstr().to_string();
+        let text = cursor.as_str().to_string();
         self.compile(&text)
     }
 

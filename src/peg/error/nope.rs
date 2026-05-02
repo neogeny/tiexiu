@@ -11,12 +11,14 @@ use std::panic::Location;
 
 pub type ParseResult<C> = Result<Yeap<C>, Nope>;
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct Yeap<C: Ctx>(pub C, pub Tree);
+
 #[derive(Clone, Debug)]
 pub struct DisasterReport {
     pub pos: (usize, usize),
     pub la: Str,
     pub error: Ref<ParseFailure>,
-    pub location: &'static Location<'static>,
     pub memento: Memento,
 }
 
@@ -25,6 +27,7 @@ pub struct Nope {
     pub start: usize,
     pub mark: usize, // The position where the disaster occurred
     pub cutseen: bool,
+    pub location: &'static Location<'static>,
     pub report: Ref<DisasterReport>,
 }
 
@@ -42,29 +45,38 @@ impl std::error::Error for Nope {
     }
 }
 
-impl Nope {
-    #[track_caller]
-    pub fn new(start: usize, ctx: &dyn CtxI, error: ParseFailure) -> Self {
-        let mark = ctx.mark();
-        let context = DisasterReport {
-            memento: Memento {
-                source: ctx.cursor().source().as_str().into(),
-                start,
-                mark,
-                msg: error.to_string().into(),
-                text: ctx.cursor().textstr().into(),
-                callstack: ctx.callstack(),
-            },
+impl DisasterReport {
+    pub fn new(start: usize, ctx: &dyn CtxI, error: &ParseFailure) -> Self {
+        let memento = Self::new_memento(start, ctx, error);
+        Self {
+            memento,
             pos: ctx.cursor().pos(),
             la: ctx.cursor().lookahead(start).into(),
-            location: Location::caller(),
-            error: error.into(),
-        };
+            error: error.clone().into(),
+        }
+    }
+
+    pub fn new_memento(start: usize, ctx: &dyn CtxI, error: &ParseFailure) -> Memento {
+        Memento {
+            input_source: ctx.cursor().input_source().into(),
+            start,
+            mark: ctx.mark(),
+            msg: error.to_string().into(),
+            text: ctx.cursor().as_str().into(),
+            callstack: ctx.callstack(),
+        }
+    }
+}
+
+impl Nope {
+    #[track_caller]
+    pub fn new(start: usize, ctx: &dyn CtxI, error: &ParseFailure) -> Self {
         Self {
             start,
-            mark,
+            mark: ctx.mark(),
             cutseen: ctx.cut_seen(),
-            report: context.into(),
+            location: Location::caller(),
+            report: DisasterReport::new(start, ctx, error).into(),
         }
     }
 
@@ -84,9 +96,6 @@ impl Nope {
         }
     }
 }
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Yeap<C: Ctx>(pub C, pub Tree);
 
 impl<C: Ctx> Yeap<C> {
     #[inline]

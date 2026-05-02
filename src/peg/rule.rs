@@ -101,7 +101,7 @@ impl Rule {
     }
 
     pub fn parse<C: Ctx>(&self, mut ctx: C) -> ParseResult<C> {
-        let _text = ctx.cursor().textstr();
+        let _text = ctx.cursor().as_str();
         match self.exp.parse(ctx.push()) {
             Err(nope) => {
                 ctx.set_furthest_failure(&nope);

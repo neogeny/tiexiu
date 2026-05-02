@@ -59,6 +59,14 @@ pub enum ParseFailure {
     #[error("Failed parsing '{0}' start {1} end {2}")]
     FailedRecursion(Str, usize, usize, Box<Tree>),
 
+    /// Corresponds memos that are Tree::Bottom
+    #[error("UNBOUND LEFT RECURSION OF {0} AT {1}@{2}")]
+    UnboundLeftRecursion(usize, Str, usize),
+
+    /// Corresponds memos that are Tree::Bottom
+    #[error("Closure matched Void")]
+    ClosureMatchedVoid(),
+
     /// Corresponds rule names not in map
     #[error("Rule not found: '{0}'")]
     RuleNotFound(Str),

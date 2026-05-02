@@ -8,7 +8,7 @@ use console::style;
 #[derive(Clone)]
 pub struct Memento {
     /// The name of the source (e.g., file path)
-    pub source: Str,
+    pub input_source: Str,
     /// The specific error (e.g., "expected semicolon")
     pub msg: Str,
     /// The full input text. Stored as a reference/Arc to avoid copying.
@@ -33,7 +33,11 @@ impl Memento {
 
         writeln!(f)?;
         writeln!(f, "{}: {}", err_label, style(&msg).bold())?;
-        writeln!(f, "  {} {}:{}:{}", arrow, self.source, line_num, col_num)?;
+        writeln!(
+            f,
+            "  {} {}:{}:{}",
+            arrow, self.input_source, line_num, col_num
+        )?;
         writeln!(f, "   {}", blue_pipe)?;
 
         // Windowing logic: find line boundaries without pre-collecting
