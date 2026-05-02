@@ -12,7 +12,7 @@ use tiexiu::api::{
 use tiexiu::cfg::CfgA;
 use tiexiu::peg::pretty::*;
 use tiexiu::tools::rails::*;
-use tiexiu::{boot_grammar, config, CfgKey, Result, Grammar};
+use tiexiu::{CfgKey, Grammar, Result, boot_grammar, config};
 
 fn cli_styles() -> Styles {
     Styles::styled()
@@ -224,11 +224,7 @@ fn configure_color(color: clap::ColorChoice) -> bool {
     }
 }
 
-pub fn pygmentize(
-    content: &str,
-    extension: &str,
-    use_color: bool,
-) -> Result<String> {
+pub fn pygmentize(content: &str, extension: &str, use_color: bool) -> Result<String> {
     let mut out = String::new();
 
     if !use_color {
@@ -239,7 +235,7 @@ pub fn pygmentize(
     use syntect::easy::HighlightLines;
     use syntect::highlighting::ThemeSet;
     use syntect::parsing::SyntaxSet;
-    use syntect::util::{as_24_bit_terminal_escaped, LinesWithEndings};
+    use syntect::util::{LinesWithEndings, as_24_bit_terminal_escaped};
 
     let ps = SyntaxSet::load_defaults_newlines();
     let ts = ThemeSet::load_defaults();
