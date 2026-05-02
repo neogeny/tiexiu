@@ -4,7 +4,7 @@
 pub use super::ctx::{Ctx, CtxI};
 use super::memo::{Memo, MemoKey};
 use super::state::{CallStack, HeavyState, ParseState};
-use super::trace::{Tracer, CONSOLE_TRACER, NULL_TRACER};
+use super::trace::{CONSOLE_TRACER, NULL_TRACER, Tracer};
 use crate::api::error::Nope;
 use crate::cfg::*;
 use crate::input::Cursor;
@@ -116,14 +116,7 @@ where
     }
 
     fn track(&mut self, key: &MemoKey) -> usize {
-        let depth = self.state_mut().keytrack.track(key);
-        if depth > 64 {
-            panic!(
-                "UNBOUND LEFT RECURSION OF {} AT {}@{}",
-                depth, key.name, key.mark
-            );
-        }
-        depth
+        self.state_mut().keytrack.track(key)
     }
 
     fn untrack(&mut self, key: &MemoKey) -> usize {
