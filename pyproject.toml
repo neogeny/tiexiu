@@ -37,10 +37,24 @@ Issues = "https://github.com/neogeny/tiexiu/issues"
 features = ["pyo3", "pyo3/abi3-py312", "pyo3/generate-import-lib"]
 module-name = "tiexiu.tiexiu"
 python-source = "python"
+
+bindings = "pyo3"
+profile = "release"
+compatibility = "manylinux_2_28"
+
+# include = ["grammars/**/*.ebnf", "assets/*.png"]
 #compatibility = "abi3"
 #compatibility = "off"
 #compatibility = "manylinux2014"
-compatibility = "manylinux_2_28"
+
+[tool.uv]
+# Tell uv which files should trigger a project rebuild
+cache-keys = [
+    { file = "pyproject.toml" },
+    { file = "Cargo.toml" },
+    { file = "src/**/*.rs" },
+    { file = "grammar/tatsu.json" }
+]
 
 [tool.uv.sources]
 tiexiu = { workspace = true }

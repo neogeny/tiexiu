@@ -12,7 +12,7 @@ use tiexiu::api::{
 use tiexiu::cfg::CfgA;
 use tiexiu::peg::pretty::*;
 use tiexiu::tools::rails::*;
-use tiexiu::{boot_grammar, config, CfgKey, Grammar, Result};
+use tiexiu::{CfgKey, Grammar, Result, boot_grammar, config};
 
 fn cli_styles() -> Styles {
     Styles::styled()
@@ -165,7 +165,11 @@ pub fn cli(out: &mut std::io::StdoutLock) -> Result<()> {
             }
         }
         Commands::Run {
-            grammar, inputs, model, short, ..
+            grammar,
+            inputs,
+            model,
+            short,
+            ..
         } => {
             let parser = load_grammar_from_path(&grammar, cfga)?;
             let mut format = "rust";
@@ -262,7 +266,7 @@ pub fn pygmentize(content: &str, extension: &str, use_color: bool) -> Result<Str
     use syntect::easy::HighlightLines;
     use syntect::highlighting::ThemeSet;
     use syntect::parsing::SyntaxSet;
-    use syntect::util::{as_24_bit_terminal_escaped, LinesWithEndings};
+    use syntect::util::{LinesWithEndings, as_24_bit_terminal_escaped};
 
     let ps = SyntaxSet::load_defaults_newlines();
     let ts = ThemeSet::load_defaults();

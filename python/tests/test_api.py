@@ -3,6 +3,9 @@
 
 import tiexiu
 
+def test_version():
+    assert isinstance(tiexiu.__version__, str)
+    assert tiexiu.__version__ >= "0.1.1"
 
 def test_parse_grammar():
     tree = tiexiu.parse_grammar("start = /a/")
