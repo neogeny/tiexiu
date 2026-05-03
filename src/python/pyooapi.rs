@@ -244,7 +244,7 @@ impl TieXiuPy {
         pythonize_json_value(py, value)
             .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))
     }
-    
+
     #[pyo3(signature = (grammar, text, **kwargs))]
     fn parse_to_json_string(
         &mut self,
