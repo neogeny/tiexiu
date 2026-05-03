@@ -5,7 +5,6 @@
 
 use crate::engine::new_ctx;
 use crate::input::{Cursor, StrCursor};
-use crate::peg::error::Yeap;
 use crate::peg::grammar::PrettyPrint;
 use crate::peg::*;
 pub use crate::trees::Tree;
@@ -95,9 +94,9 @@ impl TieXiu {
     {
         let boot = self.boot_grammar()?;
         let ctx = new_ctx(cursor, &self.cfg);
-        match boot.parse(ctx) {
-            Ok(Yeap(_, tree)) => Ok(tree),
-            Err(failure) => Err(failure.into()),
+        match boot.parse_tree(ctx) {
+            Ok(tree) => Ok(tree),
+            Err(failure) => Err(failure),
         }
     }
 
@@ -166,9 +165,9 @@ impl TieXiu {
         let parser = self.compile(grammar)?;
         let cursor = StrCursor::new(text);
         let ctx = new_ctx(cursor, &self.cfg);
-        match parser.parse(ctx) {
-            Ok(Yeap(_, tree)) => Ok(tree),
-            Err(failure) => Err(failure.into()),
+        match parser.parse_tree(ctx) {
+            Ok(tree) => Ok(tree),
+            Err(failure) => Err(failure),
         }
     }
 
@@ -185,9 +184,9 @@ impl TieXiu {
     pub fn parse_input(&mut self, parser: &Grammar, text: &str) -> Result<Tree> {
         let cursor = StrCursor::new(text);
         let ctx = new_ctx(cursor, &self.cfg);
-        match parser.parse(ctx) {
-            Ok(Yeap(_, tree)) => Ok(tree),
-            Err(failure) => Err(failure.into()),
+        match parser.parse_tree(ctx) {
+            Ok(tree) => Ok(tree),
+            Err(failure) => Err(failure),
         }
     }
 

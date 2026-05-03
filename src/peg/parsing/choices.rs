@@ -5,7 +5,7 @@ use crate::Exp;
 use crate::engine::Ctx;
 use crate::peg::error::ParseFailure::*;
 use crate::peg::error::ParseResult;
-use crate::peg::error::{Nope, Yeap};
+use crate::peg::error::Yeap;
 use crate::trees::Tree;
 use crate::types::Ref;
 
@@ -16,7 +16,7 @@ impl Exp {
 
     pub fn parse_choice<C: Ctx>(&self, mut ctx: C, options: &[Exp]) -> ParseResult<C> {
         let start = ctx.mark();
-        let mut furthest: Option<Nope> = None;
+        // let mut furthest: Option<Nope> = None;
 
         for option in options.iter() {
             match option.parse(ctx.push()) {
@@ -28,9 +28,10 @@ impl Exp {
                         return Err(nope);
                     }
 
-                    if furthest.as_ref().is_none_or(|prev| nope.mark >= prev.mark) {
-                        furthest = Some(nope);
-                    }
+                    // FIXME
+                    // if furthest.as_ref().is_none_or(|prev| nope.mark >= prev.mark) {
+                    //     furthest = Some(nope);
+                    // }
                 }
             }
         }

@@ -2,29 +2,24 @@
 
 #[macro_use]
 extern crate json;
-use tiexiu::engine::{CtxI, new_ctx};
+use tiexiu::engine::{new_ctx, CtxI};
 use tiexiu::input::strcursor::StrCursor;
 use tiexiu::parse_input;
 use tiexiu::*;
+use tiexiu::peg::error::Yeap;
 
 #[test]
 fn basic_position_tracking() -> Result<()> {
     let grammar = r#"
         start: 'hello'
     "#;
-    let grammar = tiexiu::compile(grammar, &[])?;
+    let grammar = compile(grammar, &[])?;
 
     let cursor = StrCursor::new("hello");
     let ctx = new_ctx(cursor, &[]);
 
-    match grammar.parse(ctx) {
-        Ok(state) => {
-            let _tree = state.1;
-            let ctx = state.0;
-            assert!(ctx.cursor().at_end(), "Should be at end of input");
-        }
-        Err(f) => return Err(f.into()),
-    }
+    let Yeap(ctx, _tree) = grammar.parse(ctx.clone())?;
+    assert!(ctx.cursor().at_end(), "Should be at end of input");
     Ok(())
 }
 
@@ -33,7 +28,7 @@ fn multiline_input() -> Result<()> {
     let grammar = r#"
         start: 'hello' 'world'
     "#;
-    let grammar = tiexiu::compile(grammar, &[])?;
+    let grammar = compile(grammar, &[])?;
 
     let tree = parse_input(&grammar, "hello\nworld", &[])?;
     assert_eq!(tree.to_json(), array!["hello", "world"]);

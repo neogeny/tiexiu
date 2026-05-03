@@ -4,7 +4,6 @@
 use crate::cfg::CfgA;
 use crate::engine::new_ctx;
 use crate::input::{Cursor, StrCursor};
-use crate::peg::error::Yeap;
 use crate::peg::grammar::PrettyPrint;
 use crate::peg::*;
 pub use crate::trees::Tree;
@@ -36,11 +35,7 @@ where
 {
     let boot = boot_grammar()?;
     let ctx = new_ctx(cursor, cfg);
-
-    match boot.parse(ctx) {
-        Ok(Yeap(_, tree)) => Ok(tree),
-        Err(failure) => Err(failure.into()),
-    }
+    boot.parse_tree(ctx)
 }
 
 pub fn parse_grammar_to_json_with<U>(cursor: U, cfg: &CfgA) -> Result<json::JsonValue>
@@ -121,10 +116,7 @@ pub fn parse_to_json_string(grammar: &str, text: &str, cfg: &CfgA) -> Result<Str
 pub fn parse_input(parser: &Grammar, text: &str, cfg: &CfgA) -> Result<Tree> {
     let cursor = StrCursor::new(text);
     let ctx = new_ctx(cursor, cfg);
-    match parser.parse(ctx) {
-        Ok(Yeap(_, tree)) => Ok(tree),
-        Err(failure) => Err(failure.into()),
-    }
+    parser.parse_tree(ctx)
 }
 
 pub fn parse_input_to_json(parser: &Grammar, text: &str, cfg: &CfgA) -> Result<json::JsonValue> {

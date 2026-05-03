@@ -16,43 +16,50 @@ pub struct Yeap<C: Ctx>(pub C, pub Tree);
 
 #[derive(Clone, Debug)]
 pub struct DisasterReport {
+    pub start: usize,
+    pub mark: usize, // The position where the disaster occurred
     pub pos: (usize, usize),
     pub la: Str,
     pub error: Ref<ParseFailure>,
-    pub memento: Memento,
+    pub location: &'static Location<'static>,
+    pub memento: Box<Memento>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(thiserror::Error, Clone, Debug)]
 pub struct Nope {
-    pub start: usize,
-    pub mark: usize, // The position where the disaster occurred
     pub cutseen: bool,
-    pub location: &'static Location<'static>,
-    pub report: Ref<DisasterReport>,
 }
 
 impl std::fmt::Display for Nope {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::fmt::Display::fmt(&self.report.memento, f)
+        std::fmt::Display::fmt(&self, f)
     }
 }
 
-impl std::error::Error for Nope {
-    // source() is optional since ParseError is the cause,
-    // but this is the "Rust Way" for chained errors.
+impl std::fmt::Display for DisasterReport {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Display::fmt(&self.memento, f)
+    }
+}
+
+impl std::error::Error for DisasterReport {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        Some(&self.report.error)
+        Some(&self.error)
     }
 }
 
 impl DisasterReport {
+    #[track_caller]
     pub fn new(start: usize, ctx: &dyn CtxI, error: &ParseFailure) -> Self {
         let memento = Self::new_memento(start, ctx, error);
         Self {
-            memento,
+            start,
+            mark: ctx.mark(),
+            memento: memento.into(),
             pos: ctx.cursor().pos(),
             la: ctx.cursor().lookahead(start).into(),
             error: error.clone().into(),
+            location: Location::caller(),
         }
     }
 
@@ -70,13 +77,9 @@ impl DisasterReport {
 
 impl Nope {
     #[track_caller]
-    pub fn new(start: usize, ctx: &dyn CtxI, error: &ParseFailure) -> Self {
+    pub fn new(ctx: &dyn CtxI) -> Self {
         Self {
-            start,
-            mark: ctx.mark(),
             cutseen: ctx.cut_seen(),
-            location: Location::caller(),
-            report: DisasterReport::new(start, ctx, error).into(),
         }
     }
 

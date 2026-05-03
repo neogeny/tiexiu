@@ -1,16 +1,16 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::error::{ParseFailure, ParseResult, Yeap};
-use super::parser::Parser;
+use super::error::{ParseFailure, Yeap};
 pub use super::pretty::*;
 use super::rule::{Rule, RuleMap, RuleRef};
+use crate::api::error::{DisasterReport, ParseResult};
 use crate::cfg::*;
 use crate::engine::Ctx;
 use crate::peg::ParseFailure::RuleNotFound;
 use crate::rule::RuleName;
 use crate::types::{Ref, Str};
-use crate::{StrCursor, Tree, new_ctx};
+use crate::{new_ctx, StrCursor, Tree};
 use std::sync::Arc;
 
 pub type KeywordRef = Str;
@@ -26,7 +26,14 @@ pub struct Grammar {
     pub rules: RuleMap,
 }
 
-impl<C> Parser<C> for Grammar
+impl Default for Grammar {
+    #[inline]
+    fn default() -> Self {
+        Self::new("Default", &[])
+    }
+}
+
+impl<C> crate::peg::Parser<C> for Grammar
 where
     C: Ctx,
 {
@@ -35,12 +42,6 @@ where
     }
 }
 
-impl Default for Grammar {
-    #[inline]
-    fn default() -> Self {
-        Self::new("Default", &[])
-    }
-}
 
 impl Grammar {
     pub fn new(name: &str, rules: &[RuleRef]) -> Self {
@@ -112,29 +113,49 @@ impl Grammar {
     pub fn parse<C: Ctx>(&self, mut ctx: C) -> ParseResult<C> {
         match self.start_rule() {
             Ok(start) => self.parse_from(start.as_ref(), ctx),
-            Err(e) => Err(ctx.failure(ctx.mark(), e)),
+            Err(e) => Err(
+                ctx.failure(ctx.mark(), e)
+            ),
+        }
+    }
+    
+    pub fn parse_tree<C: Ctx>(&self, ctx: C) -> crate::error::Result<Tree> {
+        match self.start_rule() {
+            Ok(start) => self.parse_tree_from(start.as_ref(), ctx),
+            Err(e) => Err(e.into()),
         }
     }
 
+    pub fn parse_tree_from<C: Ctx>(&self, start: &str, mut ctx: C) -> crate::error::Result<Tree> {
+        let start_mark = ctx.mark();
+        match self.parse_from(start, ctx.push()) {
+            Ok(Yeap(_, tree)) => Ok(tree),
+            Err(_) => Err(
+                ctx
+                .furthest_failure()
+                .unwrap_or(DisasterReport::new(start_mark, &ctx, &ParseFailure::Fail))
+                .into()),
+        }
+    }
+    
     pub fn parse_from<C: Ctx>(&self, start: &str, mut ctx: C) -> ParseResult<C> {
         let start_mark = ctx.mark();
         ctx.configure(&self.directives);
         ctx.set_keywords(&self.keywords);
         match self.get_rule(start) {
-            Ok(rule) => match rule.parse(ctx.push()) {
-                Err(nope) => Err(ctx.furthest_failure().unwrap_or(nope)),
-                ok => ok,
-            },
-            Err(err) => Err(ctx.failure(start_mark, err)),
+            Ok(rule) => rule.parse(ctx.push()),
+            Err(err) => Err(
+                ctx.failure(start_mark, err)
+            )
         }
     }
 
     pub fn parse_input(&self, text: &str, cfg: &CfgA) -> crate::error::Result<Tree> {
         let cursor = StrCursor::new(text);
         let ctx = new_ctx(cursor, cfg);
-        match self.parse(ctx) {
-            Ok(Yeap(_, tree)) => Ok(tree),
-            Err(failure) => Err(failure.into()),
+        match self.parse_tree(ctx) {
+            Ok(tree) => Ok(tree),
+            Err(failure) => Err(failure),
         }
     }
 
@@ -185,8 +206,8 @@ impl Grammar {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::peg::Exp;
     use crate::peg::rule::Rule;
+    use crate::peg::Exp;
 
     #[test]
     fn new_grammar() {

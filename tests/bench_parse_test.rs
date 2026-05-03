@@ -6,9 +6,9 @@
 //! These are skeletal tests - they will not compile until TieXiu
 //! implements the full EBNF parsing bootstrap.
 
-use tiexiu::Result;
 use tiexiu::compile;
 use tiexiu::engine::StrCtx;
+use tiexiu::Result;
 
 const CALC_GRAMMAR: &str = r#"
     @@grammar::CALC
@@ -43,7 +43,7 @@ fn test_bench_parse_arithmetic_expression() -> tiexiu::Result<()> {
     // Benchmark: parse an arithmetic expression
     let model = compile(CALC_GRAMMAR, &[])?;
     let ctx = StrCtx::from("3 + 5 * ( 10 - 20 )");
-    let _ = model.parse(ctx);
+    let _ = model.parse_tree(ctx);
     Ok(())
 }
 
@@ -52,6 +52,6 @@ fn test_bench_parse_complex_expression() -> tiexiu::Result<()> {
     // Benchmark: parse a more complex nested expression
     let model = compile(CALC_GRAMMAR, &[])?;
     let ctx = StrCtx::from("((1 + 2) * (3 + 4)) + ((5 - 6) * (7 + 8)) - 9 * (10 + 11)");
-    let _result = model.parse(ctx);
+    let _result = model.parse_tree(ctx);
     Ok(())
 }

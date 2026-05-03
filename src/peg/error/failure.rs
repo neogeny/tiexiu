@@ -6,6 +6,8 @@ use crate::types::Str;
 use crate::util::ensure::Ensure;
 use thiserror::Error;
 
+pub type CompileResult<T> = Result<T, CompileError>;
+
 impl From<Ensure> for ParseFailure {
     fn from(err: Ensure) -> Self {
         ParseFailure::Ensure(err.condition)
@@ -81,8 +83,6 @@ pub enum ParseFailure {
     #[error("!({0})")]
     Ensure(&'static str),
 }
-
-pub type CompileResult<T> = Result<T, CompileError>;
 
 #[derive(Debug, Error, Clone, PartialEq)]
 pub enum CompileError {

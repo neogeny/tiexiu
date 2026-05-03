@@ -14,7 +14,7 @@ fn invalid_input_fails() -> Result<()> {
     let cursor = StrCursor::new("b");
     let ctx = new_ctx(cursor, &[]);
 
-    let result = grammar.parse(ctx);
+    let result = grammar.parse_tree(ctx);
     assert!(result.is_err());
     Ok(())
 }
@@ -29,7 +29,7 @@ fn partial_match_fails() -> Result<()> {
     let cursor = StrCursor::new("a");
     let ctx = new_ctx(cursor, &[]);
 
-    let result = grammar.parse(ctx);
+    let result = grammar.parse_tree(ctx);
     assert!(result.is_err());
     Ok(())
 }
@@ -44,7 +44,7 @@ fn empty_input_fails_when_required() -> Result<()> {
     let cursor = StrCursor::new("");
     let ctx = new_ctx(cursor, &[]);
 
-    let result = grammar.parse(ctx);
+    let result = grammar.parse_tree(ctx);
     assert!(result.is_err());
     Ok(())
 }

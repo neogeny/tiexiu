@@ -8,7 +8,7 @@ use crate::engine::state::CallStack;
 use crate::engine::trace::Tracer;
 use crate::input::Cursor;
 use crate::peg::Rule;
-use crate::peg::error::ParseFailure;
+use crate::peg::error::{DisasterReport, ParseFailure};
 use crate::peg::error::{Nope, ParseResult, Yeap};
 use crate::trees::tree::Tree;
 use crate::types::Str;
@@ -44,11 +44,13 @@ pub trait Ctx: CtxI + Clone + Debug {
 
     #[track_caller]
     fn failure(&mut self, start: usize, source: ParseFailure) -> Nope {
-        Nope::new(start, self, &source)
+        let dis = DisasterReport::new(start, self, &source);
+        self.set_furthest_failure(&dis);
+        Nope::new(self)
     }
 
-    fn furthest_failure(&self) -> Option<Nope>;
-    fn set_furthest_failure(&mut self, nope: &Nope);
+    fn furthest_failure(&self) -> Option<DisasterReport>;
+    fn set_furthest_failure(&mut self, dis: &DisasterReport);
 
     fn reset(&mut self, mark: usize) {
         self.cursor_mut().reset(mark);

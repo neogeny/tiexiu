@@ -15,10 +15,7 @@ use tiexiu::{CfgKey, Result};
 fn parse_input(grammar: &Grammar, input: &str) -> Result<tiexiu::trees::Tree> {
     let cursor = StrCursor::new(input);
     let ctx = engine::new_ctx(cursor, &[]);
-    match grammar.parse(ctx) {
-        Ok(s) => Ok(s.1),
-        Err(f) => Err(f.into()),
-    }
+    grammar.parse_tree(ctx)
 }
 
 // ============================================================================

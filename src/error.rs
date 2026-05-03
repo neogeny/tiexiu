@@ -3,7 +3,7 @@
 
 use crate::json::error::JsonError;
 use crate::peg::ParseFailure;
-use crate::peg::error::{CompileError, Nope};
+use crate::peg::error::{CompileError, DisasterReport, Nope};
 use crate::util::ensure::Ensure;
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -41,7 +41,10 @@ pub enum Error {
     Compile(#[from] CompileError),
 
     #[error("{0}")]
-    ParseError(#[from] Nope),
+    ParseDisaster(#[from] DisasterReport),
+
+    #[error("{0}")]
+    ANopeEscaped(#[from] Nope),
 
     #[error("!! {0}")]
     Parse(#[from] ParseFailure),
