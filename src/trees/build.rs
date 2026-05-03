@@ -4,17 +4,18 @@
 use super::map::TreeMap;
 use super::tree::Tree;
 use crate::trees::KeyValue;
+use std::rc::Rc;
 
 impl Tree {
     pub fn text(value: &str) -> Tree {
         Self::Text(value.into())
     }
 
-    pub fn seq(items: &[Tree]) -> Tree {
+    pub fn seq(items: &[Rc<Tree>]) -> Tree {
         Self::Seq(items.into())
     }
 
-    pub fn list(items: &[Tree]) -> Tree {
+    pub fn list(items: &[Rc<Tree>]) -> Tree {
         Self::List(items.into())
     }
 
@@ -22,28 +23,28 @@ impl Tree {
         Self::Map(entries.into())
     }
 
-    pub fn named(key: &str, value: Tree) -> Tree {
-        let keyval = KeyValue(key.into(), value.into());
+    pub fn named(key: &str, value: Rc<Tree>) -> Tree {
+        let keyval = KeyValue(key.into(), value);
         Self::Named(keyval)
     }
 
-    pub fn named_as_list(key: &str, value: Tree) -> Tree {
-        let keyval = KeyValue(key.into(), value.into());
+    pub fn named_as_list(key: &str, value: Rc<Tree>) -> Tree {
+        let keyval = KeyValue(key.into(), value);
         Self::NamedAsList(keyval)
     }
 
-    pub fn override_with(tree: Tree) -> Tree {
-        Self::Override(tree.into())
+    pub fn override_with(tree: Rc<Tree>) -> Tree {
+        Self::Override(tree)
     }
 
-    pub fn override_as_list(tree: Tree) -> Tree {
-        Self::OverrideAsList(tree.into())
+    pub fn override_as_list(tree: Rc<Tree>) -> Tree {
+        Self::OverrideAsList(tree)
     }
 
-    pub fn node(typename: &str, tree: Tree) -> Tree {
+    pub fn node(typename: &str, tree: Rc<Tree>) -> Tree {
         Self::Node {
             typename: typename.into(),
-            tree: tree.into(),
+            tree,
         }
     }
 
@@ -68,13 +69,13 @@ mod tests {
 
     #[test]
     fn list_tree() {
-        let t = Tree::seq(&[Tree::text("a"), Tree::text("b")]);
+        let t = Tree::seq(&[Tree::text("a").into(), Tree::text("b").into()]);
         assert!(matches!(t, Tree::Seq(_)));
     }
 
     #[test]
     fn named_tree() {
-        let t = Tree::named("key", Tree::text("value"));
+        let t = Tree::named("key", Tree::text("value").into());
         assert!(matches!(t, Tree::Named(_)));
     }
 

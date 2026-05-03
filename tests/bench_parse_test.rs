@@ -6,9 +6,9 @@
 //! These are skeletal tests - they will not compile until TieXiu
 //! implements the full EBNF parsing bootstrap.
 
+use tiexiu::Result;
 use tiexiu::compile;
 use tiexiu::engine::StrCtx;
-use tiexiu::Result;
 
 const CALC_GRAMMAR: &str = r#"
     @@grammar::CALC

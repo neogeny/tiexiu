@@ -13,11 +13,11 @@ pub fn t(value: &str) -> Tree {
 }
 
 pub fn s(items: &[Tree]) -> Tree {
-    Tree::Seq(items.into())
+    Tree::Seq(items.iter().cloned().map(|t| t.into()).collect())
 }
 
 pub fn l(items: &[Tree]) -> Tree {
-    Tree::List(items.into())
+    Tree::List(items.iter().cloned().map(|t| t.into()).collect())
 }
 
 pub fn m(entries: &[(&str, Tree)]) -> Tree {

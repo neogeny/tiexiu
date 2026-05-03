@@ -23,37 +23,23 @@ impl<O> Translates<O> for Tree {
                     .map(|branch| branch.translate_with(trans))
                     .collect::<Vec<_>>();
                 trans.translate(self, outputs.as_slice())
-            },
+            }
             Tree::Map(map) => {
                 let outputs: Vec<O> = map
                     .iter()
-                    .map(
-                        |(k, v)|
-                            Tree::Named(
-                                KeyValue(
-                                    k.clone(),
-                                    v.clone().into()
-                                )
-                            )
-                        .translate_with(trans)
-                    )
+                    .map(|(k, v)| Tree::Named(KeyValue(k.clone(), v.clone())).translate_with(trans))
                     .collect();
                 trans.translate(self, outputs.as_slice())
             }
-            Tree::Node {
-                typename: _,
-                tree,
-            } => {
+            Tree::Node { typename: _, tree } => {
                 let child = vec![tree.translate_with(trans)];
-                trans.translate(self,  child.as_slice())
-            },
-            Tree::NamedAsList(keyval) |
-            Tree::Named(keyval) => {
+                trans.translate(self, child.as_slice())
+            }
+            Tree::NamedAsList(keyval) | Tree::Named(keyval) => {
                 let child = vec![keyval.1.translate_with(trans)];
                 trans.translate(self, child.as_slice())
-            },
-            Tree::Override(tree) |        // Sets the value of the whole 
-            Tree::OverrideAsList(tree) => {
+            }
+            Tree::Override(tree) | Tree::OverrideAsList(tree) => {
                 let child = vec![tree.translate_with(trans)];
                 trans.translate(self, child.as_slice())
             }

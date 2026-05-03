@@ -8,16 +8,17 @@ use crate::engine::{Ctx, CtxI};
 use crate::input::memento::Memento;
 use std::fmt::Debug;
 use std::panic::Location;
+use std::rc::Rc;
 
 pub type ParseResult<C> = Result<Yeap<C>, Nope>;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Yeap<C: Ctx>(pub C, pub Tree);
+pub struct Yeap<C: Ctx>(pub C, pub Rc<Tree>);
 
 #[derive(Clone, Debug)]
 pub struct DisasterReport {
     pub start: usize,
-    pub mark: usize, // The position where the disaster occurred
+    pub mark: usize,
     pub pos: (usize, usize),
     pub la: Str,
     pub error: Ref<ParseFailure>,
@@ -107,7 +108,7 @@ impl<C: Ctx> Yeap<C> {
     }
 
     #[inline]
-    pub fn tree(self) -> Tree {
+    pub fn tree(self) -> Rc<Tree> {
         self.1
     }
 
@@ -124,8 +125,10 @@ impl<C: Ctx> Yeap<C> {
 
 #[cfg(test)]
 mod tests {
+    use crate::Tree;
     use crate::engine::strctx::StrCtx;
     use crate::peg::error::nope::{Nope, Yeap};
+    use std::rc::Rc;
 
     const TARGET: usize = 64;
 
@@ -139,5 +142,17 @@ mod tests {
     fn test_fail_size() {
         let size = size_of::<Nope>();
         assert!(size <= TARGET, "Fail size is {} > {} bytes", size, TARGET);
+    }
+
+    #[test]
+    fn test_yeap_tree_returns_rc() {
+        use crate::engine::strctx::StrCtx;
+        use crate::input::StrCursor;
+
+        let tree = Tree::Text("hello".into());
+        let ctx = StrCtx::new(StrCursor::new("hello"), &[]);
+        let yeap = Yeap(ctx, tree.into());
+        let rc: Rc<Tree> = yeap.tree();
+        assert!(matches!(rc.as_ref(), Tree::Text(_)));
     }
 }

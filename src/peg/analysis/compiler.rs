@@ -10,6 +10,7 @@ use crate::peg::rule::{RuleMap, RuleRef};
 use crate::peg::{Exp, Grammar, Rule};
 use crate::trees::{Tree, TreeMap};
 use crate::types::Str;
+use std::rc::Rc;
 
 #[derive(Debug, Default)]
 pub struct GrammarCompiler {}
@@ -39,7 +40,7 @@ fn _parse_map(node: &Tree) -> CompileResult<&TreeMap> {
     Ok(map)
 }
 
-fn _parse_list(node: &Tree) -> CompileResult<&[Tree]> {
+fn _parse_list(node: &Tree) -> CompileResult<&[Rc<Tree>]> {
     match node {
         Tree::Seq(list) | Tree::List(list) => Ok(list),
         _ => Err(CompileError::ExpectedList(format!("{:?}", node))),
@@ -111,7 +112,7 @@ impl GrammarCompiler {
                 for nested_list in keywords_nested.iter() {
                     let inner_list = _parse_list(nested_list)?;
                     for kw in inner_list.iter() {
-                        let value: Str = match kw {
+                        let value: Str = match kw.as_ref() {
                             Tree::Text(t) => t.clone(),
                             Tree::Node { typename, tree } if typename.as_ref() == "Word" => {
                                 tree.value()
@@ -151,17 +152,10 @@ impl GrammarCompiler {
         let (typename, tree) = parse_node(tree)?;
         let typename = typename.to_string();
         let exp: Exp = match typename.as_str() {
-            "bool" => {
-                // HACK
-                //  Work around legacy stuff in the TatSu grammar.
-                //  TieXiu doesn't implement semantic actions during parse.
-                //  There is not easy type Any in Rust.
-                self.parse_exp(tree)?
-            }
+            "bool" => self.parse_exp(tree)?,
             "Alert" => {
                 let msgtree = map_get(tree, &typename, "message")?;
                 let msgexp = self.parse_exp(msgtree)?;
-                // FIXME value defaulted to 0
                 if let ExpKind::Constant(m) = msgexp.kind {
                     Exp::alert(&m, 0)
                 } else {

@@ -5,6 +5,7 @@ use crate::Exp;
 use crate::engine::Ctx;
 use crate::peg::error::*;
 use crate::trees::Tree;
+use std::rc::Rc;
 
 impl Exp {
     pub fn skip_exp<C: Ctx>(ctx: C, exp: &Exp) -> C {
@@ -15,7 +16,7 @@ impl Exp {
         }
     }
 
-    pub fn add_exp<C: Ctx>(ctx: C, exp: &Exp, res: &mut Vec<Tree>) -> Result<C, (C, Nope)> {
+    pub fn add_exp<C: Ctx>(ctx: C, exp: &Exp, res: &mut Vec<Rc<Tree>>) -> Result<C, (C, Nope)> {
         match exp.parse(ctx.clone()) {
             Ok(Yeap(new_ctx, tree)) => {
                 res.push(tree);
@@ -25,7 +26,7 @@ impl Exp {
         }
     }
 
-    pub fn repeat<C: Ctx>(mut ctx: C, exp: &Exp, res: &mut Vec<Tree>) -> ParseResult<C> {
+    pub fn repeat<C: Ctx>(mut ctx: C, exp: &Exp, res: &mut Vec<Rc<Tree>>) -> ParseResult<C> {
         loop {
             let mark = ctx.mark();
             match exp.parse(ctx.push()) {
@@ -37,10 +38,7 @@ impl Exp {
                     ctx = ctx.merge(new_ctx);
                 }
                 Err(_nope) => {
-                    // if nope.take_cut() {
-                    //     return Err(nope);
-                    // }
-                    return Ok(Yeap(ctx, Tree::Nil));
+                    return Ok(Yeap(ctx, Tree::Nil.into()));
                 }
             }
         }
@@ -50,7 +48,7 @@ impl Exp {
         mut ctx: C,
         exp: &Exp,
         pre: &Exp,
-        res: &mut Vec<Tree>,
+        res: &mut Vec<Rc<Tree>>,
         keep_pre: bool,
     ) -> ParseResult<C> {
         loop {
@@ -60,8 +58,7 @@ impl Exp {
                     if nope.take_cut() {
                         return Err(nope);
                     }
-                    // OK to match nothing
-                    return Ok(Yeap(ctx, Tree::Nil));
+                    return Ok(Yeap(ctx, Tree::Nil.into()));
                 }
                 Ok(Yeap(mut new_ctx, pre_cst)) => {
                     if new_ctx.mark() == mark {
@@ -69,7 +66,6 @@ impl Exp {
                     }
                     new_ctx.cut();
                     match exp.parse(new_ctx) {
-                        // NOTE: pre.parse().is_ok() so exp.parse().is_ok_or(fail)
                         Ok(Yeap(repeat_ctx, exp_cst)) => {
                             if keep_pre {
                                 res.push(pre_cst);
@@ -79,7 +75,7 @@ impl Exp {
                         }
                         Err(mut nope) => {
                             nope.take_cut();
-                            return Err(nope); // the implicit cut after pre.parse()
+                            return Err(nope);
                         }
                     }
                 }
@@ -142,7 +138,7 @@ mod tests {
         let pre = Exp::token(",");
         let mut res = Vec::new();
         if let Ok(Yeap(final_ctx, _)) = Exp::repeat_with_pre(ctx, &exp, &pre, &mut res, true) {
-            assert_eq!(res.len(), 4); // [",", "abc", ",", "abc"]
+            assert_eq!(res.len(), 4);
             assert_eq!(final_ctx.cursor().mark(), 8);
         } else {
             panic!("repeat_with_pre failed")
@@ -156,7 +152,7 @@ mod tests {
         let pre = Exp::token(",");
         let mut res = Vec::new();
         if let Ok(Yeap(final_ctx, _)) = Exp::repeat_with_pre(ctx, &exp, &pre, &mut res, false) {
-            assert_eq!(res.len(), 2); // ["abc", "abc"]
+            assert_eq!(res.len(), 2);
             assert_eq!(final_ctx.cursor().mark(), 8);
         } else {
             panic!("repeat_with_pre failed")
@@ -166,7 +162,7 @@ mod tests {
     #[test]
     fn test_repeat_restores_entered_cut() {
         let mut ctx = setup("abc abc abc");
-        ctx.cut(); // set cut before entering Repeat
+        ctx.cut();
         assert!(ctx.cut_seen(), "ctx should have cut set before repeat");
 
         let exp = Exp::token("abc");
@@ -182,7 +178,7 @@ mod tests {
     #[test]
     fn test_repeat_with_pre_restores_entered_cut() {
         let mut ctx = setup(",abc,abc");
-        ctx.cut(); // set cut before entering repeat_with_pre
+        ctx.cut();
         assert!(
             ctx.cut_seen(),
             "ctx should have cut set before repeat_with_pre"

@@ -4,6 +4,7 @@
 use serde_json::{Map, Value};
 use tiexiu::cfg::types::FlagMap;
 use tiexiu::trees::{KeyValue, Tree, TreeMap};
+use std::rc::Rc;
 
 #[derive(Debug, thiserror::Error)]
 pub enum TreeJsonError {
@@ -46,7 +47,7 @@ impl Tree {
                 "List",
                 [(
                     "items",
-                    Value::Array(items.iter().map(Tree::to_model_json).collect()),
+                    Value::Array(items.iter().map(|t| t.to_model_json()).collect()),
                 )],
             ),
             Tree::Named(keyval) => named_value("Named", keyval),
@@ -77,13 +78,13 @@ impl Tree {
             "Text" => Ok(Tree::Text(
                 expect_string(field(object, "text")?, "text")?.into(),
             )),
-            "List" => Ok(Tree::Seq(
-                expect_array(field(object, "items")?, "items")?
+            "List" => {
+                let items: Vec<Rc<Tree>> = expect_array(field(object, "items")?, "items")?
                     .iter()
-                    .map(Tree::from_serde_json_value)
-                    .collect::<Result<Vec<_>, _>>()?
-                    .into(),
-            )),
+                    .map(|v| Tree::from_serde_json_value(v).map(|t| t.into()))
+                    .collect::<Result<Vec<_>, _>>()?;
+                Ok(Tree::Seq(items.into()))
+            }
             "Named" => Ok(Tree::Named(named_keyval(object)?)),
             "NamedAsList" => Ok(Tree::NamedAsList(named_keyval(object)?)),
             "Override" => Ok(Tree::Override(
@@ -212,6 +213,8 @@ fn _expect_bool(value: &Value, expected: &'static str) -> Result<bool, TreeJsonE
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     #[test]
     fn test_tree_json_roundtrip() {
         let mut m = TreeMap::new();

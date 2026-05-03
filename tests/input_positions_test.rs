@@ -1,12 +1,15 @@
+// Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
 //! Input Position Tests
 
 #[macro_use]
 extern crate json;
-use tiexiu::engine::{new_ctx, CtxI};
+use tiexiu::engine::{CtxI, new_ctx};
 use tiexiu::input::strcursor::StrCursor;
 use tiexiu::parse_input;
-use tiexiu::*;
 use tiexiu::peg::error::Yeap;
+use tiexiu::*;
 
 #[test]
 fn basic_position_tracking() -> Result<()> {

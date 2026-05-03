@@ -3,6 +3,7 @@
 
 use crate::trees::{KeyValue, Tree, TreeMap};
 use json::JsonValue;
+use std::rc::Rc;
 
 use crate::json::error::JsonError;
 
@@ -50,7 +51,7 @@ impl Tree {
             Tree::Bottom | Tree::Nil => JsonValue::Null,
             Tree::Text(t) => JsonValue::String(t.to_string()),
             Tree::Seq(items) | Tree::List(items) => {
-                JsonValue::Array(items.iter().map(Tree::to_json).collect())
+                JsonValue::Array(items.iter().map(|t| t.to_json()).collect())
             }
             Tree::Map(m) => {
                 let mut obj = JsonValue::new_object();
@@ -99,7 +100,7 @@ impl Tree {
             JsonValue::String(s) => Tree::Text(s.clone().into()),
             JsonValue::Short(s) => Tree::Text(s.to_string().into()),
             JsonValue::Array(arr) => {
-                let items: Vec<Tree> = arr.iter().map(Tree::from_json).collect();
+                let items: Vec<Rc<Tree>> = arr.iter().map(|v| Tree::from_json(v).into()).collect();
                 Tree::Seq(items.into())
             }
             JsonValue::Object(obj) => {
@@ -135,11 +136,7 @@ mod tests {
         let cases: Vec<Tree> = vec![
             Tree::Nil,
             Tree::Text("hello".into()),
-            Tree::Seq(
-                vec![Tree::Text("a".into()), Tree::Text("b".into())]
-                    .into_boxed_slice()
-                    .into(),
-            ),
+            Tree::Seq(vec![Tree::Text("a".into()).into(), Tree::Text("b".into()).into()].into()),
         ];
 
         for tree in cases {

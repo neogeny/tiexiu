@@ -147,7 +147,7 @@ where
         self.with_heavy_mut(|heavy| heavy.memos.memo(key))
     }
 
-    fn memoize(&mut self, key: &MemoKey, tree: &Tree, lastmark: usize) {
+    fn memoize(&mut self, key: &MemoKey, tree: &Rc<Tree>, lastmark: usize) {
         self.with_heavy_mut(|heavy| {
             heavy.memos.memoize(key, tree, lastmark);
         });

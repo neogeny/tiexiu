@@ -25,6 +25,7 @@ mod tests {
     use crate::input::strcursor::StrCursor;
     use crate::trees::Tree;
     use std::mem::size_of;
+    use std::rc::Rc;
 
     const TARGET: usize = 32;
 
@@ -88,7 +89,7 @@ mod tests {
 
         let key = ctx1.key("hello", true);
 
-        ctx1.memoize(&key, &Tree::Nil, ctx1.mark());
+        ctx1.memoize(&key, &Tree::Nil.into(), ctx1.mark());
 
         let retrieved = ctx2.memo(&key);
 
@@ -97,7 +98,7 @@ mod tests {
             "ctx2 failed to see the memoization entry from ctx1"
         );
         assert_eq!(
-            retrieved.unwrap().tree,
+            *retrieved.unwrap().tree,
             Tree::Nil,
             "Memoization data mismatch between shared contexts"
         );
@@ -113,7 +114,7 @@ mod tests {
 
         assert_ne!(ctx1.cursor().mark(), ctx2.cursor().mark());
 
-        let entry = Tree::Bottom;
+        let entry: Rc<Tree> = Tree::Bottom.into();
         let key = ctx1.key("world", true);
         ctx2.memoize(&key, &entry, ctx1.mark());
         assert!(

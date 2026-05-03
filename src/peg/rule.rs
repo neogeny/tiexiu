@@ -9,6 +9,7 @@ use crate::peg::error::{ParseResult, Yeap};
 use crate::trees::Tree;
 use crate::types::{Ref, Str};
 use indexmap::IndexMap;
+use std::rc::Rc;
 use std::sync::Arc;
 
 pub const FLAG_NO_MEMO: &str = "no_memo";
@@ -28,7 +29,6 @@ pub type RuleMap = IndexMap<RuleName, RuleRef>;
 pub struct Rule {
     pub name: RuleName,
     pub params: Ref<[Str]>,
-    // kwparams: dict[str, Any] = field(default_factory=dict)
     pub flags: FlagMap,
     pub exp: Exp,
 }
@@ -105,24 +105,21 @@ impl Rule {
         match self.exp.parse(ctx.push()) {
             Err(nope) => Err(nope),
             Ok(Yeap(ok_ctx, tree)) => {
-                let folded = tree.fold();
+                let folded = Rc::unwrap_or_clone(tree).fold();
                 Ok(Yeap(
                     ctx.merge(ok_ctx),
                     if self.params.is_empty() {
-                        folded
+                        folded.into()
                     } else {
                         let typename = self.params[0].clone();
                         if typename.as_ref() == "bool" {
-                            // HACK
-                            //  Work around legacy in the TatSu grammar.
-                            //  TieXiu doesn't implement semantic actions during parse.
-                            //  There is not easy type `Any` in Rust.
-                            folded
+                            folded.into()
                         } else {
                             Tree::Node {
                                 typename,
                                 tree: folded.into(),
                             }
+                            .into()
                         }
                     },
                 ))

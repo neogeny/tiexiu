@@ -4,6 +4,7 @@
 use crate::trees::tree::Tree;
 use crate::types::Str;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Hash)]
 pub struct MemoKey {
@@ -14,7 +15,7 @@ pub struct MemoKey {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Memo {
-    pub tree: Tree,
+    pub tree: Rc<Tree>,
     pub mark: usize,
 }
 
@@ -67,7 +68,7 @@ impl MemoCache {
     }
 
     pub fn clear_error_memos(&mut self) {
-        self.memos.retain(|_, memo| memo.tree != Tree::Bottom);
+        self.memos.retain(|_, memo| *memo.tree != Tree::Bottom);
     }
 }
 
@@ -84,7 +85,7 @@ impl MemoCache {
         self.memos.get(key).cloned()
     }
 
-    pub fn memoize(&mut self, key: &MemoKey, tree: &Tree, mark: usize) {
+    pub fn memoize(&mut self, key: &MemoKey, tree: &Rc<Tree>, mark: usize) {
         if !key.memo {
             return;
         }
@@ -116,7 +117,7 @@ mod tests {
     fn memoize_and_retrieve() {
         let mut cache = MemoCache::new();
         let key = MemoCache::key(0, "rule", true);
-        let tree = Tree::Text("test".into());
+        let tree: Rc<Tree> = Tree::Text("test".into()).into();
 
         cache.memoize(&key, &tree, 5);
 
@@ -130,8 +131,8 @@ mod tests {
         let mut cache = MemoCache::new();
         let key1 = MemoCache::key(0, "rule1", true);
         let key2 = MemoCache::key(0, "rule2", true);
-        let tree1 = Tree::Text("a".into());
-        let tree2 = Tree::Text("b".into());
+        let tree1: Rc<Tree> = Tree::Text("a".into()).into();
+        let tree2: Rc<Tree> = Tree::Text("b".into()).into();
 
         cache.memoize(&key1, &tree1, 1);
         cache.memoize(&key2, &tree2, 2);
@@ -144,7 +145,7 @@ mod tests {
     fn prune_keeps_after_cutpoint() {
         let mut cache = MemoCache::new();
         let key = MemoCache::key(5, "rule", true);
-        let tree = Tree::Text("test".into());
+        let tree: Rc<Tree> = Tree::Text("test".into()).into();
 
         cache.memoize(&key, &tree, 5);
         cache.prune(5);
@@ -156,7 +157,7 @@ mod tests {
     fn prune_removes_before_cutpoint() {
         let mut cache = MemoCache::new();
         let key = MemoCache::key(3, "rule", true);
-        let tree = Tree::Text("test".into());
+        let tree: Rc<Tree> = Tree::Text("test".into()).into();
 
         cache.memoize(&key, &tree, 3);
         cache.prune(5);

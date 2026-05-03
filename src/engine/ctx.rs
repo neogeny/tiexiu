@@ -14,6 +14,7 @@ use crate::trees::tree::Tree;
 use crate::types::Str;
 use crate::util::pyre::{Pattern, escape};
 use std::fmt::Debug;
+use std::rc::Rc;
 
 const MAX_RECURSION_DEPTH: usize = 64;
 
@@ -139,11 +140,11 @@ pub trait Ctx: CtxI + Clone + Debug {
 
     fn memo(&mut self, key: &MemoKey) -> Option<Memo>;
 
-    fn memoize(&mut self, key: &MemoKey, tree: &Tree, lastmark: usize);
+    fn memoize(&mut self, key: &MemoKey, tree: &Rc<Tree>, lastmark: usize);
 
     fn clear_error_memos(&mut self);
 
-    fn cut(&mut self); // Only cut() remains
+    fn cut(&mut self);
     fn clear_cut(&mut self);
 
     fn prune_cache(&mut self);
@@ -156,33 +157,8 @@ pub trait Ctx: CtxI + Clone + Debug {
         let _ = keywords;
     }
 
-    /// This is the merge in TatSu
-    ///
-    /// ```python
-    /// def merge(self, prev: ParseState) -> Self:
-    ///     self.ast = prev.ast
-    ///     self.extend(prev.cst)
-    ///     self.alerts.extend(prev.alerts)
-    ///     self.cursor.goto(prev.cursor.pos)
-    ///     return self
-    /// ```
-    // NOTE:
-    //  * We don't construct the resulting CST/AST because Tree does it
-    //    when Tree.node() is called on success of a rule call
-    //  * Alerts are not implemented (no one knows what they're for)
-    //  * We should reset our cursor. Copy? Just the mark? The only
-    //    state kept by cursor is the mark.
-    //  * Our `cutseen` remains as was
-    //  * WARNING:
-    //      Don't know what to do about the callstack
-    //      All self.leave() does is pop it
-    //      See CoreCtx for a reasonable override
     fn merge(self, other: Self) -> Self;
 
-    // NOTE
-    //  Default to .clone(), but implementors can do more work.
-    //  This should work with both cloned Ctx and with a separate
-    //  StateStack.
     fn push(&mut self) -> Self {
         let mut new = self.clone();
         new.clear_cut();
@@ -209,10 +185,10 @@ pub trait Ctx: CtxI + Clone + Debug {
                     ctx.leave();
                 }
                 if rule.is_name()
-                    && let Tree::Text(name) = &tree
+                    && let Tree::Text(name) = tree.as_ref()
                     && ctx.is_keyword(name)
                 {
-                    ctx.memoize(&key, &Tree::Bottom, ctx.mark());
+                    ctx.memoize(&key, &Tree::Bottom.into(), ctx.mark());
                     let error = ParseFailure::ReservedWord(name.clone());
                     ctx.tracer().trace_failure(&ctx, name);
                     return Err(ctx.failure(start, error));
@@ -226,7 +202,7 @@ pub trait Ctx: CtxI + Clone + Debug {
                     self.leave();
                 }
                 self.tracer().trace_failure(&self, name);
-                self.memoize(&key, &Tree::Bottom, self.mark());
+                self.memoize(&key, &Tree::Bottom.into(), self.mark());
                 nope.take_cut();
                 Err(nope)
             }
@@ -237,7 +213,7 @@ pub trait Ctx: CtxI + Clone + Debug {
         let start = self.mark();
         let key = self.key(name, rule.is_memoizable());
         if let Some(memo) = self.memo(&key) {
-            return match memo.tree {
+            return match memo.tree.as_ref() {
                 Tree::Bottom => {
                     let err = ParseFailure::FailedParse(name.into());
                     Err(self.failure(start, err))
@@ -260,10 +236,6 @@ pub trait Ctx: CtxI + Clone + Debug {
         let depth = self.track(key);
         if depth > MAX_RECURSION_DEPTH {
             panic!("Recursion depth exceeded")
-            // Err(self.failure(
-            //     key.mark,
-            //     ParseFailure::UnboundLeftRecursion(depth, key.name.as_ref().into(), key.mark),
-            // ))
         } else {
             Ok(())
         }
@@ -280,10 +252,8 @@ pub trait Ctx: CtxI + Clone + Debug {
         let mut lasttree: Tree = Tree::Nil;
         let mut lastnope: Option<Nope> = None;
 
-        self.memoize(key, &Tree::Bottom, start);
+        self.memoize(key, &Tree::Bottom.into(), start);
         loop {
-            // NOTE this is in TatSu and not in pegen
-            //  self.clear_error_memos();
             self.reset(start);
 
             self.track_recursion_depth(key)?;
@@ -302,15 +272,15 @@ pub trait Ctx: CtxI + Clone + Debug {
                         break;
                     }
                     lastmark = endmark;
-                    lasttree = endtree;
+                    lasttree = Rc::unwrap_or_clone(endtree);
                     self = self.merge(ctx);
-                    self.memoize(key, &lasttree, lastmark);
+                    self.memoize(key, &lasttree.clone().into(), lastmark);
                 }
             }
         }
 
         self.reset(lastmark);
-        self.memoize(key, &lasttree, lastmark);
+        self.memoize(key, &lasttree.clone().into(), lastmark);
 
         if lasttree == Tree::Bottom {
             let nope = lastnope.unwrap_or(self.failure(
@@ -324,6 +294,6 @@ pub trait Ctx: CtxI + Clone + Debug {
             ));
             return Err(nope);
         }
-        Ok(Yeap(self, lasttree))
+        Ok(Yeap(self, lasttree.into()))
     }
 }

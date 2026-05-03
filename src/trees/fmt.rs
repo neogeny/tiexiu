@@ -4,10 +4,10 @@
 use crate::trees::{KeyValue, Tree, TreeMap};
 use std::fmt;
 use std::ops::Deref;
+use std::rc::Rc;
 
 impl fmt::Display for TreeMap {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // Collect and sort keys for a stable, predictable string
         let keys: Vec<&str> = self.iter().map(|(k, _)| k.deref()).collect();
 
         write!(f, "m(&[")?;
@@ -15,7 +15,6 @@ impl fmt::Display for TreeMap {
             if i > 0 {
                 write!(f, ", ")?;
             }
-            // Safe to unwrap because we just got the key from the map
             write!(f, "({:?}, {})", key, self.get(key).unwrap())?;
         }
         write!(f, "])")
@@ -28,7 +27,7 @@ impl fmt::Display for KeyValue {
     }
 }
 
-fn fmt_items(items: &[Tree]) -> String {
+fn fmt_items(items: &[Rc<Tree>]) -> String {
     items
         .iter()
         .map(|item| item.to_string())
@@ -105,12 +104,11 @@ mod tests {
         );
 
         assert_eq!(
-            Tree::OverrideAsList(Tree::Seq(vec![Tree::Text("item".into())].into()).into())
+            Tree::OverrideAsList(Tree::Seq(vec![Tree::Text("item".into()).into()].into()).into())
                 .to_string(),
             "ol(s(&[t(\"item\")]))"
         );
 
-        // Tags
         let mut map = IndexMap::new();
         map.insert("a".into(), Tree::Text("1".into()));
         let entries: Vec<_> = map.into_iter().collect();
@@ -120,18 +118,15 @@ mod tests {
             "m(m(&[(\"a\", t(\"1\"))]))"
         );
 
-        // Nil
         assert_eq!(Tree::Nil.to_string(), "NIL");
 
-        // Bottom
         assert_eq!(Tree::Bottom.to_string(), "BOTTOM");
 
-        // Node
         let node = Tree::Seq(
             vec![
-                Tree::Text("a".into()),
-                Tree::Text("b".into()),
-                Tree::Seq(vec![Tree::Text("c".into())].into()),
+                Tree::Text("a".into()).into(),
+                Tree::Text("b".into()).into(),
+                Tree::Seq(vec![Tree::Text("c".into()).into()].into()).into(),
             ]
             .into(),
         );

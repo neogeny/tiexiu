@@ -16,7 +16,6 @@ impl Exp {
 
     pub fn parse_choice<C: Ctx>(&self, mut ctx: C, options: &[Exp]) -> ParseResult<C> {
         let start = ctx.mark();
-        // let mut furthest: Option<Nope> = None;
 
         for option in options.iter() {
             match option.parse(ctx.push()) {
@@ -27,15 +26,9 @@ impl Exp {
                     if nope.take_cut() {
                         return Err(nope);
                     }
-
-                    // FIXME
-                    // if furthest.as_ref().is_none_or(|prev| nope.mark >= prev.mark) {
-                    //     furthest = Some(nope);
-                    // }
                 }
             }
         }
-        // Err(furthest.unwrap_or(ctx.failure(start, NoViableOption(self.la_boxed()))))
         Err(ctx.failure(start, NoViableOption(self.la_boxed())))
     }
 
@@ -46,7 +39,7 @@ impl Exp {
                 if nope.take_cut() {
                     return Err(nope);
                 }
-                Ok(Yeap(ctx, Tree::Nil))
+                Ok(Yeap(ctx, Tree::Nil.into()))
             }
         }
     }

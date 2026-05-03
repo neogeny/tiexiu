@@ -10,7 +10,8 @@ use crate::engine::Ctx;
 use crate::peg::ParseFailure::RuleNotFound;
 use crate::rule::RuleName;
 use crate::types::{Ref, Str};
-use crate::{new_ctx, StrCursor, Tree};
+use crate::{StrCursor, Tree, new_ctx};
+use std::rc::Rc;
 use std::sync::Arc;
 
 pub type KeywordRef = Str;
@@ -42,7 +43,6 @@ where
     }
 }
 
-
 impl Grammar {
     pub fn new(name: &str, rules: &[RuleRef]) -> Self {
         let rules: RuleMap = rules.iter().cloned().map(|r| (r.name.clone(), r)).collect();
@@ -68,7 +68,6 @@ impl Grammar {
 
     pub fn set_directives(&mut self, directives: GrammarDirectives) {
         self.directives = directives;
-        // In the new CfgK model, we can find the grammar name directly using binary search.
         if let Some(CfgKey::Grammar(name)) = self
             .directives
             .iter()
@@ -84,12 +83,9 @@ impl Grammar {
         vec.sort();
         vec.dedup();
 
-        // 3. Shrink to fit and freeze as a boxed slice
         self.keywords = vec.into();
     }
 
-    /// Check if a string is a reserved keyword.
-    /// Avoids allocation by searching the sorted slice directly.
     pub fn is_keyword(&self, name: &str) -> bool {
         self.keywords
             .binary_search_by(|k| k.as_ref().cmp(name))
@@ -113,12 +109,10 @@ impl Grammar {
     pub fn parse<C: Ctx>(&self, mut ctx: C) -> ParseResult<C> {
         match self.start_rule() {
             Ok(start) => self.parse_from(start.as_ref(), ctx),
-            Err(e) => Err(
-                ctx.failure(ctx.mark(), e)
-            ),
+            Err(e) => Err(ctx.failure(ctx.mark(), e)),
         }
     }
-    
+
     pub fn parse_tree<C: Ctx>(&self, ctx: C) -> crate::error::Result<Tree> {
         match self.start_rule() {
             Ok(start) => self.parse_tree_from(start.as_ref(), ctx),
@@ -129,24 +123,21 @@ impl Grammar {
     pub fn parse_tree_from<C: Ctx>(&self, start: &str, mut ctx: C) -> crate::error::Result<Tree> {
         let start_mark = ctx.mark();
         match self.parse_from(start, ctx.push()) {
-            Ok(Yeap(_, tree)) => Ok(tree),
-            Err(_) => Err(
-                ctx
+            Ok(Yeap(_, tree)) => Ok(Rc::unwrap_or_clone(tree)),
+            Err(_) => Err(ctx
                 .furthest_failure()
                 .unwrap_or(DisasterReport::new(start_mark, &ctx, &ParseFailure::Fail))
                 .into()),
         }
     }
-    
+
     pub fn parse_from<C: Ctx>(&self, start: &str, mut ctx: C) -> ParseResult<C> {
         let start_mark = ctx.mark();
         ctx.configure(&self.directives);
         ctx.set_keywords(&self.keywords);
         match self.get_rule(start) {
             Ok(rule) => rule.parse(ctx.push()),
-            Err(err) => Err(
-                ctx.failure(start_mark, err)
-            )
+            Err(err) => Err(ctx.failure(start_mark, err)),
         }
     }
 
@@ -206,8 +197,8 @@ impl Grammar {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::peg::rule::Rule;
     use crate::peg::Exp;
+    use crate::peg::rule::Rule;
 
     #[test]
     fn new_grammar() {

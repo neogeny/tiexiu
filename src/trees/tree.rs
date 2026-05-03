@@ -12,10 +12,10 @@ pub struct KeyValue(pub Str, pub Rc<Tree>);
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Tree {
-    Text(Str),        // Tokens or patterns
-    Seq(Rc<[Tree]>),  // Sequences of values
-    List(Rc<[Tree]>), // Non-mergeable list of values
-    Map(Rc<TreeMap>), // A mapping of named elements
+    Text(Str),            // Tokens or patterns
+    Seq(Rc<[Rc<Tree>]>),  // Sequences of values
+    List(Rc<[Rc<Tree>]>), // Non-mergeable list of values
+    Map(Rc<TreeMap>),     // A mapping of named elements
 
     Node {
         // The result of parsing a rule call
@@ -40,21 +40,47 @@ pub fn keyval(name: &str, tree: Tree) -> KeyValue {
 
 impl From<Vec<Tree>> for Tree {
     fn from(v: Vec<Tree>) -> Self {
-        let clean: Vec<Tree> = v
+        let clean: Vec<Rc<Tree>> = v
             .into_iter()
             .filter(|item| !matches!(item, Tree::Nil))
+            .map(|t| t.into())
             .collect();
-        Tree::Seq(clean.into_boxed_slice().into())
+        Tree::Seq(clean.into())
     }
 }
 
 impl<const N: usize> From<[Tree; N]> for Tree {
     fn from(arr: [Tree; N]) -> Self {
-        let clean: Vec<Tree> = arr
+        let clean: Vec<Rc<Tree>> = arr
             .into_iter()
             .filter(|item| !matches!(item, Tree::Nil))
+            .map(|t| t.into())
             .collect();
-        Tree::Seq(clean.into_boxed_slice().into())
+        Tree::Seq(clean.into())
+    }
+}
+
+impl From<Vec<Rc<Tree>>> for Tree {
+    fn from(v: Vec<Rc<Tree>>) -> Self {
+        Tree::Seq(v.into())
+    }
+}
+
+impl From<&[Tree]> for Tree {
+    fn from(slice: &[Tree]) -> Self {
+        let clean: Vec<Rc<Tree>> = slice
+            .iter()
+            .filter(|item| !matches!(item, Tree::Nil))
+            .cloned()
+            .map(|t| t.into())
+            .collect();
+        Tree::Seq(clean.into())
+    }
+}
+
+impl From<&[Rc<Tree>]> for Tree {
+    fn from(slice: &[Rc<Tree>]) -> Self {
+        Tree::Seq(slice.into())
     }
 }
 
@@ -107,24 +133,24 @@ impl Tree {
             (Self::Nil, n) => n,
             (s, Self::Nil) => s,
             (Self::Seq(list), node) => {
-                let mut v = list.to_vec();
-                v.push(node);
-                Self::Seq(v.into_boxed_slice().into())
+                let mut v: Vec<Rc<Tree>> = list.to_vec();
+                v.push(node.into());
+                Self::Seq(v.into())
             }
-            (s, n) => Self::Seq(vec![s, n].into_boxed_slice().into()),
+            (s, n) => Self::Seq(vec![s.into(), n.into()].into()),
         }
     }
 
     pub fn append_as_list(self, node: Self) -> Self {
         match (self, node) {
-            (Self::Nil, n) => Self::Seq(vec![n].into_boxed_slice().into()),
+            (Self::Nil, n) => Self::Seq(vec![n.into()].into()),
             (s, Self::Nil) => s,
             (Self::Seq(list), n) => {
-                let mut v = list.to_vec();
-                v.push(n);
-                Self::Seq(v.into_boxed_slice().into())
+                let mut v: Vec<Rc<Tree>> = list.to_vec();
+                v.push(n.into());
+                Self::Seq(v.into())
             }
-            (s, n) => Self::Seq(vec![s, n].into_boxed_slice().into()),
+            (s, n) => Self::Seq(vec![s.into(), n.into()].into()),
         }
     }
 
@@ -133,19 +159,19 @@ impl Tree {
             (Self::Nil, n) => n,
             (s, Self::Nil) => s,
             (Self::Seq(l1), Self::Seq(l2)) => {
-                let mut v = l1.to_vec();
-                v.extend(l2.to_vec());
-                Self::Seq(v.into_boxed_slice().into())
+                let mut v: Vec<Rc<Tree>> = l1.to_vec();
+                v.extend(l2.iter().cloned());
+                Self::Seq(v.into())
             }
             (Self::Seq(l1), n) => {
-                let mut v = l1.to_vec();
-                v.push(n);
-                Self::Seq(v.into_boxed_slice().into())
+                let mut v: Vec<Rc<Tree>> = l1.to_vec();
+                v.push(n.into());
+                Self::Seq(v.into())
             }
             (s, Self::Seq(l2)) => {
-                let mut v = vec![s];
-                v.extend(l2.to_vec());
-                Self::Seq(v.into_boxed_slice().into())
+                let mut v: Vec<Rc<Tree>> = vec![s.into()];
+                v.extend(l2.iter().cloned());
+                Self::Seq(v.into())
             }
             (s, n) => s.append(n),
         }
@@ -154,42 +180,38 @@ impl Tree {
     fn clean_and_fold(&self, gather: &mut TreeMerge) -> Tree {
         match self {
             Tree::Seq(elements) => {
-                // NOTE:
-                //  Tree::Seq is the product of Exp::Sequence and the
-                //  right semantics are to merge the values one by one.
                 let mut out = Tree::Nil;
                 elements
                     .iter()
-                    .for_each(|s| out = out.clone().append(s.clean_and_fold(gather)));
+                    .for_each(|s| out = out.clone().append(s.as_ref().clean_and_fold(gather)));
                 out
             }
             Tree::List(elements) => {
-                // NOTE:
-                //  Tree::List is the product of the Exp closure node kinds.
-                //  The current semantics inherited from TatSu are to keep them
-                //  intact, with no merging
-                let clean: Vec<Tree> = elements.iter().map(|s| s.clean_and_fold(gather)).collect();
+                let clean: Vec<Rc<Tree>> = elements
+                    .iter()
+                    .map(|s| s.as_ref().clean_and_fold(gather).into())
+                    .collect();
                 Tree::List(clean.into())
             }
             Tree::Named(keyval) => {
                 let KeyValue(name, val) = keyval;
-                let clean = val.clone().clean_and_fold(gather);
+                let clean = val.as_ref().clone().clean_and_fold(gather);
                 gather.map.insert(name, clean.clone());
                 clean
             }
             Tree::NamedAsList(keyval) => {
                 let KeyValue(name, val) = keyval;
-                let clean = val.clean_and_fold(gather);
+                let clean = val.as_ref().clone().clean_and_fold(gather);
                 gather.map.insert_as_list(name, clean.clone());
                 clean
             }
             Tree::Override(val) => {
-                let clean = val.clean_and_fold(gather);
+                let clean = val.as_ref().clone().clean_and_fold(gather);
                 gather.root = gather.root.clone().append(clean.clone());
                 clean
             }
             Tree::OverrideAsList(val) => {
-                let clean = val.clean_and_fold(gather);
+                let clean = val.as_ref().clone().clean_and_fold(gather);
                 gather.root = gather.root.clone().append_as_list(clean.clone());
                 clean
             }
@@ -220,7 +242,7 @@ impl Tree {
         }
     }
 
-    pub fn list_value(&self) -> Rc<[Tree]> {
+    pub fn list_value(&self) -> Rc<[Rc<Tree>]> {
         match self {
             Tree::Seq(items) | Tree::List(items) => items.clone(),
             _ => [].into(),
@@ -251,7 +273,7 @@ impl Tree {
             .unwrap_or_else(|| "".into())
     }
 
-    pub fn get_list(&self, key: &str) -> Rc<[Tree]> {
+    pub fn get_list(&self, key: &str) -> Rc<[Rc<Tree>]> {
         self.get(key)
             .map(|n| n.list_value().clone())
             .unwrap_or_else(|| [].into())
@@ -281,7 +303,7 @@ mod tests {
 
     #[test]
     fn test_node_nil_removal() {
-        let raw = Tree::Seq([Tree::Nil, Tree::Bottom, Tree::Nil].into());
+        let raw = Tree::from(vec![Tree::Nil, Tree::Bottom, Tree::Nil]);
         let result = raw.fold();
 
         assert_eq!(result, Tree::Bottom.fold());
@@ -289,7 +311,7 @@ mod tests {
 
     #[test]
     fn test_node_nil_removal_to_bottom() {
-        let raw = Tree::Seq([Tree::Nil, Tree::Bottom, Tree::Nil].into());
+        let raw = Tree::from(vec![Tree::Nil, Tree::Bottom, Tree::Nil]);
         let result = raw.fold();
 
         assert_eq!(result, Tree::Bottom);
@@ -297,13 +319,13 @@ mod tests {
 
     #[test]
     fn test_node_nil_removal_to_list() {
-        let raw = Tree::Seq([Tree::Bottom, Tree::Nil, Tree::Bottom].into());
-        let result = raw.fold(); // normalize doesn't close
+        let raw = Tree::from(vec![Tree::Bottom, Tree::Nil, Tree::Bottom]);
+        let result = raw.fold();
 
         if let Tree::List(v) = result {
-            assert_eq!(v.len(), 2); // Nil is gone, only the two Bottoms remain
-            assert_eq!(v[0], Tree::Bottom);
-            assert_eq!(v[1], Tree::Bottom);
+            assert_eq!(v.len(), 2);
+            assert_eq!(*v[0], Tree::Bottom);
+            assert_eq!(*v[1], Tree::Bottom);
         } else {
             panic!("Expected Closure, got {:?}", result);
         }
@@ -311,33 +333,28 @@ mod tests {
 
     #[test]
     fn test_node_nil_purging_preserves_count() {
-        // Input: List([Nil, Bottom, Nil])
-        let raw = Tree::Seq([Tree::Nil, Tree::Bottom, Tree::Nil].into());
+        let raw = Tree::from(vec![Tree::Nil, Tree::Bottom, Tree::Nil]);
         let result = raw.fold();
 
-        // Since it's effectively Bottom, and Bottom isn't a list,
-        // it doesn't become a Closure of len 1. It just stays Bottom.
         assert_eq!(result, Tree::Bottom);
     }
 
     #[test]
     fn test_named_group_with_inner_names() {
-        // r: x=(a='a' b='b') - nested named expressions
-        // After normalization, all of a, b, and x should be present
         let tree = Tree::named(
             "x",
             Tree::Seq(
                 [
-                    Tree::named("a", Tree::text("a")),
-                    Tree::named("b", Tree::text("b")),
+                    Tree::named("a", Tree::text("a").into()).into(),
+                    Tree::named("b", Tree::text("b").into()).into(),
                 ]
                 .into(),
-            ),
+            )
+            .into(),
         );
 
         let result = tree.fold();
 
-        // Result should be a Map containing "a", "b", and "x"
         assert!(matches!(result, Tree::Map(_)));
         if let Tree::Map(m) = result {
             assert!(m.get("x").is_some(), "key 'x' should be present");

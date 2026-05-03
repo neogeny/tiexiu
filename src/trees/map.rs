@@ -6,21 +6,25 @@ use crate::cfg::types::Define;
 use crate::types::Str;
 use std::rc::Rc;
 
-/// A lean, ordered association list for AST nodes.
-/// Uses a single allocation to maximize cache locality for lookups.
-pub type TreeEntrySlice = Rc<[(Str, Tree)]>;
+pub type TreeEntrySlice = Rc<[(Str, Rc<Tree>)]>;
 
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct TreeMap(pub TreeEntrySlice);
 
-// Support for bulk construction via .into()
-impl From<Vec<(Str, Tree)>> for TreeMap {
-    fn from(vec: Vec<(Str, Tree)>) -> Self {
+impl From<Vec<(Str, Rc<Tree>)>> for TreeMap {
+    fn from(vec: Vec<(Str, Rc<Tree>)>) -> Self {
         TreeMap(vec.into())
     }
 }
 
-impl From<TreeMap> for Vec<(Str, Tree)> {
+impl From<Vec<(Str, Tree)>> for TreeMap {
+    fn from(vec: Vec<(Str, Tree)>) -> Self {
+        let converted: Vec<(Str, Rc<Tree>)> = vec.into_iter().map(|(k, v)| (k, v.into())).collect();
+        TreeMap(converted.into())
+    }
+}
+
+impl From<TreeMap> for Vec<(Str, Rc<Tree>)> {
     fn from(tree_map: TreeMap) -> Self {
         tree_map.0.as_ref().to_vec()
     }
@@ -31,8 +35,7 @@ impl TreeMap {
         Self::default()
     }
 
-    /// Returns an iterator over the map entries as borrowed pairs.
-    pub fn iter(&self) -> std::slice::Iter<'_, (Str, Tree)> {
+    pub fn iter(&self) -> std::slice::Iter<'_, (Str, Rc<Tree>)> {
         self.0.iter()
     }
 
@@ -40,37 +43,39 @@ impl TreeMap {
         self.0.is_empty()
     }
 
-    /// Optimized linear lookup for small N.
-    /// Bypasses hashing and stays within the L1 cache.
     pub fn get(&self, key: &str) -> Option<&Tree> {
         self.0
             .iter()
             .find(|(k, _)| k.as_ref() == key)
-            .map(|(_, v)| v)
+            .map(|(_, v)| v.as_ref())
     }
 
     pub fn update(&mut self, other: &TreeMap) {
         for (key, value) in other.0.iter() {
-            if let Tree::Seq(items) = value {
+            if let Tree::Seq(items) = value.as_ref() {
                 for item in items.iter() {
-                    self.insert_as_list(key, item.clone());
+                    self.insert_as_list(key, item.as_ref().clone());
                 }
-            } else if let Tree::List(items) = value {
+            } else if let Tree::List(items) = value.as_ref() {
                 for item in items.iter() {
-                    self.insert_as_list(key, item.clone());
+                    self.insert_as_list(key, item.as_ref().clone());
                 }
             } else {
-                self.insert(key, value.clone());
+                self.insert(key, value.as_ref().clone());
             }
         }
     }
 
     pub fn define(&mut self, keys: &[Define]) {
-        let mut entries: Vec<(Str, Tree)> = self.0.as_ref().to_vec();
+        let mut entries: Vec<(Str, Rc<Tree>)> = self.0.as_ref().to_vec();
         for (k, aslist) in keys {
             let key = self.safe_key(k);
             if !entries.iter().any(|(k, _)| k == &key) {
-                let val = if *aslist { Tree::seq(&[]) } else { Tree::Nil };
+                let val: Rc<Tree> = if *aslist {
+                    Tree::seq(&[]).into()
+                } else {
+                    Tree::Nil.into()
+                };
                 entries.push((key, val));
             }
         }
@@ -79,10 +84,10 @@ impl TreeMap {
 
     pub fn insert(&mut self, key: &str, item: Tree) {
         let key = self.safe_key(key);
-        let mut entries: Vec<(Str, Tree)> = self.0.as_ref().to_vec();
+        let mut entries: Vec<(Str, Rc<Tree>)> = self.0.as_ref().to_vec();
 
         let new_val = if let Some(current) = entries.iter().find(|(k, _)| k == &key) {
-            current.1.clone().append(item)
+            current.1.as_ref().clone().append(item)
         } else {
             item
         };
@@ -93,23 +98,23 @@ impl TreeMap {
 
     pub fn insert_as_list(&mut self, key: &str, item: Tree) {
         let key = self.safe_key(key);
-        let mut entries: Vec<(Str, Tree)> = self.0.as_ref().to_vec();
+        let mut entries: Vec<(Str, Rc<Tree>)> = self.0.as_ref().to_vec();
 
         let new_val = if let Some(current) = entries.iter().find(|(k, _)| k == &key) {
-            current.1.clone().append_as_list(item)
+            current.1.as_ref().clone().append_as_list(item)
         } else {
-            Tree::Seq([item].into())
+            Tree::Seq([item.into()].into())
         };
 
         self.update_or_push(&mut entries, key, new_val);
         self.0 = entries.into();
     }
 
-    fn update_or_push(&self, entries: &mut Vec<(Str, Tree)>, key: Str, val: Tree) {
+    fn update_or_push(&self, entries: &mut Vec<(Str, Rc<Tree>)>, key: Str, val: Tree) {
         if let Some(existing) = entries.iter_mut().find(|(k, _)| k == &key) {
-            existing.1 = val;
+            existing.1 = val.into();
         } else {
-            entries.push((key, val));
+            entries.push((key, val.into()));
         }
     }
 
@@ -138,11 +143,11 @@ mod tests {
     }
 
     fn seq(items: &[&str]) -> Tree {
-        Tree::Seq(items.iter().map(|s| text(s)).collect())
+        Tree::Seq(items.iter().map(|s| text(s).into()).collect())
     }
 
     fn list(items: &[&str]) -> Tree {
-        Tree::List(items.iter().map(|s| text(s)).collect())
+        Tree::List(items.iter().map(|s| text(s).into()).collect())
     }
 
     #[test]
@@ -165,7 +170,7 @@ mod tests {
         map.insert("foo", text("baz"));
         assert_eq!(
             map.get("foo"),
-            Some(&Tree::Seq([text("bar"), text("baz")].into()))
+            Some(&Tree::Seq([text("bar").into(), text("baz").into()].into()))
         );
     }
 
@@ -177,7 +182,9 @@ mod tests {
         map.insert("foo", text("c"));
         assert_eq!(
             map.get("foo"),
-            Some(&Tree::Seq([text("a"), text("b"), text("c")].into()))
+            Some(&Tree::Seq(
+                [text("a").into(), text("b").into(), text("c").into()].into()
+            ))
         );
     }
 
@@ -195,7 +202,9 @@ mod tests {
         map.insert("foo", seq(&["c", "d"]));
         assert_eq!(
             map.get("foo"),
-            Some(&Tree::Seq([text("a"), text("b"), seq(&["c", "d"])].into()))
+            Some(&Tree::Seq(
+                [text("a").into(), text("b").into(), seq(&["c", "d"]).into()].into()
+            ))
         );
     }
 
@@ -209,7 +218,10 @@ mod tests {
     fn insert_as_list_once() {
         let mut map = TreeMap::new();
         map.insert_as_list("foo", text("bar"));
-        assert_eq!(map.get("foo"), Some(&Tree::Seq([text("bar")].into())));
+        assert_eq!(
+            map.get("foo"),
+            Some(&Tree::Seq([text("bar").into()].into()))
+        );
     }
 
     #[test]
@@ -219,7 +231,7 @@ mod tests {
         map.insert_as_list("foo", text("baz"));
         assert_eq!(
             map.get("foo"),
-            Some(&Tree::Seq([text("bar"), text("baz")].into()))
+            Some(&Tree::Seq([text("bar").into(), text("baz").into()].into()))
         );
     }
 
@@ -231,7 +243,9 @@ mod tests {
         map.insert_as_list("foo", text("c"));
         assert_eq!(
             map.get("foo"),
-            Some(&Tree::Seq([text("a"), text("b"), text("c")].into()))
+            Some(&Tree::Seq(
+                [text("a").into(), text("b").into(), text("c").into()].into()
+            ))
         );
     }
 
@@ -239,7 +253,10 @@ mod tests {
     fn insert_as_list_with_list_once() {
         let mut map = TreeMap::new();
         map.insert_as_list("foo", seq(&["a", "b"]));
-        assert_eq!(map.get("foo"), Some(&Tree::Seq([seq(&["a", "b"])].into())));
+        assert_eq!(
+            map.get("foo"),
+            Some(&Tree::Seq([seq(&["a", "b"]).into()].into()))
+        );
     }
 
     #[test]
@@ -249,7 +266,9 @@ mod tests {
         map.insert_as_list("foo", seq(&["c", "d"]));
         assert_eq!(
             map.get("foo"),
-            Some(&Tree::Seq([seq(&["a", "b"]), seq(&["c", "d"])].into()))
+            Some(&Tree::Seq(
+                [seq(&["a", "b"]).into(), seq(&["c", "d"]).into()].into()
+            ))
         );
     }
 
@@ -257,7 +276,10 @@ mod tests {
     fn insert_as_list_with_seq_once() {
         let mut map = TreeMap::new();
         map.insert_as_list("foo", list(&["a", "b"]));
-        assert_eq!(map.get("foo"), Some(&Tree::Seq([list(&["a", "b"])].into())));
+        assert_eq!(
+            map.get("foo"),
+            Some(&Tree::Seq([list(&["a", "b"]).into()].into()))
+        );
     }
 
     #[test]
@@ -267,7 +289,9 @@ mod tests {
         map.insert_as_list("foo", list(&["c", "d"]));
         assert_eq!(
             map.get("foo"),
-            Some(&Tree::Seq([list(&["a", "b"]), list(&["c", "d"])].into()))
+            Some(&Tree::Seq(
+                [list(&["a", "b"]).into(), list(&["c", "d"]).into()].into()
+            ))
         );
     }
 
@@ -279,7 +303,15 @@ mod tests {
         map.insert("foo", text("c"));
         map.insert_as_list("foo", text("d"));
 
-        let expected = Tree::Seq([text("a"), text("b"), text("c"), text("d")].into());
+        let expected = Tree::Seq(
+            [
+                text("a").into(),
+                text("b").into(),
+                text("c").into(),
+                text("d").into(),
+            ]
+            .into(),
+        );
         assert_eq!(map.get("foo"), Some(&expected));
     }
 
@@ -312,7 +344,7 @@ mod tests {
 
         assert_eq!(
             map.get("foo"),
-            Some(&Tree::Seq([text("a"), text("b")].into()))
+            Some(&Tree::Seq([text("a").into(), text("b").into()].into()))
         );
     }
 
@@ -337,7 +369,7 @@ mod tests {
         let other = TreeMap::new();
         map.update(&other);
 
-        assert_eq!(map.get("foo"), Some(&Tree::Seq([text("a")].into())));
+        assert_eq!(map.get("foo"), Some(&Tree::Seq([text("a").into()].into())));
     }
 
     #[test]
@@ -351,7 +383,9 @@ mod tests {
 
         assert_eq!(
             map.get("foo"),
-            Some(&Tree::Seq([text("a"), seq(&["b", "c"])].into()))
+            Some(&Tree::Seq(
+                [text("a").into(), seq(&["b", "c"]).into()].into()
+            ))
         );
     }
 }
