@@ -220,7 +220,7 @@ pub trait Ctx: CtxI + Clone + Debug {
                 }
                 _ => {
                     self.reset(memo.mark);
-                    Ok(Yeap(self, memo.tree))
+                    Ok(Yeap(self.into(), memo.tree))
                 }
             };
         }
@@ -273,7 +273,7 @@ pub trait Ctx: CtxI + Clone + Debug {
                     }
                     lastmark = endmark;
                     lasttree = Rc::unwrap_or_clone(endtree);
-                    self = self.merge(ctx);
+                    self = self.merge(*ctx);
                     self.memoize(key, &lasttree.clone().into(), lastmark);
                 }
             }
@@ -294,6 +294,132 @@ pub trait Ctx: CtxI + Clone + Debug {
             ));
             return Err(nope);
         }
-        Ok(Yeap(self, lasttree.into()))
+        Ok(Yeap(self.into(), lasttree.into()))
+    }
+}
+
+impl<C: Ctx> CtxI for Box<C> {
+    #[inline]
+    fn cursor(&self) -> &dyn Cursor {
+        (**self).cursor()
+    }
+
+    #[inline]
+    fn callstack(&self) -> CallStack {
+        (**self).callstack()
+    }
+
+    #[inline]
+    fn cut_seen(&self) -> bool {
+        (**self).cut_seen()
+    }
+}
+
+impl<C: Ctx> Configurable for Box<C> {
+    fn configure(&mut self, cfg: &crate::cfg::Cfg) {
+        (**self).configure(cfg)
+    }
+}
+
+impl<C: Ctx> Ctx for Box<C> {
+    #[inline]
+    fn cursor_mut(&mut self) -> &mut dyn Cursor {
+        (**self).cursor_mut()
+    }
+
+    #[inline]
+    fn enter(&mut self, name: &str) {
+        (**self).enter(name)
+    }
+
+    #[inline]
+    fn leave(&mut self) {
+        (**self).leave()
+    }
+
+    #[inline]
+    fn track(&mut self, key: &MemoKey) -> usize {
+        (**self).track(key)
+    }
+
+    #[inline]
+    fn untrack(&mut self, key: &MemoKey) -> usize {
+        (**self).untrack(key)
+    }
+
+    #[inline]
+    fn tracer(&self) -> &dyn Tracer {
+        (**self).tracer()
+    }
+
+    #[inline]
+    fn intern(&mut self, s: &str) -> Str {
+        (**self).intern(s)
+    }
+
+    #[inline]
+    fn furthest_failure(&self) -> Option<DisasterReport> {
+        (**self).furthest_failure()
+    }
+
+    #[inline]
+    fn set_furthest_failure(&mut self, dis: &DisasterReport) {
+        (**self).set_furthest_failure(dis)
+    }
+
+    #[inline]
+    fn get_pattern(&mut self, pattern: &str) -> Pattern {
+        (**self).get_pattern(pattern)
+    }
+
+    #[inline]
+    fn memo(&mut self, key: &MemoKey) -> Option<Memo> {
+        (**self).memo(key)
+    }
+
+    #[inline]
+    fn memoize(&mut self, key: &MemoKey, tree: &Rc<Tree>, lastmark: usize) {
+        (**self).memoize(key, tree, lastmark)
+    }
+
+    #[inline]
+    fn clear_error_memos(&mut self) {
+        (**self).clear_error_memos()
+    }
+
+    #[inline]
+    fn cut(&mut self) {
+        (**self).cut()
+    }
+
+    #[inline]
+    fn clear_cut(&mut self) {
+        (**self).clear_cut()
+    }
+
+    #[inline]
+    fn prune_cache(&mut self) {
+        (**self).prune_cache()
+    }
+
+    #[inline]
+    fn is_keyword(&self, name: &str) -> bool {
+        (**self).is_keyword(name)
+    }
+
+    #[inline]
+    fn set_keywords(&mut self, keywords: &[Str]) {
+        (**self).set_keywords(keywords)
+    }
+
+    fn merge(self, other: Self) -> Self {
+        let this = *self;
+        let other = *other;
+        this.merge(other).into()
+    }
+
+    #[inline]
+    fn done(&self) -> bool {
+        (**self).done()
     }
 }

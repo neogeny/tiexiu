@@ -107,7 +107,7 @@ impl Rule {
             Ok(Yeap(ok_ctx, tree)) => {
                 let folded = Rc::unwrap_or_clone(tree).fold();
                 Ok(Yeap(
-                    ctx.merge(ok_ctx),
+                    ctx.merge(*ok_ctx).into(),
                     if self.params.is_empty() {
                         folded.into()
                     } else {

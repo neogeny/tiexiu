@@ -13,7 +13,7 @@ use std::rc::Rc;
 pub type ParseResult<C> = Result<Yeap<C>, Nope>;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Yeap<C: Ctx>(pub C, pub Rc<Tree>);
+pub struct Yeap<C: Ctx>(pub Box<C>, pub Rc<Tree>);
 
 #[derive(Clone, Debug)]
 pub struct DisasterReport {
@@ -103,7 +103,7 @@ impl Nope {
 
 impl<C: Ctx> Yeap<C> {
     #[inline]
-    pub fn ctx(self) -> C {
+    pub fn ctx(self) -> Box<C> {
         self.0
     }
 
@@ -151,7 +151,7 @@ mod tests {
 
         let tree = Tree::Text("hello".into());
         let ctx = StrCtx::new(StrCursor::new("hello"), &[]);
-        let yeap = Yeap(ctx, tree.into());
+        let yeap = Yeap(ctx.into(), tree.into());
         let rc: Rc<Tree> = yeap.tree();
         assert!(matches!(rc.as_ref(), Tree::Text(_)));
     }
