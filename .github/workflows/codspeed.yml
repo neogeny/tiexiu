@@ -23,17 +23,11 @@ jobs:
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install cargo-codspeed
-        run: cargo install cargo-codspeed --locked
-
       - name: rust cache
         uses: swatinem/rust-cache@v2
-
-      - name: Build the benchmark target(s)
-        run: cargo codspeed build --bench parsing
 
       - name: Run the benchmarks
         uses: CodSpeedHQ/action@v4
         with:
           mode: simulation
-          run: cargo codspeed run --bench parsing
+          run: cargo bench --bench parsing
