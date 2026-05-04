@@ -70,7 +70,7 @@ impl PrettyPrint for Grammar {
                 CfgKey::NameChars(v) => Some(format!("@@{} :: \"{}\"", STR_NAMECHARS, v)),
 
                 CfgKey::IgnoreCase => Some(format!("@@{} :: True", STR_IGNORECASE)),
-                CfgKey::NoNameGuard => Some(format!("@@{} :: False", STR_NAMEGUARD)),
+                CfgKey::NameGuard => Some(format!("@@{} :: True", STR_NAMEGUARD)),
                 CfgKey::NoLeftRecursion => Some(format!("@@{} :: False", STR_LEFTREC)),
                 CfgKey::NoParseInfo => Some(format!("@@{} :: False", STR_PARSEINFO)),
                 CfgKey::NoMemoization => Some(format!("@@{} :: False", STR_MEMOIZATION)),
