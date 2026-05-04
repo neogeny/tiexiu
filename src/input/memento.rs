@@ -1,9 +1,11 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::engine::CtxI;
 use crate::engine::state::CallStack;
 use crate::types::Str;
 use console::style;
+use std::rc::Rc;
 
 #[derive(Clone)]
 pub struct Memento {
@@ -12,7 +14,7 @@ pub struct Memento {
     /// The specific error (e.g., "expected semicolon")
     pub msg: Str,
     /// The full input text. Stored as a reference/Arc to avoid copying.
-    pub text: Str,
+    pub text: Rc<str>,
     /// The absolute byte offset of the error
     pub mark: usize,
     /// The start of the relevant span for highlighting
@@ -22,6 +24,17 @@ pub struct Memento {
 }
 
 impl Memento {
+    pub fn new(start: usize, ctx: &dyn CtxI, msg: &str) -> Self {
+        Self {
+            input_source: ctx.cursor().input_source().into(),
+            start,
+            mark: ctx.mark(),
+            msg: msg.into(),
+            text: ctx.cursor().as_str().into(),
+            callstack: ctx.callstack(),
+        }
+    }
+
     fn render(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let (line_num, col_num) = Self::pos_at(&self.text, self.mark);
 

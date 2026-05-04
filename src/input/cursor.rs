@@ -6,6 +6,7 @@ use crate::input::tokenizing::TokenizingPatterns;
 use crate::types::Str;
 use crate::util::pyre::Pattern;
 use std::fmt::Debug;
+use std::rc::Rc;
 
 pub struct Location {
     pub source: Str,
@@ -17,6 +18,7 @@ pub trait Cursor: Debug + Configurable {
     fn mark(&self) -> usize;
     fn reset(&mut self, mark: usize);
     fn as_str(&self) -> &str;
+    fn as_ref(&self) -> Rc<str>;
     fn ignore_case(&self) -> bool;
     fn name_guard(&self) -> bool;
 

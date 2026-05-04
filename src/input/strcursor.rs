@@ -6,7 +6,6 @@ use super::error::Error;
 use super::tokenizing::TokenizingPatterns;
 use crate::cfg::keys::config;
 use crate::cfg::*;
-use crate::types::Str;
 use crate::util::newlines::{take_linebreak_len, take_non_newline_whitespace_len};
 use crate::util::pyre::Pattern;
 use std::rc::Rc;
@@ -21,7 +20,7 @@ pub struct CursorHeavy {
 
 #[derive(Debug, Clone)]
 pub struct StrCursor {
-    text: Str,
+    text: Rc<str>,
     offset: usize,
     heavy: Rc<CursorHeavy>,
 }
@@ -81,6 +80,10 @@ impl StrCursor {
 
     #[inline]
     fn eat_pattern(&mut self, pat: &Pattern) -> bool {
+        if self.at_end() || pat.pattern().is_empty() {
+            return false;
+        }
+
         let text = &self.text[self.offset..];
         if let Some(mat) = pat.match_(text) {
             self.offset += mat.end(None) as usize;
@@ -150,6 +153,9 @@ impl Cursor for StrCursor {
     fn as_str(&self) -> &str {
         &self.text
     }
+    fn as_ref(&self) -> Rc<str> {
+        self.text.clone()
+    }
 
     fn ignore_case(&self) -> bool {
         self.heavy.ignorecase
@@ -210,9 +216,23 @@ impl Cursor for StrCursor {
     }
 
     fn next_token(&mut self) {
-        let skip_all = self.heavy.patterns.skip_all.clone();
-        if let Some(pat) = skip_all {
-            self.eat_pattern(&pat);
+        let p = self.heavy.patterns.clone();
+
+        let mut last_offset = usize::MAX;
+        while self.offset != last_offset {
+            last_offset = self.offset;
+
+            self.eat_pattern(&p.wsp);
+
+            if self.eat_pattern(&p.eol) {
+                self.eat_pattern(&p.wsp);
+            }
+
+            self.eat_pattern(&p.cmt);
+
+            if self.at_end() {
+                break;
+            }
         }
     }
 

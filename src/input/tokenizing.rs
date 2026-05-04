@@ -12,7 +12,6 @@ pub struct TokenizingPatterns {
     pub wsp: Pattern,
     pub cmt: Pattern,
     pub eol: Pattern,
-    pub skip_all: Option<Pattern>,
 }
 
 impl TokenizingPatterns {
@@ -75,19 +74,7 @@ impl TokenizingPatterns {
         if !eol.is_empty() {
             parts.push(format!("(?:{})", eol.pattern()));
         }
-
-        let mut skip_all = None;
-        if !parts.is_empty() {
-            let combined = format!(r"(?:{})+", parts.join("|"));
-            skip_all = Some(Self::compile("skip_all", &combined)?);
-        };
-
-        Ok(Self {
-            wsp,
-            cmt,
-            eol,
-            skip_all,
-        })
+        Ok(Self { wsp, cmt, eol })
     }
 }
 
