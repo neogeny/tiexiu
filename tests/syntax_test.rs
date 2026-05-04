@@ -93,7 +93,7 @@ fn test_optional_closure() -> Result<()> {
     "#;
 
     let model = compile(grammar, &[])?;
-    let ast = parse_input(&model, "x y y z z", &[])?;
+    let ast = parse_input(&model, "xyyzz", &[])?;
     assert_eq!(
         ast,
         m(&[("foo", s(&[t("x"), l(&[t("y"), t("y")]), t("z"), t("z")]))])
@@ -111,15 +111,18 @@ fn test_optional_sequence() -> Result<()> {
         start = '1' ['2' '3'] '4' $ ;
     "#;
 
-    let model = compile(grammar, &[CfgKey::Wsp("".to_string())])?;
-    let mut ast;
-
-    ast = parse_input(&model, "1 2 3 4", &[CfgKey::Wsp("".to_string())])?;
+    let model = compile(grammar, &[])?;
+    let ast = parse_input(&model, "1234", &[])?;
     assert_eq!(ast.to_json(), value!(["1", "2", "3", "4"]));
     assert_eq!(ast, l(&[t("1"), t("2"), t("3"), t("4")]));
 
-    ast = parse_input(&model, "1     4", &[CfgKey::Wsp("".to_string())])?;
-    assert_eq!(ast, l(&[t("1"), t("4")]));
+    let grammar = r#"
+        start = '1' foo:['2' '3'] '4' $ ;
+    "#;
+
+    let model = compile(grammar, &[])?;
+    let ast = parse_input(&model, "1234", &[])?;
+    assert_eq!(ast.to_json(), object! {"foo": ["2", "3"]});
 
     Ok(())
 }
@@ -131,7 +134,7 @@ fn test_group_ast() -> Result<()> {
     "#;
 
     let model = compile(grammar, &[])?;
-    let ast = parse_input(&model, "1 2 3 4", &[])?;
+    let ast = parse_input(&model, "1234", &[])?;
     assert_eq!(ast.to_json(), value!(["1", "2", "3", "4"]));
     assert_eq!(ast, l(&[t("1"), t("2"), t("3"), t("4")]));
     Ok(())

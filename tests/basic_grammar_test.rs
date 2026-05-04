@@ -41,7 +41,7 @@ fn rule_references() -> Result<()> {
         start: 'hello' 'world'
     "#;
     let grammar = compile(grammar, &[])?;
-    let tree = parse_input(&grammar, "hello world", &[])?;
+    let tree = parse_input(&grammar, "helloworld", &[])?;
     assert_eq!(tree.to_json(), array!["hello", "world"]);
     Ok(())
 }

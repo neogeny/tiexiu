@@ -420,7 +420,7 @@ mod compilation {
             &[],
         )?;
 
-        let tree = parse_input(&grammar, "hello world", &[])?;
+        let tree = parse_input(&grammar, "helloworld", &[])?;
         let _val = tree.to_json();
         Ok(())
     }
