@@ -89,8 +89,8 @@ impl Exp {
             }
             ExpKind::Fail => Err(ctx.failure(start, Fail)),
             ExpKind::Dot => {
-                if ctx.next() {
-                    Ok(Yeap(ctx.into(), Tree::Nil.into()))
+                if let Some(c) = ctx.next() {
+                    Ok(Yeap(ctx.into(), Tree::text(&c.to_string()).into()))
                 } else {
                     Err(ctx.failure(start, NoMoreInput))
                 }
@@ -177,7 +177,7 @@ impl Exp {
             ExpKind::SkipTo(exp) => loop {
                 match exp.parse(ctx.clone()) {
                     Err(nope) => {
-                        if !ctx.dot() {
+                        if ctx.dot().is_none() {
                             return Err(nope);
                         }
                     }

@@ -76,12 +76,12 @@ pub trait Ctx: CtxI + Clone + Debug {
         result
     }
 
-    fn dot(&mut self) -> bool {
+    fn dot(&mut self) -> Option<char> {
         self.next()
     }
 
-    fn next(&mut self) -> bool {
-        self.cursor_mut().next().is_some()
+    fn next(&mut self) -> Option<char> {
+        self.cursor_mut().next()
     }
 
     fn get_pattern(&mut self, pattern: &str) -> Pattern;
