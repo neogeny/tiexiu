@@ -31,8 +31,7 @@ impl CfgBoxWrapper for Cfg {
     }
 }
 
-// NOTE! Order matters here! Debug < Mode < Trace
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
 pub enum CfgKey {
     #[default]
     None,
@@ -79,17 +78,27 @@ impl Cfg {
     /// Merges configurations where `other` overrides `self` by variant type.
     /// For entries with the same variant (e.g. Eol("a") vs Eol("b")),
     /// the value from `other` is kept.
+    /// Preserves insertion order: self's items first, then other's new items,
+    /// with other's updates to same-variant keys replacing self's in place.
     pub fn override_merge(&self, other: &Cfg) -> Self {
-        use std::collections::BTreeMap;
-        let mut map: BTreeMap<u8, CfgKey> = BTreeMap::new();
+        let mut result = Vec::with_capacity(self.len() + other.len());
+        // Build a lookup of which variant ordinals other will override
+        let mut override_ords = std::collections::HashSet::new();
+        for k in other.iter() {
+            override_ords.insert(Self::variant_ord(k));
+        }
+        // Take self's items that won't be overridden
         for k in self.iter() {
             let v = Self::variant_ord(k);
-            map.entry(v).or_insert_with(|| k.clone());
+            if !override_ords.contains(&v) {
+                result.push(k.clone());
+            }
         }
+        // Add all of other's items (preserving insertion order)
         for k in other.iter() {
-            map.insert(Self::variant_ord(k), k.clone());
+            result.push(k.clone());
         }
-        Cfg::new(&map.into_values().collect::<Vec<_>>())
+        Self::from_boxed_slice(result.into_boxed_slice())
     }
 
     fn variant_ord(k: &CfgKey) -> u8 {

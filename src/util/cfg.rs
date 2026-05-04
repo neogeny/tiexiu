@@ -1,7 +1,6 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use std::collections::BTreeSet;
 use std::ops::Deref;
 use std::{env, fmt};
 
@@ -10,37 +9,31 @@ pub type CfgA<K> = [K];
 
 /// An owned, optimized configuration container.
 /// Invariants:
-/// 1. Sorted by value (for binary search).
-/// 2. Unique values.
+/// 1. Unique values.
+/// 2. Immutable internals (value-based API).
 #[derive(Clone, Default)]
-pub struct Cfg<K: Ord + Clone + Default + Send + Sync> {
-    cfga: Box<CfgA<K>>,
+pub struct Cfg<K: Clone + Default + Send + Sync> {
+    cfga: Box<[K]>,
 }
 
-unsafe impl<K: Ord + Clone + Default + Send + Sync> Send for Cfg<K> {}
-unsafe impl<K: Ord + Clone + Default + Send + Sync> Sync for Cfg<K> {}
+unsafe impl<K: Clone + Default + Send + Sync> Send for Cfg<K> {}
+unsafe impl<K: Clone + Default + Send + Sync> Sync for Cfg<K> {}
 
-// impl<K: Ord + Clone + Default> From<&CfgA<K>> for CfgBox<K> {
-//     fn from(cfg: &CfgA<K>) -> Self {
-//         Self::new(cfg)
-//     }
-// }
-
-impl<'a, K: Ord + Clone + Default + Send + Sync, const N: usize> From<&'a [K; N]> for Cfg<K> {
+impl<'a, K: Clone + Default + Send + Sync + PartialEq, const N: usize> From<&'a [K; N]> for Cfg<K> {
     fn from(options: &'a [K; N]) -> Self {
         Self::new(options.as_slice())
     }
 }
 
 /// Has use for a Cfg
-pub trait Configurable<K: Ord + Clone + Default + Send + Sync> {
+pub trait Configurable<K: Clone + Default + Send + Sync> {
     fn configure(&mut self, cfg: &Cfg<K>) {
         let _ = cfg;
     }
 }
 
 /// Maps environment key-value pairs to a configuration type K.
-pub trait CfgMapper<K: Ord + Clone + Default + Send + Sync> {
+pub trait CfgMapper<K: Clone + Default + Send + Sync + PartialEq> {
     fn map(key: &str, value: &str) -> Option<K>;
     fn unmap(_value: &K) -> Option<(&str, &str)> {
         None
@@ -61,9 +54,9 @@ pub trait CfgMapper<K: Ord + Clone + Default + Send + Sync> {
     }
 }
 
-impl<K: Ord + Clone + Default + Send + Sync> CfgMapper<K> for Cfg<K>
+impl<K> CfgMapper<K> for Cfg<K>
 where
-    K: CfgMapper<K>,
+    K: Clone + Default + Send + Sync + PartialEq + CfgMapper<K>,
 {
     fn map(key: &str, value: &str) -> Option<K> {
         K::map(key, value)
@@ -74,28 +67,42 @@ where
     }
 }
 
-impl<K: Ord + Clone + Default + Send + Sync> FromIterator<K> for Cfg<K> {
+impl<K: Clone + Default + Send + Sync + PartialEq> FromIterator<K> for Cfg<K> {
     fn from_iter<I: IntoIterator<Item = K>>(iter: I) -> Self {
-        let set: BTreeSet<K> = iter.into_iter().collect();
+        let mut vec = Vec::new();
+        for item in iter {
+            if !vec.contains(&item) {
+                vec.push(item);
+            }
+        }
         Self {
-            cfga: set.into_iter().collect::<Vec<_>>().into_boxed_slice(),
+            cfga: vec.into_boxed_slice(),
         }
     }
 }
 
-impl<K: Ord + Clone + Default + Send + Sync> Cfg<K> {
-    /// Creates a new Cfg ensuring all invariants (Sorted, Unique).
+impl<K: Clone + Default + Send + Sync + PartialEq> Cfg<K> {
+    /// Creates a new Cfg ensuring all invariants (Unique).
     pub fn new(options: &CfgA<K>) -> Self {
-        let set: BTreeSet<K> = options.iter().cloned().collect();
+        let mut vec = Vec::with_capacity(options.len());
+        for opt in options.iter() {
+            if !vec.contains(opt) {
+                vec.push(opt.clone());
+            }
+        }
         Self {
-            cfga: set.into_iter().collect::<Vec<_>>().into_boxed_slice(),
+            cfga: vec.into_boxed_slice(),
         }
     }
 
+    #[allow(clippy::boxed_local)]
     pub fn from_boxed_slice(options: Box<[K]>) -> Self {
-        let mut vec = options.into_vec();
-        vec.sort();
-        vec.dedup();
+        let mut vec = Vec::with_capacity(options.len());
+        for opt in options.iter() {
+            if !vec.contains(opt) {
+                vec.push(opt.clone());
+            }
+        }
         Self {
             cfga: vec.into_boxed_slice(),
         }
@@ -103,11 +110,14 @@ impl<K: Ord + Clone + Default + Send + Sync> Cfg<K> {
 
     /// Merges two configurations (Set Union).
     pub fn merge(&self, other: &Cfg<K>) -> Self {
-        let mut set: BTreeSet<K> = self.cfga.iter().cloned().collect();
-        set.extend(other.iter().cloned());
-
+        let mut vec = self.cfga.to_vec();
+        for opt in other.iter() {
+            if !vec.contains(opt) {
+                vec.push(opt.clone());
+            }
+        }
         Self {
-            cfga: set.into_iter().collect::<Vec<_>>().into_boxed_slice(),
+            cfga: vec.into_boxed_slice(),
         }
     }
 
@@ -115,14 +125,20 @@ impl<K: Ord + Clone + Default + Send + Sync> Cfg<K> {
         if self.contains(&key) {
             self.clone()
         } else {
-            self.merge(&Cfg::new(&[key]))
+            let mut vec = self.cfga.to_vec();
+            vec.push(key);
+            Self {
+                cfga: vec.into_boxed_slice(),
+            }
         }
     }
 
     pub fn contains(&self, key: &K) -> bool {
-        self.cfga.binary_search(key).is_ok()
+        self.cfga.iter().any(|k| k == key)
     }
+}
 
+impl<K: Clone + Default + Send + Sync> Cfg<K> {
     pub fn is_empty(&self) -> bool {
         self.cfga.is_empty()
     }
@@ -136,14 +152,14 @@ impl<K: Ord + Clone + Default + Send + Sync> Cfg<K> {
     }
 }
 
-impl<K: Ord + Clone + Default + Send + Sync> Deref for Cfg<K> {
+impl<K: Clone + Default + Send + Sync> Deref for Cfg<K> {
     type Target = [K];
     fn deref(&self) -> &Self::Target {
         &self.cfga
     }
 }
 
-impl<K: Ord + Clone + Default + Send + Sync + fmt::Debug> fmt::Debug for Cfg<K> {
+impl<K: Clone + Default + Send + Sync + fmt::Debug> fmt::Debug for Cfg<K> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_set().entries(self.iter()).finish()
     }
@@ -154,7 +170,7 @@ mod tests {
     use super::*;
     use crate::Result;
 
-    #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Default)]
+    #[derive(Debug, Clone, PartialEq, Default)]
     enum TestOpt {
         #[default]
         None,
@@ -190,8 +206,9 @@ mod tests {
         assert!(cfg.contains(&TestOpt::Strict));
         assert!(!cfg.contains(&TestOpt::Memoize));
 
-        // Verify sorting
-        assert!(cfg.cfga[0] < cfg.cfga[1]);
+        // Verify insertion order preserved
+        assert_eq!(cfg.cfga[0], TestOpt::Trace);
+        assert_eq!(cfg.cfga[1], TestOpt::Strict);
         Ok(())
     }
 
@@ -218,7 +235,6 @@ mod tests {
         let cfg: Cfg<TestOpt> = TestOpt::load_from_env("TEST_");
         assert!(cfg.contains(&TestOpt::Trace));
         assert!(cfg.contains(&TestOpt::Strict));
-        assert_eq!(cfg.cfga.len(), 2);
         Ok(())
     }
 
@@ -232,23 +248,23 @@ mod tests {
     #[test]
     fn test_conversions() -> Result<()> {
         let options_a = [TestOpt::Trace, TestOpt::Debug];
-        let cfg_from_a: Cfg<TestOpt> = (&options_a).into(); // CfgA -> Cfg
+        let cfg_from_a: Cfg<TestOpt> = (&options_a).into();
         assert!(cfg_from_a.contains(&TestOpt::Trace));
 
-        let cfg_new = Cfg::new(&options_a); // CfgA -> Cfg via new
+        let cfg_new = Cfg::new(&options_a);
         assert!(cfg_new.contains(&TestOpt::Debug));
 
-        let slice_from_cfg: &[TestOpt] = &cfg_from_a; // Cfg -> &[K] via Deref
+        let slice_from_cfg: &[TestOpt] = &cfg_from_a;
         assert_eq!(slice_from_cfg.len(), 2);
 
-        let slice_from_as_slice = cfg_new.as_slice(); // Cfg -> &[K] via as_slice
+        let slice_from_as_slice = cfg_new.as_slice();
         assert_eq!(slice_from_as_slice.len(), 2);
 
-        let iter_from_cfg = cfg_from_a.iter(); // Cfg -> Iterator
+        let iter_from_cfg = cfg_from_a.iter();
         assert_eq!(iter_from_cfg.count(), 2);
 
         let vec_from_iter: Cfg<TestOpt> =
-            vec![TestOpt::Trace, TestOpt::Memoize].into_iter().collect(); // Vec<K> -> Cfg via FromIterator
+            vec![TestOpt::Trace, TestOpt::Memoize].into_iter().collect();
         assert!(vec_from_iter.contains(&TestOpt::Memoize));
         Ok(())
     }
