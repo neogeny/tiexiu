@@ -26,19 +26,23 @@ jobs:
           enable-cache: true
           python-version: "3.12"
 
-      - name: Setup Rust toolchain and cargo-codspeed
-        uses: moonrepo/setup-rust@v1
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
         with:
-          channel: stable
-          cache-target: release
-          bins: cargo-codspeed
+          components: rustfmt, clippy
+
+      - name: Install cargo-codspeed
+        run: cargo install cargo-codspeed --locked
+
+      - name: rust cache
+        uses: swatinem/rust-cache@v2
 
       - name: Build the benchmark target(s)
         # Using 'uv run' ensures PyO3 finds the correct Python interpreter/lib
         run: uv run cargo codspeed build --bench parsing
 
       - name: Run the benchmarks
-        uses: CodSpeedHQ/action@v3
+        uses: CodSpeedHQ/action@v4
         with:
           mode: simulation
           run: uv run cargo codspeed run --bench parsing
