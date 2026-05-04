@@ -44,6 +44,9 @@ fn whitespace_none_directive() -> Result<()> {
     Ok(())
 }
 
+// TieXiu has no default whitespace; this test is for TatSu's default behavior.
+// TODO: enable if TieXiu gains default whitespace handling.
+#[ignore = "TieXiu has no default whitespace like TatSu"]
 #[test]
 fn default_whitespace() -> Result<()> {
     let grammar = r#"

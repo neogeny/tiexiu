@@ -80,6 +80,7 @@ fn test_start() -> Result<()> {
 #[test]
 fn test_skip_whitespace() -> Result<()> {
     let grammar = r#"
+        @@whitespace :: /\s+/
         statement = 'FOO' subject $ ;
         subject = name:id ;
         id = /[a-z]+/ ;

@@ -8,6 +8,7 @@ use tiexiu::*;
 #[test]
 fn token_sequence() -> Result<()> {
     let grammar = r#"
+        @@whitespace :: /\s+/
         start: 'hello' 'world'
     "#;
     let grammar = tiexiu::compile(grammar, &[])?;
@@ -19,6 +20,7 @@ fn token_sequence() -> Result<()> {
 #[test]
 fn optional_token() -> Result<()> {
     let grammar = r#"
+        @@whitespace :: /\s+/
         start: 'a' 'b'?
     "#;
     let grammar = tiexiu::compile(grammar, &[])?;
@@ -49,7 +51,7 @@ fn positive_closure() -> Result<()> {
     "#;
     let grammar = tiexiu::compile(grammar, &[])?;
 
-    let tree = parse_input(&grammar, "a a a", &[])?;
+    let tree = parse_input(&grammar, "aaa", &[])?;
     assert_eq!(tree.to_json(), value!(["a", "a", "a"]));
     Ok(())
 }

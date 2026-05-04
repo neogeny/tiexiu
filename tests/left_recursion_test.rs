@@ -12,6 +12,7 @@ use tiexiu::api::compile;
 fn test_direct_left_recursion() -> Result<()> {
     let grammar = r#"
         @@left_recursion :: True
+        @@whitespace :: /\s+/
         start = expression $ ;
         expression = expression '+' factor | expression '-' factor | factor ;
         factor = number ;

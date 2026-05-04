@@ -7,6 +7,7 @@ use tiexiu::*;
 fn calculator_grammar() -> Result<()> {
     let grammar = r#"
         @@grammar :: Calc
+        @@whitespace :: /\s+/
         start: expression $
 
         expression:
@@ -37,6 +38,8 @@ fn calculator_grammar() -> Result<()> {
 fn json_like_grammar() -> Result<()> {
     let grammar = r#"
         @@grammar :: MiniJSON
+        @@nameguard :: False
+        @@whitespace :: /\s+/
         start: value $
 
         value: object | array | string | number | 'true' | 'false' | 'null'
@@ -67,6 +70,8 @@ fn json_like_grammar() -> Result<()> {
 fn lisp_like_grammar() -> Result<()> {
     let grammar = r#"
         @@grammar :: Lisp
+        @@nameguard :: False
+        @@whitespace :: /\s+/
         start: sexp $
 
         sexp: atom | list

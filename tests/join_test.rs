@@ -11,6 +11,8 @@ use tiexiu::api::compile;
 #[test]
 fn test_positive_join() -> Result<()> {
     let grammar = r#"
+        @@whitespace :: /\s+/
+        @@nameguard :: False
         start = ','%{'x' 'y'}+ ;
     "#;
     let model = compile(grammar, &[])?;

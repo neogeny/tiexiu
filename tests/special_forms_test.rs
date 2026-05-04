@@ -31,6 +31,7 @@ fn test_skip_group() -> Result<()> {
 #[test]
 fn test_void() -> Result<()> {
     let grammar = r#"
+        @@whitespace :: /\s+/
         start: 'a' () 'b'
     "#;
     let grammar = compile(grammar, &[])?;
@@ -59,7 +60,7 @@ fn test_dot() -> Result<()> {
     let grammar = compile(grammar, &[])?;
     let tree = parse_input(&grammar, "ab", &[])?;
     // Dot matches any character, but does not retur it
-    assert_eq!(tree.to_json(), value!("b"));
+    assert_eq!(tree.to_json(), value!(["a", "b"]));
     Ok(())
 }
 

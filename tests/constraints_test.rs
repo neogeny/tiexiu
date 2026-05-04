@@ -31,6 +31,7 @@ fn negative_lookahead() -> Result<()> {
 #[test]
 fn cut() -> Result<()> {
     let grammar = r#"
+        @@whitespace :: /\s+/
         start: 'a'~'b'
     "#;
     let grammar = tiexiu::compile(grammar, &[])?;

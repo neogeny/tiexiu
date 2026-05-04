@@ -29,6 +29,7 @@ fn basic_position_tracking() -> Result<()> {
 #[test]
 fn multiline_input() -> Result<()> {
     let grammar = r#"
+        @@whitespace :: /\s+/
         start: 'hello' 'world'
     "#;
     let grammar = compile(grammar, &[])?;

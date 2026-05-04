@@ -7,6 +7,7 @@ fn grammar_to_json_round_trip() -> Result<()> {
     // With semicolons between rules - should work
     let grammar_text = r#"
         @@grammar :: Test
+        @@whitespace :: /\s+/
         start: foo bar;
         foo: 'x';
         bar: 'y';
