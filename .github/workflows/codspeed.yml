@@ -20,16 +20,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-        with:
-          enable-cache: true
-          python-version: "3.12"
-
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
 
       - name: Install cargo-codspeed
         run: cargo install cargo-codspeed --locked
@@ -38,11 +30,10 @@ jobs:
         uses: swatinem/rust-cache@v2
 
       - name: Build the benchmark target(s)
-        # Using 'uv run' ensures PyO3 finds the correct Python interpreter/lib
-        run: uv run cargo codspeed build --bench parsing
+        run: cargo codspeed build --bench parsing
 
       - name: Run the benchmarks
         uses: CodSpeedHQ/action@v4
         with:
           mode: simulation
-          run: uv run cargo codspeed run --bench parsing
+          run: cargo codspeed run --bench parsing
