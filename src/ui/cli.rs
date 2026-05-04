@@ -13,7 +13,7 @@ use tiexiu::api::{
 use tiexiu::cfg::{CfgA, Heartbeat, HeartbeatRef};
 use tiexiu::peg::pretty::*;
 use tiexiu::tools::rails::*;
-use tiexiu::{boot_grammar, config, CfgKey, Grammar, Result};
+use tiexiu::{CfgKey, Grammar, Result, boot_grammar, config};
 
 #[derive(Debug)]
 struct CliHeartbeat {
@@ -89,15 +89,16 @@ impl ProgressUI {
     }
 
     fn add_file(&self, name: &str) -> FileProgress {
-        let pb = self.mp.add(indicatif::ProgressBar::new(0)
-            .with_style(
-                indicatif::ProgressStyle::with_template(
-                    "  {prefix:.bold} [{wide_bar:.green/black}] {pos}/{len} bytes",
+        let pb = self.mp.add(
+            indicatif::ProgressBar::new(0)
+                .with_style(
+                    indicatif::ProgressStyle::with_template(
+                        "  {prefix:.bold} [{wide_bar:.green/black}] {pos}/{len} bytes",
+                    )
+                    .unwrap()
+                    .progress_chars("▓▒░"),
                 )
-                .unwrap()
-                .progress_chars("▓▒░"),
-            )
-            .with_prefix(name.to_string()),
+                .with_prefix(name.to_string()),
         );
         FileProgress::new(pb)
     }
@@ -384,7 +385,7 @@ pub fn pygmentize(content: &str, extension: &str, use_color: bool) -> Result<Str
     use syntect::easy::HighlightLines;
     use syntect::highlighting::ThemeSet;
     use syntect::parsing::SyntaxSet;
-    use syntect::util::{as_24_bit_terminal_escaped, LinesWithEndings};
+    use syntect::util::{LinesWithEndings, as_24_bit_terminal_escaped};
 
     let ps = SyntaxSet::load_defaults_newlines();
     let ts = ThemeSet::load_defaults();
