@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::ParseError;
 use crate::cfg::*;
 use crate::peg::Grammar;
 use crate::peg::pretty::PrettyPrint;
@@ -35,6 +36,11 @@ impl GrammarPy {
                 let value_str = value.str().map(|s| s.to_string()).unwrap_or_default();
                 if let Some(opt) = CfgKey::map(&key_str, &value_str) {
                     cfg.push(opt);
+                } else {
+                    return Err(pyo3::exceptions::PyValueError::new_err(format!(
+                        "unknown configuration option: {}",
+                        key_str
+                    )));
                 }
             }
             cfg
@@ -42,7 +48,7 @@ impl GrammarPy {
             Vec::new()
         };
         let tree = crate::api::parse_input(&self.0, text, &cfg)
-            .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+            .map_err(|e| ParseError::new_err(e.to_string()))?;
         crate::python::tree::tree_to_py(tree)
     }
 }

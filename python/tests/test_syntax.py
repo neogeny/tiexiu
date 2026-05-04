@@ -354,5 +354,5 @@ def test_deprecated_comments_override_failures():
         # This comment should be stripped
         a
     """
-    result = tiexiu.parse(grammar, text, eol_comments_re=r"(?m)#[^\n]*$")
+    result = tiexiu.parse(grammar, text, eol_comments=r"(?m)#[^\n]*$")
     assert result is not None

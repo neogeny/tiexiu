@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::cfg::*;
-use crate::input::Error;
 use crate::input::tokenizing::TokenizingPatterns;
 use crate::types::Str;
 use crate::util::pyre::Pattern;
@@ -57,23 +56,5 @@ pub trait Cursor: Debug + Configurable {
         }
     }
 
-    fn set_tokenizing(&mut self, patterns: &TokenizingPatterns);
-
-    fn tokenizing_from_cfg(&self, cfg: &Cfg) -> Result<TokenizingPatterns, Error> {
-        type P = TokenizingPatterns;
-        let mut wsp = P::DEFAULT_WSP;
-        let mut cmt = P::DEFAULT_CMT;
-        let mut eol = P::DEFAULT_EOL;
-
-        for opt in cfg.iter() {
-            match opt {
-                CfgKey::Wsp(p) => wsp = p.as_str(),
-                CfgKey::Cmt(p) => cmt = p.as_str(),
-                CfgKey::Eol(p) => eol = p.as_str(),
-                _ => {}
-            }
-        }
-
-        TokenizingPatterns::try_new(wsp, cmt, eol)
-    }
+    fn set_patterns(&mut self, patterns: &TokenizingPatterns);
 }

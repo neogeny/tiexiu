@@ -110,8 +110,8 @@ impl StrCursor {
 impl Configurable for StrCursor {
     fn configure(&mut self, cfg: &Cfg) {
         let cfg = config(cfg);
-        if let Ok(patterns) = self.tokenizing_from_cfg(&cfg) {
-            self.set_tokenizing(&patterns);
+        if let Ok(patterns) = TokenizingPatterns::from_cfg(&cfg) {
+            self.set_patterns(&patterns);
         }
         let source = cfg
             .iter()
@@ -216,7 +216,7 @@ impl Cursor for StrCursor {
         }
     }
 
-    fn set_tokenizing(&mut self, patterns: &TokenizingPatterns) {
+    fn set_patterns(&mut self, patterns: &TokenizingPatterns) {
         self.heavy = CursorHeavy {
             ignorecase: self.heavy.ignorecase,
             nameguard: self.heavy.nameguard,

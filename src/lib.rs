@@ -33,11 +33,15 @@ pub use trees::TreeMap;
 use pyo3::prelude::*;
 
 #[cfg(feature = "pyo3")]
+pyo3::create_exception!(_tiexiu, ParseError, pyo3::exceptions::PyException);
+
+#[cfg(feature = "pyo3")]
 pub(crate) mod python;
 
 #[cfg(feature = "pyo3")]
 #[pymodule(name = "_tiexiu")]
 mod tiexiu_any_name {
+    use super::ParseError;
     use super::python::grammar::GrammarPy;
     use super::python::pyfnapi;
     use super::python::pyooapi::TieXiuPy;
@@ -46,6 +50,7 @@ mod tiexiu_any_name {
     #[pymodule_init]
     fn init(m: &Bound<'_, PyModule>) -> PyResult<()> {
         m.add("__version__", env!("CARGO_PKG_VERSION"))?;
+        m.add("ParseError", m.py().get_type::<ParseError>())?;
         m.add_function(wrap_pyfunction!(pyfnapi::pegapi, m)?)?;
         m.add_function(wrap_pyfunction!(pyfnapi::parse_grammar, m)?)?;
         m.add_function(wrap_pyfunction!(pyfnapi::parse_grammar_to_json, m)?)?;

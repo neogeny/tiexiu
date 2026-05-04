@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::cfg::constants::*;
+use crate::cfg::*;
 use crate::input::Error;
-use crate::util::pyre::Pattern;
 use crate::util::pyre::traits::Pattern as _;
+use crate::util::pyre::Pattern;
 
 #[derive(Clone, Debug)]
 pub struct TokenizingPatterns {
@@ -32,6 +33,24 @@ impl TokenizingPatterns {
         Ok(p)
     }
 
+    pub fn from_cfg(cfg: &Cfg) -> Result<Self, Error> {
+        type P = TokenizingPatterns;
+        let mut wsp = P::DEFAULT_WSP;
+        let mut cmt = P::DEFAULT_CMT;
+        let mut eol = P::DEFAULT_EOL;
+
+        for opt in cfg.iter() {
+            match opt {
+                CfgKey::Wsp(p) => wsp = p.as_str(),
+                CfgKey::Cmt(p) => cmt = p.as_str(),
+                CfgKey::Eol(p) => eol = p.as_str(),
+                _ => {}
+            }
+        }
+
+        TokenizingPatterns::try_new(wsp, cmt, eol)
+    }
+
     pub fn validate_no_empty_match(pattern: &Pattern, kind: &str) {
         assert!(
             !pattern.matches_empty(),
@@ -57,11 +76,15 @@ impl TokenizingPatterns {
             parts.push(format!("(?:{})", eol.pattern()));
         }
 
-        let skip_all = if parts.is_empty() {
-            None
-        } else {
-            let combined = format!(r"(?:{})+", parts.join("|"));
-            Some(Self::compile("skip_all", &combined)?)
+        let mut skip_all = None;
+        if !parts.is_empty() {
+            let non_empty = parts.into_iter()
+                .filter(|p| !p.is_empty())
+                .collect::<Vec<_>>(); 
+            if !non_empty.is_empty() {
+                let combined = format!(r"(?:{})+", non_empty.join("|"));
+                skip_all = Some(Self::compile("skip_all", &combined)?);
+            }
         };
 
         Ok(Self {
