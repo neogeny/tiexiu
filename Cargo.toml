@@ -47,10 +47,10 @@ serde_json = [
 cli = [
     "dep:clap",
     "dep:syntect",
+    "dep:indicatif",
 ]
 pyo3 = ["dep:pyo3", "serde"]
 dhat = ["dep:dhat"]
-indicatif = ["dep:indicatif"]
 
 #interpolation = ["dep:strfmt", "dep:evalexpr"]
 
