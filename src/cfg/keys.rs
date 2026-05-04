@@ -49,7 +49,7 @@ pub enum CfgKey {
     NameChars(String),
 
     IgnoreCase,
-    NoNameGuard,
+    NameGuard,
     NoLeftRecursion,
     NoParseInfo,
     NoMemoization,
@@ -104,7 +104,7 @@ impl Cfg {
             CfgKey::Eol(_) => 7,
             CfgKey::NameChars(_) => 8,
             CfgKey::IgnoreCase => 9,
-            CfgKey::NoNameGuard => 10,
+            CfgKey::NameGuard => 10,
             CfgKey::NoLeftRecursion => 11,
             CfgKey::NoParseInfo => 12,
             CfgKey::NoMemoization => 13,
@@ -129,7 +129,7 @@ impl CfgMapper<CfgKey> for CfgKey {
             (STR_EOL_COMMENTS, pattern) => Some(CfgKey::Eol(pattern.to_string())),
 
             (STR_IGNORECASE, _) if is_truthy => Some(CfgKey::IgnoreCase),
-            (STR_NAMEGUARD, _) if !is_truthy => Some(CfgKey::NoNameGuard),
+            (STR_NAMEGUARD, _) if is_truthy => Some(CfgKey::NameGuard),
             (STR_LEFTREC, _) if !is_truthy => Some(CfgKey::NoLeftRecursion),
             (STR_PARSEINFO, _) if !is_truthy => Some(CfgKey::NoParseInfo),
             (STR_MEMOIZATION, _) if !is_truthy => Some(CfgKey::NoMemoization),
@@ -151,7 +151,7 @@ impl CfgMapper<CfgKey> for CfgKey {
             CfgKey::NameChars(v) => Some((STR_NAMECHARS, v.as_str())),
 
             CfgKey::IgnoreCase => Some((STR_IGNORECASE, true_str)),
-            CfgKey::NoNameGuard => Some((STR_NAMEGUARD, false_str)),
+            CfgKey::NameGuard => Some((STR_NAMEGUARD, true_str)),
             CfgKey::NoLeftRecursion => Some((STR_LEFTREC, false_str)),
             CfgKey::NoParseInfo => Some((STR_PARSEINFO, false_str)),
             CfgKey::NoMemoization => Some((STR_MEMOIZATION, false_str)),
