@@ -121,12 +121,12 @@ mod tests {
 
     #[test]
     fn test_repeat() {
-        let ctx = setup("abc abc abc");
+        let ctx = setup("abcabcabc");
         let exp = Exp::token("abc");
         let mut res = Vec::new();
         if let Ok(Yeap(final_ctx, _)) = Exp::repeat(ctx, &exp, &mut res) {
             assert_eq!(res.len(), 3);
-            assert_eq!(final_ctx.cursor().mark(), 11);
+            assert_eq!(final_ctx.cursor().mark(), 9);
         } else {
             panic!("repeat  failed")
         }
@@ -162,7 +162,7 @@ mod tests {
 
     #[test]
     fn test_repeat_restores_entered_cut() {
-        let mut ctx = setup("abc abc abc");
+        let mut ctx = setup("abcabcabc");
         ctx.cut();
         assert!(ctx.cut_seen(), "ctx should have cut set before repeat");
 
