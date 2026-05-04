@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::Exp;
-use crate::engine::Ctx;
+use crate::context::Ctx;
 use crate::peg::error::ParseFailure::*;
 use crate::peg::error::ParseResult;
 use crate::peg::error::Yeap;

@@ -4,8 +4,8 @@
 use super::memo::{Memo, MemoCache, MemoKey};
 use crate::SYM_ETX;
 use crate::cfg::Configurable;
-use crate::engine::state::CallStack;
-use crate::engine::trace::Tracer;
+use crate::context::state::CallStack;
+use crate::context::trace::Tracer;
 use crate::input::Cursor;
 use crate::peg::Rule;
 use crate::peg::error::{DisasterReport, ParseFailure};

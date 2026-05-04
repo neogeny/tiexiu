@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::api::error::nope::ParseResult;
-use crate::engine::Ctx;
+use crate::context::Ctx;
 use crate::peg::error::nope::Yeap;
 use crate::peg::{Exp, ExpKind, ParseFailure::*, Parser};
 use crate::trees::Tree;
@@ -301,8 +301,8 @@ impl Exp {
 
 #[cfg(test)]
 mod tests {
-    use crate::engine::prelude::*;
-    use crate::engine::strctx::StrCtx;
+    use crate::context::prelude::*;
+    use crate::context::strctx::StrCtx;
     use crate::exp::*;
     use crate::input::StrCursor;
     use crate::peg::Rule;

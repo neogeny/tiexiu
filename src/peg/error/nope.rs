@@ -4,7 +4,7 @@
 use super::failure::ParseFailure;
 use crate::Tree;
 use crate::cfg::types::Str;
-use crate::engine::{Ctx, CtxI};
+use crate::context::{Ctx, CtxI};
 use crate::input::memento::Memento;
 use std::fmt::Debug;
 use std::panic::Location;
@@ -115,7 +115,7 @@ impl<C: Ctx> Yeap<C> {
 #[cfg(test)]
 mod tests {
     use crate::Tree;
-    use crate::engine::strctx::StrCtx;
+    use crate::context::strctx::StrCtx;
     use crate::peg::error::nope::{Nope, Yeap};
     use std::rc::Rc;
 
@@ -135,7 +135,7 @@ mod tests {
 
     #[test]
     fn test_yeap_tree_returns_rc() {
-        use crate::engine::strctx::StrCtx;
+        use crate::context::strctx::StrCtx;
         use crate::input::StrCursor;
 
         let tree = Tree::Text("hello".into());

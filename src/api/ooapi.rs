@@ -3,7 +3,7 @@
 
 //! Object-oriented API for TieXiu
 
-use crate::engine::new_ctx;
+use crate::context::new_ctx;
 use crate::input::{Cursor, StrCursor};
 use crate::peg::grammar::PrettyPrint;
 use crate::peg::*;

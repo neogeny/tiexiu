@@ -75,6 +75,44 @@ impl From<&CfgA> for Cfg {
     }
 }
 
+impl Cfg {
+    /// Merges configurations where `other` overrides `self` by variant type.
+    /// For entries with the same variant (e.g. Eol("a") vs Eol("b")),
+    /// the value from `other` is kept.
+    pub fn override_merge(&self, other: &Cfg) -> Self {
+        use std::collections::BTreeMap;
+        let mut map: BTreeMap<u8, CfgKey> = BTreeMap::new();
+        for k in self.iter() {
+            let v = Self::variant_ord(k);
+            map.entry(v).or_insert_with(|| k.clone());
+        }
+        for k in other.iter() {
+            map.insert(Self::variant_ord(k), k.clone());
+        }
+        Cfg::new(&map.into_values().collect::<Vec<_>>())
+    }
+
+    fn variant_ord(k: &CfgKey) -> u8 {
+        match k {
+            CfgKey::None => 0,
+            CfgKey::Debug => 1,
+            CfgKey::Verbose => 2,
+            CfgKey::Trace => 3,
+            CfgKey::Grammar(_) => 4,
+            CfgKey::Wsp(_) => 5,
+            CfgKey::Cmt(_) => 6,
+            CfgKey::Eol(_) => 7,
+            CfgKey::NameChars(_) => 8,
+            CfgKey::IgnoreCase => 9,
+            CfgKey::NoNameGuard => 10,
+            CfgKey::NoLeftRecursion => 11,
+            CfgKey::NoParseInfo => 12,
+            CfgKey::NoMemoization => 13,
+            CfgKey::Source(_) => 14,
+        }
+    }
+}
+
 impl CfgMapper<CfgKey> for CfgKey {
     fn map(key: &str, value: &str) -> Option<CfgKey> {
         use super::constants::*;

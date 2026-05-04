@@ -21,7 +21,7 @@ impl<'c> From<StrCursor> for StrCtx<'c> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::engine::{Ctx, CtxI};
+    use crate::context::{Ctx, CtxI};
     use crate::input::strcursor::StrCursor;
     use crate::trees::Tree;
     use std::mem::size_of;

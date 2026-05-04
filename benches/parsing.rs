@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
-use tiexiu::engine::StrCtx;
+use tiexiu::context::StrCtx;
 use tiexiu::input::StrCursor;
 use tiexiu::peg::{Exp, Grammar};
 

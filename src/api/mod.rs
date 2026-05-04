@@ -5,7 +5,7 @@ pub(crate) mod fnapi;
 pub mod ooapi;
 
 pub use crate::cfg::*;
-pub use crate::engine::new_ctx;
+pub use crate::context::new_ctx;
 pub use crate::input::{Cursor, StrCursor};
 pub use crate::peg::grammar::PrettyPrint;
 pub use crate::peg::*;

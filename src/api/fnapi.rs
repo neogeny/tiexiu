@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::cfg::CfgA;
-use crate::engine::new_ctx;
+use crate::context::new_ctx;
 use crate::input::{Cursor, StrCursor};
 use crate::peg::grammar::PrettyPrint;
 use crate::peg::*;
@@ -114,9 +114,7 @@ pub fn parse_to_json_string(grammar: &str, text: &str, cfg: &CfgA) -> Result<Str
 }
 
 pub fn parse_input(parser: &Grammar, text: &str, cfg: &CfgA) -> Result<Tree> {
-    let cursor = StrCursor::new(text);
-    let ctx = new_ctx(cursor, cfg);
-    parser.parse_tree(ctx)
+    parser.parse_input(text, cfg)
 }
 
 pub fn parse_input_to_json(parser: &Grammar, text: &str, cfg: &CfgA) -> Result<json::JsonValue> {

@@ -8,7 +8,7 @@
 
 use tiexiu::Result;
 use tiexiu::compile;
-use tiexiu::engine::StrCtx;
+use tiexiu::context::StrCtx;
 
 const CALC_GRAMMAR: &str = r#"
     @@grammar::CALC

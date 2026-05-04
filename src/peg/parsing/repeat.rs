@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::Exp;
-use crate::engine::Ctx;
+use crate::context::Ctx;
 use crate::peg::error::*;
 use crate::trees::Tree;
 use std::rc::Rc;
@@ -88,8 +88,8 @@ impl Exp {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::engine::CtxI;
-    use crate::engine::new_ctx;
+    use crate::context::CtxI;
+    use crate::context::new_ctx;
     use crate::input::strcursor::StrCursor;
 
     fn setup(input: &str) -> impl Ctx {
