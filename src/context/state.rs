@@ -4,7 +4,7 @@
 //! A translation of the TatSu module with the same name
 
 use super::memo::{KeyTrack, MemoCache};
-use super::trace::{NULL_TRACER, Tracer};
+use super::trace::{Tracer, NULL_TRACER};
 use crate::cfg::HeartbeatRef;
 use crate::input::Cursor;
 use crate::parser::TokenStack;
@@ -13,6 +13,7 @@ use crate::types::{Str, StrSet};
 use crate::util::fuse::Fuse;
 use crate::util::pyre::Pattern;
 use std::collections::HashMap;
+use std::time::Instant;
 
 pub const _AT_: &str = "__value__";
 
@@ -45,6 +46,7 @@ pub struct HeavyState<'t> {
     pub tracer: &'t dyn Tracer,
     pub heartbeat: Option<HeartbeatRef>,
     pub input_len: usize,
+    pub instant: Instant,
 }
 
 #[derive(Debug, Clone)]
@@ -77,6 +79,7 @@ impl<'t> HeavyState<'t> {
             tracer: &NULL_TRACER,
             heartbeat: None,
             input_len: 0,
+            instant: Instant::now(),
         }
     }
 

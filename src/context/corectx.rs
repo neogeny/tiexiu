@@ -4,7 +4,7 @@
 pub use super::ctx::{Ctx, CtxI};
 use super::memo::{Memo, MemoKey};
 use super::state::{CallStack, HeavyState, ParseState};
-use super::trace::{CONSOLE_TRACER, NULL_TRACER, Tracer};
+use super::trace::{Tracer, CONSOLE_TRACER, NULL_TRACER};
 use crate::cfg::*;
 use crate::input::Cursor;
 use crate::peg::error::DisasterReport;
@@ -14,6 +14,7 @@ use crate::util::pyre::Pattern;
 use std::borrow::Cow;
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::time::Instant;
 
 #[derive(Clone, Debug)]
 pub struct CoreCtx<'c, U>
@@ -150,18 +151,18 @@ where
     }
 
     fn heartbeat_tick(&mut self) {
+        if self.heavy.borrow().instant.elapsed().as_millis() < 128 {
+            return
+        }
         if let Some(hb) = self.heavy.borrow().heartbeat.clone() {
             let mark = self.mark();
             let total = self.cursor().as_str().len();
             if total == 0 {
                 return;
             }
-
-            let step = total / 384;
-            if step == 0 || mark >= total || mark.is_multiple_of(step) {
-                hb.tick(mark, total);
-            }
+            hb.tick(mark, total);
         }
+        self.heavy.borrow_mut().instant = Instant::now();
     }
 
     fn memo(&mut self, key: &MemoKey) -> Option<Memo> {
