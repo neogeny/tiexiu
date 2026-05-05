@@ -180,13 +180,20 @@ impl Cursor for StrCursor {
         self.text.get(self.offset..)?.chars().next()
     }
 
-    fn match_token(&mut self, token: &str) -> bool {
-        let token_len = token.len();
-        if let Some(text_slice) = self.text[self.offset..].get(..token_len)
+    fn peek_token(&mut self, token: &str) -> bool {
+        if let Some(text_slice) = self.text[self.offset..].get(..token.len())
             && (self.ignore_case() && text_slice.eq_ignore_ascii_case(token)
                 || !self.ignore_case() && text_slice == token)
         {
-            self.offset += token_len;
+            true
+        } else {
+            false
+        }
+    }
+
+    fn match_token(&mut self, token: &str) -> bool {
+        if self.peek_token(token) {
+            self.offset += token.len();
             return true;
         }
         false
