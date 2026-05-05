@@ -1,12 +1,23 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+// #[cfg(feature = "dhat")]
+// #[global_allocator]
+// static ALLOC: dhat::Alloc = dhat::Alloc;
+
+use mimalloc::MiMalloc;
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
+
 mod ui;
 
-use tiexiu::Error;
 use tiexiu::error::Result;
+use tiexiu::Error;
 
 fn main() -> Result<()> {
+    #[cfg(feature = "dhat")]
+    let _profiler = dhat::Profiler::new_heap();
+
     use std::io::{self, Write};
     let mut out_handle = io::stdout().lock();
     let mut err_handle = io::stderr().lock();

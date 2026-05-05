@@ -17,6 +17,7 @@ opt-level = 3        # Max optimizations (0-3)
 lto = true           # Link Time Optimization (smaller, faster binary)
 codegen-units = 1    # Better optimizations at the cost of slower build time
 panic = 'abort'      # Reduces binary size if you don't need stack unwinding
+debug = 1
 
 [package.metadata.docs.rs]
 all-features = true
@@ -39,6 +40,10 @@ required-features = ["cli"]
 default = ["cli"]
 bootstrap = ["default"]
 
+dhat = ["dep:dhat"]
+dhat-heap = []    # if you are doing heap profiling
+dhat-ad-hoc = []  # if you are doing ad hoc profiling
+
 serde = ["dep:serde"]
 serde_json = [
     "dep:serde",
@@ -48,9 +53,10 @@ cli = [
     "dep:clap",
     "dep:syntect",
     "dep:indicatif",
+    "dep:mimalloc",
 ]
 pyo3 = ["dep:pyo3", "serde"]
-dhat = ["dep:dhat"]
+mimalloc = ["dep:mimalloc"]
 
 #interpolation = ["dep:strfmt", "dep:evalexpr"]
 
@@ -77,6 +83,7 @@ serde_json = { version = "1.0.149", features = ["preserve_order"], optional = tr
 unicode-width = "0.2.2"
 derivative = "2.2.0"
 indicatif = { version = "0.18.4", optional = true }
+mimalloc = { version = "0.1.50", optional = true }
 
 #evalexpr = { version = "13.1.0", optional = true }
 #strfmt = { version = "0.2.5", optional = true }
