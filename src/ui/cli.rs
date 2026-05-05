@@ -13,7 +13,7 @@ use tiexiu::api::{
 use tiexiu::cfg::{Cfg, CfgA, Heartbeat, HeartbeatRef};
 use tiexiu::peg::pretty::*;
 use tiexiu::tools::rails::*;
-use tiexiu::{boot_grammar, config, CfgKey, Grammar, Result};
+use tiexiu::{CfgKey, Grammar, Result, boot_grammar, config};
 
 #[derive(Debug)]
 struct CliHeartbeat {
@@ -442,7 +442,7 @@ pub fn pygmentize(content: &str, extension: &str, use_color: bool) -> Result<Str
     use syntect::easy::HighlightLines;
     use syntect::highlighting::ThemeSet;
     use syntect::parsing::SyntaxSet;
-    use syntect::util::{as_24_bit_terminal_escaped, LinesWithEndings};
+    use syntect::util::{LinesWithEndings, as_24_bit_terminal_escaped};
 
     let ps = SyntaxSet::load_defaults_newlines();
     let ts = ThemeSet::load_defaults();

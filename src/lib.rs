@@ -28,7 +28,6 @@ pub use peg::Rule;
 pub use trees::Tree;
 pub use trees::TreeMap;
 
-
 #[cfg(feature = "pyo3")]
 pyo3::create_exception!(_tiexiu, ParseError, pyo3::exceptions::PyException);
 

@@ -4,7 +4,7 @@
 //! A translation of the TatSu module with the same name
 
 use super::memo::{KeyTrack, MemoCache};
-use super::trace::{Tracer, NULL_TRACER};
+use super::trace::{NULL_TRACER, Tracer};
 use crate::cfg::HeartbeatRef;
 use crate::input::Cursor;
 use crate::parser::TokenStack;

@@ -11,8 +11,8 @@ static GLOBAL: MiMalloc = MiMalloc;
 
 mod ui;
 
-use tiexiu::error::Result;
 use tiexiu::Error;
+use tiexiu::error::Result;
 
 fn main() -> Result<()> {
     #[cfg(feature = "dhat")]
