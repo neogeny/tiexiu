@@ -39,7 +39,7 @@ impl StrCursor {
             offset: 0,
             heavy: CursorHeavy {
                 ignorecase: false,
-                nameguard: false,
+                nameguard: true,
                 source: "some input".into(),
                 patterns: TokenizingPatterns::default().into(),
             }
@@ -56,7 +56,7 @@ impl StrCursor {
             offset: start.min(text.len()),
             heavy: CursorHeavy {
                 ignorecase: false,
-                nameguard: false,
+                nameguard: true,
                 source: source.into(),
                 patterns: TokenizingPatterns::default().into(),
             }
@@ -70,7 +70,7 @@ impl StrCursor {
             offset: 0,
             heavy: CursorHeavy {
                 ignorecase: false,
-                nameguard: false,
+                nameguard: true,
                 source: "some input".into(),
                 patterns: patterns.into(),
             }
@@ -113,8 +113,9 @@ impl StrCursor {
 impl Configurable for StrCursor {
     fn configure(&mut self, cfg: &Cfg) {
         let cfg = config(cfg);
-        let patterns =
-            TokenizingPatterns::from_cfg(&cfg).unwrap_or_else(|_| TokenizingPatterns::default());
+
+        let mut patterns = (*self.heavy.patterns).clone();
+        patterns.configure(&cfg);
 
         let source = cfg
             .iter()
@@ -127,18 +128,9 @@ impl Configurable for StrCursor {
             })
             .next()
             .unwrap_or(&self.heavy.source);
-
-        let has_namechars = cfg.iter().any(|k| matches!(k, CfgKey::NameChars(_)));
-
-        let nameguard = if cfg.contains(&CfgKey::NameGuard) {
-            true
-        } else {
-            patterns.has_wsp || has_namechars
-        };
-
         self.heavy = CursorHeavy {
             ignorecase: cfg.contains(&CfgKey::IgnoreCase),
-            nameguard,
+            nameguard: cfg.contains(&CfgKey::NameGuard),
             source: source.into(),
             patterns: patterns.into(),
         }
@@ -171,7 +163,7 @@ impl Cursor for StrCursor {
     }
 
     fn name_guard(&self) -> bool {
-        self.heavy.nameguard || self.heavy.patterns.has_wsp
+        self.heavy.nameguard
     }
 
     fn at_end(&self) -> bool {

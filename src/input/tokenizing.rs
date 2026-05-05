@@ -17,7 +17,45 @@ pub struct TokenizingPatterns {
     pub has_eol: bool,
 }
 
+impl Default for TokenizingPatterns {
+    fn default() -> Self {
+        Self::try_new(r"(?m)\s+", "", "").expect("default patterns must be valid")
+    }
+}
+
 impl TokenizingPatterns {
+    pub fn configure(&mut self, cfg: &Cfg) {
+        for opt in cfg.iter() {
+            match opt {
+                CfgKey::Wsp(p) => {
+                    if p.is_empty() {
+                        self.has_wsp = false;
+                    }
+                    if let Ok(new) = Self::compile(STR_WHITESPACE, p.as_str()) {
+                        self.wsp = new;
+                    }
+                }
+                CfgKey::Cmt(p) => {
+                    if p.is_empty() {
+                        self.has_cmt = false;
+                    }
+                    if let Ok(new) = Self::compile(STR_COMMENTS, p.as_str()) {
+                        self.cmt = new;
+                    }
+                }
+                CfgKey::Eol(p) => {
+                    if p.is_empty() {
+                        self.has_eol = false;
+                    }
+                    if let Ok(new) = Self::compile(STR_EOL_COMMENTS, p.as_str()) {
+                        self.eol = new;
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+
     pub fn compile(kind: &'static str, mut pattern: &str) -> Result<Pattern, Error> {
         if pattern.is_empty() {
             pattern = "(?!)";
@@ -80,11 +118,5 @@ impl TokenizingPatterns {
             has_cmt: !cm.is_empty(),
             has_eol: !eo.is_empty(),
         })
-    }
-}
-
-impl Default for TokenizingPatterns {
-    fn default() -> Self {
-        Self::try_new("", "", "").expect("empty patterns must compile to never-match")
     }
 }

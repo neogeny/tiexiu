@@ -9,13 +9,13 @@ use crate::cfg::*;
 use crate::context::Ctx;
 use crate::peg::ParseFailure::RuleNotFound;
 use crate::rule::RuleName;
-use crate::types::Str;
+use crate::types::{Ref, Str};
 use crate::{StrCursor, Tree, new_ctx};
 use std::rc::Rc;
 use std::sync::Arc;
 
 pub type KeywordRef = Str;
-pub type GrammarKeywords = Box<[KeywordRef]>;
+pub type GrammarKeywords = Ref<[KeywordRef]>;
 pub type GrammarDirectives = Cfg;
 
 #[derive(Debug, Clone)]
@@ -113,9 +113,7 @@ impl Grammar {
         }
     }
 
-    pub fn parse_tree<C: Ctx>(&self, mut ctx: C) -> crate::error::Result<Tree> {
-        ctx.configure(&self.directives);
-        ctx.set_keywords(&self.keywords);
+    pub fn parse_tree<C: Ctx>(&self, ctx: C) -> crate::error::Result<Tree> {
         match self.start_rule() {
             Ok(start) => self.parse_tree_from(start.as_ref(), ctx),
             Err(e) => Err(e.into()),
@@ -135,6 +133,7 @@ impl Grammar {
 
     pub fn parse_from<C: Ctx>(&self, start: &str, mut ctx: C) -> ParseResult<C> {
         let start_mark = ctx.mark();
+        ctx.configure(&self.directives);
         ctx.set_keywords(&self.keywords);
         match self.get_rule(start) {
             Ok(rule) => rule.parse(ctx.push()),
@@ -143,14 +142,11 @@ impl Grammar {
     }
 
     pub fn parse_input(&self, text: &str, cfg: &CfgA) -> crate::error::Result<Tree> {
-        let cfg = cfg.into();
-        let merged = self.directives.override_merge(&cfg);
         let cursor = StrCursor::new(text);
-        let mut ctx = new_ctx(cursor, &merged);
-        ctx.set_keywords(&self.keywords);
-        match self.start_rule() {
-            Ok(start) => self.parse_tree_from(start.as_ref(), ctx),
-            Err(e) => Err(e.into()),
+        let ctx = new_ctx(cursor, cfg);
+        match self.parse_tree(ctx) {
+            Ok(tree) => Ok(tree),
+            Err(failure) => Err(failure),
         }
     }
 
