@@ -132,7 +132,6 @@ pub trait Ctx: CtxI + Clone + Debug {
 
     fn next_token(&mut self) {
         self.cursor_mut().next_token();
-        self.heartbeat_tick();
     }
 
     fn heartbeat_tick(&mut self) {
@@ -200,6 +199,7 @@ pub trait Ctx: CtxI + Clone + Debug {
                 }
                 ctx.tracer().trace_success(&ctx);
                 ctx.memoize(&key, &tree, ctx.mark());
+                self.heartbeat_tick();
                 Ok(Yeap(ctx, tree))
             }
             Err(mut nope) => {

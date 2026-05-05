@@ -10,10 +10,10 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use tiexiu::api::{
     boot_grammar_pretty, boot_grammar_to_json_string, compile, load_grammar_from_json, parse_input,
 };
-use tiexiu::cfg::{CfgA, Heartbeat, HeartbeatRef};
+use tiexiu::cfg::{Cfg, CfgA, Heartbeat, HeartbeatRef};
 use tiexiu::peg::pretty::*;
 use tiexiu::tools::rails::*;
-use tiexiu::{CfgKey, Grammar, Result, boot_grammar, config};
+use tiexiu::{boot_grammar, config, CfgKey, Grammar, Result};
 
 #[derive(Debug)]
 struct CliHeartbeat {
@@ -39,21 +39,60 @@ impl Heartbeat for CliHeartbeat {
     }
 }
 
-struct FileProgress {
+struct LoadProgress {
     pb: indicatif::ProgressBar,
-    heartbeat: HeartbeatRef,
+    hb: HeartbeatRef,
 }
 
-impl FileProgress {
-    fn new(pb: indicatif::ProgressBar) -> Self {
-        Self {
-            heartbeat: std::sync::Arc::new(CliHeartbeat::new(pb.clone())),
-            pb,
-        }
+impl LoadProgress {
+    fn new(mp: &indicatif::MultiProgress, msg: &'static str) -> Self {
+        let pb = mp.add(
+            indicatif::ProgressBar::new_spinner()
+                .with_style(
+                    indicatif::ProgressStyle::with_template("{spinner:.cyan} {wide_msg}")
+                        .unwrap()
+                        .tick_chars("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"),
+                ),
+        );
+        let hb = std::sync::Arc::new(CliHeartbeat::new(pb.clone()));
+        pb.set_message(msg);
+        Self { pb, hb }
     }
 
     fn heartbeat(&self) -> &HeartbeatRef {
-        &self.heartbeat
+        &self.hb
+    }
+
+    fn finish(self) {
+        self.pb.finish_with_message("loaded");
+    }
+}
+
+struct FileProgress {
+    pb: indicatif::ProgressBar,
+    hb: HeartbeatRef,
+}
+
+impl FileProgress {
+    fn new(mp: &indicatif::MultiProgress, name: &str) -> Self {
+        let pb = mp.add(
+            indicatif::ProgressBar::new(0)
+                .with_style(
+                    indicatif::ProgressStyle::with_template(
+                        // "  {prefix:>40.bold} [{wide_bar:.cyan/black}] {pos:>8}/{len:<8} bytes",
+                        "  {prefix:>40.bold} [{wide_bar:.cyan/black}] {percent:>4}% ",
+                    )
+                    .unwrap()
+                    .progress_chars("▓▒░"),
+                )
+                .with_prefix(name.to_string()),
+        );
+        let hb = std::sync::Arc::new(CliHeartbeat::new(pb.clone()));
+        Self { pb, hb }
+    }
+
+    fn heartbeat(&self) -> &HeartbeatRef {
+        &self.hb
     }
 
     fn set_length(&self, len: usize) {
@@ -88,19 +127,12 @@ impl ProgressUI {
         Self { mp, files }
     }
 
+    fn loading(&self, msg: &'static str) -> LoadProgress {
+        LoadProgress::new(&self.mp, msg)
+    }
+
     fn add_file(&self, name: &str) -> FileProgress {
-        let pb = self.mp.add(
-            indicatif::ProgressBar::new(0)
-                .with_style(
-                    indicatif::ProgressStyle::with_template(
-                        "  {prefix:.bold} [{wide_bar:.green/black}] {pos}/{len} bytes",
-                    )
-                    .unwrap()
-                    .progress_chars("▓▒░"),
-                )
-                .with_prefix(name.to_string()),
-        );
-        FileProgress::new(pb)
+        FileProgress::new(&self.mp, name)
     }
 
     fn inc_files(&self) {
@@ -269,11 +301,11 @@ pub fn cli(out: &mut std::io::StdoutLock) -> Result<()> {
             short,
             ..
         } => {
-            let parser = load_grammar_from_path(&grammar, cfga)?;
+            let progress = ProgressUI::new(inputs.len() as u64);
+            let parser = load_grammar_from_path(&grammar, &progress, &cfg)?;
+
             let mut format = "rust";
             let mut output = String::new();
-
-            let progress = ProgressUI::new(inputs.len() as u64);
 
             for input in &inputs {
                 let name = input.file_name().unwrap_or_default().to_string_lossy();
@@ -318,7 +350,16 @@ pub fn cli(out: &mut std::io::StdoutLock) -> Result<()> {
             railroads,
             ..
         } => {
-            let parser = load_grammar_from_path(&grammar, cfga)?;
+            let grammar_text = std::fs::read_to_string(&grammar)?;
+            let parser = if grammar
+                .extension()
+                .and_then(|ext| ext.to_str())
+                .is_some_and(|ext| ext.eq_ignore_ascii_case("json"))
+            {
+                load_grammar_from_json(&grammar_text, &cfg)?
+            } else {
+                compile(&grammar_text, &cfg)?
+            };
             if json {
                 (parser.to_json_string()?, "json")
             } else if model {
@@ -343,17 +384,25 @@ pub fn cli(out: &mut std::io::StdoutLock) -> Result<()> {
     Ok(())
 }
 
-fn load_grammar_from_path(grammar: &PathBuf, cfga: &CfgA) -> Result<Grammar> {
+fn load_grammar_from_path(grammar: &PathBuf, progress: &ProgressUI, cfga: &CfgA) -> Result<Grammar> {
+    let loader = progress.loading("loading grammar");
+    let load_cfg = cfga
+        .iter()
+        .cloned()
+        .chain(std::iter::once(CfgKey::Heartbeat(loader.heartbeat().clone())))
+        .collect::<Cfg>();
+
     let grammar_text = std::fs::read_to_string(grammar)?;
     let parser = if grammar
         .extension()
         .and_then(|ext| ext.to_str())
         .is_some_and(|ext| ext.eq_ignore_ascii_case("json"))
     {
-        load_grammar_from_json(&grammar_text, cfga)?
+        load_grammar_from_json(&grammar_text, &load_cfg)?
     } else {
-        compile(&grammar_text, cfga)?
+        compile(&grammar_text, &load_cfg)?
     };
+    loader.finish();
     Ok(parser)
 }
 
@@ -385,7 +434,7 @@ pub fn pygmentize(content: &str, extension: &str, use_color: bool) -> Result<Str
     use syntect::easy::HighlightLines;
     use syntect::highlighting::ThemeSet;
     use syntect::parsing::SyntaxSet;
-    use syntect::util::{LinesWithEndings, as_24_bit_terminal_escaped};
+    use syntect::util::{as_24_bit_terminal_escaped, LinesWithEndings};
 
     let ps = SyntaxSet::load_defaults_newlines();
     let ts = ThemeSet::load_defaults();

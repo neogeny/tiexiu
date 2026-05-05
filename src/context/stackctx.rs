@@ -25,10 +25,12 @@ where
     U: Cursor + Clone,
 {
     pub fn new(cursor: U, cfga: &CfgA) -> Self {
+        let len = cursor.as_str().len();
         let mut ctx = Self {
             states: ParseStateStack::new(cursor),
             heavy: HeavyState::new(),
         };
+        ctx.heavy.input_len = len;
         ctx.configure(&config(cfga));
         ctx
     }
@@ -150,10 +152,17 @@ where
     }
 
     fn heartbeat_tick(&mut self) {
-        let mark = self.cursor().mark();
         if let Some(hb) = self.heavy.heartbeat.clone() {
-            let total = self.cursor().as_str().len();
-            hb.tick(mark, total);
+            let mark = self.cursor().mark();
+            let total = self.heavy.input_len;
+            if total == 0 {
+                return;
+            }
+
+            let step = total / 200;
+            if step == 0 || mark % step == 0 {
+                hb.tick(mark, total);
+            }
         }
     }
 

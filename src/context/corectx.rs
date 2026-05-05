@@ -29,10 +29,12 @@ where
     U: Cursor + Clone + 'c,
 {
     pub fn new(cursor: U, cfga: &CfgA) -> Self {
+        let len = cursor.as_str().len();
         let mut ctx = Self {
             state: Cow::Owned(ParseState::new(cursor).into()),
             heavy: RefCell::new(HeavyState::new()).into(),
         };
+        ctx.heavy.borrow_mut().input_len = len;
         ctx.configure(&config(cfga));
         ctx
     }
@@ -148,10 +150,17 @@ where
     }
 
     fn heartbeat_tick(&mut self) {
-        let mark = self.mark();
         if let Some(hb) = self.heavy.borrow().heartbeat.clone() {
+            let mark = self.mark();
             let total = self.cursor().as_str().len();
-            hb.tick(mark, total);
+            if total == 0 {
+                return;
+            }
+
+            let step = total / 384;
+            if step == 0 || mark >= total|| mark.is_multiple_of(step) {
+                hb.tick(mark, total);
+            }
         }
     }
 
