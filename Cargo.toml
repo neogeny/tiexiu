@@ -53,10 +53,10 @@ cli = [
     "dep:clap",
     "dep:syntect",
     "dep:indicatif",
-    "dep:mimalloc",
+    "malloc",
 ]
-pyo3 = ["dep:pyo3", "serde"]
-mimalloc = ["dep:mimalloc"]
+pyo3 = ["dep:pyo3", "serde", "malloc"]
+malloc = ["dep:mimalloc"]
 
 #interpolation = ["dep:strfmt", "dep:evalexpr"]
 
