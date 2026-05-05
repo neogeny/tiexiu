@@ -13,7 +13,7 @@ use tiexiu::api::{
 use tiexiu::cfg::{Cfg, CfgA, Heartbeat, HeartbeatRef};
 use tiexiu::peg::pretty::*;
 use tiexiu::tools::rails::*;
-use tiexiu::{CfgKey, Grammar, Result, boot_grammar, config};
+use tiexiu::{boot_grammar, config, CfgKey, Grammar, Result};
 
 #[derive(Debug)]
 struct CliHeartbeat {
@@ -46,7 +46,8 @@ struct LoadProgress {
 
 impl LoadProgress {
     fn new(mp: &indicatif::MultiProgress, msg: &'static str) -> Self {
-        let pb = mp.add(
+        let pb = mp.insert(
+            0,
             indicatif::ProgressBar::new_spinner().with_style(
                 indicatif::ProgressStyle::with_template("{spinner:.cyan} {wide_msg}")
                     .unwrap()
@@ -74,15 +75,16 @@ struct FileProgress {
 
 impl FileProgress {
     fn new(mp: &indicatif::MultiProgress, name: &str) -> Self {
-        let pb = mp.add(
+        let pb = mp.insert(
+            0,
             indicatif::ProgressBar::new(0)
                 .with_style(
                     indicatif::ProgressStyle::with_template(
                         // "  {prefix:>40.bold} [{wide_bar:.cyan/black}] {pos:>8}/{len:<8} bytes",
-                        "  {prefix:>40.bold} [{wide_bar:.cyan/black}] {percent:>4}% {duration_precise}  ",
+                        "  {prefix:>40.bold} [{wide_bar:.yellow/black}] {percent:>4}% {duration_precise}  ",
                     )
                     .unwrap()
-                    .progress_chars("▓▒░"),
+                    .progress_chars("░▓▒"),
                 )
                 .with_prefix(name.to_string()),
         );
@@ -121,7 +123,8 @@ impl ProgressUI {
                     "{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {pos}/{len} files",
                 )
                 .unwrap()
-                .progress_chars("#>-"),
+                .progress_chars("⠇⠋ "),
+                // .progress_chars("░>-"),
         ));
         Self { mp, files }
     }
@@ -439,7 +442,7 @@ pub fn pygmentize(content: &str, extension: &str, use_color: bool) -> Result<Str
     use syntect::easy::HighlightLines;
     use syntect::highlighting::ThemeSet;
     use syntect::parsing::SyntaxSet;
-    use syntect::util::{LinesWithEndings, as_24_bit_terminal_escaped};
+    use syntect::util::{as_24_bit_terminal_escaped, LinesWithEndings};
 
     let ps = SyntaxSet::load_defaults_newlines();
     let ts = ThemeSet::load_defaults();
