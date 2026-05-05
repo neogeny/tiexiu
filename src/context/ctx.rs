@@ -2,17 +2,17 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::memo::{Memo, MemoCache, MemoKey};
-use crate::SYM_ETX;
 use crate::cfg::Configurable;
 use crate::context::state::CallStack;
 use crate::context::trace::Tracer;
 use crate::input::Cursor;
-use crate::peg::Rule;
 use crate::peg::error::{DisasterReport, ParseFailure};
 use crate::peg::error::{Nope, ParseResult, Yeap};
+use crate::peg::Rule;
 use crate::trees::tree::Tree;
 use crate::types::Str;
-use crate::util::pyre::{Pattern, escape};
+use crate::util::pyre::{escape, Pattern};
+use crate::SYM_ETX;
 use std::fmt::Debug;
 use std::rc::Rc;
 
@@ -45,13 +45,20 @@ pub trait Ctx: CtxI + Clone + Debug {
 
     #[track_caller]
     fn failure(&mut self, start: usize, source: ParseFailure) -> Nope {
+        let nope = Nope::new(self);
+
+        if let Some(furthest) = self.furthest_failure()
+            && furthest.mark >= self.mark() {
+            return nope
+        }
+
         let dis = DisasterReport::new(start, self, &source);
         self.set_furthest_failure(&dis);
-        Nope::new(self)
+        nope
     }
 
-    fn furthest_failure(&self) -> Option<DisasterReport>;
     fn set_furthest_failure(&mut self, dis: &DisasterReport);
+    fn furthest_failure(&self) -> Option<DisasterReport>;
 
     fn reset(&mut self, mark: usize) {
         self.cursor_mut().reset(mark);
@@ -367,13 +374,13 @@ impl<C: Ctx> Ctx for Box<C> {
     }
 
     #[inline]
-    fn furthest_failure(&self) -> Option<DisasterReport> {
-        (**self).furthest_failure()
+    fn set_furthest_failure(&mut self, dis: &DisasterReport) {
+        (**self).set_furthest_failure(dis)
     }
 
     #[inline]
-    fn set_furthest_failure(&mut self, dis: &DisasterReport) {
-        (**self).set_furthest_failure(dis)
+    fn furthest_failure(&self) -> Option<DisasterReport> {
+        (**self).furthest_failure()
     }
 
     #[inline]

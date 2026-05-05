@@ -101,16 +101,7 @@ impl<'t> HeavyState<'t> {
     }
 
     pub fn set_furthest_failure(&mut self, dis: &DisasterReport) {
-        let furthest = self.furthest_failure.clone();
-        match furthest {
-            Some(prev) if dis.mark >= prev.mark => {
-                self.furthest_failure = Some(dis.clone());
-            }
-            None => {
-                self.furthest_failure = Some(dis.clone());
-            }
-            _ => {}
-        }
+        self.furthest_failure = Some(dis.clone());
     }
 }
 
