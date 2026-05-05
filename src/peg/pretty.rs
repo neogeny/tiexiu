@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::cfg::CfgKey;
 use crate::cfg::constants::*;
+use crate::cfg::CfgKey;
 use crate::peg::exp::{Exp, ExpKind};
 use crate::peg::{Grammar, Rule};
 use crate::util::indent::IndentWriter;
@@ -112,7 +112,15 @@ impl PrettyPrint for Rule {
         } else {
             ""
         };
-        writer.writeln("");
+        if self.has_no_stak_flag() {
+            writer.writeln("@nostak");
+        }
+        if self.has_no_memo_flag() {
+            writer.writeln("@nomemo");
+        }
+        if self.has_is_name_flag() {
+            writer.writeln("@name");
+        }
         writer.writeln(&format!(
             "{}{}:{}{}",
             self.name, params_str, start_str, pretty_exp,

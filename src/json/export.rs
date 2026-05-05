@@ -82,9 +82,10 @@ impl Rule {
             .collect();
         obj["params"] = JsonValue::Array(params);
 
+        obj["no_memo"] = JsonValue::Boolean(self.has_no_memo_flag());
+        obj["no_stak"] = JsonValue::Boolean(self.has_no_stak_flag());
         obj["is_name"] = JsonValue::Boolean(self.is_name());
         obj["is_tokn"] = JsonValue::Boolean(self.has_is_tokn_flag());
-        obj["no_memo"] = JsonValue::Boolean(self.has_no_memo_flag());
         obj["is_memo"] = JsonValue::Boolean(self.has_is_memo_flag());
         obj["is_lrec"] = JsonValue::Boolean(self.has_is_lrec_flag());
 

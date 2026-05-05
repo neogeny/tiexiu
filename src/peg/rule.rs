@@ -148,7 +148,7 @@ impl Rule {
     }
 
     pub fn should_trace(&self) -> bool {
-        !self.has_no_stack_flat() && !self.is_token()
+        !self.has_no_stak_flag() && !self.is_token()
     }
 
     pub fn has_is_name_flag(&self) -> bool {
@@ -171,7 +171,7 @@ impl Rule {
         self.flag(FLAG_IS_LREC)
     }
 
-    pub fn has_no_stack_flat(&self) -> bool {
+    pub fn has_no_stak_flag(&self) -> bool {
         self.flag(FLAG_NO_STAK)
     }
 
