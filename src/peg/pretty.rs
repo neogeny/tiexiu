@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::cfg::constants::*;
 use crate::cfg::CfgKey;
+use crate::cfg::constants::*;
 use crate::peg::exp::{Exp, ExpKind};
 use crate::peg::{Grammar, Rule};
 use crate::util::indent::IndentWriter;
