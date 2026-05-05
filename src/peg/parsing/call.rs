@@ -5,13 +5,13 @@
 //! Moved from `Ctx` trait to decouple parsing logic from context management.
 
 use crate::context::Ctx;
+use crate::peg::Exp;
 use crate::peg::error::{Nope, ParseFailure, ParseResult, Yeap};
 use crate::peg::rule::Rule;
-use crate::peg::Exp;
 use crate::trees::tree::Tree;
 use std::rc::Rc;
 
-const MAX_RECURSION_DEPTH: usize = 64;
+pub const MAX_RECURSION_DEPTH: usize = 64;
 
 impl Exp {
     /// Core entry point for calling a rule.

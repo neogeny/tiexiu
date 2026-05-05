@@ -7,16 +7,13 @@ use crate::cfg::Configurable;
 use crate::context::state::CallStack;
 use crate::context::trace::Tracer;
 use crate::input::Cursor;
-use crate::peg::Rule;
+use crate::peg::error::Nope;
 use crate::peg::error::{DisasterReport, ParseFailure};
-use crate::peg::error::{Nope, ParseResult, Yeap};
 use crate::trees::tree::Tree;
 use crate::types::Str;
 use crate::util::pyre::{Pattern, escape};
 use std::fmt::Debug;
 use std::rc::Rc;
-
-const MAX_RECURSION_DEPTH: usize = 64;
 
 pub trait CtxI: Configurable {
     fn cursor(&self) -> &dyn Cursor;
@@ -182,137 +179,6 @@ pub trait Ctx: CtxI + Clone + Debug {
     }
 
     fn done(&self) -> bool;
-
-    fn _call(mut self, name: &str, rule: &Rule) -> ParseResult<Self> {
-        let start = self.mark();
-        let key = self.key(name, rule.is_memoizable());
-
-        if !rule.is_token() {
-            self.next_token();
-        }
-        if rule.should_trace() {
-            self.enter(name);
-            self.tracer().trace_entry(&self);
-        }
-
-        match self.push().do_call(name, rule) {
-            Ok(Yeap(mut ctx, tree)) => {
-                if rule.should_trace() {
-                    ctx.leave();
-                }
-                if rule.is_name()
-                    && let Tree::Text(name) = tree.as_ref()
-                    && ctx.is_keyword(name)
-                {
-                    ctx.memoize(&key, &Tree::Bottom.into(), ctx.mark());
-                    let error = ParseFailure::ReservedWord(name.clone());
-                    ctx.tracer().trace_failure(&ctx, name);
-                    return Err(ctx.failure(start, error));
-                }
-                ctx.tracer().trace_success(&ctx);
-                ctx.memoize(&key, &tree, ctx.mark());
-                self.heartbeat_tick();
-                Ok(Yeap(ctx, tree))
-            }
-            Err(mut nope) => {
-                if rule.should_trace() {
-                    self.leave();
-                }
-                self.tracer().trace_failure(&self, name);
-                self.memoize(&key, &Tree::Bottom.into(), self.mark());
-                nope.take_cut();
-                Err(nope)
-            }
-        }
-    }
-
-    fn do_call(mut self, name: &str, rule: &Rule) -> ParseResult<Self> {
-        let start = self.mark();
-        let key = self.key(name, rule.is_memoizable());
-        if let Some(memo) = self.memo(&key) {
-            return match memo.tree.as_ref() {
-                Tree::Bottom => {
-                    let err = ParseFailure::FailedParse(name.into());
-                    Err(self.failure(start, err))
-                }
-                _ => {
-                    self.reset(memo.mark);
-                    Ok(Yeap(self.into(), memo.tree))
-                }
-            };
-        }
-
-        if rule.is_left_recursive() {
-            self.call_recursive(&key, rule)
-        } else {
-            rule.parse(self)
-        }
-    }
-
-    fn track_recursion_depth(&mut self, key: &MemoKey) -> Result<(), Nope> {
-        let depth = self.track(key);
-        if depth > MAX_RECURSION_DEPTH {
-            panic!("Recursion depth exceeded")
-        } else {
-            Ok(())
-        }
-    }
-
-    fn call_recursive(mut self, key: &MemoKey, rule: &Rule) -> ParseResult<Self> {
-        self.tracer().trace_recursion(&self);
-        if !rule.is_left_recursive() {
-            panic!("Recursive call on non-LRec rule");
-        }
-
-        let start = self.mark();
-        let mut lastmark = start;
-        let mut lasttree: Tree = Tree::Nil;
-        let mut lastnope: Option<Nope> = None;
-
-        self.memoize(key, &Tree::Bottom.into(), start);
-        loop {
-            self.reset(start);
-
-            self.track_recursion_depth(key)?;
-            let result = rule.parse(self.push());
-            self.untrack(key);
-
-            match result {
-                Err(nope) => {
-                    lastnope = Some(nope);
-                    break;
-                }
-                Ok(Yeap(ctx, tree)) => {
-                    let endmark = ctx.mark();
-                    let endtree = tree;
-                    if endmark <= lastmark {
-                        break;
-                    }
-                    lastmark = endmark;
-                    lasttree = Rc::unwrap_or_clone(endtree);
-                    self = self.merge(*ctx);
-                    self.memoize(key, &lasttree.clone().into(), lastmark);
-                }
-            }
-        }
-
-        self.reset(lastmark);
-        self.memoize(key, &lasttree.clone().into(), lastmark);
-
-        if lasttree == Tree::Bottom {
-            let nope = lastnope.unwrap_or(self.failure(
-                start,
-                ParseFailure::FailedRecursion(
-                    key.name.clone(),
-                    start,
-                    lastmark,
-                    lasttree.clone().into(),
-                ),
-            ));
-            return Err(nope);
-        }
-        Ok(Yeap(self.into(), lasttree.into()))
-    }
 }
 
 impl<C: Ctx> CtxI for Box<C> {
