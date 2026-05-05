@@ -183,7 +183,7 @@ pub trait Ctx: CtxI + Clone + Debug {
 
     fn done(&self) -> bool;
 
-    fn call(mut self, name: &str, rule: &Rule) -> ParseResult<Self> {
+    fn _call(mut self, name: &str, rule: &Rule) -> ParseResult<Self> {
         let start = self.mark();
         let key = self.key(name, rule.is_memoizable());
 

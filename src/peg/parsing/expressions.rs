@@ -71,7 +71,7 @@ impl Exp {
             },
             ExpKind::Call { name, rule } => match rule {
                 None => Err(ctx.failure(start, RuleNotLinked(name.clone()))),
-                Some(rule) => match ctx.call(name, rule.as_ref()) {
+                Some(rule) => match Self::rule_call(ctx, name, rule.as_ref()) {
                     Ok(ok) => Ok(ok),
                     Err(mut nope) => {
                         nope.take_cut();
