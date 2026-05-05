@@ -34,7 +34,7 @@ Repository = "https://github.com/neogeny/tiexiu"
 Issues = "https://github.com/neogeny/tiexiu/issues"
 
 [tool.maturin]
-features = ["pyo3", "pyo3/abi3-py312", "pyo3/generate-import-lib"]
+features = ["pyo3", "malloc", "pyo3/abi3-py312", "pyo3/generate-import-lib"]
 module-name = "tiexiu._tiexiu"
 python-source = "python"
 bindings = "pyo3"
