@@ -121,6 +121,7 @@ impl PrettyPrint for Rule {
         if self.has_is_name_flag() {
             writer.writeln("@name");
         }
+        writer.writeln("");
         writer.writeln(&format!(
             "{}{}:{}{}",
             self.name, params_str, start_str, pretty_exp,

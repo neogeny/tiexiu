@@ -18,12 +18,12 @@ fn test_numbers_and_unicode() -> Result<()> {
         "#,
     );
 
-    let tree = parse_grammar(grammar.as_ref(), &[])?;
-    eprintln!("{:#?}", tree);
-    eprintln!("{}", tree.to_json_string_pretty());
+    let _tree = parse_grammar(grammar.as_ref(), &[])?;
+    // eprintln!("{:#?}", tree);
+    // eprintln!("{}", tree.to_json_string_pretty());
 
     let model = compile(grammar.as_ref(), &[])?;
-    eprintln!("{:#?}", model);
+    // eprintln!("{:#?}", model);
 
     let pretty = model.pretty_print();
     assert_eq!(grammar.trim(), pretty.trim());
