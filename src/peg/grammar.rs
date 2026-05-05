@@ -68,11 +68,6 @@ impl Grammar {
 
     pub fn set_directives(&mut self, directives: GrammarDirectives) {
         self.directives = directives;
-        // HACK: TatSu grammars default to `(?m)\s+` whitespace when not specified.
-        // This patch ensures the compiler and JSON import both get TatSu-compatible defaults.
-        if !self.directives.iter().any(|k| matches!(k, CfgKey::Wsp(_))) {
-            self.directives = self.directives.add(CfgKey::Wsp(r"(?m)\s+".to_string()));
-        }
         if let Some(CfgKey::Grammar(name)) = self
             .directives
             .iter()

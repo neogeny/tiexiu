@@ -171,10 +171,13 @@ impl Cursor for StrCursor {
     }
 
     fn next(&mut self) -> Option<char> {
-        let rest = self.text.get(self.offset..)?;
-        let c = rest.chars().next()?;
-        self.offset += c.len_utf8();
-        Some(c)
+        self.peek().inspect(|c| {
+            self.offset += c.len_utf8();
+        })
+    }
+
+    fn peek(&mut self) -> Option<char> {
+        self.text.get(self.offset..)?.chars().next()
     }
 
     fn match_token(&mut self, token: &str) -> bool {

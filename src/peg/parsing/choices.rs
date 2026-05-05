@@ -8,14 +8,15 @@ use crate::peg::error::ParseResult;
 use crate::peg::error::Yeap;
 use crate::trees::Tree;
 use crate::types::Str;
+use std::rc::Rc;
 
 impl Exp {
-    pub fn la_boxed(&self) -> Box<[Str]> {
+    pub fn la_boxed(&self) -> Rc<[Str]> {
         self.la
             .as_ref()
             .map(|la| la.iter().cloned().collect::<Vec<_>>())
             .unwrap_or_default()
-            .into_boxed_slice()
+            .into()
     }
 
     pub fn parse_choice<C: Ctx>(&self, mut ctx: C, options: &[Exp]) -> ParseResult<C> {
@@ -33,7 +34,7 @@ impl Exp {
                 }
             }
         }
-        Err(ctx.failure(start, NoViableOption(self.la_boxed())))
+        Err(ctx.failure(start, NoViableOption(self.la.clone())))
     }
 
     pub fn parse_optional<C: Ctx>(&self, mut ctx: C, exp: &Exp) -> ParseResult<C> {

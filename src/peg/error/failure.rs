@@ -4,6 +4,7 @@
 use crate::Tree;
 use crate::types::Str;
 use crate::util::ensure::Ensure;
+use std::sync::Arc;
 use thiserror::Error;
 
 pub type CompileResult<T> = Result<T, CompileError>;
@@ -46,8 +47,8 @@ pub enum ParseFailure {
     NotExpecting(Str),
 
     /// Corresponds to Self::Choice fallback
-    #[error("no viable option")]
-    NoViableOption(Box<[Str]>),
+    #[error("Expecting: {0:#?}")]
+    NoViableOption(Option<Arc<[Str]>>),
 
     /// Corresponds is_keyword() validations
     #[error("'{0}' is a reserved word")]

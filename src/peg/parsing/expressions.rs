@@ -90,7 +90,7 @@ impl Exp {
             ExpKind::Fail => Err(ctx.failure(start, Fail)),
             ExpKind::Dot => {
                 if let Some(c) = ctx.next() {
-                    Ok(Yeap(ctx.into(), Tree::text(&c.to_string()).into()))
+                    Ok(Yeap(ctx.into(), Tree::text(c.to_string().as_str()).into()))
                 } else {
                     Err(ctx.failure(start, NoMoreInput))
                 }

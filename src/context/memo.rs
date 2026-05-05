@@ -73,10 +73,10 @@ impl MemoCache {
 }
 
 impl MemoCache {
-    pub fn key(mark: usize, name: &str, memo: bool) -> MemoKey {
+    pub fn key(mark: usize, name: Str, memo: bool) -> MemoKey {
         MemoKey {
             mark,
-            name: name.into(),
+            name: name.clone(),
             memo,
         }
     }
@@ -109,14 +109,14 @@ mod tests {
     #[test]
     fn new_cache_is_empty() {
         let mut cache = MemoCache::new();
-        let key = MemoCache::key(0, "rule", true);
+        let key = MemoCache::key(0, "rule".into(), true);
         assert!(cache.memo(&key).is_none());
     }
 
     #[test]
     fn memoize_and_retrieve() {
         let mut cache = MemoCache::new();
-        let key = MemoCache::key(0, "rule", true);
+        let key = MemoCache::key(0, "rule".into(), true);
         let tree: Rc<Tree> = Tree::Text("test".into()).into();
 
         cache.memoize(&key, &tree, 5);
@@ -129,8 +129,8 @@ mod tests {
     #[test]
     fn memoize_multiple_rules() {
         let mut cache = MemoCache::new();
-        let key1 = MemoCache::key(0, "rule1", true);
-        let key2 = MemoCache::key(0, "rule2", true);
+        let key1 = MemoCache::key(0, "rule1".into(), true);
+        let key2 = MemoCache::key(0, "rule2".into(), true);
         let tree1: Rc<Tree> = Tree::Text("a".into()).into();
         let tree2: Rc<Tree> = Tree::Text("b".into()).into();
 
@@ -144,7 +144,7 @@ mod tests {
     #[test]
     fn prune_keeps_after_cutpoint() {
         let mut cache = MemoCache::new();
-        let key = MemoCache::key(5, "rule", true);
+        let key = MemoCache::key(5, "rule".into(), true);
         let tree: Rc<Tree> = Tree::Text("test".into()).into();
 
         cache.memoize(&key, &tree, 5);
@@ -156,7 +156,7 @@ mod tests {
     #[test]
     fn prune_removes_before_cutpoint() {
         let mut cache = MemoCache::new();
-        let key = MemoCache::key(3, "rule", true);
+        let key = MemoCache::key(3, "rule".into(), true);
         let tree: Rc<Tree> = Tree::Text("test".into()).into();
 
         cache.memoize(&key, &tree, 3);
@@ -167,9 +167,9 @@ mod tests {
 
     #[test]
     fn key_equality() {
-        let key1 = MemoCache::key(0, "rule", true);
-        let key2 = MemoCache::key(0, "rule", true);
-        let key3 = MemoCache::key(1, "rule", true);
+        let key1 = MemoCache::key(0, "rule".into(), true);
+        let key2 = MemoCache::key(0, "rule".into(), true);
+        let key3 = MemoCache::key(1, "rule".into(), true);
 
         assert_eq!(key1, key2);
         assert_ne!(key1, key3);

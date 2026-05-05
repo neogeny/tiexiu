@@ -84,6 +84,10 @@ pub trait Ctx: CtxI + Clone + Debug {
         self.cursor_mut().next()
     }
 
+    fn peek(&mut self) -> Option<char> {
+        self.cursor_mut().peek()
+    }
+
     fn get_pattern(&mut self, pattern: &str) -> Pattern;
 
     fn match_token(&mut self, token: &str) -> bool {
@@ -139,7 +143,7 @@ pub trait Ctx: CtxI + Clone + Debug {
     }
 
     fn key(&mut self, name: &str, memo: bool) -> MemoKey {
-        MemoCache::key(self.mark(), name, memo)
+        MemoCache::key(self.mark(), self.intern(name), memo)
     }
 
     fn memo(&mut self, key: &MemoKey) -> Option<Memo>;
@@ -378,6 +382,11 @@ impl<C: Ctx> Ctx for Box<C> {
     }
 
     #[inline]
+    fn heartbeat_tick(&mut self) {
+        (**self).heartbeat_tick()
+    }
+
+    #[inline]
     fn memo(&mut self, key: &MemoKey) -> Option<Memo> {
         (**self).memo(key)
     }
@@ -405,11 +414,6 @@ impl<C: Ctx> Ctx for Box<C> {
     #[inline]
     fn prune_cache(&mut self) {
         (**self).prune_cache()
-    }
-
-    #[inline]
-    fn heartbeat_tick(&mut self) {
-        (**self).heartbeat_tick()
     }
 
     #[inline]

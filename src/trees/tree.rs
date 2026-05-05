@@ -42,7 +42,7 @@ impl From<Vec<Tree>> for Tree {
     fn from(v: Vec<Tree>) -> Self {
         let clean: Vec<Rc<Tree>> = v
             .into_iter()
-            .filter(|item| !matches!(item, Tree::Nil))
+            .filter(|item| *item != Tree::Nil)
             .map(|t| t.into())
             .collect();
         Tree::Seq(clean.into())
@@ -53,7 +53,7 @@ impl<const N: usize> From<[Tree; N]> for Tree {
     fn from(arr: [Tree; N]) -> Self {
         let clean: Vec<Rc<Tree>> = arr
             .into_iter()
-            .filter(|item| !matches!(item, Tree::Nil))
+            .filter(|item| *item != Tree::Nil)
             .map(|t| t.into())
             .collect();
         Tree::Seq(clean.into())
@@ -70,7 +70,7 @@ impl From<&[Tree]> for Tree {
     fn from(slice: &[Tree]) -> Self {
         let clean: Vec<Rc<Tree>> = slice
             .iter()
-            .filter(|item| !matches!(item, Tree::Nil))
+            .filter(|item| **item != Tree::Nil)
             .cloned()
             .map(|t| t.into())
             .collect();

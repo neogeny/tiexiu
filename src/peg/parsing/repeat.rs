@@ -5,6 +5,7 @@ use crate::Exp;
 use crate::context::Ctx;
 use crate::peg::error::*;
 use crate::trees::Tree;
+use crate::trees::short::NIL;
 use std::rc::Rc;
 
 impl Exp {
@@ -38,7 +39,7 @@ impl Exp {
                     ctx = ctx.merge(*new_ctx);
                 }
                 Err(_nope) => {
-                    return Ok(Yeap(ctx.into(), Tree::Nil.into()));
+                    return Ok(Yeap(ctx.into(), NIL.into()));
                 }
             }
         }
@@ -58,7 +59,7 @@ impl Exp {
                     if nope.take_cut() {
                         return Err(nope);
                     }
-                    return Ok(Yeap(ctx.into(), Tree::Nil.into()));
+                    return Ok(Yeap(ctx.into(), NIL.into()));
                 }
                 Ok(Yeap(mut new_ctx, pre_cst)) => {
                     if new_ctx.mark() == mark {
