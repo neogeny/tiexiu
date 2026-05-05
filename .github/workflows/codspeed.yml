@@ -26,8 +26,17 @@ jobs:
       - name: rust cache
         uses: swatinem/rust-cache@v2
 
+      # 1. Install the cargo-codspeed orchestration tool
+      - name: Install cargo-codspeed
+        run: cargo install cargo-codspeed --locked
+
+      # 2. Build the benchmark targets using cargo-codspeed
+      - name: Build benchmarks
+        run: cargo codspeed build
+
+      # 3. Execute using the correct runner
       - name: Run the benchmarks
         uses: CodSpeedHQ/action@v4
         with:
           mode: simulation
-          run: cargo bench --bench parsing
+          run: cargo codspeed run
