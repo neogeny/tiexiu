@@ -16,7 +16,7 @@ exclude = ["pyproject.toml", "__pycache__"]
 opt-level = 3        # Max optimizations (0-3)
 lto = true           # Link Time Optimization (smaller, faster binary)
 codegen-units = 1    # Better optimizations at the cost of slower build time
-panic = 'abort'      # Reduces binary size if you don't need stack unwinding
+#panic = 'abort'      # Reduces binary size if you don't need stack unwinding
 debug = 1
 
 [package.metadata.docs.rs]
