@@ -57,6 +57,7 @@ pub enum CfgKey {
     Cmt(String),
     Eol(String),
     NameChars(String),
+    Start(String),
 
     IgnoreCase,
     NameGuard,
@@ -84,6 +85,7 @@ impl PartialEq for CfgKey {
             (Self::Cmt(a), Self::Cmt(b)) => a == b,
             (Self::Eol(a), Self::Eol(b)) => a == b,
             (Self::NameChars(a), Self::NameChars(b)) => a == b,
+            (Self::Start(a), Self::Start(b)) => a == b,
             (Self::IgnoreCase, Self::IgnoreCase) => true,
             (Self::NameGuard, Self::NameGuard) => true,
             (Self::NoLeftRecursion, Self::NoLeftRecursion) => true,
@@ -107,6 +109,7 @@ impl std::hash::Hash for CfgKey {
             | CfgKey::Cmt(s)
             | CfgKey::Eol(s)
             | CfgKey::NameChars(s)
+            | CfgKey::Start(s)
             | CfgKey::Source(s) => {
                 s.hash(state);
             }
@@ -172,6 +175,7 @@ impl Cfg {
             CfgKey::Cmt(_) => 6,
             CfgKey::Eol(_) => 7,
             CfgKey::NameChars(_) => 8,
+            CfgKey::Start(_) => 8,
             CfgKey::IgnoreCase => 9,
             CfgKey::NameGuard => 10,
             CfgKey::NoLeftRecursion => 11,
@@ -204,6 +208,7 @@ impl CfgMapper<CfgKey> for CfgKey {
             (STR_PARSEINFO, _) if !is_truthy => Some(CfgKey::NoParseInfo),
             (STR_MEMOIZATION, _) if !is_truthy => Some(CfgKey::NoMemoization),
             (STR_NAMECHARS, pattern) => Some(CfgKey::NameChars(pattern.to_string())),
+            (STR_START, name) => Some(CfgKey::Start(name.to_string())),
 
             _ => None,
         }
@@ -219,6 +224,7 @@ impl CfgMapper<CfgKey> for CfgKey {
             CfgKey::Cmt(v) => Some((STR_COMMENTS, v.as_str())),
             CfgKey::Eol(v) => Some((STR_EOL_COMMENTS, v.as_str())),
             CfgKey::NameChars(v) => Some((STR_NAMECHARS, v.as_str())),
+            CfgKey::Start(v) => Some((STR_START, v.as_str())),
 
             CfgKey::IgnoreCase => Some((STR_IGNORECASE, true_str)),
             CfgKey::NameGuard => Some((STR_NAMEGUARD, true_str)),

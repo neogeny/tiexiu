@@ -13,7 +13,7 @@ use tiexiu::api::{
 use tiexiu::cfg::{Cfg, CfgA, Heartbeat, HeartbeatRef};
 use tiexiu::peg::pretty::*;
 use tiexiu::tools::rails::*;
-use tiexiu::{boot_grammar, config, CfgKey, Grammar, Result};
+use tiexiu::{CfgKey, Grammar, Result, boot_grammar, config};
 
 #[derive(Debug)]
 struct CliHeartbeat {
@@ -47,12 +47,11 @@ struct LoadProgress {
 impl LoadProgress {
     fn new(mp: &indicatif::MultiProgress, msg: &'static str) -> Self {
         let pb = mp.add(
-            indicatif::ProgressBar::new_spinner()
-                .with_style(
-                    indicatif::ProgressStyle::with_template("{spinner:.cyan} {wide_msg}")
-                        .unwrap()
-                        .tick_chars("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"),
-                ),
+            indicatif::ProgressBar::new_spinner().with_style(
+                indicatif::ProgressStyle::with_template("{spinner:.cyan} {wide_msg}")
+                    .unwrap()
+                    .tick_chars("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"),
+            ),
         );
         let hb = std::sync::Arc::new(CliHeartbeat::new(pb.clone()));
         pb.set_message(msg);
@@ -384,12 +383,18 @@ pub fn cli(out: &mut std::io::StdoutLock) -> Result<()> {
     Ok(())
 }
 
-fn load_grammar_from_path(grammar: &PathBuf, progress: &ProgressUI, cfga: &CfgA) -> Result<Grammar> {
+fn load_grammar_from_path(
+    grammar: &PathBuf,
+    progress: &ProgressUI,
+    cfga: &CfgA,
+) -> Result<Grammar> {
     let loader = progress.loading("loading grammar");
     let load_cfg = cfga
         .iter()
         .cloned()
-        .chain(std::iter::once(CfgKey::Heartbeat(loader.heartbeat().clone())))
+        .chain(std::iter::once(CfgKey::Heartbeat(
+            loader.heartbeat().clone(),
+        )))
         .collect::<Cfg>();
 
     let grammar_text = std::fs::read_to_string(grammar)?;
@@ -434,7 +439,7 @@ pub fn pygmentize(content: &str, extension: &str, use_color: bool) -> Result<Str
     use syntect::easy::HighlightLines;
     use syntect::highlighting::ThemeSet;
     use syntect::parsing::SyntaxSet;
-    use syntect::util::{as_24_bit_terminal_escaped, LinesWithEndings};
+    use syntect::util::{LinesWithEndings, as_24_bit_terminal_escaped};
 
     let ps = SyntaxSet::load_defaults_newlines();
     let ts = ThemeSet::load_defaults();

@@ -158,7 +158,7 @@ where
             }
 
             let step = total / 384;
-            if step == 0 || mark >= total|| mark.is_multiple_of(step) {
+            if step == 0 || mark >= total || mark.is_multiple_of(step) {
                 hb.tick(mark, total);
             }
         }
