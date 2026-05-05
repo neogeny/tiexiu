@@ -155,16 +155,17 @@ fn bench_named_parse(c: &mut Criterion) {
 }
 
 criterion_group!(
-    benches,
-    bench_token_parse,
-    bench_sequence_parse,
-    bench_choice_parse,
-    bench_closure_parse,
-    bench_nested_expression,
-    bench_context_clone,
-    bench_grammar_from_json,
-    bench_optional_parse,
-    bench_lookahead_parse,
-    bench_named_parse,
+    name = benches;
+    config = Criterion::default().without_plots();
+    targets = bench_token_parse,
+            bench_sequence_parse,
+            bench_choice_parse,
+            bench_closure_parse,
+            bench_nested_expression,
+            bench_context_clone,
+            bench_grammar_from_json,
+            bench_optional_parse,
+            bench_lookahead_parse,
+            bench_named_parse,
 );
 criterion_main!(benches);
