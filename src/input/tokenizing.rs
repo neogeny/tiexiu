@@ -19,7 +19,7 @@ pub struct TokenizingPatterns {
 
 impl Default for TokenizingPatterns {
     fn default() -> Self {
-        Self::try_new(r"(?m)\s+", "", "").expect("default patterns must be valid")
+        Self::try_new("", "", "").expect("empty patterns must compile to never-match")
     }
 }
 
