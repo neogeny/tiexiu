@@ -28,15 +28,14 @@ jobs:
 
       # 1. Install the cargo-codspeed orchestration tool
       - name: Install cargo-codspeed
-        run: cargo install cargo-codspeed --locked
+        run: cargo install cargo-codspeed@4.6.0
 
       # 2. Build the benchmark targets using cargo-codspeed
       - name: Build benchmarks
         run: cargo codspeed build
 
-      # 3. Execute using the correct runner
-      - name: Run the benchmarks
-        uses: CodSpeedHQ/action@v4
-        with:
-          mode: simulation
-          run: cargo codspeed run
+       # 3. Execute using the correct runner
+       - name: Run the benchmarks
+         uses: CodSpeedHQ/action@v4
+         with:
+           run: cargo codspeed run

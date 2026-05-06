@@ -342,11 +342,11 @@ mod tests {
     #[test]
     fn test_named_group_with_inner_names() {
         let tree = Tree::named(
-            "x",
+            "x".into(),
             Tree::Seq(
                 [
-                    Tree::named("a", Tree::text("a").into()).into(),
-                    Tree::named("b", Tree::text("b").into()).into(),
+                    Tree::named("a".into(), Tree::text("a".into()).into()).into(),
+                    Tree::named("b".into(), Tree::text("b".into()).into()).into(),
                 ]
                 .into(),
             )

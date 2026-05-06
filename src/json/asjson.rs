@@ -121,8 +121,8 @@ impl Tree {
                 }
                 Tree::Map(m.into())
             }
-            JsonValue::Boolean(yesno) => Tree::text(yesno.to_string().as_str()),
-            JsonValue::Number(n) => Tree::text(n.to_string().as_str()),
+            JsonValue::Boolean(yesno) => Tree::text(yesno.to_string().as_str().into()).clone(),
+            JsonValue::Number(n) => Tree::text(n.to_string().as_str().into()),
         }
     }
 }

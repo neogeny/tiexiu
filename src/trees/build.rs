@@ -3,19 +3,19 @@
 
 use super::map::TreeMap;
 use super::tree::Tree;
-use crate::trees::KeyValue;
-use std::rc::Rc;
+use crate::trees::{KeyValue, TreeRef};
+use crate::types::Str;
 
 impl Tree {
-    pub fn text(value: &str) -> Tree {
-        Self::Text(value.into())
+    pub fn text(value: Str) -> Tree {
+        Self::Text(value)
     }
 
-    pub fn seq(items: &[Rc<Tree>]) -> Tree {
+    pub fn seq(items: &[TreeRef]) -> Tree {
         Self::Seq(items.into())
     }
 
-    pub fn list(items: &[Rc<Tree>]) -> Tree {
+    pub fn list(items: &[TreeRef]) -> Tree {
         Self::List(items.into())
     }
 
@@ -23,29 +23,26 @@ impl Tree {
         Self::Map(entries.into())
     }
 
-    pub fn named(key: &str, value: Rc<Tree>) -> Tree {
-        let keyval = KeyValue(key.into(), value);
+    pub fn named(key: Str, value: TreeRef) -> Tree {
+        let keyval = KeyValue(key, value);
         Self::Named(keyval)
     }
 
-    pub fn named_as_list(key: &str, value: Rc<Tree>) -> Tree {
-        let keyval = KeyValue(key.into(), value);
+    pub fn named_as_list(key: Str, value: TreeRef) -> Tree {
+        let keyval = KeyValue(key, value);
         Self::NamedAsList(keyval)
     }
 
-    pub fn override_with(tree: Rc<Tree>) -> Tree {
+    pub fn override_with(tree: TreeRef) -> Tree {
         Self::Override(tree)
     }
 
-    pub fn override_as_list(tree: Rc<Tree>) -> Tree {
+    pub fn override_as_list(tree: TreeRef) -> Tree {
         Self::OverrideAsList(tree)
     }
 
-    pub fn node(typename: &str, tree: Rc<Tree>) -> Tree {
-        Self::Node {
-            typename: typename.into(),
-            tree,
-        }
+    pub fn node(typename: Str, tree: TreeRef) -> Tree {
+        Self::Node { typename, tree }
     }
 
     pub fn bottom() -> Tree {
@@ -63,19 +60,19 @@ mod tests {
 
     #[test]
     fn text_tree() {
-        let t = Tree::text("hello");
+        let t = Tree::text("hello".into());
         assert_eq!(t.to_string(), "t(\"hello\")");
     }
 
     #[test]
     fn list_tree() {
-        let t = Tree::seq(&[Tree::text("a").into(), Tree::text("b").into()]);
+        let t = Tree::seq(&[Tree::text("a".into()).into(), Tree::text("b".into()).into()]);
         assert!(matches!(t, Tree::Seq(_)));
     }
 
     #[test]
     fn named_tree() {
-        let t = Tree::named("key", Tree::text("value").into());
+        let t = Tree::named("key".into(), Tree::text("value".into()).into());
         assert!(matches!(t, Tree::Named(_)));
     }
 

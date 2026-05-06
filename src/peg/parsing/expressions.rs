@@ -90,7 +90,10 @@ impl Exp {
             ExpKind::Fail => Err(ctx.failure(start, Fail)),
             ExpKind::Dot => {
                 if let Some(c) = ctx.next() {
-                    Ok(Yeap(ctx.into(), Tree::text(c.to_string().as_str()).into()))
+                    Ok(Yeap(
+                        ctx.into(),
+                        Tree::text(c.to_string().as_str().into()).into(),
+                    ))
                 } else {
                     Err(ctx.failure(start, NoMoreInput))
                 }
@@ -132,14 +135,14 @@ impl Exp {
 
             ExpKind::Named(name, exp) => match exp.parse(ctx.clone()) {
                 Ok(Yeap(new_ctx, tree)) => {
-                    let wrapped = Tree::named(name, tree);
+                    let wrapped = Tree::named(name.clone(), tree);
                     Ok(Yeap(ctx.merge(*new_ctx).into(), wrapped.into()))
                 }
                 err => err,
             },
             ExpKind::NamedList(name, exp) => match exp.parse(ctx.clone()) {
                 Ok(Yeap(new_ctx, tree)) => {
-                    let wrapped = Tree::named_as_list(name, tree);
+                    let wrapped = Tree::named_as_list(name.clone(), tree);
                     Ok(Yeap(ctx.merge(*new_ctx).into(), wrapped.into()))
                 }
                 err => err,

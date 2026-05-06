@@ -123,8 +123,9 @@ pub trait Ctx: CtxI + Clone + Debug {
         let re = self.get_pattern(pattern);
         let result = self.cursor_mut().match_pattern(&re);
         if let Some(matched) = result {
-            self.tracer().trace_match(self, matched.as_str(), pattern);
-            Some(self.intern(matched.as_str()))
+            let m = matched.as_str();
+            self.tracer().trace_match(self, m, pattern);
+            Some(self.intern(m))
         } else {
             self.tracer().trace_no_match(self, "", pattern);
             None
