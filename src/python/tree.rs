@@ -4,7 +4,7 @@
 use crate::Tree;
 use crate::trees::KeyValue;
 use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyList, PyString, PyTuple};
+use pyo3::types::{PyDict, PyList, PyString};
 
 fn to_python(tree: &Tree, py: Python<'_>) -> PyResult<Py<PyAny>> {
     match tree {
@@ -22,8 +22,8 @@ fn to_python(tree: &Tree, py: Python<'_>) -> PyResult<Py<PyAny>> {
                 .iter()
                 .map(|item| to_python(item, py))
                 .collect::<PyResult<_>>()?;
-            let py_tuple = PyTuple::new(py, py_items)?;
-            Ok(py_tuple.into())
+            let py_seq = PyList::new(py, py_items)?;
+            Ok(py_seq.into())
         }
         Tree::Map(m) => {
             let dict = PyDict::new(py);
