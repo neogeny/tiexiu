@@ -1,6 +1,6 @@
-mod build;
+pub mod build;
 pub mod error;
-mod fmt;
+pub mod fmt;
 pub mod fold;
 pub mod map;
 pub mod short;
