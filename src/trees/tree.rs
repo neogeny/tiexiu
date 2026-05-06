@@ -150,7 +150,6 @@ impl Tree {
                 v.push(n.into());
                 Self::Seq(v.into())
             }
-            (s, Self::Nil) => Self::Seq(vec![s.into()].into()),
             (s, n) => Self::Seq(vec![s.into(), n.into()].into()),
         }
     }
@@ -164,17 +163,17 @@ impl Tree {
                 v.extend(l2.iter().cloned());
                 Self::Seq(v.into())
             }
-            (Self::Seq(l1), n) => {
-                let mut v: Vec<Rc<Tree>> = l1.to_vec();
-                v.push(n.into());
-                Self::Seq(v.into())
-            }
             (s, Self::Seq(l2)) => {
                 let mut v: Vec<Rc<Tree>> = vec![s.into()];
                 v.extend(l2.iter().cloned());
                 Self::Seq(v.into())
             }
-            (s, n) => s.append(n),
+            (Self::Seq(l1), n) => {
+                let mut v: Vec<Rc<Tree>> = l1.to_vec();
+                v.push(n.into());
+                Self::Seq(v.into())
+            }
+            (s, n) => Self::Seq(vec![s.into(), n.into()].into()),
         }
     }
 
