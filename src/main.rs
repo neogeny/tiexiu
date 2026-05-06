@@ -5,9 +5,14 @@
 // #[global_allocator]
 // static ALLOC: dhat::Alloc = dhat::Alloc;
 
+#[cfg(not(feature = "dhat"))]
 use mimalloc::MiMalloc;
+#[cfg(not(feature = "dhat"))]
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
+#[cfg(feature = "dhat")]
+#[global_allocator]
+static ALLOC: dhat::Alloc = dhat::Alloc;
 
 mod ui;
 
@@ -25,19 +30,17 @@ fn main() -> Result<()> {
     match ui::cli::cli(&mut out_handle) {
         Ok(_) => {
             let _ = out_handle.flush();
-            std::process::exit(0);
+            Ok(())
         }
         Err(err) => match &err {
-            Error::Io(e) if e.kind() == io::ErrorKind::BrokenPipe => {
-                std::process::exit(0);
-            }
+            Error::Io(e) if e.kind() == io::ErrorKind::BrokenPipe => Ok(()),
             _ => {
                 #[cfg(debug_assertions)]
                 writeln!(err_handle, "{:#?}", err).ok();
                 #[cfg(not(debug_assertions))]
                 writeln!(err_handle, "{}", err).ok();
                 let _ = err_handle.flush();
-                std::process::exit(1);
+                Err(err)
             }
         },
     }
