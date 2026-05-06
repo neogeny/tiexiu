@@ -259,7 +259,7 @@ def test_non_capturing_group_failure():
     grammar = r"start = (?: 'FIX' ) value ; value = /\d+/"
     parser = tiexiu.compile(grammar)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(tiexiu.ParseError):
         parser.parse_input("BUG123")
 
 
@@ -338,7 +338,7 @@ def test_no_default_comments():
         # no comments are valid
         a
     """
-    with pytest.raises(ValueError):
+    with pytest.raises(tiexiu.ParseError):
         tiexiu.parse(grammar, text)
 
 
