@@ -28,6 +28,11 @@ impl GrammarPy {
     }
 
     #[pyo3(signature = (text, **kwargs))]
+    fn parse(&self, text: &str, kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<Py<PyAny>> {
+        self.parse_input(text, kwargs)
+    }
+
+    #[pyo3(signature = (text, **kwargs))]
     fn parse_input(&self, text: &str, kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<Py<PyAny>> {
         let cfg: Vec<CfgKey> = if let Some(k) = kwargs {
             let mut cfg: Vec<CfgKey> = Vec::new();
