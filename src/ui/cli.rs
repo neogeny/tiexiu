@@ -1,150 +1,19 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::ui::progress::ProgressUI;
 use clap;
 use clap::builder::styling::{AnsiColor, Styles};
 use clap::{Parser, Subcommand};
 use std::fmt::Write;
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicUsize, Ordering};
 use tiexiu::api::{
     boot_grammar_pretty, boot_grammar_to_json_string, compile, load_grammar_from_json, parse_input,
 };
-use tiexiu::cfg::{Cfg, CfgA, Heartbeat, HeartbeatRef};
+use tiexiu::cfg::{Cfg, CfgA};
 use tiexiu::peg::pretty::*;
 use tiexiu::tools::rails::*;
 use tiexiu::{CfgKey, Grammar, Result, boot_grammar, config};
-
-#[derive(Debug)]
-struct CliHeartbeat {
-    pb: indicatif::ProgressBar,
-    last_mark: AtomicUsize,
-}
-
-impl CliHeartbeat {
-    fn new(pb: indicatif::ProgressBar) -> Self {
-        Self {
-            pb,
-            last_mark: AtomicUsize::new(0),
-        }
-    }
-}
-
-impl Heartbeat for CliHeartbeat {
-    fn tick(&self, mark: usize, _total: usize) {
-        let prev = self.last_mark.swap(mark, Ordering::Relaxed);
-        if mark > prev {
-            self.pb.set_position(mark as u64);
-        }
-    }
-}
-
-struct LoadProgress {
-    pb: indicatif::ProgressBar,
-    hb: HeartbeatRef,
-}
-
-impl LoadProgress {
-    fn new(mp: &indicatif::MultiProgress, msg: &'static str) -> Self {
-        let pb = mp.insert(
-            0,
-            indicatif::ProgressBar::new_spinner().with_style(
-                indicatif::ProgressStyle::with_template("{spinner:.cyan} {wide_msg}")
-                    .unwrap()
-                    .tick_chars("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"),
-            ),
-        );
-        let hb = std::sync::Arc::new(CliHeartbeat::new(pb.clone()));
-        pb.set_message(msg);
-        Self { pb, hb }
-    }
-
-    fn heartbeat(&self) -> &HeartbeatRef {
-        &self.hb
-    }
-
-    fn finish(self) {
-        self.pb.finish_with_message("loaded");
-    }
-}
-
-struct FileProgress {
-    pb: indicatif::ProgressBar,
-    hb: HeartbeatRef,
-}
-
-impl FileProgress {
-    fn new(mp: &indicatif::MultiProgress, name: &str) -> Self {
-        let pb = mp.insert(
-            0,
-            indicatif::ProgressBar::new(0)
-                .with_style(
-                    indicatif::ProgressStyle::with_template(
-                        // "  {prefix:>40.bold} [{wide_bar:.cyan/black}] {pos:>8}/{len:<8} bytes",
-                        "  {prefix:>40.bold} [{wide_bar:.yellow/black}] {percent:>4}% {duration_precise}  ",
-                    )
-                    .unwrap()
-                    .progress_chars("░▓▒"),
-                )
-                .with_prefix(name.to_string()),
-        );
-        let hb = std::sync::Arc::new(CliHeartbeat::new(pb.clone()));
-        Self { pb, hb }
-    }
-
-    fn heartbeat(&self) -> &HeartbeatRef {
-        &self.hb
-    }
-
-    fn set_length(&self, len: usize) {
-        self.pb.set_length(len as u64);
-    }
-
-    fn success(self) {
-        self.pb.finish_with_message("done");
-    }
-
-    fn fail(self) {
-        self.pb.finish_with_message("failed");
-    }
-}
-
-struct ProgressUI {
-    mp: indicatif::MultiProgress,
-    files: indicatif::ProgressBar,
-}
-
-impl ProgressUI {
-    fn new(total: u64) -> Self {
-        let mp = indicatif::MultiProgress::new();
-        let files = mp.add(indicatif::ProgressBar::new(total)
-            .with_style(
-                indicatif::ProgressStyle::with_template(
-                    "{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {pos}/{len} files",
-                )
-                .unwrap()
-                .progress_chars("⠇⠋ "),
-                // .progress_chars("░>-"),
-        ));
-        Self { mp, files }
-    }
-
-    fn loading(&self, msg: &'static str) -> LoadProgress {
-        LoadProgress::new(&self.mp, msg)
-    }
-
-    fn add_file(&self, name: &str) -> FileProgress {
-        FileProgress::new(&self.mp, name)
-    }
-
-    fn inc_files(&self) {
-        self.files.inc(1);
-    }
-
-    fn finish(self) {
-        self.files.finish_with_message("done");
-    }
-}
 
 fn cli_styles() -> Styles {
     Styles::styled()
@@ -263,6 +132,7 @@ pub enum Commands {
 }
 
 pub fn cli(out: &mut std::io::StdoutLock) -> Result<()> {
+    use crate::ui::progress::ProgressUI;
     use std::io::Write;
     let cli = Cli::parse();
     let use_color = configure_color(cli.color);
@@ -313,7 +183,13 @@ pub fn cli(out: &mut std::io::StdoutLock) -> Result<()> {
                 let name = input.file_name().unwrap_or_default().to_string_lossy();
                 let file_prog = progress.add_file(&name);
 
-                let text = std::fs::read_to_string(input)?;
+                let text = match std::fs::read_to_string(input) {
+                    Err(error) => {
+                        file_prog.fail(&format!("{:#?}", error));
+                        continue;
+                    }
+                    Ok(text) => text,
+                };
                 file_prog.set_length(text.len());
 
                 let file_cfg = cfg
@@ -336,8 +212,7 @@ pub fn cli(out: &mut std::io::StdoutLock) -> Result<()> {
                         output.push('\n');
                     }
                     Err(err) => {
-                        file_prog.fail();
-                        eprintln!("{:#?}", err)
+                        file_prog.fail(&format!("{:#?}", err));
                     }
                 }
                 progress.inc_files();
