@@ -4,7 +4,7 @@
 pub use super::ctx::{Ctx, CtxI};
 use super::memo::{Memo, MemoKey};
 use super::state::{CallStack, HeavyState, ParseState};
-use super::trace::{CONSOLE_TRACER, NULL_TRACER, Tracer};
+use super::trace::{Tracer, CONSOLE_TRACER, NULL_TRACER};
 use crate::cfg::*;
 use crate::input::Cursor;
 use crate::peg::error::DisasterReport;
@@ -138,12 +138,12 @@ where
         self.with_heavy_mut(|heavy| heavy.intern(s))
     }
 
-    fn furthest_failure(&self) -> Option<DisasterReport> {
-        self.heavy.borrow().furthest_failure.clone()
-    }
-
     fn set_furthest_failure(&mut self, dis: &DisasterReport) {
         self.with_heavy_mut(|heavy| heavy.set_furthest_failure(dis));
+    }
+
+    fn furthest_failure(&self) -> Option<DisasterReport> {
+        self.heavy.borrow().furthest_failure.clone()
     }
 
     fn get_pattern(&mut self, pattern: &str) -> Pattern {
