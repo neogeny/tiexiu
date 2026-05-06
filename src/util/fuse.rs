@@ -31,3 +31,16 @@ impl Fuse {
         self.0 = None;
     }
 }
+
+impl Drop for Fuse {
+    #[track_caller]
+    fn drop(&mut self) {
+        // Failing to burn a fuse before dropping it represents an unhandled lifecycle.
+        if self.is_good() {
+            if std::thread::panicking() {
+                return; // Prevent double panics during stack unwinding
+            }
+            panic!("Fuse dropped while still active (must be explicitly burnt)");
+        }
+    }
+}
