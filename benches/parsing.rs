@@ -14,7 +14,7 @@ fn bench_token_parse(c: &mut Criterion) {
     c.bench_function("parse_single_token", |b| {
         b.iter_with_setup(
             || (ctx.clone(), token.clone()),
-            |(current_ctx, t)| black_box(t.parse(current_ctx)),
+            |(current_ctx, t)| black_box(t.parse_at(current_ctx)),
         );
     });
 }
@@ -27,7 +27,7 @@ fn bench_sequence_parse(c: &mut Criterion) {
     c.bench_function("parse_sequence_3_tokens", |b| {
         b.iter_with_setup(
             || (ctx.clone(), seq.clone()),
-            |(current_ctx, s)| black_box(s.parse(current_ctx)),
+            |(current_ctx, s)| black_box(s.parse_at(current_ctx)),
         );
     });
 }
@@ -40,7 +40,7 @@ fn bench_choice_parse(c: &mut Criterion) {
         let ctx = StrCtx::new(cursor, &[]);
         b.iter_with_setup(
             || (ctx.clone(), choice.clone()),
-            |(current_ctx, ch)| black_box(ch.parse(current_ctx)),
+            |(current_ctx, ch)| black_box(ch.parse_at(current_ctx)),
         );
     });
 
@@ -49,7 +49,7 @@ fn bench_choice_parse(c: &mut Criterion) {
         let ctx = StrCtx::new(cursor, &[]);
         b.iter_with_setup(
             || (ctx.clone(), choice.clone()),
-            |(current_ctx, ch)| black_box(ch.parse(current_ctx)),
+            |(current_ctx, ch)| black_box(ch.parse_at(current_ctx)),
         );
     });
 }
@@ -62,7 +62,7 @@ fn bench_closure_parse(c: &mut Criterion) {
     c.bench_function("parse_closure_10_repetitions", |b| {
         b.iter_with_setup(
             || (ctx.clone(), closure.clone()),
-            |(current_ctx, cl)| black_box(cl.parse(current_ctx)),
+            |(current_ctx, cl)| black_box(cl.parse_at(current_ctx)),
         );
     });
 }
@@ -84,7 +84,7 @@ fn bench_nested_expression(c: &mut Criterion) {
     c.bench_function("parse_nested_expression", |b| {
         b.iter_with_setup(
             || (ctx.clone(), expr.clone()),
-            |(current_ctx, e)| black_box(e.parse(current_ctx)),
+            |(current_ctx, e)| black_box(e.parse_at(current_ctx)),
         );
     });
 }
@@ -114,7 +114,7 @@ fn bench_optional_parse(c: &mut Criterion) {
         let ctx = StrCtx::new(cursor, &[]);
         b.iter_with_setup(
             || (ctx.clone(), opt.clone()),
-            |(current_ctx, o)| black_box(o.parse(current_ctx)),
+            |(current_ctx, o)| black_box(o.parse_at(current_ctx)),
         );
     });
 
@@ -123,7 +123,7 @@ fn bench_optional_parse(c: &mut Criterion) {
         let ctx = StrCtx::new(cursor, &[]);
         b.iter_with_setup(
             || (ctx.clone(), opt.clone()),
-            |(current_ctx, o)| black_box(o.parse(current_ctx)),
+            |(current_ctx, o)| black_box(o.parse_at(current_ctx)),
         );
     });
 }
@@ -136,7 +136,7 @@ fn bench_lookahead_parse(c: &mut Criterion) {
     c.bench_function("parse_lookahead", |b| {
         b.iter_with_setup(
             || (ctx.clone(), la.clone()),
-            |(current_ctx, l)| black_box(l.parse(current_ctx)),
+            |(current_ctx, l)| black_box(l.parse_at(current_ctx)),
         );
     });
 }
@@ -149,7 +149,7 @@ fn bench_named_parse(c: &mut Criterion) {
     c.bench_function("parse_named_element", |b| {
         b.iter_with_setup(
             || (ctx.clone(), named.clone()),
-            |(current_ctx, n)| black_box(n.parse(current_ctx)),
+            |(current_ctx, n)| black_box(n.parse_at(current_ctx)),
         );
     });
 }

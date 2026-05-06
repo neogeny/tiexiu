@@ -82,7 +82,7 @@ impl Exp {
         if rule.is_left_recursive() {
             Self::call_recursive(ctx, &key, rule)
         } else {
-            rule.parse(ctx)
+            rule.parse_at(ctx)
         }
     }
 
@@ -109,7 +109,7 @@ impl Exp {
             Self::track_recursion_depth(&mut ctx, key)?;
 
             // We need to push a context state here to attempt the parse safely
-            let result = rule.parse(ctx.push());
+            let result = rule.parse_at(ctx.push());
             ctx.untrack(key);
 
             match result {

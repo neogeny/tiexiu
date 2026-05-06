@@ -23,7 +23,7 @@ impl Exp {
         let start = ctx.mark();
 
         for option in options.iter() {
-            match option.parse(ctx.push()) {
+            match option.parse_at(ctx.push()) {
                 Ok(Yeap(new_ctx, tree)) => {
                     return Ok(Yeap(ctx.merge(*new_ctx).into(), tree));
                 }
@@ -38,7 +38,7 @@ impl Exp {
     }
 
     pub fn parse_optional<C: Ctx>(&self, mut ctx: C, exp: &Exp) -> ParseResult<C> {
-        match exp.parse(ctx.push()) {
+        match exp.parse_at(ctx.push()) {
             Ok(Yeap(new_ctx, tree)) => Ok(Yeap(ctx.merge(*new_ctx).into(), tree)),
             Err(mut nope) => {
                 if nope.take_cut() {

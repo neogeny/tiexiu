@@ -37,8 +37,8 @@ impl<C> Parser<C> for Rule
 where
     C: Ctx,
 {
-    fn parse(&self, ctx: C) -> ParseResult<C> {
-        Rule::parse(self, ctx)
+    fn parse_at(&self, ctx: C) -> ParseResult<C> {
+        Rule::parse_at(self, ctx)
     }
 }
 
@@ -100,8 +100,8 @@ impl Rule {
         }
     }
 
-    pub fn parse<C: Ctx>(&self, mut ctx: C) -> ParseResult<C> {
-        match self.exp.parse(ctx.push()) {
+    pub fn parse_at<C: Ctx>(&self, mut ctx: C) -> ParseResult<C> {
+        match self.exp.parse_at(ctx.push()) {
             Err(nope) => Err(nope),
             Ok(Yeap(ok_ctx, tree)) => {
                 let folded = Rc::unwrap_or_clone(tree).fold();

@@ -7,5 +7,5 @@ pub use crate::util::tokenstack::TokenStack;
 use std::fmt::Debug;
 
 pub trait Parser<C: Ctx>: Debug {
-    fn parse(&self, ctx: C) -> ParseResult<C>;
+    fn parse_at(&self, ctx: C) -> ParseResult<C>;
 }

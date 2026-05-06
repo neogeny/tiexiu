@@ -11,14 +11,14 @@ use std::rc::Rc;
 impl Exp {
     pub fn skip_exp<C: Ctx>(ctx: C, exp: &Exp) -> C {
         let skip_ctx = ctx.clone();
-        match exp.parse(skip_ctx) {
+        match exp.parse_at(skip_ctx) {
             Ok(Yeap(new_ctx, _)) => ctx.merge(*new_ctx),
             Err(_) => ctx,
         }
     }
 
     pub fn add_exp<C: Ctx>(ctx: C, exp: &Exp, res: &mut Vec<Rc<Tree>>) -> Result<C, (C, Nope)> {
-        match exp.parse(ctx.clone()) {
+        match exp.parse_at(ctx.clone()) {
             Ok(Yeap(new_ctx, tree)) => {
                 res.push(tree);
                 Ok(ctx.merge(*new_ctx))
@@ -30,7 +30,7 @@ impl Exp {
     pub fn repeat<C: Ctx>(mut ctx: C, exp: &Exp, res: &mut Vec<Rc<Tree>>) -> ParseResult<C> {
         loop {
             let mark = ctx.mark();
-            match exp.parse(ctx.push()) {
+            match exp.parse_at(ctx.push()) {
                 Ok(Yeap(new_ctx, tree)) => {
                     if new_ctx.mark() == mark {
                         return Err(ctx.failure(mark, ParseFailure::ClosureMatchedVoid()));
@@ -54,7 +54,7 @@ impl Exp {
     ) -> ParseResult<C> {
         loop {
             let mark = ctx.mark();
-            match pre.parse(ctx.push()) {
+            match pre.parse_at(ctx.push()) {
                 Err(mut nope) => {
                     if nope.take_cut() {
                         return Err(nope);
@@ -67,7 +67,7 @@ impl Exp {
                     }
                     new_ctx.cut();
                     let inner_ctx = *new_ctx;
-                    match exp.parse(inner_ctx) {
+                    match exp.parse_at(inner_ctx) {
                         Ok(Yeap(repeat_ctx, exp_cst)) => {
                             if keep_pre {
                                 res.push(pre_cst);

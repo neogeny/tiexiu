@@ -21,7 +21,7 @@ fn basic_position_tracking() -> Result<()> {
     let cursor = StrCursor::new("hello");
     let ctx = new_ctx(cursor, &[]);
 
-    let Yeap(ctx, _tree) = grammar.parse(ctx.clone())?;
+    let Yeap(ctx, _tree) = grammar.parse_at(ctx.clone())?;
     assert!(ctx.cursor().at_end(), "Should be at end of input");
     Ok(())
 }
