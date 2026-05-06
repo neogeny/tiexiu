@@ -212,10 +212,6 @@ where
         self.state_mut().merge(other.state_mut());
         self
     }
-
-    fn done(&self) -> bool {
-        self.state.is_popped()
-    }
 }
 
 #[cfg(test)]

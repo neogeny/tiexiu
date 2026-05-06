@@ -10,7 +10,6 @@ use crate::input::Cursor;
 use crate::parser::TokenStack;
 use crate::peg::error::DisasterReport;
 use crate::types::{Str, StrSet};
-use crate::util::fuse::Fuse;
 use crate::util::pyre::Pattern;
 use std::collections::HashMap;
 use std::time::Instant;
@@ -29,7 +28,6 @@ pub struct Alert {
 
 #[derive(Debug)]
 pub struct ParseState<U: Cursor + Clone> {
-    fuse: Fuse,
     pub cursor: U,
     pub cutseen: bool,
     pub callstack: CallStack,
@@ -111,7 +109,6 @@ impl<U: Cursor + Clone> ParseState<U> {
             cursor,
             cutseen: false,
             callstack: CallStack::new(),
-            fuse: Fuse::default(),
             keytrack: KeyTrack::default(),
         }
     }
@@ -121,35 +118,23 @@ impl<U: Cursor + Clone> ParseState<U> {
             cursor: other.cursor.clone(),
             cutseen: false,
             callstack: other.callstack.clone(),
-            fuse: Fuse::default(),
             keytrack: KeyTrack::default(),
         }
     }
 
     pub fn merge(&mut self, prev: &mut Self) -> &mut Self {
-        prev.burn();
         self.cursor.reset(prev.cursor.mark());
         self.callstack = prev.callstack.clone();
         self
     }
 
-    pub fn burn(&mut self) {
-        self.fuse.burn();
-    }
-
     pub fn pop(&mut self, into: &mut Self) {
         into.callstack = self.callstack.clone();
         into.cursor.reset(self.cursor.mark());
-        self.burn();
     }
 
     pub fn undo(&mut self, into: &mut Self) {
         into.callstack = self.callstack.clone();
-        self.burn();
-    }
-
-    pub fn is_popped(&self) -> bool {
-        self.fuse.is_burnt()
     }
 }
 

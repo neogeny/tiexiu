@@ -178,8 +178,6 @@ pub trait Ctx: CtxI + Clone + Debug {
         new.clear_cut();
         new
     }
-
-    fn done(&self) -> bool;
 }
 
 impl<C: Ctx> CtxI for Box<C> {
@@ -305,10 +303,5 @@ impl<C: Ctx> Ctx for Box<C> {
         let this = *self;
         let other = *other;
         this.merge(other).into()
-    }
-
-    #[inline]
-    fn done(&self) -> bool {
-        (**self).done()
     }
 }
