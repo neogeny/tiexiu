@@ -45,7 +45,7 @@ impl CfgBoxWrapper for Cfg {
 #[derive(Debug, Clone, Default)]
 pub enum CfgKey {
     #[default]
-    None,
+    Null,
 
     Debug,
     Verbose,
@@ -76,7 +76,7 @@ pub enum CfgKey {
 impl PartialEq for CfgKey {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (Self::None, Self::None) => true,
+            (Self::Null, Self::Null) => true,
             (Self::Debug, Self::Debug) => true,
             (Self::Verbose, Self::Verbose) => true,
             (Self::Trace, Self::Trace) => true,
@@ -166,7 +166,7 @@ impl Cfg {
 
     fn variant_ord(k: &CfgKey) -> u8 {
         match k {
-            CfgKey::None => 0,
+            CfgKey::Null => 0,
             CfgKey::Debug => 1,
             CfgKey::Verbose => 2,
             CfgKey::Trace => 3,
@@ -193,20 +193,67 @@ impl CfgMapper<CfgKey> for CfgKey {
         let is_truthy = !is_falsy(value);
 
         match (key.to_lowercase().as_str(), value) {
-            ("trace", "1") => Some(CfgKey::Trace),
-            ("debug", "1") => Some(CfgKey::Debug),
-            ("verbose", "1") => Some(CfgKey::Verbose),
-
+            (STR_TRACE, _) => {
+                if is_truthy {
+                    Some(CfgKey::Trace)
+                } else {
+                    Some(CfgKey::Null)
+                }
+            }
+            (STR_DEBUG, _) => {
+                if is_truthy {
+                    Some(CfgKey::Debug)
+                } else {
+                    Some(CfgKey::Null)
+                }
+            }
+            (STR_VERBOSE, _) => {
+                if is_truthy {
+                    Some(CfgKey::Verbose)
+                } else {
+                    Some(CfgKey::Null)
+                }
+            }
             (STR_GRAMMAR_NAME, name) => Some(CfgKey::Grammar(name.to_string())),
             (STR_WHITESPACE, pattern) => Some(CfgKey::Wsp(pattern.to_string())),
             (STR_COMMENTS, pattern) => Some(CfgKey::Cmt(pattern.to_string())),
             (STR_EOL_COMMENTS, pattern) => Some(CfgKey::Eol(pattern.to_string())),
 
-            (STR_IGNORECASE, _) if is_truthy => Some(CfgKey::IgnoreCase),
-            (STR_NAMEGUARD, _) if is_truthy => Some(CfgKey::NameGuard),
-            (STR_LEFTREC, _) if !is_truthy => Some(CfgKey::NoLeftRecursion),
-            (STR_PARSEINFO, _) if !is_truthy => Some(CfgKey::NoParseInfo),
-            (STR_MEMOIZATION, _) if !is_truthy => Some(CfgKey::NoMemoization),
+            (STR_IGNORECASE, _) => {
+                if is_truthy {
+                    Some(CfgKey::IgnoreCase)
+                } else {
+                    Some(CfgKey::Null)
+                }
+            }
+            (STR_NAMEGUARD, _) => {
+                if is_truthy {
+                    Some(CfgKey::NameGuard)
+                } else {
+                    Some(CfgKey::Null)
+                }
+            }
+            (STR_LEFTREC, _) => {
+                if !is_truthy {
+                    Some(CfgKey::NoLeftRecursion)
+                } else {
+                    Some(CfgKey::Null)
+                }
+            }
+            (STR_PARSEINFO, _) => {
+                if !is_truthy {
+                    Some(CfgKey::NoParseInfo)
+                } else {
+                    Some(CfgKey::Null)
+                }
+            }
+            (STR_MEMOIZATION, _) => {
+                if !is_truthy {
+                    Some(CfgKey::NoMemoization)
+                } else {
+                    Some(CfgKey::Null)
+                }
+            }
             (STR_NAMECHARS, pattern) => Some(CfgKey::NameChars(pattern.to_string())),
             (STR_START, name) => Some(CfgKey::Start(name.to_string())),
 

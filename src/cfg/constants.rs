@@ -25,6 +25,10 @@ pub const STR_NAMEGUARD: &str = "nameguard";
 pub const STR_KEYWORD: &str = "keyword";
 pub const STR_START: &str = "start";
 
+pub const STR_TRACE: &str = "trace";
+pub const STR_DEBUG: &str = "debug";
+pub const STR_VERBOSE: &str = "verbose";
+
 // Symbols
 
 pub const SYM_ETX: &str = "＄";
