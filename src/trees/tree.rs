@@ -144,12 +144,13 @@ impl Tree {
     pub fn append_as_list(self, node: Self) -> Self {
         match (self, node) {
             (Self::Nil, n) => Self::Seq(vec![n.into()].into()),
-            (s, Self::Nil) => s,
+            (Self::Seq(list), Self::Nil) => Self::Seq(list),
             (Self::Seq(list), n) => {
                 let mut v: Vec<Rc<Tree>> = list.to_vec();
                 v.push(n.into());
                 Self::Seq(v.into())
             }
+            (s, Self::Nil) => Self::Seq(vec![s.into()].into()),
             (s, n) => Self::Seq(vec![s.into(), n.into()].into()),
         }
     }
