@@ -79,8 +79,11 @@ fn test_match_endrule_unindented_branch() -> Result<()> {
 
 #[test]
 fn test_match_endrule_blankline_branch() -> Result<()> {
-    let p = Pattern::new(r"\s*[;]|(?=\s*(?:\r?\n|\r)\S)|(?:\s*(?:\r?\n|\r)){2,}[;?]")?;
-    let _ = p.match_("\n\n");
+    let p = Pattern::new(r"\s*[;]|(?=\s*(?:\r?\n|\r)\S)|(?:\s*(?:\r?\n|\r)){2,}[;]?")?;
+    let m = p
+        .match_("\n\n")
+        .ok_or_else(|| Error::from("ENDRULE should match blank line"))?;
+    assert_eq!(m.start(None), 0);
     Ok(())
 }
 

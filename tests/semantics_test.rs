@@ -13,6 +13,10 @@ fn test_semantics_not_class() -> Result<()> {
         start::sum = {number}+ $ ;
         number::int = /\d+/ ;
     "#;
-    compile(grammar, &[])?;
+    let model = compile(grammar, &[])?;
+    // Python test verifies that passing a class (not instance) raises TypeError
+    // and that parsing with semantics=ModelBuilderSemantics() returns 15 for "5 4 3 2 1"
+    // TieXiu doesn't support semantics, so we just verify the grammar compiles
+    let _ = model;
     Ok(())
 }

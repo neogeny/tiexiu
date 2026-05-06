@@ -40,7 +40,8 @@ fn closure_tokens() -> Result<()> {
     "#;
     let grammar = tiexiu::compile(grammar, &[])?;
     let tree = parse_input(&grammar, "aaa", &[])?;
-    eprintln!("closure result: {:?}", tree.to_json());
+    // Python: assert ast == ['a', 'a', 'a']
+    assert_eq!(tree.to_json(), value!(["a", "a", "a"]));
     Ok(())
 }
 

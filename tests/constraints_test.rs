@@ -35,6 +35,7 @@ fn cut() -> Result<()> {
         start: 'a'~'b'
     "#;
     let grammar = tiexiu::compile(grammar, &[])?;
-    let _tree = parse_input(&grammar, "a b", &[])?;
+    let tree = parse_input(&grammar, "a b", &[])?;
+    assert_eq!(tree.to_json(), array!["a", "b"]);
     Ok(())
 }

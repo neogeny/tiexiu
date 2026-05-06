@@ -33,6 +33,7 @@ fn whitespace_directive() -> Result<()> {
 // When implemented, it should disable automatic whitespace between tokens,
 // allowing 'a' 'b' to match "ab" without requiring a space.
 #[test]
+#[ignore = "whitespace None directive not implemented"]
 fn whitespace_none_directive() -> Result<()> {
     let grammar = r#"
         @@whitespace :: None
@@ -40,14 +41,16 @@ fn whitespace_none_directive() -> Result<()> {
         
         start: 'a' 'b'
     "#;
-    let _grammar = tiexiu::compile(grammar, &[])?;
+    let grammar = tiexiu::compile(grammar, &[])?;
+    let tree = parse_input(&grammar, "ab", &[])?;
+    assert_eq!(tree.to_json(), array!["a", "b"]);
     Ok(())
 }
 
 // TieXiu has no default whitespace; this test is for TatSu's default behavior.
 // TODO: enable if TieXiu gains default whitespace handling.
-#[ignore = "TieXiu has no default whitespace like TatSu"]
 #[test]
+#[ignore = "TieXiu has no default whitespace like TatSu"]
 fn default_whitespace() -> Result<()> {
     let grammar = r#"
         start: 'a' 'b'

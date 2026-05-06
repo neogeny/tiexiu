@@ -19,7 +19,16 @@ fn test_missing_rule() -> Result<()> {
 
 #[test]
 fn test_error_exists() -> Result<()> {
-    // Simple check that Error type exists
-    fn _check_error(_: tiexiu::Error) {}
+    // Verify that Error type exists and can be matched
+    let grammar = r#"
+        start = 'test' $ ;
+    "#;
+    match tiexiu::api::compile(grammar, &[]) {
+        Ok(_) => (),
+        Err(e) => {
+            // Error should be a proper error type
+            let _: tiexiu::Error = e;
+        }
+    }
     Ok(())
 }

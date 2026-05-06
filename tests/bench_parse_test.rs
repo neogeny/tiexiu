@@ -12,6 +12,7 @@ use tiexiu::context::StrCtx;
 
 const CALC_GRAMMAR: &str = r#"
     @@grammar::CALC
+    @@whitespace :: /\s+/
 
     start: expression $
 
@@ -34,24 +35,27 @@ const CALC_GRAMMAR: &str = r#"
 
 #[test]
 fn test_bench_compile_calc_grammar() -> Result<()> {
-    compile(CALC_GRAMMAR, &[])?;
+    let model = compile(CALC_GRAMMAR, &[])?;
+    assert_eq!(model.name.to_string(), "CALC");
     Ok(())
 }
 
 #[test]
 fn test_bench_parse_arithmetic_expression() -> tiexiu::Result<()> {
-    // Benchmark: parse an arithmetic expression
     let model = compile(CALC_GRAMMAR, &[])?;
     let ctx = StrCtx::from("3 + 5 * ( 10 - 20 )");
-    let _ = model.parse_tree(ctx);
+    let tree = model.parse_tree(ctx)?;
+    // Just verify it parses without error
+    let _ = tree;
     Ok(())
 }
 
 #[test]
 fn test_bench_parse_complex_expression() -> tiexiu::Result<()> {
-    // Benchmark: parse a more complex nested expression
     let model = compile(CALC_GRAMMAR, &[])?;
     let ctx = StrCtx::from("((1 + 2) * (3 + 4)) + ((5 - 6) * (7 + 8)) - 9 * (10 + 11)");
-    let _result = model.parse_tree(ctx);
+    let tree = model.parse_tree(ctx)?;
+    // Just verify it parses without error
+    let _ = tree;
     Ok(())
 }

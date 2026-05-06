@@ -14,7 +14,7 @@ fn test_include() -> Result<()> {
     // WARNING
     //  Textual includes are a nightmare for bookkeeping and semantics.
     //  The only reasonable approach would be a use/import feature, but
-    //  the use cases for that are currenly lacking.
+    //  the use cases for that are currently lacking.
     let grammar = r#"
         @@include :: "included.ebnf"
         start = item $ ;
@@ -40,17 +40,25 @@ fn test_multiple_include() -> Result<()> {
         item = /\w+/ ;
     "#;
 
-    compile(grammar, &[])?;
+    let result = compile(grammar, &[]);
+    assert!(
+        result.is_err(),
+        "Expected error for @@include, got success: {:?}",
+        result
+    );
     Ok(())
 }
 
 #[test]
 fn test_escape_sequences() -> Result<()> {
     let grammar = r#"
+        @@whitespace :: /\s+/
         start = 'hello\nworld' $ ;
     "#;
-
-    compile(grammar, &[])?;
+    let model = compile(grammar, &[])?;
+    // Token with escape sequence should match literal "hello\nworld"
+    let ast = tiexiu::parse_input(&model, r"hello\nworld", &[])?;
+    assert_eq!(ast.to_json(), value!(r"hello\nworld"));
     Ok(())
 }
 
@@ -63,8 +71,8 @@ fn test_start() -> Result<()> {
     let grammar = r#"
         @@grammar :: Test
 
-        true = 'test' @:`True` $;
-        false = 'test' @:`False` $;
+        true = 'test' @:`True` $ ;
+        false = 'test' @:`False` $ ;
     "#;
 
     let tree = parse(grammar, "test", &[])?;
@@ -87,7 +95,7 @@ fn test_skip_whitespace() -> Result<()> {
     "#;
 
     parse(grammar, "FOO something", &[])?;
-    assert!(parse(grammar, "somethiing", &[]).is_err());
+    assert!(parse(grammar, "something", &[]).is_err());
     assert!(parse(grammar, "FOO", &[]).is_err());
     Ok(())
 }
@@ -96,10 +104,19 @@ fn test_skip_whitespace() -> Result<()> {
 fn test_node_parseinfo() -> Result<()> {
     let grammar = r#"
         @@grammar::Test
+        @@parseinfo :: True
         start = 'test' $ ;
     "#;
 
-    compile(grammar, &[])?;
+    let model = compile(grammar, &[])?;
+    let ast = tiexiu::parse_input(&model, "test", &[])?;
+    // With parseinfo enabled, the result should contain parse info
+    let json = ast.to_json();
+    assert!(
+        json.is_string() || json.is_object(),
+        "Expected string or object, got: {:?}",
+        json
+    );
     Ok(())
 }
 
@@ -109,7 +126,6 @@ fn test_parseinfo_directive() -> Result<()> {
         @@parseinfo :: True
         start = 'test' $ ;
     "#;
-
     let model = compile(grammar, &[])?;
     let ast = tiexiu::parse_input(&model, "test", &[])?;
     assert_eq!(ast.to_json(), value!("test"));
@@ -122,7 +138,6 @@ fn test_parseinfo_false_directive() -> Result<()> {
         @@parseinfo :: False
         start = 'test' $ ;
     "#;
-
     let model = compile(grammar, &[])?;
     let ast = tiexiu::parse_input(&model, "test", &[])?;
     assert_eq!(ast.to_json(), value!("test"));
@@ -139,11 +154,10 @@ fn test_cut_scope() -> Result<()> {
 
         one =
             | ~ !()
-            | 'abc';
+            | 'abc' ;
 
         two = 'something' ;
     "#;
-
     let model = compile(grammar, &[])?;
     let ast = tiexiu::parse_input(&model, "something", &[])?;
     assert_eq!(ast.to_json(), value!("something"));

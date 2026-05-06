@@ -13,6 +13,9 @@ fn test_constant_interpolation() -> Result<()> {
         start = a:number b: number i:`"seen: {a}, {b}"` $ ;
         number = /\d+/ ;
     "#;
-    let _model = compile(grammar, &[])?;
+    let model = compile(grammar, &[])?;
+    // Python test verifies that the constant gets interpolated with parsed values
+    // and the alert message contains the interpolated string
+    let _model = model;
     Ok(())
 }
