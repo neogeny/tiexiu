@@ -8,6 +8,7 @@ use crate::peg::{Exp, ExpKind, ParseFailure::*, Parser};
 use crate::trees::Tree;
 use crate::types::Str;
 use crate::util::pyre;
+use std::collections::LinkedList;
 use std::rc::Rc;
 
 impl<C: Ctx> Parser<C> for Exp {
@@ -192,38 +193,40 @@ impl Exp {
             },
 
             ExpKind::Sequence(sequence) => {
-                let mut results: Vec<Rc<Tree>> = Vec::new();
+                let mut results: Vec<Rc<Tree>> = Vec::with_capacity(sequence.len());
                 for exp in &**sequence {
-                    match exp.parse_at(ctx.clone()) {
+                    match exp.parse_at(ctx) {
                         Ok(Yeap(new_ctx, tree)) => {
                             results.push(tree);
-                            ctx = ctx.merge(*new_ctx);
+                            ctx = *new_ctx;
                         }
                         err => return err,
                     }
                 }
-                Ok(Yeap(ctx.into(), Tree::from(results).into()))
+                Ok(Yeap(
+                    ctx.into(),
+                    Tree::Seq(results.into()).into(),
+                ))
             }
             ExpKind::Alt(exp) => exp.parse_at(ctx),
             ExpKind::Choice(options) => self.parse_choice(ctx, options),
             ExpKind::Optional(exp) => self.parse_optional(ctx, exp),
 
             ExpKind::Closure(exp) => {
-                let mut res: Vec<Rc<Tree>> = Vec::new();
+                let mut res: LinkedList<Rc<Tree>> = LinkedList::new();
                 match Self::repeat(ctx.push(), exp, &mut res) {
-                    Ok(Yeap(new_ctx, _)) => Ok(Yeap(
-                        ctx.merge(*new_ctx).into(),
-                        Tree::from(res).closed().into(),
-                    )),
+                    Ok(Yeap(new_ctx, _)) => {
+                        Ok(Yeap(ctx.merge(*new_ctx).into(), Tree::from(res).into()))
+                    }
                     err => err,
                 }
             }
             ExpKind::PositiveClosure(exp) => {
-                let mut res: Vec<Rc<Tree>> = Vec::new();
+                let mut res: LinkedList<Rc<Tree>> = LinkedList::new();
                 match exp.parse_at(ctx.push()) {
                     Ok(Yeap(new_ctx, tree)) => {
                         ctx = ctx.merge(*new_ctx);
-                        res.push(tree);
+                        res.push_back(tree);
                     }
                     err => return err,
                 };
@@ -237,7 +240,7 @@ impl Exp {
                 }
             }
             ExpKind::Join { exp, sep } => {
-                let mut res: Vec<Rc<Tree>> = Vec::new();
+                let mut res = LinkedList::new();
                 match Self::add_exp(ctx.push(), exp, &mut res) {
                     Ok(new_ctx) => match Self::repeat_with_pre(new_ctx, exp, sep, &mut res, true) {
                         Ok(Yeap(new_ctx, _)) => Ok(Yeap(
@@ -253,7 +256,7 @@ impl Exp {
                 }
             }
             ExpKind::PositiveJoin { exp, sep } => {
-                let mut res: Vec<Rc<Tree>> = Vec::new();
+                let mut res = LinkedList::new();
                 match Self::add_exp(ctx.push(), exp, &mut res) {
                     Ok(new_ctx) => match Self::repeat_with_pre(new_ctx, exp, sep, &mut res, true) {
                         Ok(Yeap(new_ctx, _)) => Ok(Yeap(
@@ -266,7 +269,7 @@ impl Exp {
                 }
             }
             ExpKind::Gather { exp, sep } => {
-                let mut res: Vec<Rc<Tree>> = Vec::new();
+                let mut res = LinkedList::new();
                 match Self::add_exp(ctx.push(), exp, &mut res) {
                     Ok(new_ctx) => {
                         match Self::repeat_with_pre(new_ctx, exp, sep, &mut res, false) {
@@ -284,7 +287,7 @@ impl Exp {
                 }
             }
             ExpKind::PositiveGather { exp, sep } => {
-                let mut res: Vec<Rc<Tree>> = Vec::new();
+                let mut res = LinkedList::new();
                 match Self::add_exp(ctx.push(), exp, &mut res) {
                     Ok(new_ctx) => {
                         match Self::repeat_with_pre(new_ctx, exp, sep, &mut res, false) {

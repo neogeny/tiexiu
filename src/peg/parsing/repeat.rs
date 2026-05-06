@@ -4,9 +4,8 @@
 use crate::Exp;
 use crate::context::Ctx;
 use crate::peg::error::*;
-use crate::trees::Tree;
+use crate::trees::TreeList;
 use crate::trees::short::NIL;
-use std::rc::Rc;
 
 impl Exp {
     pub fn skip_exp<C: Ctx>(ctx: C, exp: &Exp) -> C {
@@ -17,17 +16,17 @@ impl Exp {
         }
     }
 
-    pub fn add_exp<C: Ctx>(ctx: C, exp: &Exp, res: &mut Vec<Rc<Tree>>) -> Result<C, (C, Nope)> {
+    pub fn add_exp<C: Ctx>(ctx: C, exp: &Exp, res: &mut TreeList) -> Result<C, (C, Nope)> {
         match exp.parse_at(ctx.clone()) {
             Ok(Yeap(new_ctx, tree)) => {
-                res.push(tree);
+                res.push_back(tree);
                 Ok(ctx.merge(*new_ctx))
             }
             Err(nope) => Err((ctx, nope)),
         }
     }
 
-    pub fn repeat<C: Ctx>(mut ctx: C, exp: &Exp, res: &mut Vec<Rc<Tree>>) -> ParseResult<C> {
+    pub fn repeat<C: Ctx>(mut ctx: C, exp: &Exp, res: &mut TreeList) -> ParseResult<C> {
         loop {
             let mark = ctx.mark();
             match exp.parse_at(ctx.push()) {
@@ -35,7 +34,7 @@ impl Exp {
                     if new_ctx.mark() == mark {
                         return Err(ctx.failure(mark, ParseFailure::ClosureMatchedVoid()));
                     }
-                    res.push(tree);
+                    res.push_back(tree);
                     ctx = ctx.merge(*new_ctx);
                 }
                 Err(_nope) => {
@@ -49,7 +48,7 @@ impl Exp {
         mut ctx: C,
         exp: &Exp,
         pre: &Exp,
-        res: &mut Vec<Rc<Tree>>,
+        res: &mut TreeList,
         keep_pre: bool,
     ) -> ParseResult<C> {
         loop {
@@ -70,9 +69,9 @@ impl Exp {
                     match exp.parse_at(inner_ctx) {
                         Ok(Yeap(repeat_ctx, exp_cst)) => {
                             if keep_pre {
-                                res.push(pre_cst);
+                                res.push_back(pre_cst);
                             }
-                            res.push(exp_cst);
+                            res.push_back(exp_cst);
                             ctx = ctx.merge(*repeat_ctx);
                         }
                         Err(mut nope) => {
@@ -113,7 +112,7 @@ mod tests {
     fn test_add_exp() {
         let ctx = setup("abc");
         let exp = Exp::token("abc");
-        let mut res = Vec::new();
+        let mut res = TreeList::new();
         let result = Exp::add_exp(ctx, &exp, &mut res);
         assert!(result.is_ok());
         assert_eq!(res.len(), 1);
@@ -124,7 +123,7 @@ mod tests {
     fn test_repeat() {
         let ctx = setup("abcabcabc");
         let exp = Exp::token("abc");
-        let mut res = Vec::new();
+        let mut res = TreeList::new();
         if let Ok(Yeap(final_ctx, _)) = Exp::repeat(ctx, &exp, &mut res) {
             assert_eq!(res.len(), 3);
             assert_eq!(final_ctx.cursor().mark(), 9);
@@ -138,7 +137,7 @@ mod tests {
         let ctx = setup(",abc,abc");
         let exp = Exp::token("abc");
         let pre = Exp::token(",");
-        let mut res = Vec::new();
+        let mut res = TreeList::new();
         if let Ok(Yeap(final_ctx, _)) = Exp::repeat_with_pre(ctx, &exp, &pre, &mut res, true) {
             assert_eq!(res.len(), 4);
             assert_eq!(final_ctx.cursor().mark(), 8);
@@ -152,7 +151,7 @@ mod tests {
         let ctx = setup(",abc,abc");
         let exp = Exp::token("abc");
         let pre = Exp::token(",");
-        let mut res = Vec::new();
+        let mut res = TreeList::new();
         if let Ok(Yeap(final_ctx, _)) = Exp::repeat_with_pre(ctx, &exp, &pre, &mut res, false) {
             assert_eq!(res.len(), 2);
             assert_eq!(final_ctx.cursor().mark(), 8);
@@ -168,7 +167,7 @@ mod tests {
         assert!(ctx.cut_seen(), "ctx should have cut set before repeat");
 
         let exp = Exp::token("abc");
-        let mut res = Vec::new();
+        let mut res = TreeList::new();
         if let Ok(Yeap(final_ctx, _)) = Exp::repeat(ctx, &exp, &mut res) {
             assert_eq!(res.len(), 3);
             assert!(final_ctx.cut_seen(), "cut should be restored after repeat");
@@ -188,7 +187,7 @@ mod tests {
 
         let exp = Exp::token("abc");
         let pre = Exp::token(",");
-        let mut res = Vec::new();
+        let mut res = TreeList::new();
         if let Ok(Yeap(final_ctx, _)) = Exp::repeat_with_pre(ctx, &exp, &pre, &mut res, true) {
             assert_eq!(res.len(), 4);
             assert!(
@@ -210,7 +209,7 @@ mod tests {
 
         let exp = Exp::token("abc");
         let pre = Exp::token(",");
-        let mut res = Vec::new();
+        let mut res = TreeList::new();
         if let Ok(Yeap(final_ctx, _)) = Exp::repeat_with_pre(ctx, &exp, &pre, &mut res, true) {
             assert_eq!(res.len(), 4);
             assert!(

@@ -3,12 +3,14 @@
 
 use super::map::TreeMap;
 use crate::cfg::types::{Define, Str};
+use std::collections::LinkedList;
 use std::rc::Rc;
 
 pub type TreeRef = Rc<Tree>;
+pub type TreeList = LinkedList<TreeRef>;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct KeyValue(pub Str, pub Rc<Tree>);
+pub struct KeyValue(pub Str, pub TreeRef);
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Tree {
@@ -81,6 +83,17 @@ impl From<&[Tree]> for Tree {
 impl From<&[Rc<Tree>]> for Tree {
     fn from(slice: &[Rc<Tree>]) -> Self {
         Tree::Seq(slice.into())
+    }
+}
+
+impl From<TreeList> for Tree {
+    fn from(list: TreeList) -> Self {
+        Tree::List(
+            list.into_iter()
+                .collect::<Vec<_>>()
+                .into_boxed_slice()
+                .into(),
+        )
     }
 }
 
