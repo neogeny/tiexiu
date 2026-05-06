@@ -108,21 +108,21 @@ impl Grammar {
 
     pub fn parse<C: Ctx>(&self, mut ctx: C) -> ParseResult<C> {
         match self.start_rule() {
-            Ok(start) => self.parse_from(start.as_ref(), ctx),
+            Ok(start) => self.parse_from(ctx, start.as_ref()),
             Err(e) => Err(ctx.failure(ctx.mark(), e)),
         }
     }
 
     pub fn parse_tree<C: Ctx>(&self, ctx: C) -> crate::error::Result<Tree> {
         match self.start_rule() {
-            Ok(start) => self.parse_tree_from(start.as_ref(), ctx),
+            Ok(start) => self.parse_tree_from(ctx, start.as_ref()),
             Err(e) => Err(e.into()),
         }
     }
 
-    pub fn parse_tree_from<C: Ctx>(&self, start: &str, mut ctx: C) -> crate::error::Result<Tree> {
+    pub fn parse_tree_from<C: Ctx>(&self, mut ctx: C, start: &str) -> crate::error::Result<Tree> {
         let start_mark = ctx.mark();
-        match self.parse_from(start, ctx.push()) {
+        match self.parse_from(ctx.push(), start) {
             Ok(Yeap(_, tree)) => Ok(Rc::unwrap_or_clone(tree)),
             Err(_) => Err(ctx
                 .furthest_failure()
@@ -131,7 +131,7 @@ impl Grammar {
         }
     }
 
-    pub fn parse_from<C: Ctx>(&self, start: &str, mut ctx: C) -> ParseResult<C> {
+    pub fn parse_from<C: Ctx>(&self, mut ctx: C, start: &str) -> ParseResult<C> {
         let start_mark = ctx.mark();
         ctx.configure(&self.directives);
         ctx.set_keywords(&self.keywords);
@@ -141,10 +141,31 @@ impl Grammar {
         }
     }
 
-    pub fn parse_input(&self, text: &str, cfg: &CfgA) -> crate::error::Result<Tree> {
+    pub fn parse_input(&self, text: &str, cfga: &CfgA) -> crate::error::Result<Tree> {
         let cursor = StrCursor::new(text);
-        let ctx = new_ctx(cursor, cfg);
-        match self.parse_tree(ctx) {
+        let ctx = new_ctx(cursor, cfga);
+        if let Some(start) = config(cfga).start() {
+            match self.parse_tree_from(ctx, start) {
+                Ok(tree) => Ok(tree),
+                Err(failure) => Err(failure),
+            }
+        } else {
+            match self.parse_tree(ctx) {
+                Ok(tree) => Ok(tree),
+                Err(failure) => Err(failure),
+            }
+        }
+    }
+
+    pub fn parse_input_from(
+        &self,
+        text: &str,
+        start: &str,
+        cfga: &CfgA,
+    ) -> crate::error::Result<Tree> {
+        let cursor = StrCursor::new(text);
+        let ctx = new_ctx(cursor, cfga);
+        match self.parse_tree_from(ctx, start) {
             Ok(tree) => Ok(tree),
             Err(failure) => Err(failure),
         }

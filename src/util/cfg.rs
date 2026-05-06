@@ -84,8 +84,12 @@ impl<K: Clone + Default + Send + Sync + PartialEq> FromIterator<K> for Cfg<K> {
 impl<K: Clone + Default + Send + Sync + PartialEq> Cfg<K> {
     /// Creates a new Cfg ensuring all invariants (Unique).
     pub fn new(options: &CfgA<K>) -> Self {
+        let def = &K::default();
         let mut vec = Vec::with_capacity(options.len());
         for opt in options.iter() {
+            if opt == def {
+                continue;
+            }
             if !vec.contains(opt) {
                 vec.push(opt.clone());
             }

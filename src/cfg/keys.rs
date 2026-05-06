@@ -14,34 +14,6 @@ pub type Cfg = cfg::Cfg<CfgKey>;
 /// Configuration Key are addditive, so the default is empty
 const DEFAULT_CFGA: &CfgA = &[];
 
-/// Add configurations over default and env
-pub fn config(cfga: &CfgA) -> Cfg {
-    // NOTE:
-    //  Configurations are meant to be mostly one-time
-    //  except for options passed by library users through
-    Cfg::from(DEFAULT_CFGA)
-        .merge(&Cfg::load_from_env(ENV_PREFIX))
-        .merge(&cfga.into())
-}
-
-pub trait CfgBoxWrapper {
-    fn trace(&self) -> bool;
-    fn heartbeat(&self) -> Option<&HeartbeatRef>;
-}
-
-impl CfgBoxWrapper for Cfg {
-    fn trace(&self) -> bool {
-        self.contains(&CfgKey::Trace)
-    }
-
-    fn heartbeat(&self) -> Option<&HeartbeatRef> {
-        self.iter().find_map(|k| match k {
-            CfgKey::Heartbeat(h) => Some(h),
-            _ => None,
-        })
-    }
-}
-
 #[derive(Debug, Clone, Default)]
 pub enum CfgKey {
     #[default]
@@ -71,6 +43,42 @@ pub enum CfgKey {
 
     /// Heartbeat callback for progress reporting
     Heartbeat(HeartbeatRef),
+}
+
+/// Add configurations over default and env
+pub fn config(cfga: &CfgA) -> Cfg {
+    // NOTE:
+    //  Configurations are meant to be mostly one-time
+    //  except for options passed by library users through
+    Cfg::from(DEFAULT_CFGA)
+        .merge(&Cfg::load_from_env(ENV_PREFIX))
+        .merge(&cfga.into())
+}
+
+pub trait CfgBoxWrapper {
+    fn trace(&self) -> bool;
+    fn heartbeat(&self) -> Option<&HeartbeatRef>;
+    fn start(&self) -> Option<&str>;
+}
+
+impl CfgBoxWrapper for Cfg {
+    fn trace(&self) -> bool {
+        self.contains(&CfgKey::Trace)
+    }
+
+    fn heartbeat(&self) -> Option<&HeartbeatRef> {
+        self.iter().find_map(|k| match k {
+            CfgKey::Heartbeat(h) => Some(h),
+            _ => None,
+        })
+    }
+
+    fn start(&self) -> Option<&str> {
+        self.iter().find_map(|k| match k {
+            CfgKey::Start(s) => Some(s.as_str()),
+            _ => None,
+        })
+    }
 }
 
 impl PartialEq for CfgKey {
@@ -325,7 +333,7 @@ mod tests {
     fn test_bool_mapping() -> Result<()> {
         assert_eq!(CfgKey::map("ignorecase", "True"), Some(CfgKey::IgnoreCase));
         assert_eq!(CfgKey::map("parseinfo", "False"), Some(CfgKey::NoParseInfo));
-        assert_eq!(CfgKey::map("parseinfo", "True"), None);
+        assert_eq!(CfgKey::map("parseinfo", "True"), Some(CfgKey::Null));
         assert_eq!(
             CfgKey::map("left_recursion", "0"),
             Some(CfgKey::NoLeftRecursion)
