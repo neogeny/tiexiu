@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 /// ```
-/// pub fn example_operation() {
+/// use tiexiu::util::finally;
+///
+/// fn example_operation() {
 ///     // Logic starts here
-///     let _guard = Finally(Some(|| {
+///     let _guard = finally(|| {
 ///         // This is your "finally" block
 ///         println!("Cleanup complete.");
-///     }));
+///     });
 ///
 ///     // If any code here returns early or panics, _guard is dropped.
 /// }
