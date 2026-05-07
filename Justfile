@@ -26,7 +26,7 @@ fmt:
     cargo fmt --all --check
 
 test: fix fmt clippy
-    cargo nextest run --lib --all-features
+    cargo nextest run --lib --all-features --features grammars
 
 test-all: fix fmt clippy
     cargo nextest run --all --all-features

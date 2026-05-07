@@ -39,6 +39,7 @@ required-features = ["cli"]
 [features]
 default = ["cli"]
 bootstrap = ["default"]
+grammars = []
 
 serde = ["dep:serde"]
 serde_json = [

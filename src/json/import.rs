@@ -435,6 +435,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg_attr(not(feature = "grammars"), ignore)]
     fn test_grammar_from_json_value_java() {
         let json_str = std::fs::read_to_string("grammar/java.json").expect("java.json missing");
         let value = json::parse(&json_str).expect("Failed to parse JSON");

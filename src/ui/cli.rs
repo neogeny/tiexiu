@@ -72,7 +72,7 @@ pub enum Commands {
         #[arg(short, long, default_value_t = true)]
         json: bool,
 
-        /// Print the Rust code for the boot grammar model
+        /// Print the Rust code for the boot model construction
         #[arg(short, long)]
         model: bool,
 
@@ -98,7 +98,7 @@ pub enum Commands {
         #[arg(short, long, group = "format")]
         json: bool,
 
-        /// Print the Rust code for the tree
+        /// Print the Rust code for the tree construction
         #[arg(short, long)]
         model: bool,
 
@@ -117,7 +117,7 @@ pub enum Commands {
         #[arg(short, long, group = "format")]
         json: bool,
 
-        /// Print the Rust code for the boot grammar model
+        /// Print the Rust code grammar model constructors
         #[arg(short, long)]
         model: bool,
 
