@@ -9,7 +9,7 @@ use std::rc::Rc;
 #[derive(Clone, Default, Debug, Eq, PartialEq, Hash)]
 pub struct MemoKey {
     pub mark: usize,
-    pub name_index: usize,
+    pub name: Str,
     pub can_memo: bool,
 }
 
@@ -94,11 +94,11 @@ impl MemoCache {
 }
 
 impl MemoCache {
-    pub fn key(&mut self, mark: usize, name: Str, memo: bool) -> MemoKey {
+    pub fn key(&mut self, mark: usize, name: Str, can_memo: bool) -> MemoKey {
         MemoKey {
             mark,
-            name_index: self.intern_index(name),
-            can_memo: memo,
+            name,
+            can_memo,
         }
     }
 
