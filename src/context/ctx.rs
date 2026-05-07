@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::memo::{Memo, MemoCache, MemoKey};
+use super::memo::{Memo, MemoKey};
 use crate::SYM_ETX;
 use crate::cfg::Configurable;
 use crate::context::state::CallStack;
@@ -148,9 +148,7 @@ pub trait Ctx: CtxI + Clone + Debug {
         let _ = self;
     }
 
-    fn key(&mut self, name: &str, memo: bool) -> MemoKey {
-        MemoCache::key(self.mark(), self.intern(name), memo)
-    }
+    fn key(&mut self, name: &str, can_memo: bool) -> MemoKey;
 
     fn memo(&mut self, key: &MemoKey) -> Option<Memo>;
 
@@ -257,6 +255,10 @@ impl<C: Ctx> Ctx for Box<C> {
     #[inline]
     fn heartbeat_tick(&mut self) {
         (**self).heartbeat_tick()
+    }
+
+    fn key(&mut self, name: &str, can_memo: bool) -> MemoKey {
+        (**self).key(name, can_memo)
     }
 
     #[inline]

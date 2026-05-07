@@ -4,7 +4,7 @@
 pub use super::ctx::{Ctx, CtxI};
 use super::memo::{Memo, MemoKey};
 use super::state::{CallStack, HeavyState, ParseState};
-use super::trace::{Tracer, CONSOLE_TRACER, NULL_TRACER};
+use super::trace::{CONSOLE_TRACER, NULL_TRACER, Tracer};
 use crate::cfg::*;
 use crate::input::Cursor;
 use crate::peg::error::DisasterReport;
@@ -46,7 +46,7 @@ where
     }
 
     #[inline]
-    fn with_heavy_mut<F, R>(&self, f: F) -> R
+    fn _with_heavy_mut<F, R>(&self, f: F) -> R
     where
         F: FnOnce(&mut HeavyState) -> R,
     {
@@ -135,11 +135,11 @@ where
     }
 
     fn intern(&mut self, s: &str) -> Str {
-        self.with_heavy_mut(|heavy| heavy.intern(s))
+        self.heavy.borrow_mut().memos.intern(s)
     }
 
     fn set_furthest_failure(&mut self, dis: &DisasterReport) {
-        self.with_heavy_mut(|heavy| heavy.set_furthest_failure(dis));
+        self.heavy.borrow_mut().set_furthest_failure(dis);
     }
 
     fn furthest_failure(&self) -> Option<DisasterReport> {
@@ -147,7 +147,7 @@ where
     }
 
     fn get_pattern(&mut self, pattern: &str) -> Pattern {
-        self.with_heavy_mut(|heavy| heavy.get_pattern(pattern))
+        self.heavy.borrow_mut().get_pattern(pattern)
     }
 
     fn heartbeat_tick(&mut self) {
@@ -165,20 +165,23 @@ where
         self.heavy.borrow_mut().instant = Instant::now();
     }
 
+    fn key(&mut self, name: &str, can_memo: bool) -> MemoKey {
+        self.heavy
+            .borrow_mut()
+            .memos
+            .key(self.mark(), name.into(), can_memo)
+    }
+
     fn memo(&mut self, key: &MemoKey) -> Option<Memo> {
-        self.with_heavy_mut(|heavy| heavy.memos.memo(key))
+        self.heavy.borrow_mut().memos.memo(key)
     }
 
     fn memoize(&mut self, key: &MemoKey, tree: &Rc<Tree>, lastmark: usize) {
-        self.with_heavy_mut(|heavy| {
-            heavy.memos.memoize(key, tree, lastmark);
-        });
+        self.heavy.borrow_mut().memos.memoize(key, tree, lastmark);
     }
 
     fn clear_error_memos(&mut self) {
-        self.with_heavy_mut(|heavy| {
-            heavy.memos.clear_error_memos();
-        });
+        self.heavy.borrow_mut().memos.clear_error_memos();
     }
 
     fn cut(&mut self) {
@@ -193,7 +196,7 @@ where
 
     fn prune_cache(&mut self) {
         let cutpoint = self.mark();
-        self.with_heavy_mut(|heavy| heavy.memos.prune(cutpoint));
+        self.heavy.borrow_mut().memos.prune(cutpoint);
     }
 
     fn is_keyword(&self, name: &str) -> bool {

@@ -9,7 +9,7 @@ use crate::cfg::HeartbeatRef;
 use crate::input::Cursor;
 use crate::parser::TokenStack;
 use crate::peg::error::DisasterReport;
-use crate::types::{Str, StrSet};
+use crate::types::Str;
 use crate::util::pyre::Pattern;
 use std::collections::HashMap;
 use std::time::Instant;
@@ -39,7 +39,6 @@ pub struct HeavyState<'t> {
     pub memos: MemoCache,
     pub patterns: PatternCache,
     pub keywords: Box<[Str]>,
-    pub strings: StrSet,
     pub furthest_failure: Option<DisasterReport>,
     pub tracer: &'t dyn Tracer,
     pub heartbeat: Option<HeartbeatRef>,
@@ -72,7 +71,6 @@ impl<'t> HeavyState<'t> {
             memos: MemoCache::new(),
             patterns: PatternCache::new(),
             keywords: [].into(),
-            strings: StrSet::new(),
             furthest_failure: None,
             tracer: &NULL_TRACER,
             heartbeat: None,
@@ -86,16 +84,6 @@ impl<'t> HeavyState<'t> {
             .entry(pattern.to_string())
             .or_insert_with(|| Pattern::new(pattern).unwrap())
             .clone()
-    }
-
-    pub fn intern(&mut self, s: &str) -> Str {
-        if let Some(existing) = self.strings.get(s) {
-            return existing.clone();
-        }
-
-        let new: Str = s.into();
-        self.strings.insert(new.clone());
-        new
     }
 
     pub fn set_furthest_failure(&mut self, dis: &DisasterReport) {

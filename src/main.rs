@@ -1,19 +1,6 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-// #[cfg(feature = "dhat")]
-// #[global_allocator]
-// static ALLOC: dhat::Alloc = dhat::Alloc;
-
-#[cfg(not(feature = "dhat"))]
-use mimalloc::MiMalloc;
-#[cfg(not(feature = "dhat"))]
-#[global_allocator]
-static GLOBAL: MiMalloc = MiMalloc;
-#[cfg(feature = "dhat")]
-#[global_allocator]
-static ALLOC: dhat::Alloc = dhat::Alloc;
-
 mod ui;
 
 use tiexiu::Error;

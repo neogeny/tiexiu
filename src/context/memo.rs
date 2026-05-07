@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::trees::tree::Tree;
-use crate::types::Str;
-use std::collections::HashMap;
+use crate::types::{FastIndexSet, Str};
+use ahash::{AHashMap, RandomState};
 use std::rc::Rc;
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Hash)]
 pub struct MemoKey {
     pub mark: usize,
-    pub name: Str,
-    pub memo: bool,
+    pub name_index: usize,
+    pub can_memo: bool,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -21,7 +21,8 @@ pub struct Memo {
 
 #[derive(Clone, Debug)]
 pub struct MemoCache {
-    memos: HashMap<MemoKey, Memo>,
+    strings: FastIndexSet<Str>,
+    memos: AHashMap<MemoKey, Memo>,
 }
 
 #[derive(Clone, Default, Debug)]
@@ -63,21 +64,41 @@ impl KeyTrack {
 impl MemoCache {
     pub fn new() -> Self {
         Self {
-            memos: HashMap::new(),
+            strings: FastIndexSet::with_hasher(RandomState::new()),
+            memos: AHashMap::new(),
         }
     }
 
     pub fn clear_error_memos(&mut self) {
         self.memos.retain(|_, memo| *memo.tree != Tree::Bottom);
     }
+
+    pub fn intern(&mut self, s: &str) -> Str {
+        if let Some(existing) = self.strings.get(s) {
+            return existing.clone();
+        }
+
+        let new: Str = s.into();
+        self.strings.insert(new.clone());
+        new
+    }
+
+    pub fn intern_index(&mut self, s: Str) -> usize {
+        if let Some(index) = self.strings.get_index_of(&s) {
+            return index;
+        }
+
+        let (index, _) = self.strings.insert_full(s);
+        index
+    }
 }
 
 impl MemoCache {
-    pub fn key(mark: usize, name: Str, memo: bool) -> MemoKey {
+    pub fn key(&mut self, mark: usize, name: Str, memo: bool) -> MemoKey {
         MemoKey {
             mark,
-            name: name.clone(),
-            memo,
+            name_index: self.intern_index(name),
+            can_memo: memo,
         }
     }
 
@@ -86,7 +107,7 @@ impl MemoCache {
     }
 
     pub fn memoize(&mut self, key: &MemoKey, tree: &Rc<Tree>, mark: usize) {
-        if !key.memo {
+        if !key.can_memo {
             return;
         }
         let memo = Memo {
@@ -109,14 +130,14 @@ mod tests {
     #[test]
     fn new_cache_is_empty() {
         let mut cache = MemoCache::new();
-        let key = MemoCache::key(0, "rule".into(), true);
+        let key = cache.key(0, "rule".into(), true);
         assert!(cache.memo(&key).is_none());
     }
 
     #[test]
     fn memoize_and_retrieve() {
         let mut cache = MemoCache::new();
-        let key = MemoCache::key(0, "rule".into(), true);
+        let key = cache.key(0, "rule".into(), true);
         let tree: Rc<Tree> = Tree::Text("test".into()).into();
 
         cache.memoize(&key, &tree, 5);
@@ -129,8 +150,8 @@ mod tests {
     #[test]
     fn memoize_multiple_rules() {
         let mut cache = MemoCache::new();
-        let key1 = MemoCache::key(0, "rule1".into(), true);
-        let key2 = MemoCache::key(0, "rule2".into(), true);
+        let key1 = cache.key(0, "rule1".into(), true);
+        let key2 = cache.key(0, "rule2".into(), true);
         let tree1: Rc<Tree> = Tree::Text("a".into()).into();
         let tree2: Rc<Tree> = Tree::Text("b".into()).into();
 
@@ -144,7 +165,7 @@ mod tests {
     #[test]
     fn prune_keeps_after_cutpoint() {
         let mut cache = MemoCache::new();
-        let key = MemoCache::key(5, "rule".into(), true);
+        let key = cache.key(5, "rule".into(), true);
         let tree: Rc<Tree> = Tree::Text("test".into()).into();
 
         cache.memoize(&key, &tree, 5);
@@ -156,7 +177,7 @@ mod tests {
     #[test]
     fn prune_removes_before_cutpoint() {
         let mut cache = MemoCache::new();
-        let key = MemoCache::key(3, "rule".into(), true);
+        let key = cache.key(3, "rule".into(), true);
         let tree: Rc<Tree> = Tree::Text("test".into()).into();
 
         cache.memoize(&key, &tree, 3);
@@ -167,9 +188,10 @@ mod tests {
 
     #[test]
     fn key_equality() {
-        let key1 = MemoCache::key(0, "rule".into(), true);
-        let key2 = MemoCache::key(0, "rule".into(), true);
-        let key3 = MemoCache::key(1, "rule".into(), true);
+        let mut cache = MemoCache::new();
+        let key1 = cache.key(0, "rule".into(), true);
+        let key2 = cache.key(0, "rule".into(), true);
+        let key3 = cache.key(1, "rule".into(), true);
 
         assert_eq!(key1, key2);
         assert_ne!(key1, key3);

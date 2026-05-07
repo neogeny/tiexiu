@@ -203,10 +203,7 @@ impl Exp {
                         err => return err,
                     }
                 }
-                Ok(Yeap(
-                    ctx.into(),
-                    Tree::Seq(results.into()).into(),
-                ))
+                Ok(Yeap(ctx.into(), Tree::Seq(results.into()).into()))
             }
             ExpKind::Alt(exp) => exp.parse_at(ctx),
             ExpKind::Choice(options) => self.parse_choice(ctx, options),

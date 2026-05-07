@@ -138,7 +138,7 @@ impl Exp {
             let nope = lastnope.unwrap_or(ctx.failure(
                 start,
                 ParseFailure::FailedRecursion(
-                    key.name.clone(),
+                    rule.name.clone(),
                     start,
                     lastmark,
                     lasttree.clone().into(),
