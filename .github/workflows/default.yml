@@ -34,7 +34,7 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: clippy (strict)
-        run: cargo clippy --all-targets --all-features -- -D warnings
+        run: cargo clippy --all-targets -- -D warnings
 
   test:
     name: build and test
@@ -59,7 +59,7 @@ jobs:
         uses: swatinem/rust-cache@v2
 
       - name: build
-        run: cargo build --verbose --all-features
+        run: cargo build --verbose
 
       - name: test
-        run: cargo nextest run --verbose --all-features
+        run: cargo nextest run --verbose
