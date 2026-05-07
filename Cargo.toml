@@ -90,7 +90,7 @@ tikv-jemallocator = {
     version = "0.6.1",
     optional = true,
     features = [
-        "background_threads",
+#        "background_threads",
         "override_allocator_on_supported_platforms",
         "unprefixed_malloc_on_supported_platforms",
 #        "alloc_trait",

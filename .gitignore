@@ -27,6 +27,6 @@ target
 tmp
 Modelfile
 grammar/
-tatsu/
+tatsu
 .aider*
 corpus/

@@ -425,10 +425,32 @@ mod tests {
     }
 
     #[test]
-    fn test_grammar_from_json_value_calc() {
+    fn test_grammar_from_json_value_calc_imported() {
         let json_str = std::fs::read_to_string("grammar/calc.json").expect("calc.json missing");
         let value = json::parse(&json_str).expect("Failed to parse JSON");
         let grammar = Grammar::from_json_value(&value).expect("Failed to convert");
         assert_eq!(grammar.name, "CALC".into());
+        assert_eq!(grammar.rules().count(), 9);
+        assert!(grammar.analyzed);
+    }
+
+    #[test]
+    fn test_grammar_from_json_value_java() {
+        let json_str = std::fs::read_to_string("grammar/java.json").expect("java.json missing");
+        let value = json::parse(&json_str).expect("Failed to parse JSON");
+        let grammar = Grammar::from_json_value(&value).expect("Failed to convert");
+        assert_eq!(grammar.name, "Java".into());
+
+        let rule_count = grammar.rules().count();
+        assert!(
+            rule_count > 50,
+            "Java grammar should have many rules, got {}",
+            rule_count
+        );
+
+        let start_rule = grammar
+            .start_rule()
+            .expect("Java grammar should have a start rule");
+        assert!(!start_rule.is_empty());
     }
 }
