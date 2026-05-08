@@ -100,7 +100,7 @@ impl Rule {
         }
     }
 
-    pub fn parse_at<C: Ctx>(&self, mut ctx: C) -> ParseResult<C> {
+    pub fn parse_at<C: Ctx>(&self, ctx: C) -> ParseResult<C> {
         match self.exp.parse_at(ctx.push()) {
             Err(nope) => Err(nope),
             Ok(Yeap(ok_ctx, tree)) => {

@@ -42,8 +42,8 @@ pub trait Ctx: CtxI + Clone + Debug {
 
     #[track_caller]
     fn failure(&mut self, start: usize, source: ParseFailure) -> Nope {
+        self.cursor_mut().reset(start);
         let nope = Nope::new(self);
-
         if let Some(furthest) = self.furthest_failure()
             && furthest.mark >= self.mark()
         {
@@ -171,7 +171,7 @@ pub trait Ctx: CtxI + Clone + Debug {
 
     fn merge(self, other: &Self) -> Self;
 
-    fn push(&mut self) -> Self {
+    fn push(&self) -> Self {
         let mut new = self.clone();
         new.clear_cut();
         new

@@ -113,9 +113,7 @@ impl<U: Cursor + Clone> ParseState<U> {
         self
     }
 
-    pub fn pop(&mut self, into: &mut Self) {
-        into.cursor.reset(self.cursor.mark());
-    }
+    pub fn pop(&mut self, _into: &mut Self) {}
 
     pub fn undo(&mut self, _into: &mut Self) {}
 }

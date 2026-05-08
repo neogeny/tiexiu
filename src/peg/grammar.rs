@@ -120,7 +120,7 @@ impl Grammar {
         }
     }
 
-    pub fn parse_tree_from<C: Ctx>(&self, mut ctx: C, start: &str) -> crate::error::Result<Tree> {
+    pub fn parse_tree_from<C: Ctx>(&self, ctx: C, start: &str) -> crate::error::Result<Tree> {
         let start_mark = ctx.mark();
         match self.parse_from(ctx.push(), start) {
             Ok(Yeap(_, tree)) => Ok(Rc::unwrap_or_clone(tree)),

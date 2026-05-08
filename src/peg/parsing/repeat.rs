@@ -98,12 +98,12 @@ mod tests {
 
     #[test]
     fn test_skip_exp() {
-        let mut ctx = setup("abc");
+        let ctx = setup("abc");
         let exp = Exp::token("abc");
         let new_ctx = Exp::skip_exp(ctx.push(), &exp);
         assert_eq!(new_ctx.cursor().mark(), 3);
 
-        let mut ctx = setup("def");
+        let ctx = setup("def");
         let new_ctx = Exp::skip_exp(ctx.push(), &exp);
         assert_eq!(new_ctx.cursor().mark(), 0);
     }
