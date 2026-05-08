@@ -17,7 +17,9 @@ opt-level = 3        # Max optimizations (0-3)
 lto = true           # Link Time Optimization (smaller, faster binary)
 codegen-units = 1    # Better optimizations at the cost of slower build time
 #panic = 'abort'      # Reduces binary size if you don't need stack unwinding
-debug = 1
+debug = true            # Required for symbols
+split-debuginfo = "packed" # Force creation of a .dSYM bundle
+strip = false           # Ensure symbols aren't removed
 
 [package.metadata.docs.rs]
 all-features = true
