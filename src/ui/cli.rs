@@ -213,6 +213,7 @@ pub fn cli(out: &mut std::io::StdoutLock) -> Result<()> {
                     }
                     Err(err) => {
                         file_prog.fail(&format!("{:#?}", err));
+                        eprintln!("{}", err);
                     }
                 }
                 progress.inc_files();
