@@ -74,7 +74,7 @@ impl Exp {
                 }
                 _ => {
                     ctx.reset(memo.mark);
-                    Ok(Yeap(ctx.into(), memo.tree))
+                    Ok(Yeap(ctx, memo.tree))
                 }
             };
         }
@@ -146,7 +146,7 @@ impl Exp {
             ));
             return Err(nope);
         }
-        Ok(Yeap(ctx.into(), lasttree.into()))
+        Ok(Yeap(ctx, lasttree.into()))
     }
 
     /// Checks recursion depth to prevent stack overflow.

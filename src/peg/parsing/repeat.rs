@@ -38,7 +38,7 @@ impl Exp {
                     ctx = ctx.merge(&new_ctx);
                 }
                 Err(_nope) => {
-                    return Ok(Yeap(ctx.into(), NIL.into()));
+                    return Ok(Yeap(ctx, NIL.into()));
                 }
             }
         }
@@ -58,14 +58,14 @@ impl Exp {
                     if nope.take_cut() {
                         return Err(nope);
                     }
-                    return Ok(Yeap(ctx.into(), NIL.into()));
+                    return Ok(Yeap(ctx, NIL.into()));
                 }
                 Ok(Yeap(mut new_ctx, pre_cst)) => {
                     if new_ctx.mark() == mark {
                         return Err(ctx.failure(mark, ParseFailure::ClosureMatchedVoid()));
                     }
                     new_ctx.cut();
-                    let inner_ctx = *new_ctx;
+                    let inner_ctx = new_ctx;
                     match exp.parse_at(inner_ctx) {
                         Ok(Yeap(repeat_ctx, exp_cst)) => {
                             if keep_pre {

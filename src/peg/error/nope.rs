@@ -13,7 +13,12 @@ use std::rc::Rc;
 pub type ParseResult<C> = Result<Yeap<C>, Nope>;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Yeap<C: Ctx>(pub Box<C>, pub Rc<Tree>);
+pub struct Yeap<C: Ctx>(pub C, pub Rc<Tree>);
+
+#[derive(thiserror::Error, Clone, Debug)]
+pub struct Nope {
+    pub cutseen: bool,
+}
 
 #[derive(Clone, Debug)]
 pub struct DisasterReport {
@@ -25,12 +30,6 @@ pub struct DisasterReport {
     pub location: &'static Location<'static>,
     pub memento: Box<Memento>,
 }
-
-#[derive(thiserror::Error, Clone, Debug)]
-pub struct Nope {
-    pub cutseen: bool,
-}
-
 impl std::fmt::Display for Nope {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         std::fmt::Display::fmt(&self, f)
@@ -92,11 +91,6 @@ impl Nope {
 
 impl<C: Ctx> Yeap<C> {
     #[inline]
-    pub fn ctx(self) -> Box<C> {
-        self.0
-    }
-
-    #[inline]
     pub fn tree(self) -> Rc<Tree> {
         self.1
     }
@@ -119,7 +113,7 @@ mod tests {
     use crate::peg::error::nope::{Nope, Yeap};
     use std::rc::Rc;
 
-    const TARGET: usize = 16;
+    const TARGET: usize = 32;
 
     #[test]
     fn test_yeap_size() {
@@ -140,7 +134,7 @@ mod tests {
 
         let tree = Tree::Text("hello".into());
         let ctx = StrCtx::new(StrCursor::new("hello"), &[]);
-        let yeap = Yeap(ctx.into(), tree.into());
+        let yeap = Yeap(ctx, tree.into());
         let rc: Rc<Tree> = yeap.tree();
         assert!(matches!(rc.as_ref(), Tree::Text(_)));
     }
