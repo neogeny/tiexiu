@@ -264,6 +264,8 @@ impl CfgMapper<CfgKey> for CfgKey {
             }
             (STR_NAMECHARS, pattern) => Some(CfgKey::NameChars(pattern.to_string())),
             (STR_START, name) => Some(CfgKey::Start(name.to_string())),
+            (STR_SOURCE, name) => Some(CfgKey::Source(name.to_string())),
+            (STR_FILENAME, name) => Some(CfgKey::Source(name.to_string())),
 
             _ => None,
         }

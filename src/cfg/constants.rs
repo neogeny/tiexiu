@@ -24,6 +24,8 @@ pub const STR_NAMECHARS: &str = "namechars";
 pub const STR_NAMEGUARD: &str = "nameguard";
 pub const STR_KEYWORD: &str = "keyword";
 pub const STR_START: &str = "start";
+pub const STR_SOURCE: &str = "source";
+pub const STR_FILENAME: &str = "filename";
 
 pub const STR_TRACE: &str = "trace";
 pub const STR_DEBUG: &str = "debug";
