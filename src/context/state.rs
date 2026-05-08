@@ -30,7 +30,6 @@ pub struct Alert {
 pub struct ParseState<U: Cursor + Clone> {
     pub cursor: U,
     pub cutseen: bool,
-    pub callstack: CallStack,
     pub keytrack: KeyTrack,
 }
 
@@ -44,6 +43,7 @@ pub struct HeavyState<'t> {
     pub heartbeat: Option<HeartbeatRef>,
     pub input_len: usize,
     pub instant: Instant,
+    pub callstack: CallStack,
 }
 
 #[derive(Debug, Clone)]
@@ -53,9 +53,7 @@ pub struct ParseStateStack<U: Cursor + Clone> {
 
 impl<U: Cursor + Clone> Clone for ParseState<U> {
     fn clone(&self) -> Self {
-        let mut clone = Self::new(self.cursor.clone());
-        clone.callstack = self.callstack.clone();
-        clone
+        Self::new(self.cursor.clone())
     }
 }
 
@@ -76,6 +74,7 @@ impl<'t> HeavyState<'t> {
             heartbeat: None,
             input_len: 0,
             instant: Instant::now(),
+            callstack: CallStack::new(),
         }
     }
 
@@ -96,7 +95,6 @@ impl<U: Cursor + Clone> ParseState<U> {
         Self {
             cursor,
             cutseen: false,
-            callstack: CallStack::new(),
             keytrack: KeyTrack::default(),
         }
     }
@@ -105,25 +103,21 @@ impl<U: Cursor + Clone> ParseState<U> {
         Self {
             cursor: other.cursor.clone(),
             cutseen: false,
-            callstack: other.callstack.clone(),
             keytrack: KeyTrack::default(),
         }
     }
 
     pub fn merge(&mut self, prev: &Self) -> &mut Self {
         self.cursor.reset(prev.cursor.mark());
-        self.callstack = prev.callstack.clone();
+        // self.callstack = prev.callstack.clone();
         self
     }
 
     pub fn pop(&mut self, into: &mut Self) {
-        into.callstack = self.callstack.clone();
         into.cursor.reset(self.cursor.mark());
     }
 
-    pub fn undo(&mut self, into: &mut Self) {
-        into.callstack = self.callstack.clone();
-    }
+    pub fn undo(&mut self, _into: &mut Self) {}
 }
 
 impl<U: Cursor + Clone> ParseStateStack<U> {

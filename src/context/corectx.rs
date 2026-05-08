@@ -78,7 +78,7 @@ where
 
     #[inline]
     fn callstack(&self) -> CallStack {
-        self.state.callstack.clone()
+        self.heavy.borrow_mut().callstack.clone()
     }
 
     #[inline]
@@ -114,12 +114,12 @@ where
     }
 
     fn enter(&mut self, name: &str) {
-        self.state_mut().callstack.push(name);
+        self.heavy.borrow_mut().callstack.push(name);
     }
 
     fn leave(&mut self) {
-        let stack = self.state.callstack.clone();
-        self.state_mut().callstack = stack.tail().unwrap_or_default()
+        let tail = self.heavy.borrow().callstack.tail().unwrap_or_default();
+        self.heavy.borrow_mut().callstack = tail;
     }
 
     fn track(&mut self, key: &MemoKey) -> usize {
