@@ -11,7 +11,7 @@ impl Exp {
     pub fn skip_exp<C: Ctx>(ctx: C, exp: &Exp) -> C {
         let skip_ctx = ctx.clone();
         match exp.parse_at(skip_ctx) {
-            Ok(Yeap(new_ctx, _)) => ctx.merge(*new_ctx),
+            Ok(Yeap(new_ctx, _)) => ctx.merge(&new_ctx),
             Err(_) => ctx,
         }
     }
@@ -20,7 +20,7 @@ impl Exp {
         match exp.parse_at(ctx.clone()) {
             Ok(Yeap(new_ctx, tree)) => {
                 res.push_back(tree);
-                Ok(ctx.merge(*new_ctx))
+                Ok(ctx.merge(&new_ctx))
             }
             Err(nope) => Err((ctx, nope)),
         }
@@ -35,7 +35,7 @@ impl Exp {
                         return Err(ctx.failure(mark, ParseFailure::ClosureMatchedVoid()));
                     }
                     res.push_back(tree);
-                    ctx = ctx.merge(*new_ctx);
+                    ctx = ctx.merge(&new_ctx);
                 }
                 Err(_nope) => {
                     return Ok(Yeap(ctx.into(), NIL.into()));
@@ -72,7 +72,7 @@ impl Exp {
                                 res.push_back(pre_cst);
                             }
                             res.push_back(exp_cst);
-                            ctx = ctx.merge(*repeat_ctx);
+                            ctx = ctx.merge(&repeat_ctx);
                         }
                         Err(mut nope) => {
                             nope.take_cut();

@@ -211,8 +211,8 @@ where
         self.heavy.borrow_mut().keywords = keywords.into()
     }
 
-    fn merge(mut self, mut other: Self) -> Self {
-        self.state_mut().merge(other.state_mut());
+    fn merge(mut self, other: &Self) -> Self {
+        self.state_mut().merge(&other.state);
         self
     }
 }

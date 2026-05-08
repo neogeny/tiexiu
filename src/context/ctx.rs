@@ -169,7 +169,7 @@ pub trait Ctx: CtxI + Clone + Debug {
         let _ = keywords;
     }
 
-    fn merge(self, other: Self) -> Self;
+    fn merge(self, other: &Self) -> Self;
 
     fn push(&mut self) -> Self {
         let mut new = self.clone();
@@ -301,9 +301,8 @@ impl<C: Ctx> Ctx for Box<C> {
         (**self).set_keywords(keywords)
     }
 
-    fn merge(self, other: Self) -> Self {
+    fn merge(self, other: &Self) -> Self {
         let this = *self;
-        let other = *other;
         this.merge(other).into()
     }
 }

@@ -110,7 +110,7 @@ impl<U: Cursor + Clone> ParseState<U> {
         }
     }
 
-    pub fn merge(&mut self, prev: &mut Self) -> &mut Self {
+    pub fn merge(&mut self, prev: &Self) -> &mut Self {
         self.cursor.reset(prev.cursor.mark());
         self.callstack = prev.callstack.clone();
         self
@@ -170,7 +170,7 @@ impl<U: Cursor + Clone> ParseStateStack<U> {
     }
 
     pub fn merge(&mut self) -> &mut ParseState<U> {
-        let mut prev = self.pop();
-        self.state_mut().merge(&mut prev)
+        let prev = self.pop();
+        self.state_mut().merge(&prev)
     }
 }

@@ -125,7 +125,7 @@ impl Exp {
                     }
                     lastmark = endmark;
                     lasttree = Rc::unwrap_or_clone(endtree);
-                    ctx = ctx.merge(*inner_ctx);
+                    ctx = ctx.merge(&inner_ctx);
                     ctx.memoize(key, &lasttree.clone().into(), lastmark);
                 }
             }
