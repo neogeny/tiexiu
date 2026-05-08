@@ -33,7 +33,6 @@ test-all: fix fmt clippy
 
 build: fix fmt clippy
     cargo build
-    maturin build
 
 build-release:
     cargo build --release
