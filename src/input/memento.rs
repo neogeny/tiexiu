@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::context::CtxI;
 use crate::context::state::CallStack;
+use crate::context::CtxI;
 use crate::types::Str;
 use console::style;
 use std::rc::Rc;
@@ -21,6 +21,8 @@ pub struct Memento {
     pub start: usize,
     /// Rule invocations leading to this moment
     pub callstack: CallStack,
+    pub pos: (usize, usize),
+    pub la: Str,
 }
 
 impl Memento {
@@ -32,6 +34,8 @@ impl Memento {
             msg: msg.into(),
             text: ctx.cursor().as_str().into(),
             callstack: ctx.callstack(),
+            pos: ctx.cursor().pos(),
+            la: ctx.cursor().lookahead(start).into(),
         }
     }
 
@@ -51,7 +55,7 @@ impl Memento {
             "  {} {}:{}:{}",
             arrow, self.input_source, line_num, col_num
         )?;
-        writeln!(f, "   {}", blue_pipe)?;
+        writeln!(f, "    {}", blue_pipe)?;
 
         // Windowing logic: find line boundaries without pre-collecting
         let lines: Vec<&str> = self.text.lines().collect();
@@ -83,7 +87,7 @@ impl Memento {
             }
         }
 
-        #[cfg(debug_assertions)]
+        // #[cfg(debug_assertions)]
         {
             writeln!(f)?;
             for call in self.callstack.iter() {

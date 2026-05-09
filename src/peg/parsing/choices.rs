@@ -34,7 +34,7 @@ impl Exp {
                 }
             }
         }
-        Err(ctx.failure(start, NoViableOption(self.la.clone())))
+        Err(ctx.failure(start, NoViableOption(self.lookahead_str())))
     }
 
     pub fn parse_optional<C: Ctx>(&self, ctx: C, exp: &Exp) -> ParseResult<C> {

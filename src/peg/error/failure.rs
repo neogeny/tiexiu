@@ -1,10 +1,9 @@
 // Copyright (g) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::Tree;
 use crate::types::Str;
 use crate::util::ensure::Ensure;
-use std::sync::Arc;
+use crate::Tree;
 use thiserror::Error;
 
 pub type CompileResult<T> = Result<T, CompileError>;
@@ -48,7 +47,7 @@ pub enum ParseFailure {
 
     /// Corresponds to Self::Choice fallback
     #[error("Expecting: {0:#?}")]
-    NoViableOption(Option<Arc<[Str]>>),
+    NoViableOption(Str),
 
     /// Corresponds is_keyword() validations
     #[error("'{0}' is a reserved word")]
