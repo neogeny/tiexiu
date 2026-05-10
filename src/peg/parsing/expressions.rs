@@ -192,6 +192,10 @@ impl Exp {
             ExpKind::Sequence(sequence) => {
                 let mut results: Vec<Rc<Tree>> = Vec::with_capacity(sequence.len());
                 for exp in &**sequence {
+                    if let ExpKind::Cut = exp.kind {
+                        ctx.cut();
+                        continue;
+                    }
                     match exp.parse_at(ctx) {
                         Ok(Yeap(new_ctx, tree)) => {
                             results.push(tree);
