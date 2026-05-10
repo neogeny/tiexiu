@@ -1,13 +1,13 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::{Exp, ExpKind};
 use crate::context::Ctx;
 use crate::peg::error::ParseFailure::*;
 use crate::peg::error::ParseResult;
 use crate::peg::error::Yeap;
 use crate::trees::Tree;
 use crate::types::Str;
+use crate::{Exp, ExpKind};
 use std::rc::Rc;
 
 impl Exp {
@@ -24,7 +24,7 @@ impl Exp {
 
         for option in options.iter() {
             if let ExpKind::Alt(exp) = &option.kind {
-                // with .push() cutseen == False
+                // NOTE With .push() cutseen == False
                 match exp.parse_at(ctx.push()) {
                     Ok(Yeap(new_ctx, tree)) => {
                         return Ok(Yeap(ctx.merge(&new_ctx), tree));

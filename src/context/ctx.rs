@@ -15,6 +15,8 @@ use crate::util::pyre::{Pattern, escape};
 use std::fmt::Debug;
 use std::rc::Rc;
 
+pub const MAX_RECURSION_DEPTH: usize = 64;
+
 pub trait CtxI: Configurable {
     fn cursor(&self) -> &dyn Cursor;
     fn callstack(&self) -> CallStack;
@@ -32,9 +34,19 @@ pub trait Ctx: CtxI + Clone + Debug {
     fn cursor_mut(&mut self) -> &mut dyn Cursor;
     fn enter(&mut self, name: &str);
     fn leave(&mut self);
-    fn track(&mut self, key: &MemoKey) -> usize;
     fn untrack(&mut self, key: &MemoKey) -> usize;
     fn tracer(&self) -> &dyn Tracer;
+
+    /// Checks recursion depth to prevent stack overflow.
+    fn track(&mut self, key: &MemoKey) -> usize;
+    fn track_recursion_depth(&mut self, key: &MemoKey) -> Result<(), Nope> {
+        let depth = self.track(key);
+        if depth > MAX_RECURSION_DEPTH {
+            panic!("Recursion depth exceeded")
+        } else {
+            Ok(())
+        }
+    }
 
     fn intern(&mut self, s: &str) -> Str {
         s.into()

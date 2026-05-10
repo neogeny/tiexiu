@@ -149,15 +149,17 @@ impl Exp {
     #[inline]
     pub fn choice(models: Vec<Self>) -> Self {
         // Do this in favor of existing tests
-        let alts = models.iter()
+        let alts = models
+            .iter()
             .cloned()
-            .map(|model| 
+            .map(|model| {
                 if let ExpKind::Alt(_) = model.kind {
                     model
                 } else {
                     Exp::alt(model)
                 }
-            ) .collect::<Vec<_>>();
+            })
+            .collect::<Vec<_>>();
         Self::new(ExpKind::Choice(alts.into_boxed_slice()))
     }
 

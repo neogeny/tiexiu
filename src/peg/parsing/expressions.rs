@@ -80,10 +80,7 @@ impl Exp {
                     }
                 },
             },
-            ExpKind::Cut => {
-                ctx.cut();
-                Ok(Yeap(ctx, Tree::Nil.into()))
-            }
+            ExpKind::Cut => Err(ctx.failure(start, CutWithNoSequence)),
             ExpKind::Void => {
                 ctx.match_void();
                 Ok(Yeap(ctx, Tree::Nil.into()))
@@ -191,9 +188,11 @@ impl Exp {
 
             ExpKind::Sequence(sequence) => {
                 let mut results: Vec<Rc<Tree>> = Vec::with_capacity(sequence.len());
+                // let mut cut = false;
                 for exp in &**sequence {
                     if let ExpKind::Cut = exp.kind {
                         ctx.cut();
+                        // cut = true;
                         continue;
                     }
                     match exp.parse_at(ctx) {
@@ -201,7 +200,10 @@ impl Exp {
                             results.push(tree);
                             ctx = new_ctx;
                         }
-                        err => return err,
+                        Err(nope) => {
+                            // nope.cutseen |= cut;
+                            return Err(nope);
+                        }
                     }
                 }
                 Ok(Yeap(ctx, Tree::Seq(results.into()).into()))

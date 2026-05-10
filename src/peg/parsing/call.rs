@@ -11,8 +11,6 @@ use crate::peg::rule::Rule;
 use crate::trees::tree::Tree;
 use std::rc::Rc;
 
-pub const MAX_RECURSION_DEPTH: usize = 64;
-
 impl Exp {
     /// Core entry point for calling a rule.
     /// Handles setup, tracing, token skipping, and delegation to `do_call`.
@@ -106,7 +104,7 @@ impl Exp {
 
         loop {
             ctx.reset(start);
-            Self::track_recursion_depth(&mut ctx, key)?;
+            ctx.track_recursion_depth(key)?;
 
             // We need to push a context state here to attempt the parse safely
             let result = rule.parse_at(ctx.push());
@@ -147,18 +145,5 @@ impl Exp {
             return Err(nope);
         }
         Ok(Yeap(ctx, lasttree.into()))
-    }
-
-    /// Checks recursion depth to prevent stack overflow.
-    fn track_recursion_depth<C: Ctx>(
-        ctx: &mut C,
-        key: &crate::context::memo::MemoKey,
-    ) -> Result<(), Nope> {
-        let depth = ctx.track(key);
-        if depth > MAX_RECURSION_DEPTH {
-            panic!("Recursion depth exceeded")
-        } else {
-            Ok(())
-        }
     }
 }
