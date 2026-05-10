@@ -3,7 +3,6 @@
 
 use super::failure::ParseFailure;
 use crate::Tree;
-use crate::cfg::types::Str;
 use crate::context::{Ctx, CtxI};
 use crate::input::memento::Memento;
 use std::fmt::Debug;
@@ -15,26 +14,22 @@ pub type ParseResult<C> = Result<Yeap<C>, Nope>;
 #[derive(Debug, Clone, PartialEq)]
 pub struct Yeap<C: Ctx>(pub C, pub Rc<Tree>);
 
-#[derive(thiserror::Error, Clone, Debug)]
-pub struct Nope {
-    pub cutseen: bool,
-}
+pub type Nope = DisasterReport;
 
 #[derive(Clone, Debug)]
 pub struct DisasterReport {
-    pub start: usize,
-    pub mark: usize,
-    pub pos: (usize, usize),
-    pub la: Str,
-    pub error: Box<ParseFailure>,
+    pub cutseen: bool,
+    pub error: Rc<ParseFailure>,
     pub location: &'static Location<'static>,
-    pub memento: Box<Memento>,
+    pub memento: Rc<Memento>,
 }
-impl std::fmt::Display for Nope {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::fmt::Display::fmt(&self, f)
-    }
-}
+
+// FIXME
+// impl std::fmt::Display for Nope {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         std::fmt::Display::fmt(&self, f)
+//     }
+// }
 
 impl std::fmt::Display for DisasterReport {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -44,7 +39,7 @@ impl std::fmt::Display for DisasterReport {
 
 impl std::error::Error for DisasterReport {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        Some(&self.error)
+        Some(self.error.as_ref())
     }
 }
 
@@ -53,23 +48,15 @@ impl DisasterReport {
     pub fn new(start: usize, ctx: &dyn CtxI, error: &ParseFailure) -> Self {
         let memento = Memento::new(start, ctx, error.to_string().as_str());
         Self {
-            start,
-            mark: ctx.mark(),
+            cutseen: ctx.cut_seen(),
             memento: memento.into(),
-            pos: ctx.cursor().pos(),
-            la: ctx.cursor().lookahead(start).into(),
             error: error.clone().into(),
             location: Location::caller(),
         }
     }
-}
 
-impl Nope {
-    #[track_caller]
-    pub fn new(ctx: &dyn CtxI) -> Self {
-        Self {
-            cutseen: ctx.cut_seen(),
-        }
+    pub fn mark(&self) -> usize {
+        self.memento.mark
     }
 
     pub fn setcut(&mut self) {
@@ -81,13 +68,33 @@ impl Nope {
         self.cutseen = false;
         was_cut
     }
-
-    pub fn restore_cut(&mut self, was_cut: bool) {
-        if !was_cut {
-            self.cutseen = false;
-        }
-    }
 }
+
+// FIXME
+// impl Nope {
+//     #[track_caller]
+//     pub fn new(ctx: &dyn CtxI) -> Self {
+//         Self {
+//             cutseen: ctx.cut_seen(),
+//         }
+//     }
+//
+//     pub fn setcut(&mut self) {
+//         self.cutseen = true;
+//     }
+//
+//     pub fn take_cut(&mut self) -> bool {
+//         let was_cut = self.cutseen;
+//         self.cutseen = false;
+//         was_cut
+//     }
+//
+//     pub fn restore_cut(&mut self, was_cut: bool) {
+//         if !was_cut {
+//             self.cutseen = false;
+//         }
+//     }
+// }
 
 impl<C: Ctx> Yeap<C> {
     #[inline]

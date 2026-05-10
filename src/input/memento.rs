@@ -15,10 +15,10 @@ pub struct Memento {
     pub msg: Str,
     /// The full input text. Stored as a reference/Arc to avoid copying.
     pub text: Rc<str>,
-    /// The absolute byte offset of the error
-    pub mark: usize,
     /// The start of the relevant span for highlighting
     pub start: usize,
+    /// The absolute byte offset of the error
+    pub mark: usize,
     /// Rule invocations leading to this moment
     pub callstack: CallStack,
     pub pos: (usize, usize),
