@@ -51,11 +51,11 @@ pub trait Ctx: CtxI + Clone + Debug {
         }
 
         let nope = DisasterReport::new(start, self, &source);
-        self.set_furthest_failure(&nope);
+        self.set_furthest_failure(nope.clone());
         nope
     }
 
-    fn set_furthest_failure(&mut self, dis: &DisasterReport);
+    fn set_furthest_failure(&mut self, dis: DisasterReport);
     fn furthest_failure(&self) -> Option<DisasterReport>;
 
     fn reset(&mut self, mark: usize) {

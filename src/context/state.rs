@@ -85,8 +85,8 @@ impl<'t> HeavyState<'t> {
             .clone()
     }
 
-    pub fn set_furthest_failure(&mut self, dis: &DisasterReport) {
-        self.furthest_failure = Some(dis.clone());
+    pub fn set_furthest_failure(&mut self, dis: DisasterReport) {
+        self.furthest_failure = Some(dis);
     }
 }
 

@@ -138,7 +138,7 @@ where
         self.heavy.borrow_mut().memos.intern(s)
     }
 
-    fn set_furthest_failure(&mut self, dis: &DisasterReport) {
+    fn set_furthest_failure(&mut self, dis: DisasterReport) {
         self.heavy.borrow_mut().set_furthest_failure(dis);
     }
 
