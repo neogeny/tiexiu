@@ -470,11 +470,13 @@ mod tests {
 
     #[test]
     fn test_simple_grammar() -> Result<()> {
+        let boot = crate::api::boot_grammar()?;
+        eprintln!("boot grammar:\n{:#?}", boot);
         use crate::api::compile;
         let grammar = compile(
             r"
-        start = 'a';
-        ",
+            start = 'a';
+            ",
             &[],
         )?;
         let result = grammar.railroads();

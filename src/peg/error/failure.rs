@@ -1,9 +1,9 @@
 // Copyright (g) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::Tree;
 use crate::types::Str;
 use crate::util::ensure::Ensure;
+use crate::Tree;
 use thiserror::Error;
 
 pub type CompileResult<T> = Result<T, CompileError>;
@@ -79,6 +79,12 @@ pub enum ParseFailure {
 
     #[error("There are no rules in the grammar")]
     NoRulesInGrammar,
+
+    #[error("Alt not captured by a choice")]
+    AltWithNoChoice,
+
+    #[error("Choice without Alt")]
+    ChoiceOptionWithNoAlt,
 
     #[error("!({0})")]
     Ensure(&'static str),

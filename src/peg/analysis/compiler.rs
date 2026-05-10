@@ -173,7 +173,7 @@ impl GrammarCompiler {
                     .collect::<CompileResult<_>>()?;
                 Exp::choice(exps)
             }
-            "Option" => self.parse_exp(tree)?,
+            "Option" => Exp::alt(self.parse_exp(tree)?),
             "Closure" => Exp::closure(self.parse_exp(tree)?),
             "Comment" => Exp::nil(),
             "Constant" => Exp::constant(&tree.value()),

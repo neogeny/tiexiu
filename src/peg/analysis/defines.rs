@@ -34,10 +34,8 @@ impl Exp {
                     exp._defines(names);
                 }
             }
-            ExpKind::Alt(exp) => {
-                exp._defines(names);
-            }
-            ExpKind::Optional(exp)
+            ExpKind::Alt(exp)
+            | ExpKind::Optional(exp)
             | ExpKind::Closure(exp)
             | ExpKind::PositiveClosure(exp)
             | ExpKind::SkipGroup(exp)

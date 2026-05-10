@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::Exp;
+use crate::{Exp, ExpKind};
 use crate::context::Ctx;
 use crate::peg::error::ParseFailure::*;
 use crate::peg::error::ParseResult;
@@ -23,15 +23,20 @@ impl Exp {
         let start = ctx.mark();
 
         for option in options.iter() {
-            match option.parse_at(ctx.push()) {
-                Ok(Yeap(new_ctx, tree)) => {
-                    return Ok(Yeap(ctx.merge(&new_ctx), tree));
-                }
-                Err(mut nope) => {
-                    if nope.take_cut() {
-                        return Err(nope);
+            if let ExpKind::Alt(exp) = &option.kind {
+                // with .push() cutseen == False
+                match exp.parse_at(ctx.push()) {
+                    Ok(Yeap(new_ctx, tree)) => {
+                        return Ok(Yeap(ctx.merge(&new_ctx), tree));
+                    }
+                    Err(mut nope) => {
+                        if nope.take_cut() {
+                            return Err(nope);
+                        }
                     }
                 }
+            } else {
+                return Err(ctx.failure(start, ChoiceOptionWithNoAlt));
             }
         }
         Err(ctx.failure(start, NoViableOption(self.lookahead_str())))

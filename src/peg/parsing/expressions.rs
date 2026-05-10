@@ -49,9 +49,9 @@ impl Exp {
     fn do_parse_at<C: Ctx>(&self, mut ctx: C) -> ParseResult<C> {
         let start = ctx.mark();
         let mut exp = self;
-        while let ExpKind::RuleInclude { .. } | ExpKind::Group(_) | ExpKind::Alt(_) = &exp.kind {
+        while let ExpKind::RuleInclude { .. } | ExpKind::Group(_) = &exp.kind {
             match &exp.kind {
-                ExpKind::Group(next) | ExpKind::Alt(next) => exp = next,
+                ExpKind::Group(next) => exp = next,
                 ExpKind::RuleInclude { name, exp: opt_exp } => match opt_exp {
                     None => return Err(ctx.failure(start, RuleNotLinked(name.clone()))),
                     Some(next) => exp = next,
@@ -206,7 +206,7 @@ impl Exp {
                 }
                 Ok(Yeap(ctx, Tree::Seq(results.into()).into()))
             }
-            ExpKind::Alt(exp) => exp.parse_at(ctx),
+            ExpKind::Alt(_exp) => Err(ctx.failure(start, AltWithNoChoice)),
             ExpKind::Choice(options) => self.parse_choice(ctx, options),
             ExpKind::Optional(exp) => self.parse_optional(ctx, exp),
 
@@ -377,7 +377,7 @@ mod tests {
     }
 
     #[test]
-    fn choice_clears_when_no_cut_enters() {
+    fn choice_clears_when_no_cut_enters() -> crate::Result<()> {
         let grammar = crate::peg::Grammar::new(
             "test",
             &[RuleRef::from(Rule::new("start", &[], Exp::token("abc")))],
@@ -389,11 +389,12 @@ mod tests {
         let exp = Exp::choice(vec![Exp::token("abc"), Exp::token("xyz")]);
         let result = exp.parse_at(ctx);
         assert!(result.is_ok(), "choice should succeed");
-        let succ = result.unwrap();
+        let succ = result?;
         assert!(
             !succ.0.cut_seen(),
             "cut should be cleared when not set on entry"
         );
+        Ok(())
     }
 
     #[test]
