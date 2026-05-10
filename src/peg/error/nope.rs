@@ -18,9 +18,9 @@ pub type Nope = DisasterReport;
 
 #[derive(Clone, Debug)]
 pub struct DisasterReport {
+    pub location: &'static Location<'static>,
     pub cutseen: bool,
     pub error: Rc<ParseFailure>,
-    pub location: &'static Location<'static>,
     pub memento: Rc<Memento>,
 }
 
