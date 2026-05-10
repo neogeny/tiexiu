@@ -26,9 +26,7 @@ classifiers = [
     "Topic :: Text Processing :: General",
     "Development Status :: 3 - Alpha",
 ]
-dependencies = [
-    "uv>=0.11.10",
-]
+dependencies = []
 
 [project.urls]
 Homepage = "https://github.com/neogeny/tiexiu"
