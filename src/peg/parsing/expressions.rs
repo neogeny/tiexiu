@@ -3,8 +3,8 @@
 
 use crate::api::error::nope::ParseResult;
 use crate::context::{Ctx, Snap};
-use crate::peg::error::Yeap;
 use crate::peg::error::nope::yeap;
+use crate::peg::error::Yeap;
 use crate::peg::{Exp, ExpKind, ParseFailure::*, Parser};
 use crate::trees::Tree;
 use crate::types::Str;
@@ -217,9 +217,10 @@ impl Exp {
                             ctx.merge(&snap);
                         }
                         Err(nope) => {
-                            // WARNING This breaks the cut logic:
+                            // WARNING This breaks the Cut logic:
+                            //  `
                             //  nope.cutseen |= cut;
-                            //  _
+                            //  `
                             //  Passing cutseen on the failure path is responsibility
                             //  of Choice/Alt
                             return Err(nope);
