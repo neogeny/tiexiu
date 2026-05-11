@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::context::Ctx;
-use crate::peg::error::ParseFailure::*;
 use crate::peg::error::yeap;
+use crate::peg::error::ParseFailure::*;
 use crate::peg::error::{ParseResult, Yeap};
 use crate::trees::Tree;
 use crate::types::Str;
@@ -26,8 +26,8 @@ impl Exp {
             if let ExpKind::Alt(exp) = &option.kind {
                 // NOTE With .push() cutseen == False
                 match exp.parse_at(ctx.push()) {
-                    Ok(Yeap(mark, tree)) => {
-                        ctx.merge(mark);
+                    Ok(Yeap(snap, tree)) => {
+                        ctx.merge(snap);
                         return Ok(yeap(ctx.into(), tree));
                     }
                     Err(mut nope) => {

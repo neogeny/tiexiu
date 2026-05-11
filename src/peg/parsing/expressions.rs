@@ -3,8 +3,8 @@
 
 use crate::api::error::nope::ParseResult;
 use crate::context::{Ctx, Snap};
-use crate::peg::error::Yeap;
 use crate::peg::error::nope::yeap;
+use crate::peg::error::Yeap;
 use crate::peg::{Exp, ExpKind, ParseFailure::*, Parser};
 use crate::trees::Tree;
 use crate::types::Str;
@@ -73,11 +73,16 @@ impl Exp {
             },
             ExpKind::Call { name, rule } => match rule {
                 None => Err(ctx.failure(start, RuleNotLinked(name.clone()))),
-                Some(rule) => match Self::rule_call(ctx, name, rule.as_ref()) {
-                    Ok(ok) => Ok(ok),
-                    Err(mut nope) => {
-                        nope.take_cut();
-                        Err(nope)
+                Some(rule) => {
+                    match Self::rule_call(ctx.push(), name, rule.as_ref()) {
+                        Ok(Yeap(snap, tree)) => {
+                            ctx.merge(snap);
+                            Ok(Yeap(ctx.into(), tree))
+                        }
+                        Err(mut nope) => {
+                            nope.take_cut();
+                            Err(nope)
+                        }
                     }
                 },
             },
@@ -133,9 +138,9 @@ impl Exp {
             ExpKind::Alert(literal, _) => Ok(yeap(ctx.into(), Tree::Text(literal.clone()).into())),
 
             ExpKind::Named(name, exp) => match exp.parse_at(ctx.clone()) {
-                Ok(Yeap(mark, tree)) => {
+                Ok(Yeap(snap, tree)) => {
                     let wrapped = Tree::named(name.clone(), tree);
-                    ctx.merge(mark);
+                    ctx.merge(snap);
                     Ok(yeap(ctx.into(), wrapped.into()))
                 }
                 err => err,
@@ -209,8 +214,12 @@ impl Exp {
                             results.push(tree);
                             ctx.merge(snap);
                         }
-                        Err(mut nope) => {
-                            nope.cutseen |= cut;
+                        Err(nope) => {
+                            // WARNING This breaks the cut logic:
+                            //  nope.cutseen |= cut;
+                            //  _
+                            //  Passing cutseen on the failure path is responsibility
+                            //  of Choice/Alt
                             return Err(nope);
                         }
                     }

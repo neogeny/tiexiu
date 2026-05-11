@@ -70,8 +70,8 @@ impl FileProgress {
         self.pb.finish_with_message("done");
     }
 
-    pub fn fail(self, msg: &str) {
-        self.pb.finish_with_message(msg.to_string());
+    pub fn fail(self, _msg: &str) {
+        // self.pb.finish_with_message(msg.to_string());
     }
 }
 

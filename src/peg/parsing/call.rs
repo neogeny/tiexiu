@@ -5,9 +5,9 @@
 //! Moved from `Ctx` trait to decouple parsing logic from context management.
 
 use crate::context::Ctx;
-use crate::peg::Exp;
-use crate::peg::error::{Nope, ParseFailure, ParseResult, Yeap, yeap};
+use crate::peg::error::{yeap, Nope, ParseFailure, ParseResult, Yeap};
 use crate::peg::rule::Rule;
+use crate::peg::Exp;
 use crate::trees::tree::Tree;
 use std::rc::Rc;
 
