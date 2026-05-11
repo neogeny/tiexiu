@@ -3,8 +3,8 @@
 
 use crate::api::error::nope::ParseResult;
 use crate::context::Ctx;
-use crate::peg::error::Yeap;
 use crate::peg::error::nope::yeap;
+use crate::peg::error::Yeap;
 use crate::peg::{Exp, ExpKind, ParseFailure::*, Parser};
 use crate::trees::Tree;
 use crate::types::Str;
@@ -371,11 +371,12 @@ mod tests {
         assert!(ctx.cut_seen(), "ctx should have cut set before choice");
 
         let exp = Exp::choice(vec![Exp::token("abc"), Exp::token("xyz")]);
-        let result = exp.parse_at(ctx);
+        let result = exp.parse_at(ctx.clone());
         assert!(result.is_ok(), "choice should succeed");
         let succ = result.unwrap();
+        ctx.merge(&succ.0);
         assert!(
-            succ.0.cut_seen(),
+            ctx.cut_seen(),
             "cut should be restored after choice success"
         );
     }
@@ -406,15 +407,16 @@ mod tests {
             &[RuleRef::from(Rule::new("start", &[], Exp::token("abc")))],
         );
         let _ = grammar;
-        let ctx = StrCtx::new(StrCursor::new("abc"), &[]);
+        let mut ctx = StrCtx::new(StrCursor::new("abc"), &[]);
         assert!(!ctx.cut_seen(), "ctx should not have cut set");
 
         let exp = Exp::choice(vec![Exp::token("abc"), Exp::token("xyz")]);
-        let result = exp.parse_at(ctx);
+        let result = exp.parse_at(ctx.clone());
         assert!(result.is_ok(), "choice should succeed");
         let succ = result?;
+        ctx.merge(&succ.0);
         assert!(
-            !succ.0.cut_seen(),
+            !ctx.cut_seen(),
             "cut should be cleared when not set on entry"
         );
         Ok(())
@@ -432,11 +434,12 @@ mod tests {
         assert!(ctx.cut_seen(), "ctx should have cut set before optional");
 
         let exp = Exp::optional(Exp::token("abc"));
-        let result = exp.parse_at(ctx);
+        let result = exp.parse_at(ctx.clone());
         assert!(result.is_ok(), "optional should succeed");
         let succ = result.unwrap();
+        ctx.merge(&succ.0);
         assert!(
-            succ.0.cut_seen(),
+            ctx.cut_seen(),
             "cut should be restored after optional success"
         );
     }
@@ -451,11 +454,12 @@ mod tests {
         assert!(ctx.cut_seen(), "ctx should have cut set before optional");
 
         let exp = Exp::optional(Exp::token("xyz"));
-        let result = exp.parse_at(ctx);
+        let result = exp.parse_at(ctx.clone());
         assert!(result.is_ok(), "optional failure returns Ok with nil");
         let succ = result.unwrap();
+        ctx.merge(&succ.0);
         assert!(
-            succ.0.cut_seen(),
+            ctx.cut_seen(),
             "cut should be restored after optional failure"
         );
     }
@@ -465,15 +469,16 @@ mod tests {
         let grammar =
             crate::peg::Grammar::new("test", &[Rule::new("start", &[], Exp::token("abc")).into()]);
         let _ = grammar;
-        let ctx = StrCtx::new(StrCursor::new("abc"), &[]);
+        let mut ctx = StrCtx::new(StrCursor::new("abc"), &[]);
         assert!(!ctx.cut_seen(), "ctx should not have cut set");
 
         let exp = Exp::optional(Exp::token("abc"));
-        let result = exp.parse_at(ctx);
+        let result = exp.parse_at(ctx.clone());
         assert!(result.is_ok(), "optional should succeed");
         let succ = result.unwrap();
+        ctx.merge(&succ.0);
         assert!(
-            !succ.0.cut_seen(),
+            !ctx.cut_seen(),
             "cut should be cleared when not set on entry"
         );
     }
