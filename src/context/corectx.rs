@@ -184,13 +184,13 @@ where
         self.heavy.borrow_mut().memos.clear_error_memos();
     }
 
-    fn cut(&mut self) {
+    fn _cut(&mut self) {
         self.tracer().trace_cut(self);
         self.state_mut().cutseen = true;
         // self.prune_cache();
     }
 
-    fn clear_cut(&mut self) {
+    fn _clear_cut(&mut self) {
         self.state_mut().cutseen = false;
     }
 
@@ -246,7 +246,7 @@ mod tests {
         let cursor = StrCursor::new("test");
         let mut ctx = CoreCtx::new(cursor, &[]);
 
-        ctx.cut();
+        ctx._cut();
         assert!(ctx._cut_seen());
     }
 
@@ -255,7 +255,7 @@ mod tests {
         let cursor = StrCursor::new("test");
         let mut ctx = CoreCtx::new(cursor, &[]);
 
-        ctx.cut();
+        ctx._cut();
         assert!(ctx._cut_seen());
 
         let cloned_ctx = ctx.push();

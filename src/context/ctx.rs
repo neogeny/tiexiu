@@ -213,8 +213,8 @@ pub trait Ctx: CtxI + Clone + Debug {
 
     fn clear_error_memos(&mut self);
 
-    fn cut(&mut self);
-    fn clear_cut(&mut self);
+    fn _cut(&mut self);
+    fn _clear_cut(&mut self);
 
     fn prune_cache(&mut self);
 
@@ -232,7 +232,8 @@ pub trait Ctx: CtxI + Clone + Debug {
 
     fn push(&self) -> Self {
         let mut new = self.clone();
-        new.clear_cut();
+        // FIXME
+        new._clear_cut();
         new
     }
 }

@@ -200,7 +200,7 @@ impl Exp {
                 let mut cut = false;
                 for exp in &**sequence {
                     if let ExpKind::Cut = exp.kind {
-                        ctx.cut();
+                        // ctx.cut();
                         cut = true;
                         continue;
                     }
@@ -362,7 +362,7 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "cuseen is being removed from Ctx"]
+    #[ignore = "cutseen is being removed from Ctx"]
     fn choice_restores_entered_cut_on_success() {
         let grammar = crate::peg::Grammar::new(
             "test",
@@ -370,7 +370,7 @@ mod tests {
         );
         let _ = grammar;
         let mut ctx = StrCtx::new(StrCursor::new("abc"), &[]);
-        ctx.cut();
+        ctx._cut();
         assert!(ctx._cut_seen(), "ctx should have cut set before choice");
 
         let exp = Exp::choice(vec![Exp::token("abc"), Exp::token("xyz")]);
@@ -392,7 +392,7 @@ mod tests {
         );
         let _ = grammar;
         let mut ctx = StrCtx::new(StrCursor::new("abc"), &[]);
-        ctx.cut();
+        ctx._cut();
         assert!(ctx._cut_seen(), "ctx should have cut set before choice");
 
         let exp = Exp::choice(vec![Exp::token("xyz"), Exp::token("123")]);
@@ -433,7 +433,7 @@ mod tests {
         );
         let _ = grammar;
         let mut ctx = StrCtx::new(StrCursor::new("abc"), &[]);
-        ctx.cut();
+        ctx._cut();
         assert!(ctx._cut_seen(), "ctx should have cut set before optional");
 
         let exp = Exp::optional(Exp::token("abc"));
@@ -453,7 +453,7 @@ mod tests {
             crate::peg::Grammar::new("test", &[Rule::new("start", &[], Exp::token("xyz")).into()]);
         let _ = grammar;
         let mut ctx = StrCtx::new(StrCursor::new("abc"), &[]);
-        ctx.cut();
+        ctx._cut();
         assert!(ctx._cut_seen(), "ctx should have cut set before optional");
 
         let exp = Exp::optional(Exp::token("xyz"));
