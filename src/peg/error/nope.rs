@@ -12,10 +12,10 @@ use std::rc::Rc;
 pub type ParseResult = Result<Yeap, Nope>;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Yeap(pub Snap, pub Rc<Tree>);
+pub struct Yeap(pub Rc<Snap>, pub Rc<Tree>);
 
-pub fn yeap(snap: Snap, tree: Rc<Tree>) -> Yeap {
-    Yeap(snap, tree)
+pub fn yeap(snap: &Snap, tree: Rc<Tree>) -> Yeap {
+    Yeap(snap.clone().into(), tree)
 }
 
 #[derive(thiserror::Error, Debug, Clone, PartialEq)]
@@ -109,6 +109,7 @@ impl Yeap {
 #[cfg(test)]
 mod tests {
     use crate::Tree;
+    use crate::context::CtxI;
     use crate::peg::error::Yeap;
     use crate::peg::error::nope::{Nope, yeap};
     use std::rc::Rc;
@@ -134,7 +135,7 @@ mod tests {
 
         let tree = Tree::Text("hello".into());
         let ctx = StrCtx::new(StrCursor::new("hello"), &[]);
-        let yeap = yeap(ctx.into(), tree.into());
+        let yeap = yeap(&ctx.click(), tree.into());
         let rc: Rc<Tree> = yeap.tree();
         assert!(matches!(rc.as_ref(), Tree::Text(_)));
     }

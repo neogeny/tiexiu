@@ -5,9 +5,9 @@
 //! Moved from `Ctx` trait to decouple parsing logic from context management.
 
 use crate::context::Ctx;
-use crate::peg::error::{yeap, Nope, ParseFailure, ParseResult, Yeap};
-use crate::peg::rule::Rule;
 use crate::peg::Exp;
+use crate::peg::error::{Nope, ParseFailure, ParseResult, Yeap, yeap};
+use crate::peg::rule::Rule;
 use crate::trees::tree::Tree;
 use std::rc::Rc;
 
@@ -28,8 +28,8 @@ impl Exp {
         }
 
         match Self::do_call(ctx.push(), name, rule) {
-            Ok(Yeap(mark, tree)) => {
-                ctx.merge(mark.clone());
+            Ok(Yeap(snap, tree)) => {
+                ctx.merge(&snap);
                 if rule.should_trace() {
                     ctx.leave();
                 }
@@ -45,7 +45,7 @@ impl Exp {
                 ctx.tracer().trace_success(&ctx);
                 ctx.memoize(&key, &tree, ctx.mark());
                 ctx.heartbeat_tick();
-                Ok(yeap(mark, tree))
+                Ok(yeap(&snap, tree))
             }
             Err(mut nope) => {
                 if rule.should_trace() {
@@ -73,7 +73,7 @@ impl Exp {
                 }
                 _ => {
                     ctx.reset(memo.mark);
-                    Ok(yeap(ctx.into(), memo.tree))
+                    Ok(yeap(&ctx.into(), memo.tree))
                 }
             };
         }
@@ -116,15 +116,15 @@ impl Exp {
                     lastnope = Some(nope);
                     break;
                 }
-                Ok(Yeap(mark, tree)) => {
-                    let endmark = mark.mark;
+                Ok(Yeap(snap, tree)) => {
+                    let endmark = snap.mark;
                     let endtree = tree;
                     if endmark <= lastmark {
                         break;
                     }
                     lastmark = endmark;
                     lasttree = Rc::unwrap_or_clone(endtree);
-                    ctx.merge(mark);
+                    ctx.merge(&snap);
                     ctx.memoize(key, &lasttree.clone().into(), lastmark);
                 }
             }
@@ -145,6 +145,6 @@ impl Exp {
             ));
             return Err(nope);
         }
-        Ok(yeap(ctx.into(), lasttree.into()))
+        Ok(yeap(&ctx.into(), lasttree.into()))
     }
 }

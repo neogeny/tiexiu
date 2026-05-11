@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::context::Ctx;
-use crate::peg::error::yeap;
 use crate::peg::error::ParseFailure::*;
+use crate::peg::error::yeap;
 use crate::peg::error::{ParseResult, Yeap};
 use crate::trees::Tree;
 use crate::types::Str;
@@ -27,8 +27,8 @@ impl Exp {
                 // NOTE With .push() cutseen == False
                 match exp.parse_at(ctx.push()) {
                     Ok(Yeap(snap, tree)) => {
-                        ctx.merge(snap);
-                        return Ok(yeap(ctx.into(), tree));
+                        ctx.merge(&snap);
+                        return Ok(yeap(&ctx.into(), tree));
                     }
                     Err(mut nope) => {
                         if nope.take_cut() {
@@ -46,14 +46,14 @@ impl Exp {
     pub fn parse_optional<C: Ctx>(&self, mut ctx: C, exp: &Exp) -> ParseResult {
         match exp.parse_at(ctx.push()) {
             Ok(Yeap(snap, tree)) => {
-                ctx.merge(snap);
-                Ok(yeap(ctx.into(), tree))
+                ctx.merge(&snap);
+                Ok(yeap(&ctx.into(), tree))
             }
             Err(mut nope) => {
                 if nope.take_cut() {
                     return Err(nope);
                 }
-                Ok(yeap(ctx.into(), Tree::Nil.into()))
+                Ok(yeap(&ctx.into(), Tree::Nil.into()))
             }
         }
     }

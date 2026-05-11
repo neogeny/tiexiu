@@ -103,11 +103,11 @@ impl Rule {
     pub fn parse_at<C: Ctx>(&self, mut ctx: C) -> ParseResult {
         match self.exp.parse_at(ctx.push()) {
             Err(nope) => Err(nope),
-            Ok(Yeap(mark, tree)) => {
+            Ok(Yeap(snap, tree)) => {
                 let folded = Rc::unwrap_or_clone(tree).fold();
-                ctx.merge(mark);
+                ctx.merge(&snap);
                 Ok(yeap(
-                    ctx.into(),
+                    &ctx.into(),
                     if self.params.is_empty() {
                         folded.into()
                     } else {

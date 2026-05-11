@@ -226,7 +226,7 @@ pub trait Ctx: CtxI + Clone + Debug {
         let _ = keywords;
     }
 
-    fn merge(&mut self, snap: Snap) {
+    fn merge(&mut self, snap: &Snap) {
         self.reset(snap.mark);
     }
 
