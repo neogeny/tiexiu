@@ -8,25 +8,14 @@ use crate::trees::TreeList;
 use crate::trees::short::NIL;
 
 impl Exp {
-    pub fn skip_exp<C: Ctx>(mut ctx: C, exp: &Exp) -> C {
-        let skip_ctx = ctx.clone();
-        match exp.parse_at(skip_ctx) {
-            Ok(Yeap(new_ctx, _)) => {
-                ctx.merge(&new_ctx);
-                ctx
-            }
-            Err(_) => ctx,
-        }
-    }
-
-    pub fn add_exp<C: Ctx>(mut ctx: C, exp: &Exp, res: &mut TreeList) -> Result<C, (C, Nope)> {
+    pub fn add_exp<C: Ctx>(mut ctx: C, exp: &Exp, res: &mut TreeList) -> ParseResult {
         match exp.parse_at(ctx.clone()) {
-            Ok(Yeap(new_ctx, tree)) => {
-                res.push_back(tree);
-                ctx.merge(&new_ctx);
-                Ok(ctx)
+            Ok(Yeap(snap, tree)) => {
+                res.push_back(tree.clone());
+                ctx.merge(&snap);
+                Ok(yeap(ctx.into(), tree))
             }
-            Err(nope) => Err((ctx, nope)),
+            err => err,
         }
     }
 
@@ -102,34 +91,26 @@ mod tests {
     }
 
     #[test]
-    fn test_skip_exp() {
-        let ctx = setup("abc");
-        let exp = Exp::token("abc");
-        let new_ctx = Exp::skip_exp(ctx.push(), &exp);
-        assert_eq!(new_ctx.cursor().mark(), 3);
-
-        let ctx = setup("def");
-        let new_ctx = Exp::skip_exp(ctx.push(), &exp);
-        assert_eq!(new_ctx.cursor().mark(), 0);
-    }
-
-    #[test]
     fn test_add_exp() {
-        let ctx = setup("abc");
+        let mut ctx = setup("abc");
         let exp = Exp::token("abc");
         let mut res = TreeList::new();
-        let result = Exp::add_exp(ctx, &exp, &mut res);
+        let result = Exp::add_exp(ctx.clone(), &exp, &mut res);
         assert!(result.is_ok());
+        if let Ok(Yeap(snap, _)) = result {
+            ctx.merge(&snap);
+        }
         assert_eq!(res.len(), 1);
-        assert_eq!(result.unwrap().cursor().mark(), 3);
+        assert_eq!(ctx.cursor().mark(), 3);
     }
 
     #[test]
     fn test_repeat() {
-        let ctx = setup("abcabcabc");
+        let mut ctx = setup("abcabcabc");
         let exp = Exp::token("abc");
         let mut res = TreeList::new();
-        if let Ok(Yeap(_snap, _)) = Exp::repeat(ctx.push(), &exp, &mut res) {
+        if let Ok(Yeap(snap, _)) = Exp::repeat(ctx.push(), &exp, &mut res) {
+            ctx.merge(&snap);
             assert_eq!(res.len(), 3);
             assert_eq!(ctx.cursor().mark(), 9);
         } else {
@@ -139,11 +120,12 @@ mod tests {
 
     #[test]
     fn test_repeat_with_pre() {
-        let ctx = setup(",abc,abc");
+        let mut ctx = setup(",abc,abc");
         let exp = Exp::token("abc");
         let pre = Exp::token(",");
         let mut res = TreeList::new();
-        if let Ok(Yeap(_snap, _)) = Exp::repeat_with_pre(ctx.push(), &exp, &pre, &mut res, true) {
+        if let Ok(Yeap(snap, _)) = Exp::repeat_with_pre(ctx.push(), &exp, &pre, &mut res, true) {
+            ctx.merge(&snap);
             assert_eq!(res.len(), 4);
             assert_eq!(ctx.cursor().mark(), 8);
         } else {
@@ -153,11 +135,12 @@ mod tests {
 
     #[test]
     fn test_repeat_with_pre_no_keep() {
-        let ctx = setup(",abc,abc");
+        let mut ctx = setup(",abc,abc");
         let exp = Exp::token("abc");
         let pre = Exp::token(",");
         let mut res = TreeList::new();
-        if let Ok(Yeap(_snap, _)) = Exp::repeat_with_pre(ctx.push(), &exp, &pre, &mut res, false) {
+        if let Ok(Yeap(snap, _)) = Exp::repeat_with_pre(ctx.push(), &exp, &pre, &mut res, false) {
+            ctx.merge(&snap);
             assert_eq!(res.len(), 2);
             assert_eq!(ctx.cursor().mark(), 8);
         } else {
@@ -193,10 +176,10 @@ mod tests {
         let exp = Exp::token("abc");
         let pre = Exp::token(",");
         let mut res = TreeList::new();
-        if let Ok(Yeap(final_ctx, _)) = Exp::repeat_with_pre(ctx, &exp, &pre, &mut res, true) {
+        if let Ok(Yeap(snap, _)) = Exp::repeat_with_pre(ctx, &exp, &pre, &mut res, true) {
             assert_eq!(res.len(), 4);
             assert!(
-                final_ctx.cut_seen(),
+                snap.cut_seen(),
                 "cut should be restored after repeat_with_pre"
             );
         } else {

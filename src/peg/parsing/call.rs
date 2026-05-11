@@ -29,6 +29,7 @@ impl Exp {
 
         match Self::do_call(ctx.push(), name, rule) {
             Ok(Yeap(snap, tree)) => {
+                ctx.merge(&snap);
                 if rule.should_trace() {
                     ctx.leave();
                 }
