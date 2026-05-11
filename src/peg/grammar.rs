@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::error::{ParseFailure, Yeap};
+use super::error::{ParseFailure, YeapS};
 pub use super::pretty::*;
 use super::rule::{Rule, RuleMap, RuleRef};
 use crate::api::error::{DisasterReport, ParseResult};
@@ -123,7 +123,7 @@ impl Grammar {
     pub fn parse_tree_from<C: Ctx>(&self, ctx: C, start: &str) -> crate::error::Result<Tree> {
         let start_mark = ctx.mark();
         match self.parse_from(ctx.push(), start) {
-            Ok(Yeap(_, tree)) => Ok(Rc::unwrap_or_clone(tree)),
+            Ok(YeapS(_, tree)) => Ok(Rc::unwrap_or_clone(tree)),
             Err(_) => Err(ctx
                 .furthest_failure()
                 .unwrap_or(DisasterReport::new(start_mark, &ctx, &ParseFailure::Fail))

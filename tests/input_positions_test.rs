@@ -8,7 +8,7 @@ extern crate json;
 use tiexiu::context::{CtxI, new_ctx};
 use tiexiu::input::strcursor::StrCursor;
 use tiexiu::parse_input;
-use tiexiu::peg::error::Yeap;
+use tiexiu::peg::error::YeapS;
 use tiexiu::*;
 
 #[test]
@@ -21,7 +21,7 @@ fn basic_position_tracking() -> Result<()> {
     let cursor = StrCursor::new("hello");
     let ctx = new_ctx(cursor, &[]);
 
-    let Yeap(ctx, _tree) = grammar.parse_at(ctx.clone())?;
+    let YeapS(ctx, _tree) = grammar.parse_at(ctx.clone())?;
     assert!(ctx.cursor().at_end(), "Should be at end of input");
     Ok(())
 }

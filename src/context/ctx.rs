@@ -17,6 +17,24 @@ use std::rc::Rc;
 
 pub const MAX_RECURSION_DEPTH: usize = 64;
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct Snap {
+    pub mark: usize,
+    pub cutsen: bool,
+}
+
+impl From<&dyn CtxI> for Snap {
+    fn from(ctx: &dyn CtxI) -> Self {
+        ctx.click()
+    }
+}
+
+impl<C: Ctx> From<C> for Snap {
+    fn from(ctx: C) -> Self {
+        ctx.click()
+    }
+}
+
 pub trait CtxI: Configurable {
     fn cursor(&self) -> &dyn Cursor;
     fn callstack(&self) -> CallStack;
@@ -24,6 +42,13 @@ pub trait CtxI: Configurable {
         self.cursor().mark()
     }
     fn cut_seen(&self) -> bool;
+
+    fn click(&self) -> Snap {
+        Snap {
+            mark: self.mark(),
+            cutsen: self.cut_seen(),
+        }
+    }
 }
 
 pub trait Ctx: CtxI + Clone + Debug {

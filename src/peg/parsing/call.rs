@@ -6,7 +6,7 @@
 
 use crate::context::Ctx;
 use crate::peg::Exp;
-use crate::peg::error::{Nope, ParseFailure, ParseResult, Yeap};
+use crate::peg::error::{Nope, ParseFailure, ParseResult, Yeap, YeapS};
 use crate::peg::rule::Rule;
 use crate::trees::tree::Tree;
 use std::rc::Rc;
@@ -28,7 +28,7 @@ impl Exp {
         }
 
         match Self::do_call(ctx.push(), name, rule) {
-            Ok(Yeap(new_ctx, tree)) => {
+            Ok(YeapS(new_ctx, tree)) => {
                 if rule.should_trace() {
                     ctx.leave();
                 }
@@ -115,7 +115,7 @@ impl Exp {
                     lastnope = Some(nope);
                     break;
                 }
-                Ok(Yeap(inner_ctx, tree)) => {
+                Ok(YeapS(inner_ctx, tree)) => {
                     let endmark = inner_ctx.mark();
                     let endtree = tree;
                     if endmark <= lastmark {

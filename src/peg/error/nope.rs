@@ -9,10 +9,15 @@ use std::fmt::Debug;
 use std::panic::Location;
 use std::rc::Rc;
 
-pub type ParseResult<C> = Result<Yeap<C>, Nope>;
+pub type ParseResult<C> = Result<YeapS<C>, Nope>;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Yeap<C: Ctx>(pub Rc<C>, pub Rc<Tree>);
+pub struct YeapS<C: Ctx>(pub Rc<C>, pub Rc<Tree>);
+
+#[allow(non_snake_case)]
+pub fn Yeap<C: Ctx>(ctx: Rc<C>, tree: Rc<Tree>) -> YeapS<C> {
+    YeapS(ctx, tree)
+}
 
 #[derive(thiserror::Error, Debug, Clone, PartialEq)]
 pub struct Nope {
@@ -97,7 +102,7 @@ impl Nope {
     }
 }
 
-impl<C: Ctx> Yeap<C> {
+impl<C: Ctx> YeapS<C> {
     #[inline]
     pub fn tree(self) -> Rc<Tree> {
         self.1
@@ -118,6 +123,7 @@ impl<C: Ctx> Yeap<C> {
 mod tests {
     use crate::Tree;
     use crate::context::strctx::StrCtx;
+    use crate::peg::error::YeapS;
     use crate::peg::error::nope::{Nope, Yeap};
     use std::rc::Rc;
 
@@ -125,7 +131,7 @@ mod tests {
 
     #[test]
     fn test_yeap_size() {
-        let size = size_of::<Yeap<StrCtx>>();
+        let size = size_of::<YeapS<StrCtx>>();
         assert!(size <= TARGET, "Yeap size is {} > {} bytes", size, TARGET);
     }
 
