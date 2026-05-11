@@ -3,19 +3,19 @@
 
 use super::failure::ParseFailure;
 use crate::Tree;
-use crate::context::{Ctx, CtxI};
+use crate::context::{CtxI, Snap};
 use crate::input::memento::Memento;
 use std::fmt::Debug;
 use std::panic::Location;
 use std::rc::Rc;
 
-pub type ParseResult<C> = Result<Yeap<C>, Nope>;
+pub type ParseResult = Result<Yeap, Nope>;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Yeap<C: Ctx>(pub Rc<C>, pub Rc<Tree>);
+pub struct Yeap(pub Snap, pub Rc<Tree>);
 
-pub fn yeap<C: Ctx>(ctx: Rc<C>, tree: Rc<Tree>) -> Yeap<C> {
-    Yeap(ctx, tree)
+pub fn yeap(snap: Snap, tree: Rc<Tree>) -> Yeap {
+    Yeap(snap, tree)
 }
 
 #[derive(thiserror::Error, Debug, Clone, PartialEq)]
@@ -101,27 +101,16 @@ impl Nope {
     }
 }
 
-impl<C: Ctx> Yeap<C> {
+impl Yeap {
     #[inline]
     pub fn tree(self) -> Rc<Tree> {
         self.1
-    }
-
-    #[inline]
-    pub fn ctx_ref(&self) -> &C {
-        &self.0
-    }
-
-    #[inline]
-    pub fn cst_ref(&self) -> &Tree {
-        &self.1
     }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::Tree;
-    use crate::context::strctx::StrCtx;
     use crate::peg::error::Yeap;
     use crate::peg::error::nope::{Nope, yeap};
     use std::rc::Rc;
@@ -130,7 +119,7 @@ mod tests {
 
     #[test]
     fn test_yeap_size() {
-        let size = size_of::<Yeap<StrCtx>>();
+        let size = size_of::<Yeap>();
         assert!(size <= TARGET, "Yeap size is {} > {} bytes", size, TARGET);
     }
 

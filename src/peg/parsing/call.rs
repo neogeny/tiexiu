@@ -14,7 +14,7 @@ use std::rc::Rc;
 impl Exp {
     /// Core entry point for calling a rule.
     /// Handles setup, tracing, token skipping, and delegation to `do_call`.
-    pub fn rule_call<C: Ctx>(mut ctx: C, name: &str, rule: &Rule) -> ParseResult<C> {
+    pub fn rule_call<C: Ctx>(mut ctx: C, name: &str, rule: &Rule) -> ParseResult {
         let start = ctx.mark();
         let key = ctx.key(name, rule.is_memoizable());
 
@@ -28,23 +28,23 @@ impl Exp {
         }
 
         match Self::do_call(ctx.push(), name, rule) {
-            Ok(Yeap(new_ctx, tree)) => {
+            Ok(Yeap(snap, tree)) => {
                 if rule.should_trace() {
                     ctx.leave();
                 }
                 if rule.is_name()
                     && let Tree::Text(name) = tree.as_ref()
-                    && new_ctx.is_keyword(name)
+                    && ctx.is_keyword(name)
                 {
-                    ctx.memoize(&key, &Tree::Bottom.into(), new_ctx.mark());
+                    ctx.memoize(&key, &Tree::Bottom.into(), ctx.mark());
                     let error = ParseFailure::ReservedWord(name.clone());
-                    new_ctx.tracer().trace_failure(&ctx, name);
+                    ctx.tracer().trace_failure(&ctx, name);
                     return Err(ctx.failure(start, error));
                 }
-                ctx.tracer().trace_success(&*new_ctx);
-                ctx.memoize(&key, &tree, new_ctx.mark());
+                ctx.tracer().trace_success(&ctx);
+                ctx.memoize(&key, &tree, ctx.mark());
                 ctx.heartbeat_tick();
-                Ok(yeap(new_ctx, tree))
+                Ok(yeap(snap, tree))
             }
             Err(mut nope) => {
                 if rule.should_trace() {
@@ -60,7 +60,7 @@ impl Exp {
 
     /// Internal dispatch for a call, handling memoization and left recursion.
     /// This mirrors the logic previously in `Ctx::do_call`.
-    fn do_call<C: Ctx>(mut ctx: C, name: &str, rule: &Rule) -> ParseResult<C> {
+    fn do_call<C: Ctx>(mut ctx: C, name: &str, rule: &Rule) -> ParseResult {
         let start = ctx.mark();
         let key = ctx.key(name, rule.is_memoizable());
 
@@ -89,7 +89,7 @@ impl Exp {
         mut ctx: C,
         key: &crate::context::memo::MemoKey,
         rule: &Rule,
-    ) -> ParseResult<C> {
+    ) -> ParseResult {
         ctx.tracer().trace_recursion(&ctx);
         if !rule.is_left_recursive() {
             panic!("Recursive call on non-LRec rule");
@@ -115,15 +115,15 @@ impl Exp {
                     lastnope = Some(nope);
                     break;
                 }
-                Ok(Yeap(inner_ctx, tree)) => {
-                    let endmark = inner_ctx.mark();
+                Ok(Yeap(snap, tree)) => {
+                    let endmark = snap.mark;
                     let endtree = tree;
                     if endmark <= lastmark {
                         break;
                     }
                     lastmark = endmark;
                     lasttree = Rc::unwrap_or_clone(endtree);
-                    ctx.merge(&inner_ctx);
+                    ctx.merge(&snap);
                     ctx.memoize(key, &lasttree.clone().into(), lastmark);
                 }
             }

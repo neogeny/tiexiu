@@ -38,7 +38,7 @@ impl<C> crate::peg::Parser<C> for Grammar
 where
     C: Ctx,
 {
-    fn parse_at(&self, ctx: C) -> ParseResult<C> {
+    fn parse_at(&self, ctx: C) -> ParseResult {
         Grammar::parse_at(self, ctx)
     }
 }
@@ -106,7 +106,7 @@ impl Grammar {
         }
     }
 
-    pub fn parse_at<C: Ctx>(&self, mut ctx: C) -> ParseResult<C> {
+    pub fn parse_at<C: Ctx>(&self, mut ctx: C) -> ParseResult {
         match self.start_rule() {
             Ok(start) => self.parse_from(ctx, start.as_ref()),
             Err(e) => Err(ctx.failure(ctx.mark(), e)),
@@ -131,7 +131,7 @@ impl Grammar {
         }
     }
 
-    pub fn parse_from<C: Ctx>(&self, mut ctx: C, start: &str) -> ParseResult<C> {
+    pub fn parse_from<C: Ctx>(&self, mut ctx: C, start: &str) -> ParseResult {
         let start_mark = ctx.mark();
         ctx.configure(&self.directives);
         ctx.set_keywords(&self.keywords);

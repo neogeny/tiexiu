@@ -37,7 +37,7 @@ impl<C> Parser<C> for Rule
 where
     C: Ctx,
 {
-    fn parse_at(&self, ctx: C) -> ParseResult<C> {
+    fn parse_at(&self, ctx: C) -> ParseResult {
         Rule::parse_at(self, ctx)
     }
 }
@@ -100,7 +100,7 @@ impl Rule {
         }
     }
 
-    pub fn parse_at<C: Ctx>(&self, mut ctx: C) -> ParseResult<C> {
+    pub fn parse_at<C: Ctx>(&self, mut ctx: C) -> ParseResult {
         match self.exp.parse_at(ctx.push()) {
             Err(nope) => Err(nope),
             Ok(Yeap(ok_ctx, tree)) => {

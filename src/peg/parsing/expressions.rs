@@ -13,7 +13,7 @@ use std::collections::LinkedList;
 use std::rc::Rc;
 
 impl<C: Ctx> Parser<C> for Exp {
-    fn parse_at(&self, ctx: C) -> ParseResult<C> {
+    fn parse_at(&self, ctx: C) -> ParseResult {
         self.parse_at(ctx)
     }
 }
@@ -32,22 +32,22 @@ impl Exp {
             .into()
     }
 
-    pub fn parse_at<C: Ctx>(&self, ctx: C) -> ParseResult<C> {
+    pub fn parse_at<C: Ctx>(&self, ctx: C) -> ParseResult {
         match self.do_parse_at(ctx) {
             Err(err) => Err(err),
-            Ok(Yeap(ctx, tree)) => {
+            Ok(Yeap(snap, tree)) => {
                 if let Some(df) = self.df.as_ref() {
                     let mut cloned = tree.as_ref().clone();
                     cloned.define(df);
-                    Ok(yeap(ctx, cloned.into()))
+                    Ok(yeap(snap, cloned.into()))
                 } else {
-                    Ok(yeap(ctx, tree))
+                    Ok(yeap(snap, tree))
                 }
             }
         }
     }
 
-    fn do_parse_at<C: Ctx>(&self, mut ctx: C) -> ParseResult<C> {
+    fn do_parse_at<C: Ctx>(&self, mut ctx: C) -> ParseResult {
         let start = ctx.mark();
         let mut exp = self;
         while let ExpKind::RuleInclude { .. } | ExpKind::Group(_) = &exp.kind {
@@ -260,7 +260,7 @@ impl Exp {
                         err => err,
                     },
                     Err((empty_ctx, _nope)) => {
-                        ctx.merge(&empty_ctx);
+                        ctx.merge(&empty_ctx.click());
                         Ok(yeap(ctx.into(), Tree::from(res).closed().into()))
                     }
                 }
@@ -291,7 +291,7 @@ impl Exp {
                         }
                     }
                     Err((empty_ctx, _nope)) => {
-                        ctx.merge(&empty_ctx);
+                        ctx.merge(&empty_ctx.click());
                         Ok(yeap(ctx.into(), Tree::from(res).closed().into()))
                     }
                 }

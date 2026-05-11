@@ -35,6 +35,12 @@ impl<C: Ctx> From<C> for Snap {
     }
 }
 
+impl Snap {
+    pub fn cut_seen(&self) -> bool {
+        self.cutsen
+    }
+}
+
 pub trait CtxI: Configurable {
     fn cursor(&self) -> &dyn Cursor;
     fn callstack(&self) -> CallStack;
@@ -206,8 +212,8 @@ pub trait Ctx: CtxI + Clone + Debug {
         let _ = keywords;
     }
 
-    fn merge(&mut self, other: &Self) {
-        self.reset(other.mark());
+    fn merge(&mut self, snap: &Snap) {
+        self.reset(snap.mark);
     }
 
     fn push(&self) -> Self {

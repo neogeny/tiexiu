@@ -19,7 +19,7 @@ impl Exp {
             .into()
     }
 
-    pub fn parse_choice<C: Ctx>(&self, mut ctx: C, options: &[Exp]) -> ParseResult<C> {
+    pub fn parse_choice<C: Ctx>(&self, mut ctx: C, options: &[Exp]) -> ParseResult {
         let start = ctx.mark();
 
         for option in options.iter() {
@@ -43,10 +43,10 @@ impl Exp {
         Err(ctx.failure(start, NoViableOption(self.lookahead_str())))
     }
 
-    pub fn parse_optional<C: Ctx>(&self, mut ctx: C, exp: &Exp) -> ParseResult<C> {
+    pub fn parse_optional<C: Ctx>(&self, mut ctx: C, exp: &Exp) -> ParseResult {
         match exp.parse_at(ctx.push()) {
-            Ok(Yeap(new_ctx, tree)) => {
-                ctx.merge(&new_ctx);
+            Ok(Yeap(snap, tree)) => {
+                ctx.merge(&snap);
                 Ok(yeap(ctx.into(), tree))
             }
             Err(mut nope) => {

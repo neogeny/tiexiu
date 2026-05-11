@@ -30,16 +30,16 @@ impl Exp {
         }
     }
 
-    pub fn repeat<C: Ctx>(mut ctx: C, exp: &Exp, res: &mut TreeList) -> ParseResult<C> {
+    pub fn repeat<C: Ctx>(mut ctx: C, exp: &Exp, res: &mut TreeList) -> ParseResult {
         loop {
             let mark = ctx.mark();
             match exp.parse_at(ctx.push()) {
-                Ok(Yeap(new_ctx, tree)) => {
-                    if new_ctx.mark() == mark {
+                Ok(Yeap(snap, tree)) => {
+                    if snap.mark == mark {
                         return Err(ctx.failure(mark, ParseFailure::ClosureMatchedVoid()));
                     }
                     res.push_back(tree);
-                    ctx.merge(&new_ctx);
+                    ctx.merge(&snap);
                 }
                 Err(_nope) => {
                     return Ok(yeap(ctx.into(), NIL.into()));
@@ -54,7 +54,7 @@ impl Exp {
         pre: &Exp,
         res: &mut TreeList,
         keep_pre: bool,
-    ) -> ParseResult<C> {
+    ) -> ParseResult {
         loop {
             let mark = ctx.mark();
             match pre.parse_at(ctx.push()) {
@@ -64,11 +64,11 @@ impl Exp {
                     }
                     return Ok(yeap(ctx.into(), NIL.into()));
                 }
-                Ok(Yeap(new_ctx, pre_cst)) => {
-                    if new_ctx.mark() == mark {
+                Ok(Yeap(snap, pre_cst)) => {
+                    if snap.mark == mark {
                         return Err(ctx.failure(mark, ParseFailure::ClosureMatchedVoid()));
                     }
-                    ctx.merge(&new_ctx);
+                    ctx.merge(&snap);
                     let mut inner_ctx = ctx.push();
                     inner_ctx.cut();
                     match exp.parse_at(inner_ctx) {
@@ -129,9 +129,9 @@ mod tests {
         let ctx = setup("abcabcabc");
         let exp = Exp::token("abc");
         let mut res = TreeList::new();
-        if let Ok(Yeap(final_ctx, _)) = Exp::repeat(ctx, &exp, &mut res) {
+        if let Ok(Yeap(_snap, _)) = Exp::repeat(ctx.push(), &exp, &mut res) {
             assert_eq!(res.len(), 3);
-            assert_eq!(final_ctx.cursor().mark(), 9);
+            assert_eq!(ctx.cursor().mark(), 9);
         } else {
             panic!("repeat  failed")
         }
@@ -143,9 +143,9 @@ mod tests {
         let exp = Exp::token("abc");
         let pre = Exp::token(",");
         let mut res = TreeList::new();
-        if let Ok(Yeap(final_ctx, _)) = Exp::repeat_with_pre(ctx, &exp, &pre, &mut res, true) {
+        if let Ok(Yeap(_snap, _)) = Exp::repeat_with_pre(ctx.push(), &exp, &pre, &mut res, true) {
             assert_eq!(res.len(), 4);
-            assert_eq!(final_ctx.cursor().mark(), 8);
+            assert_eq!(ctx.cursor().mark(), 8);
         } else {
             panic!("repeat_with_pre failed")
         }
@@ -157,9 +157,9 @@ mod tests {
         let exp = Exp::token("abc");
         let pre = Exp::token(",");
         let mut res = TreeList::new();
-        if let Ok(Yeap(final_ctx, _)) = Exp::repeat_with_pre(ctx, &exp, &pre, &mut res, false) {
+        if let Ok(Yeap(_snap, _)) = Exp::repeat_with_pre(ctx.push(), &exp, &pre, &mut res, false) {
             assert_eq!(res.len(), 2);
-            assert_eq!(final_ctx.cursor().mark(), 8);
+            assert_eq!(ctx.cursor().mark(), 8);
         } else {
             panic!("repeat_with_pre failed")
         }
