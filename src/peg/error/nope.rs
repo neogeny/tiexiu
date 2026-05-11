@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::failure::ParseFailure;
+use crate::Tree;
 use crate::context::{Ctx, CtxI};
 use crate::input::memento::Memento;
-use crate::Tree;
 use std::fmt::Debug;
 use std::panic::Location;
 use std::rc::Rc;
@@ -14,7 +14,10 @@ pub type ParseResult<C> = Result<Yeap<C>, Nope>;
 #[derive(Debug, Clone, PartialEq)]
 pub struct Yeap<C: Ctx>(pub Rc<C>, pub Rc<Tree>);
 
-pub type Nope = DisasterReport;
+#[derive(thiserror::Error, Debug, Clone, PartialEq)]
+pub struct Nope {
+    pub cutseen: bool,
+}
 
 #[derive(Clone, Debug)]
 pub struct DisasterReport {
@@ -24,12 +27,11 @@ pub struct DisasterReport {
     pub memento: Rc<Memento>,
 }
 
-// FIXME
-// impl std::fmt::Display for Nope {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         std::fmt::Display::fmt(&self, f)
-//     }
-// }
+impl std::fmt::Display for Nope {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Display::fmt(&self, f)
+    }
+}
 
 impl std::fmt::Display for DisasterReport {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -70,31 +72,30 @@ impl DisasterReport {
     }
 }
 
-// FIXME
-// impl Nope {
-//     #[track_caller]
-//     pub fn new(ctx: &dyn CtxI) -> Self {
-//         Self {
-//             cutseen: ctx.cut_seen(),
-//         }
-//     }
-//
-//     pub fn setcut(&mut self) {
-//         self.cutseen = true;
-//     }
-//
-//     pub fn take_cut(&mut self) -> bool {
-//         let was_cut = self.cutseen;
-//         self.cutseen = false;
-//         was_cut
-//     }
-//
-//     pub fn restore_cut(&mut self, was_cut: bool) {
-//         if !was_cut {
-//             self.cutseen = false;
-//         }
-//     }
-// }
+impl Nope {
+    #[track_caller]
+    pub fn new(ctx: &dyn CtxI) -> Self {
+        Self {
+            cutseen: ctx.cut_seen(),
+        }
+    }
+
+    pub fn setcut(&mut self) {
+        self.cutseen = true;
+    }
+
+    pub fn take_cut(&mut self) -> bool {
+        let was_cut = self.cutseen;
+        self.cutseen = false;
+        was_cut
+    }
+
+    pub fn restore_cut(&mut self, was_cut: bool) {
+        if !was_cut {
+            self.cutseen = false;
+        }
+    }
+}
 
 impl<C: Ctx> Yeap<C> {
     #[inline]
@@ -115,9 +116,9 @@ impl<C: Ctx> Yeap<C> {
 
 #[cfg(test)]
 mod tests {
+    use crate::Tree;
     use crate::context::strctx::StrCtx;
     use crate::peg::error::nope::{Nope, Yeap};
-    use crate::Tree;
     use std::rc::Rc;
 
     const TARGET: usize = 32;

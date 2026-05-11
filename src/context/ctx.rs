@@ -54,21 +54,16 @@ pub trait Ctx: CtxI + Clone + Debug {
 
     #[track_caller]
     fn failure(&mut self, start: usize, source: ParseFailure) -> Nope {
+        let nope = Nope::new(self);
         self.cursor_mut().reset(start);
-
-        if let Some(mut furthest) = self.furthest_failure()
+        if let Some(furthest) = self.furthest_failure()
             && furthest.mark() >= self.mark()
         {
-            // NOTE
-            //  Need to pass back the correct Cut information.
-            //  This copy of the ParseFailure is owned
-            //  Previously handled through a fresh Nope(bool)
-            furthest.cutseen = self.cut_seen();
-            return furthest;
+            return nope;
         }
 
-        let nope = DisasterReport::new(start, self, &source);
-        self.set_furthest_failure(nope.clone());
+        let dis = DisasterReport::new(start, self, &source);
+        self.set_furthest_failure(dis.clone());
         nope
     }
 

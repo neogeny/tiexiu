@@ -3,7 +3,7 @@
 
 use crate::json::error::JsonError;
 use crate::peg::ParseFailure;
-use crate::peg::error::{CompileError, DisasterReport};
+use crate::peg::error::{CompileError, DisasterReport, Nope};
 use crate::util::ensure::Ensure;
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -45,6 +45,9 @@ pub enum Error {
 
     #[error("!! {0}")]
     Parse(#[from] ParseFailure),
+
+    #[error("!! {0}")]
+    EscapedNope(#[from] Nope),
 
     #[cfg(feature = "serde_json")]
     #[error("failed to serialize JSON output: {0}")]
