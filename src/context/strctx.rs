@@ -75,8 +75,8 @@ mod tests {
         assert_eq!(ctx1.cursor().mark(), 10, "Ctx1 should remain at 10 (CoW)");
 
         ctx2.cut();
-        assert!(ctx2.cut_seen(), "Ctx2 should be cut");
-        assert!(!ctx1.cut_seen(), "Ctx1 should remain uncut (CoW)");
+        assert!(ctx2._cut_seen(), "Ctx2 should be cut");
+        assert!(!ctx1._cut_seen(), "Ctx1 should remain uncut (CoW)");
     }
 
     #[test]

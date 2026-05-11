@@ -20,6 +20,7 @@ pub const MAX_RECURSION_DEPTH: usize = 64;
 #[derive(Debug, Clone, PartialEq)]
 pub struct Snap {
     pub mark: usize,
+    pub cutseen: bool,
 }
 
 impl From<&dyn CtxI> for Snap {
@@ -34,16 +35,39 @@ impl<C: Ctx> From<C> for Snap {
     }
 }
 
+impl Snap {
+    pub fn cut_seen(&self) -> bool {
+        self.cutseen
+    }
+
+    pub fn set_cut(&mut self) {
+        self.cutseen = true;
+    }
+
+    pub fn or_cut(&mut self, value: bool) {
+        self.cutseen |= value;
+    }
+
+    pub fn take_cut(&mut self) -> bool {
+        let cutseen = self.cutseen;
+        self.cutseen = false;
+        cutseen
+    }
+}
+
 pub trait CtxI: Configurable {
     fn cursor(&self) -> &dyn Cursor;
     fn callstack(&self) -> CallStack;
     fn mark(&self) -> usize {
         self.cursor().mark()
     }
-    fn cut_seen(&self) -> bool;
+    fn _cut_seen(&self) -> bool;
 
     fn click(&self) -> Snap {
-        Snap { mark: self.mark() }
+        Snap {
+            mark: self.mark(),
+            cutseen: false,
+        }
     }
 }
 
@@ -75,7 +99,7 @@ pub trait Ctx: CtxI + Clone + Debug {
 
     #[track_caller]
     fn failure(&mut self, start: usize, source: ParseFailure) -> Nope {
-        let nope = Nope::new(self);
+        let nope = Nope::new(false);
         self.cursor_mut().reset(start);
         if let Some(furthest) = self.furthest_failure()
             && furthest.mark() >= self.mark()
@@ -83,7 +107,7 @@ pub trait Ctx: CtxI + Clone + Debug {
             return nope;
         }
 
-        let dis = DisasterReport::new(start, self, &source);
+        let dis = DisasterReport::new(start, false, self, &source);
         self.set_furthest_failure(dis.clone());
         nope
     }

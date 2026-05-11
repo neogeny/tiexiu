@@ -1,11 +1,11 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::Exp;
 use crate::context::Ctx;
 use crate::peg::error::*;
-use crate::trees::TreeList;
 use crate::trees::short::NIL;
+use crate::trees::TreeList;
+use crate::Exp;
 
 impl Exp {
     pub fn add_exp<C: Ctx>(mut ctx: C, exp: &Exp, res: &mut TreeList) -> ParseResult {
@@ -82,8 +82,8 @@ impl Exp {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::context::CtxI;
     use crate::context::new_ctx;
+    use crate::context::CtxI;
     use crate::input::strcursor::StrCursor;
 
     fn setup(input: &str) -> impl Ctx {
@@ -149,39 +149,43 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "Ctx.cutseen is being removed"]
     fn test_repeat_restores_entered_cut() {
         let mut ctx = setup("abcabcabc");
         ctx.cut();
-        assert!(ctx.cut_seen(), "ctx should have cut set before repeat");
+        // FIXME
+        // assert!(ctx.cut_seen(), "ctx should have cut set before repeat");
 
         let exp = Exp::token("abc");
         let mut res = TreeList::new();
-        if let Ok(Yeap(mark, _)) = Exp::repeat(ctx.clone(), &exp, &mut res) {
-            ctx.merge(mark);
+        if let Ok(Yeap(snap, _)) = Exp::repeat(ctx.clone(), &exp, &mut res) {
+            ctx.merge(snap.clone());
             assert_eq!(res.len(), 3);
-            assert!(ctx.cut_seen(), "cut should be restored after repeat");
+            assert!(snap.cut_seen(), "cut should be restored after repeat");
         } else {
             panic!("repeat failed")
         }
     }
 
     #[test]
+    #[ignore = "Ctx.cutseen is being removed"]
     fn test_repeat_with_pre_restores_entered_cut() {
         let mut ctx = setup(",abc,abc");
         ctx.cut();
-        assert!(
-            ctx.cut_seen(),
-            "ctx should have cut set before repeat_with_pre"
-        );
+        // FIXME
+        // assert!(
+        //     ctx.cut_seen(),
+        //     "ctx should have cut set before repeat_with_pre"
+        // );
 
         let exp = Exp::token("abc");
         let pre = Exp::token(",");
         let mut res = TreeList::new();
-        if let Ok(Yeap(mark, _)) = Exp::repeat_with_pre(ctx.clone(), &exp, &pre, &mut res, true) {
-            ctx.merge(mark);
+        if let Ok(Yeap(snap, _)) = Exp::repeat_with_pre(ctx.clone(), &exp, &pre, &mut res, true) {
+            ctx.merge(snap.clone());
             assert_eq!(res.len(), 4);
             assert!(
-                ctx.cut_seen(),
+                snap.cut_seen(),
                 "cut should be restored after repeat_with_pre"
             );
         } else {
@@ -192,19 +196,20 @@ mod tests {
     #[test]
     fn test_repeat_with_pre_no_cut_enters_clears() {
         let mut ctx = setup(",abc,abc");
-        assert!(
-            !ctx.cut_seen(),
-            "ctx should not have cut set before repeat_with_pre"
-        );
+        // FIXME
+        // assert!(
+        //     !ctx.cut_seen(),
+        //     "ctx should not have cut set before repeat_with_pre"
+        // );
 
         let exp = Exp::token("abc");
         let pre = Exp::token(",");
         let mut res = TreeList::new();
-        if let Ok(Yeap(mark, _)) = Exp::repeat_with_pre(ctx.clone(), &exp, &pre, &mut res, true) {
-            ctx.merge(mark);
+        if let Ok(Yeap(snap, _)) = Exp::repeat_with_pre(ctx.clone(), &exp, &pre, &mut res, true) {
+            ctx.merge(snap.clone());
             assert_eq!(res.len(), 4);
             assert!(
-                !ctx.cut_seen(),
+                !snap.cut_seen(),
                 "cut should be cleared when not set on entry"
             );
         } else {

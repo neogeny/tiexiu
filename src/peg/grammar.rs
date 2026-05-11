@@ -126,7 +126,12 @@ impl Grammar {
             Ok(Yeap(_, tree)) => Ok(Rc::unwrap_or_clone(tree)),
             Err(_) => Err(ctx
                 .furthest_failure()
-                .unwrap_or(DisasterReport::new(start_mark, &ctx, &ParseFailure::Fail))
+                .unwrap_or(DisasterReport::new(
+                    start_mark,
+                    false,
+                    &ctx,
+                    &ParseFailure::Fail,
+                ))
                 .into()),
         }
     }

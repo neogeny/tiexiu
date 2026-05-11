@@ -82,7 +82,7 @@ where
     }
 
     #[inline]
-    fn cut_seen(&self) -> bool {
+    fn _cut_seen(&self) -> bool {
         self.state.cutseen
     }
 }
@@ -228,7 +228,7 @@ mod tests {
         let cursor = StrCursor::new("test");
         let ctx = CoreCtx::new(cursor, &[]);
 
-        assert!(!ctx.cut_seen());
+        assert!(!ctx._cut_seen());
     }
 
     #[test]
@@ -247,7 +247,7 @@ mod tests {
         let mut ctx = CoreCtx::new(cursor, &[]);
 
         ctx.cut();
-        assert!(ctx.cut_seen());
+        assert!(ctx._cut_seen());
     }
 
     #[test]
@@ -256,15 +256,15 @@ mod tests {
         let mut ctx = CoreCtx::new(cursor, &[]);
 
         ctx.cut();
-        assert!(ctx.cut_seen());
+        assert!(ctx._cut_seen());
 
         let cloned_ctx = ctx.push();
         assert!(
-            !cloned_ctx.cut_seen(),
+            !cloned_ctx._cut_seen(),
             "cloned context should have cutseen as false"
         );
         assert!(
-            ctx.cut_seen(),
+            ctx._cut_seen(),
             "original context should still have cutseen as true"
         );
     }

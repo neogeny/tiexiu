@@ -51,10 +51,10 @@ impl std::error::Error for DisasterReport {
 
 impl DisasterReport {
     #[track_caller]
-    pub fn new(start: usize, ctx: &dyn CtxI, error: &ParseFailure) -> Self {
+    pub fn new(start: usize, cutseen: bool, ctx: &dyn CtxI, error: &ParseFailure) -> Self {
         let memento = Memento::new(start, ctx, error.to_string().as_str());
         Self {
-            cutseen: ctx.cut_seen(),
+            cutseen,
             memento: memento.into(),
             error: error.clone().into(),
             location: Location::caller(),
@@ -78,10 +78,8 @@ impl DisasterReport {
 
 impl Nope {
     #[track_caller]
-    pub fn new(ctx: &dyn CtxI) -> Self {
-        Self {
-            cutseen: ctx.cut_seen(),
-        }
+    pub fn new(cutseen: bool) -> Self {
+        Self { cutseen }
     }
 
     pub fn setcut(&mut self) {
