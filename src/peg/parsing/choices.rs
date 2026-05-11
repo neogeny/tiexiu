@@ -3,8 +3,8 @@
 
 use crate::context::Ctx;
 use crate::peg::error::ParseFailure::*;
-use crate::peg::error::Yeap;
-use crate::peg::error::{ParseResult, YeapS};
+use crate::peg::error::yeap;
+use crate::peg::error::{ParseResult, Yeap};
 use crate::trees::Tree;
 use crate::types::Str;
 use crate::{Exp, ExpKind};
@@ -26,9 +26,9 @@ impl Exp {
             if let ExpKind::Alt(exp) = &option.kind {
                 // NOTE With .push() cutseen == False
                 match exp.parse_at(ctx.push()) {
-                    Ok(YeapS(new_ctx, tree)) => {
+                    Ok(Yeap(new_ctx, tree)) => {
                         ctx.merge(&new_ctx);
-                        return Ok(Yeap(ctx.into(), tree));
+                        return Ok(yeap(ctx.into(), tree));
                     }
                     Err(mut nope) => {
                         if nope.take_cut() {
@@ -45,15 +45,15 @@ impl Exp {
 
     pub fn parse_optional<C: Ctx>(&self, mut ctx: C, exp: &Exp) -> ParseResult<C> {
         match exp.parse_at(ctx.push()) {
-            Ok(YeapS(new_ctx, tree)) => {
+            Ok(Yeap(new_ctx, tree)) => {
                 ctx.merge(&new_ctx);
-                Ok(Yeap(ctx.into(), tree))
+                Ok(yeap(ctx.into(), tree))
             }
             Err(mut nope) => {
                 if nope.take_cut() {
                     return Err(nope);
                 }
-                Ok(Yeap(ctx.into(), Tree::Nil.into()))
+                Ok(yeap(ctx.into(), Tree::Nil.into()))
             }
         }
     }

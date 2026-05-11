@@ -6,7 +6,7 @@
 
 use crate::context::Ctx;
 use crate::peg::Exp;
-use crate::peg::error::{Nope, ParseFailure, ParseResult, Yeap, YeapS};
+use crate::peg::error::{Nope, ParseFailure, ParseResult, Yeap, yeap};
 use crate::peg::rule::Rule;
 use crate::trees::tree::Tree;
 use std::rc::Rc;
@@ -28,7 +28,7 @@ impl Exp {
         }
 
         match Self::do_call(ctx.push(), name, rule) {
-            Ok(YeapS(new_ctx, tree)) => {
+            Ok(Yeap(new_ctx, tree)) => {
                 if rule.should_trace() {
                     ctx.leave();
                 }
@@ -44,7 +44,7 @@ impl Exp {
                 ctx.tracer().trace_success(&*new_ctx);
                 ctx.memoize(&key, &tree, new_ctx.mark());
                 ctx.heartbeat_tick();
-                Ok(Yeap(new_ctx, tree))
+                Ok(yeap(new_ctx, tree))
             }
             Err(mut nope) => {
                 if rule.should_trace() {
@@ -72,7 +72,7 @@ impl Exp {
                 }
                 _ => {
                     ctx.reset(memo.mark);
-                    Ok(Yeap(ctx.into(), memo.tree))
+                    Ok(yeap(ctx.into(), memo.tree))
                 }
             };
         }
@@ -115,7 +115,7 @@ impl Exp {
                     lastnope = Some(nope);
                     break;
                 }
-                Ok(YeapS(inner_ctx, tree)) => {
+                Ok(Yeap(inner_ctx, tree)) => {
                     let endmark = inner_ctx.mark();
                     let endtree = tree;
                     if endmark <= lastmark {
@@ -144,6 +144,6 @@ impl Exp {
             ));
             return Err(nope);
         }
-        Ok(Yeap(ctx.into(), lasttree.into()))
+        Ok(yeap(ctx.into(), lasttree.into()))
     }
 }
