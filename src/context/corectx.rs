@@ -4,7 +4,7 @@
 pub use super::ctx::{Ctx, CtxI};
 use super::memo::{Memo, MemoKey};
 use super::state::{CallStack, HeavyState, ParseState};
-use super::trace::{CONSOLE_TRACER, NULL_TRACER, Tracer};
+use super::trace::{Tracer, CONSOLE_TRACER, NULL_TRACER};
 use crate::cfg::*;
 use crate::input::Cursor;
 use crate::peg::error::DisasterReport;
@@ -122,16 +122,16 @@ where
         self.heavy.borrow_mut().callstack = tail;
     }
 
-    fn track(&mut self, key: &MemoKey) -> usize {
-        self.state_mut().keytrack.track(key)
-    }
-
     fn untrack(&mut self, key: &MemoKey) -> usize {
         self.state_mut().keytrack.untrack(key)
     }
 
     fn tracer(&self) -> &dyn Tracer {
         self.heavy.borrow().tracer
+    }
+
+    fn track(&mut self, key: &MemoKey) -> usize {
+        self.state_mut().keytrack.track(key)
     }
 
     fn intern(&mut self, s: &str) -> Str {
@@ -211,10 +211,11 @@ where
         self.heavy.borrow_mut().keywords = keywords.into()
     }
 
-    fn merge(mut self, other: &Self) -> Self {
-        self.state_mut().merge(&other.state);
-        self
-    }
+    // FIXME
+    // fn merge(mut self, other: &Self) -> Self {
+    //     self.state_mut().merge(&other.state);
+    //     self
+    // }
 }
 
 #[cfg(test)]
