@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::memo::{Memo, MemoKey};
+use crate::SYM_ETX;
 use crate::cfg::Configurable;
 use crate::context::state::CallStack;
 use crate::context::trace::Tracer;
@@ -10,8 +11,7 @@ use crate::peg::error::Nope;
 use crate::peg::error::{DisasterReport, ParseFailure};
 use crate::trees::tree::Tree;
 use crate::types::Str;
-use crate::util::pyre::{escape, Pattern};
-use crate::SYM_ETX;
+use crate::util::pyre::{Pattern, escape};
 use std::fmt::Debug;
 use std::rc::Rc;
 
@@ -20,7 +20,6 @@ pub const MAX_RECURSION_DEPTH: usize = 64;
 #[derive(Debug, Clone, PartialEq)]
 pub struct Snap {
     pub mark: usize,
-    // pub cutseen: bool,
 }
 
 impl From<&dyn CtxI> for Snap {
@@ -35,12 +34,6 @@ impl<C: Ctx> From<C> for Snap {
     }
 }
 
-impl Snap {
-    // pub fn cut_seen(&self) -> bool {
-    //     self.cutsen
-    // }
-}
-
 pub trait CtxI: Configurable {
     fn cursor(&self) -> &dyn Cursor;
     fn callstack(&self) -> CallStack;
@@ -50,9 +43,7 @@ pub trait CtxI: Configurable {
     fn cut_seen(&self) -> bool;
 
     fn click(&self) -> Snap {
-        Snap {
-            mark: self.mark(),
-        }
+        Snap { mark: self.mark() }
     }
 }
 
@@ -211,7 +202,7 @@ pub trait Ctx: CtxI + Clone + Debug {
         let _ = keywords;
     }
 
-    fn merge(&mut self, snap: &Snap) {
+    fn merge(&mut self, snap: Snap) {
         self.reset(snap.mark);
     }
 

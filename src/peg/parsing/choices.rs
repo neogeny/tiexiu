@@ -26,8 +26,8 @@ impl Exp {
             if let ExpKind::Alt(exp) = &option.kind {
                 // NOTE With .push() cutseen == False
                 match exp.parse_at(ctx.push()) {
-                    Ok(Yeap(new_ctx, tree)) => {
-                        ctx.merge(&new_ctx);
+                    Ok(Yeap(mark, tree)) => {
+                        ctx.merge(mark);
                         return Ok(yeap(ctx.into(), tree));
                     }
                     Err(mut nope) => {
@@ -46,7 +46,7 @@ impl Exp {
     pub fn parse_optional<C: Ctx>(&self, mut ctx: C, exp: &Exp) -> ParseResult {
         match exp.parse_at(ctx.push()) {
             Ok(Yeap(snap, tree)) => {
-                ctx.merge(&snap);
+                ctx.merge(snap);
                 Ok(yeap(ctx.into(), tree))
             }
             Err(mut nope) => {

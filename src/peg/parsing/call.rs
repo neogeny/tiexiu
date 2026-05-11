@@ -28,8 +28,8 @@ impl Exp {
         }
 
         match Self::do_call(ctx.push(), name, rule) {
-            Ok(Yeap(snap, tree)) => {
-                ctx.merge(&snap);
+            Ok(Yeap(mark, tree)) => {
+                ctx.merge(mark.clone());
                 if rule.should_trace() {
                     ctx.leave();
                 }
@@ -45,7 +45,7 @@ impl Exp {
                 ctx.tracer().trace_success(&ctx);
                 ctx.memoize(&key, &tree, ctx.mark());
                 ctx.heartbeat_tick();
-                Ok(yeap(snap, tree))
+                Ok(yeap(mark, tree))
             }
             Err(mut nope) => {
                 if rule.should_trace() {
@@ -116,15 +116,15 @@ impl Exp {
                     lastnope = Some(nope);
                     break;
                 }
-                Ok(Yeap(snap, tree)) => {
-                    let endmark = snap.mark;
+                Ok(Yeap(mark, tree)) => {
+                    let endmark = mark.mark;
                     let endtree = tree;
                     if endmark <= lastmark {
                         break;
                     }
                     lastmark = endmark;
                     lasttree = Rc::unwrap_or_clone(endtree);
-                    ctx.merge(&snap);
+                    ctx.merge(mark);
                     ctx.memoize(key, &lasttree.clone().into(), lastmark);
                 }
             }
