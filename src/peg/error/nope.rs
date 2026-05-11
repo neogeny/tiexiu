@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::failure::ParseFailure;
-use crate::Tree;
 use crate::context::{Ctx, CtxI};
 use crate::input::memento::Memento;
+use crate::Tree;
 use std::fmt::Debug;
 use std::panic::Location;
 use std::rc::Rc;
@@ -12,7 +12,7 @@ use std::rc::Rc;
 pub type ParseResult<C> = Result<Yeap<C>, Nope>;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Yeap<C: Ctx>(pub C, pub Rc<Tree>);
+pub struct Yeap<C: Ctx>(pub Rc<C>, pub Rc<Tree>);
 
 pub type Nope = DisasterReport;
 
@@ -115,9 +115,9 @@ impl<C: Ctx> Yeap<C> {
 
 #[cfg(test)]
 mod tests {
-    use crate::Tree;
     use crate::context::strctx::StrCtx;
     use crate::peg::error::nope::{Nope, Yeap};
+    use crate::Tree;
     use std::rc::Rc;
 
     const TARGET: usize = 32;
@@ -141,7 +141,7 @@ mod tests {
 
         let tree = Tree::Text("hello".into());
         let ctx = StrCtx::new(StrCursor::new("hello"), &[]);
-        let yeap = Yeap(ctx, tree.into());
+        let yeap = Yeap(ctx.into(), tree.into());
         let rc: Rc<Tree> = yeap.tree();
         assert!(matches!(rc.as_ref(), Tree::Text(_)));
     }

@@ -28,23 +28,23 @@ impl Exp {
         }
 
         match Self::do_call(ctx.push(), name, rule) {
-            Ok(Yeap(mut ctx, tree)) => {
+            Ok(Yeap(new_ctx, tree)) => {
                 if rule.should_trace() {
                     ctx.leave();
                 }
                 if rule.is_name()
                     && let Tree::Text(name) = tree.as_ref()
-                    && ctx.is_keyword(name)
+                    && new_ctx.is_keyword(name)
                 {
-                    ctx.memoize(&key, &Tree::Bottom.into(), ctx.mark());
+                    ctx.memoize(&key, &Tree::Bottom.into(), new_ctx.mark());
                     let error = ParseFailure::ReservedWord(name.clone());
-                    ctx.tracer().trace_failure(&ctx, name);
+                    new_ctx.tracer().trace_failure(&ctx, name);
                     return Err(ctx.failure(start, error));
                 }
-                ctx.tracer().trace_success(&ctx);
-                ctx.memoize(&key, &tree, ctx.mark());
+                ctx.tracer().trace_success(&*new_ctx);
+                ctx.memoize(&key, &tree, new_ctx.mark());
                 ctx.heartbeat_tick();
-                Ok(Yeap(ctx, tree))
+                Ok(Yeap(new_ctx, tree))
             }
             Err(mut nope) => {
                 if rule.should_trace() {
@@ -72,7 +72,7 @@ impl Exp {
                 }
                 _ => {
                     ctx.reset(memo.mark);
-                    Ok(Yeap(ctx, memo.tree))
+                    Ok(Yeap(ctx.into(), memo.tree))
                 }
             };
         }
@@ -144,6 +144,6 @@ impl Exp {
             ));
             return Err(nope);
         }
-        Ok(Yeap(ctx, lasttree.into()))
+        Ok(Yeap(ctx.into(), lasttree.into()))
     }
 }

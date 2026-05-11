@@ -188,7 +188,7 @@ pub trait Ctx: CtxI + Clone + Debug {
 
     fn merge(mut self, other: &Self) -> Self {
         self.cursor_mut().reset(other.cursor().mark());
-        self   
+        self
     }
 
     fn push(&self) -> Self {
