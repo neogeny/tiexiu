@@ -8,9 +8,9 @@ A high-performance port of **TatSu** to Rust.
 
 [TatSu]: https://tatsu.readthedocs.io/en/stable/
 
-### Why Still Alpha?
+### Beta
 
-Although **TieXiu** is functionally complete, extending the _alpha_ period allows for adjusting the API and its signatures to the user experience. The plan is to later go through a _beta_ period to flush out any remaining quirks or bugs.
+**TieXiu** is functionally complete, and correct respect its predecessor **TatSu**. A _beta_ period will allow for adjusting the API and its signatures to the user experience.
 
 ## About
 
@@ -27,15 +27,31 @@ The [TatSu Documentation][] provides a vision of where the **TieXiu** project is
 
 **TatSu** is a mature project with an important user base so it's difficult to make certain changes even if they are improvements or fixes for long-standing quirks (as well known within experienced software engineers, a long-lived quirk becomes a feature). **TieXiu** is an opportunity to start from scratch, with a modern approach, even if the grammar syntax and its semantics are preserved.
 
+## On The (Non-Blazing) Speed
+
+**TieXiu** was started with the aim of learning `Rust` and applying AI Agents over a meaningful project (versus books or simple exercises). **TatSu** has rich parser-generator semantics that had to be replicated in `Rust` for completeness and compatibility. 
+
+ Not a primary objective, it was expected that parsing with otpimized `Rust` over its runtime would run circles around the `Python` implementation. 
+ 
+ **It was not so**.
+
+ As if implementing the semantics wasn't difficult enough on a languate so strict about memory management and with so little reasonable and efficient defaults, the first complete runs of parser generation and parsing were `3x` times _slower_ than the best `Python` counterpart.
+ 
+ It took an important amount of _Rust-specific_ optimizations and some algorithm redesign to reach the current `1.08x` speed.`Rust` is not friendly to the deep recursion required to parse a language like, for example, `Java`, and its default data structures, like `Vec`, don't behave well when used as short-lived containers. The complete history of optimizations that include an imported _heap manager_ figure in the `Git` logs.
+
+   The `PyO3` interface is there, but it's easier and more convenient to use **TatSu** directly when working with `Python`.
+
+ **TieXiu** is today a powerful PEG parser generator in `Rust`, so it may find a home among the _rustacean_ community wanting to convert flat streams into semantic structures. 
+
 ## Non-Features
 
 Most features of **TatSu** are available in **TieXiu**. Some features have not yet been implemented, and a few never will:
 
 * [ ] Generation of synthetic classes from grammar parameters will not be implemented in Rust.
-* [ ] Generation of source code with an object model for deifinitions in the grammar may be implemented if a way is found to make the parser or postprocessing bind the Tree output of a parse to the model ([serde_json][] provides the infrastructure for trying).
+* [ ] Generation of source code with an object model for deifinitions in the grammar may be implemented if a way is found to make the parser or postprocessing bind the Tree output of a parse to the model.
 * [ ] Code generation of a parser recently moved in **TatSu** to the loading of a model of the Grammar and using it as parser. Although the generated procedural parser may produce 1.3x increased throughput in Python, supporting generated code is hard and it complicates the internal interfaces. For Rust, **TieXiu** _alreay knows_ how to load _fast_ a Grammar model from **TatSu** JSON. A generated copy of the grammar model constructor could be precompiled by Rust.
-* [ ] Parsing of boolean and numeric values happens in **TatSu** through synthetic actions, which call the constructors for those types passing the parsed strings. For **TieXiu** the preferred way of transformig a tree (semantics) is through post-processing (folding).
-* [ ] Semantic actions (transformations) during parse are not implemented. Python is friendly to objects. Python is OK with objects of type `Any`, so semantic actions during parse in **TatSu** can produce a _tree_ of any type. Rust is different, and trying to have structures of an _any_ type is not rustacean. The result of a parse is a well-defined Tree which is a small-enough enum that writing a walker for it is easy, so type transformations can be done in postprocessing by folding. See the `fold` modules in **TieXiu** for examples and useful trait definitions.
+* [ ] Parsing of boolean and numeric values happens in **TatSu** through synthetic actions, which call the constructors for those types passing the parsed strings. For **TieXiu** the preferred way of transformig a tree (semantics) is through post-processing (folding), but basic numeric types and booleans could be supported.
+* [ ] Semantic actions (transformations) during parse are not implemented. Python is friendly to objects of type `Any`, so semantic actions during parse in **TatSu** can produce a _tree_ of any type. Rust is different, and trying to have structures of an _any_ type is not rustacean. The result of a parse is a well-defined Tree which is a small-enough enum that writing a walker for it is easy, so type transformations can be done in postprocessing by folding. See the `fold` modules in **TieXiu** for examples and useful trait definitions.
 * [ ] Interpolation and evaluation of _\`constant\`_ expressions hasn't had any known use cases with **TatSu**. They will not be implemented in **TieXiu** until a use case appears.
 * [ ] The `@@include` directive for textual includes was always a bad idea.
 
