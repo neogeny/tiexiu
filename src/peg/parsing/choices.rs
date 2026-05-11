@@ -27,7 +27,8 @@ impl Exp {
                 // NOTE With .push() cutseen == False
                 match exp.parse_at(ctx.push()) {
                     Ok(Yeap(new_ctx, tree)) => {
-                        return Ok(Yeap(ctx.merge(&new_ctx).into(), tree));
+                        ctx.merge(&new_ctx);
+                        return Ok(Yeap(ctx.into(), tree));
                     }
                     Err(mut nope) => {
                         if nope.take_cut() {
@@ -42,9 +43,12 @@ impl Exp {
         Err(ctx.failure(start, NoViableOption(self.lookahead_str())))
     }
 
-    pub fn parse_optional<C: Ctx>(&self, ctx: C, exp: &Exp) -> ParseResult<C> {
+    pub fn parse_optional<C: Ctx>(&self, mut ctx: C, exp: &Exp) -> ParseResult<C> {
         match exp.parse_at(ctx.push()) {
-            Ok(Yeap(new_ctx, tree)) => Ok(Yeap(ctx.merge(&new_ctx).into(), tree)),
+            Ok(Yeap(new_ctx, tree)) => {
+                ctx.merge(&new_ctx);
+                Ok(Yeap(ctx.into(), tree))
+            }
             Err(mut nope) => {
                 if nope.take_cut() {
                     return Err(nope);

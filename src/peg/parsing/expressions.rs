@@ -134,35 +134,40 @@ impl Exp {
             ExpKind::Named(name, exp) => match exp.parse_at(ctx.clone()) {
                 Ok(Yeap(new_ctx, tree)) => {
                     let wrapped = Tree::named(name.clone(), tree);
-                    Ok(Yeap(ctx.merge(&new_ctx).into(), wrapped.into()))
+                    ctx.merge(&new_ctx);
+                    Ok(Yeap(ctx.into(), wrapped.into()))
                 }
                 err => err,
             },
             ExpKind::NamedList(name, exp) => match exp.parse_at(ctx.clone()) {
                 Ok(Yeap(new_ctx, tree)) => {
                     let wrapped = Tree::named_as_list(name.clone(), tree);
-                    Ok(Yeap(ctx.merge(&new_ctx).into(), wrapped.into()))
+                    ctx.merge(&new_ctx);
+                    Ok(Yeap(ctx.into(), wrapped.into()))
                 }
                 err => err,
             },
             ExpKind::Override(exp) => match exp.parse_at(ctx.clone()) {
                 Ok(Yeap(new_ctx, tree)) => {
                     let wrapped = Tree::override_with(tree);
-                    Ok(Yeap(ctx.merge(&new_ctx).into(), wrapped.into()))
+                    ctx.merge(&new_ctx);
+                    Ok(Yeap(ctx.into(), wrapped.into()))
                 }
                 err => err,
             },
             ExpKind::OverrideList(exp) => match exp.parse_at(ctx.clone()) {
                 Ok(Yeap(new_ctx, tree)) => {
                     let wrapped = Tree::override_as_list(tree);
-                    Ok(Yeap(ctx.merge(&new_ctx).into(), wrapped.into()))
+                    ctx.merge(&new_ctx);
+                    Ok(Yeap(ctx.into(), wrapped.into()))
                 }
                 err => err,
             },
             ExpKind::Group(exp) => exp.parse_at(ctx),
             ExpKind::SkipGroup(exp) => {
                 let Yeap(new_ctx, _) = exp.parse_at(ctx.clone())?;
-                Ok(Yeap(ctx.merge(&new_ctx).into(), Tree::Nil.into()))
+                ctx.merge(&new_ctx);
+                Ok(Yeap(ctx.into(), Tree::Nil.into()))
             }
             ExpKind::Lookahead(exp) => match exp.parse_at(ctx.push()) {
                 Ok(Yeap(_, _)) => Ok(Yeap(ctx.into(), Tree::Nil.into())),
@@ -183,7 +188,7 @@ impl Exp {
                         }
                     }
                     Ok(Yeap(inner_ctx, tree)) => {
-                        ctx = ctx.merge(&inner_ctx);
+                        ctx.merge(&inner_ctx);
                         break Ok(Yeap(ctx.into(), tree));
                     }
                 }
@@ -201,7 +206,7 @@ impl Exp {
                     match exp.parse_at(ctx.push()) {
                         Ok(Yeap(new_ctx, tree)) => {
                             results.push(tree);
-                            ctx = ctx.merge(&new_ctx);
+                            ctx.merge(&new_ctx);
                         }
                         Err(nope) => {
                             // nope.cutseen |= cut;
@@ -219,7 +224,8 @@ impl Exp {
                 let mut res: LinkedList<Rc<Tree>> = LinkedList::new();
                 match Self::repeat(ctx.push(), exp, &mut res) {
                     Ok(Yeap(new_ctx, _)) => {
-                        Ok(Yeap(ctx.merge(&new_ctx).into(), Tree::from(res).into()))
+                        ctx.merge(&new_ctx);
+                        Ok(Yeap(ctx.into(), Tree::from(res).into()))
                     }
                     err => err,
                 }
@@ -228,17 +234,17 @@ impl Exp {
                 let mut res: LinkedList<Rc<Tree>> = LinkedList::new();
                 match exp.parse_at(ctx.push()) {
                     Ok(Yeap(new_ctx, tree)) => {
-                        ctx = ctx.merge(&new_ctx);
+                        ctx.merge(&new_ctx);
                         res.push_back(tree);
                     }
                     err => return err,
                 };
 
                 match Self::repeat(ctx.clone(), exp, &mut res) {
-                    Ok(Yeap(new_ctx, _)) => Ok(Yeap(
-                        ctx.merge(&new_ctx).into(),
-                        Tree::from(res).closed().into(),
-                    )),
+                    Ok(Yeap(new_ctx, _)) => {
+                        ctx.merge(&new_ctx);
+                        Ok(Yeap(ctx.into(), Tree::from(res).closed().into()))
+                    }
                     err => err,
                 }
             }
@@ -246,26 +252,26 @@ impl Exp {
                 let mut res = LinkedList::new();
                 match Self::add_exp(ctx.push(), exp, &mut res) {
                     Ok(new_ctx) => match Self::repeat_with_pre(new_ctx, exp, sep, &mut res, true) {
-                        Ok(Yeap(new_ctx, _)) => Ok(Yeap(
-                            ctx.merge(&new_ctx).into(),
-                            Tree::from(res).closed().into(),
-                        )),
+                        Ok(Yeap(new_ctx, _)) => {
+                            ctx.merge(&new_ctx);
+                            Ok(Yeap(ctx.into(), Tree::from(res).closed().into()))
+                        }
                         err => err,
                     },
-                    Err((empty_ctx, _nope)) => Ok(Yeap(
-                        ctx.merge(&empty_ctx).into(),
-                        Tree::from(res).closed().into(),
-                    )),
+                    Err((empty_ctx, _nope)) => {
+                        ctx.merge(&empty_ctx);
+                        Ok(Yeap(ctx.into(), Tree::from(res).closed().into()))
+                    }
                 }
             }
             ExpKind::PositiveJoin { exp, sep } => {
                 let mut res = LinkedList::new();
                 match Self::add_exp(ctx.push(), exp, &mut res) {
                     Ok(new_ctx) => match Self::repeat_with_pre(new_ctx, exp, sep, &mut res, true) {
-                        Ok(Yeap(new_ctx, _)) => Ok(Yeap(
-                            ctx.merge(&new_ctx).into(),
-                            Tree::from(res).closed().into(),
-                        )),
+                        Ok(Yeap(new_ctx, _)) => {
+                            ctx.merge(&new_ctx);
+                            Ok(Yeap(ctx.into(), Tree::from(res).closed().into()))
+                        }
                         err => err,
                     },
                     Err((_actx, nope)) => Err(nope),
@@ -276,17 +282,17 @@ impl Exp {
                 match Self::add_exp(ctx.push(), exp, &mut res) {
                     Ok(new_ctx) => {
                         match Self::repeat_with_pre(new_ctx, exp, sep, &mut res, false) {
-                            Ok(Yeap(rep_ctx, _)) => Ok(Yeap(
-                                ctx.merge(&rep_ctx).into(),
-                                Tree::from(res).closed().into(),
-                            )),
+                            Ok(Yeap(rep_ctx, _)) => {
+                                ctx.merge(&rep_ctx);
+                                Ok(Yeap(ctx.into(), Tree::from(res).closed().into()))
+                            }
                             err => err,
                         }
                     }
-                    Err((empty_ctx, _nope)) => Ok(Yeap(
-                        ctx.merge(&empty_ctx).into(),
-                        Tree::from(res).closed().into(),
-                    )),
+                    Err((empty_ctx, _nope)) => {
+                        ctx.merge(&empty_ctx);
+                        Ok(Yeap(ctx.into(), Tree::from(res).closed().into()))
+                    }
                 }
             }
             ExpKind::PositiveGather { exp, sep } => {
@@ -294,10 +300,10 @@ impl Exp {
                 match Self::add_exp(ctx.push(), exp, &mut res) {
                     Ok(new_ctx) => {
                         match Self::repeat_with_pre(new_ctx, exp, sep, &mut res, false) {
-                            Ok(Yeap(rep_ctx, _)) => Ok(Yeap(
-                                ctx.merge(&rep_ctx).into(),
-                                Tree::from(res).closed().into(),
-                            )),
+                            Ok(Yeap(rep_ctx, _)) => {
+                                ctx.merge(&rep_ctx);
+                                Ok(Yeap(ctx.into(), Tree::from(res).closed().into()))
+                            }
                             err => err,
                         }
                     }

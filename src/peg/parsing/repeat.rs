@@ -8,19 +8,23 @@ use crate::trees::TreeList;
 use crate::trees::short::NIL;
 
 impl Exp {
-    pub fn skip_exp<C: Ctx>(ctx: C, exp: &Exp) -> C {
+    pub fn skip_exp<C: Ctx>(mut ctx: C, exp: &Exp) -> C {
         let skip_ctx = ctx.clone();
         match exp.parse_at(skip_ctx) {
-            Ok(Yeap(new_ctx, _)) => ctx.merge(&new_ctx),
+            Ok(Yeap(new_ctx, _)) => {
+                ctx.merge(&new_ctx);
+                ctx
+            }
             Err(_) => ctx,
         }
     }
 
-    pub fn add_exp<C: Ctx>(ctx: C, exp: &Exp, res: &mut TreeList) -> Result<C, (C, Nope)> {
+    pub fn add_exp<C: Ctx>(mut ctx: C, exp: &Exp, res: &mut TreeList) -> Result<C, (C, Nope)> {
         match exp.parse_at(ctx.clone()) {
             Ok(Yeap(new_ctx, tree)) => {
                 res.push_back(tree);
-                Ok(ctx.merge(&new_ctx))
+                ctx.merge(&new_ctx);
+                Ok(ctx)
             }
             Err(nope) => Err((ctx, nope)),
         }
@@ -35,7 +39,7 @@ impl Exp {
                         return Err(ctx.failure(mark, ParseFailure::ClosureMatchedVoid()));
                     }
                     res.push_back(tree);
-                    ctx = ctx.merge(&new_ctx);
+                    ctx.merge(&new_ctx);
                 }
                 Err(_nope) => {
                     return Ok(Yeap(ctx.into(), NIL.into()));
@@ -64,7 +68,7 @@ impl Exp {
                     if new_ctx.mark() == mark {
                         return Err(ctx.failure(mark, ParseFailure::ClosureMatchedVoid()));
                     }
-                    ctx = ctx.merge(&new_ctx);
+                    ctx.merge(&new_ctx);
                     let mut inner_ctx = ctx.push();
                     inner_ctx.cut();
                     match exp.parse_at(inner_ctx) {
@@ -73,7 +77,7 @@ impl Exp {
                                 res.push_back(pre_cst);
                             }
                             res.push_back(exp_cst);
-                            ctx = ctx.merge(&repeat_ctx);
+                            ctx.merge(&repeat_ctx);
                         }
                         Err(mut nope) => {
                             nope.take_cut();
