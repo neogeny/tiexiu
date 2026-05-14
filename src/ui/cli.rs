@@ -5,6 +5,7 @@ use crate::ui::progress::ProgressUI;
 use clap;
 use clap::builder::styling::{AnsiColor, Styles};
 use clap::{Parser, Subcommand};
+use console::style;
 use std::fmt::Write;
 use std::path::PathBuf;
 use tiexiu::api::{
@@ -179,6 +180,7 @@ pub fn cli(out: &mut std::io::StdoutLock) -> Result<()> {
             let mut format = "rust";
             let mut output = String::new();
 
+            let mut errcount = 0;
             for input in &inputs {
                 let name = input.file_name().unwrap_or_default().to_string_lossy();
                 let file_prog = progress.add_file(&name);
@@ -186,6 +188,7 @@ pub fn cli(out: &mut std::io::StdoutLock) -> Result<()> {
                 let text = match std::fs::read_to_string(input) {
                     Err(error) => {
                         file_prog.fail(&format!("{:#?}", error));
+                        errcount += 1;
                         continue;
                     }
                     Ok(text) => text,
@@ -212,6 +215,7 @@ pub fn cli(out: &mut std::io::StdoutLock) -> Result<()> {
                         output.push('\n');
                     }
                     Err(err) => {
+                        errcount += 1;
                         file_prog.fail(&format!("{:#?}", err));
                         eprintln!("{}", err);
                     }
@@ -219,6 +223,20 @@ pub fn cli(out: &mut std::io::StdoutLock) -> Result<()> {
                 progress.inc_files();
             }
             progress.finish();
+            eprintln!(
+                "{} {} {}",
+                style(format!("Parsed {} files", inputs.len()))
+                    .white()
+                    .bold(),
+                style(format!("{} passed", inputs.len() - errcount))
+                    .green()
+                    .bold(),
+                if errcount > 0 {
+                    style(format!("{} errors", errcount)).red().bold()
+                } else {
+                    style("".to_string()).white()
+                },
+            );
             (output, format)
         }
         Commands::Grammar {
