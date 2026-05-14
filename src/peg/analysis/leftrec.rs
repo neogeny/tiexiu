@@ -1,11 +1,11 @@
-// Copyright (g) 2026 Juancarlo Añez (apalala@gmail.com)
+// Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use std::collections::{BTreeSet, HashSet};
 
-use crate::Grammar;
 use crate::cfg::types::Str;
 use crate::exp::{Exp, ExpKind};
+use crate::Grammar;
 
 fn first_calls(grammar: &Grammar, exp: &Exp) -> Vec<usize> {
     match &exp.kind {
