@@ -52,7 +52,6 @@ impl Exp {
         let mut exp = self;
         while let ExpKind::RuleInclude { .. } | ExpKind::Group(_) = &exp.kind {
             match &exp.kind {
-                ExpKind::Group(next) => exp = next,
                 ExpKind::RuleInclude { name, exp: opt_exp } => match opt_exp {
                     None => return Err(ctx.failure(start, RuleNotLinked(name.clone()))),
                     Some(next) => exp = next,
@@ -171,7 +170,22 @@ impl Exp {
                 }
                 err => err,
             },
-            ExpKind::Group(exp) => exp.parse_at(ctx),
+            ExpKind::Group(exp) => {
+                // NOTE contain cutseen value
+                //  The grammar doesn't enforce it, but the only
+                //  logical reason to introduce a Group is to
+                //  introduce a nested Choice.
+                match exp.parse_at(ctx.push()) {
+                    Ok(Yeap(snap, tree)) => {
+                        ctx.merge(&snap);
+                        Ok(yeap(&ctx.click(), tree))
+                    }
+                    Err(mut nope) => {
+                        nope.take_cut();
+                        Err(nope)
+                    }
+                }
+            }
             ExpKind::SkipGroup(exp) => {
                 let Yeap(snap, _) = exp.parse_at(ctx.clone())?;
                 ctx.merge(&snap);
@@ -209,6 +223,8 @@ impl Exp {
                     if let ExpKind::Cut = exp.kind {
                         // ctx.cut();
                         cut = true;
+                        ctx.tracer().trace_cut(&ctx);
+                        ctx.prune_cache();
                         continue;
                     }
                     match exp.parse_at(ctx.push()) {
@@ -216,20 +232,21 @@ impl Exp {
                             results.push(tree);
                             ctx.merge(&snap);
                         }
-                        Err(nope) => {
-                            // WARNING This breaks the Cut logic:
-                            //  `
-                            //  nope.cutseen |= cut;
-                            //  `
-                            //  Passing cutseen on the failure path is responsibility
-                            //  of Choice/Alt
+                        Err(mut nope) => {
+                            nope.cutseen |= cut;
                             return Err(nope);
                         }
                     }
                 }
                 let mut snap: Snap = ctx.into();
                 snap.or_cut(cut);
-                Ok(yeap(&snap, Tree::Seq(results.into()).into()))
+                if results.is_empty() {
+                    Ok(yeap(&snap, Tree::Nil.into()))
+                } else if results.len() == 1 {
+                    Ok(yeap(&snap, results[0].clone()))
+                } else {
+                    Ok(yeap(&snap, Tree::Seq(results.into()).into()))
+                }
             }
             ExpKind::Alt(_exp) => Err(ctx.failure(start, AltWithNoChoice)),
             ExpKind::Choice(options) => self.parse_choice(ctx, options),

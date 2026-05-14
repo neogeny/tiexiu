@@ -28,7 +28,7 @@ impl Exp {
                 match exp.parse_at(ctx.push()) {
                     Ok(Yeap(snap, tree)) => {
                         ctx.merge(&snap);
-                        return Ok(yeap(&ctx.into(), tree));
+                        return Ok(yeap(&ctx.click(), tree));
                     }
                     Err(mut nope) => {
                         if nope.take_cut() {
