@@ -3,9 +3,9 @@
 
 use std::collections::{BTreeSet, HashSet};
 
+use crate::Grammar;
 use crate::cfg::types::Str;
 use crate::exp::{Exp, ExpKind};
-use crate::Grammar;
 
 fn first_calls(grammar: &Grammar, exp: &Exp) -> Vec<usize> {
     match &exp.kind {
