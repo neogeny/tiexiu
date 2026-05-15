@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::memo::{Memo, MemoKey};
-use crate::SYM_ETX;
 use crate::cfg::Configurable;
 use crate::context::state::CallStack;
 use crate::context::trace::Tracer;
@@ -11,7 +10,8 @@ use crate::peg::error::Nope;
 use crate::peg::error::{DisasterReport, ParseFailure};
 use crate::trees::tree::Tree;
 use crate::types::Str;
-use crate::util::pyre::{Pattern, escape};
+use crate::util::pyre::{escape, Pattern};
+use crate::SYM_ETX;
 use std::fmt::Debug;
 use std::rc::Rc;
 
@@ -102,7 +102,7 @@ pub trait Ctx: CtxI + Clone + Debug {
         let nope = Nope::new(false);
         self.cursor_mut().reset(start);
         if let Some(furthest) = self.furthest_failure()
-            && furthest.mark() >= self.mark()
+            && furthest.start() >= start
         {
             return nope;
         }
