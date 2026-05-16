@@ -160,7 +160,7 @@ fn find_cycles_in_scc(edges: &[Vec<usize>], scc: &[usize], start: usize) -> Vec<
 }
 
 impl Grammar {
-    pub fn mark_left_recursion(&mut self) {
+    pub(crate) fn mark_left_recursion(&mut self) {
         for rule in self.rules_mut() {
             rule.reset_left_recursion();
         }

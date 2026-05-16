@@ -3,6 +3,8 @@
 
 //! Railroad diagram generation for grammars
 
+#![allow(dead_code)]
+
 use crate::cfg::constants::{SYM_EOL, SYM_ETX};
 use crate::peg::{Exp, ExpKind, Grammar, Rule};
 use std::rc::Rc;

@@ -7,7 +7,7 @@
 use std::fmt;
 use std::rc::Rc;
 
-pub type Token = str;
+pub(crate) type Token = str;
 
 pub struct TokenStack(Rc<Node>);
 

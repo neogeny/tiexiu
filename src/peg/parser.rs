@@ -3,7 +3,7 @@
 
 use crate::context::Ctx;
 use crate::peg::error::ParseResult;
-pub use crate::util::tokenstack::TokenStack;
+pub(crate) use crate::util::tokenstack::TokenStack;
 use std::fmt::Debug;
 
 pub trait Parser<C: Ctx>: Debug {

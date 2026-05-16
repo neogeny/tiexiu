@@ -9,12 +9,12 @@ use crate::util::pyre::traits::Pattern as _;
 
 #[derive(Clone, Debug)]
 pub struct TokenizingPatterns {
-    pub wsp: Pattern,
-    pub cmt: Pattern,
-    pub eol: Pattern,
-    pub has_wsp: bool,
-    pub has_cmt: bool,
-    pub has_eol: bool,
+    pub(super) wsp: Pattern,
+    pub(super) cmt: Pattern,
+    pub(super) eol: Pattern,
+    pub(super) has_wsp: bool,
+    pub(super) has_cmt: bool,
+    pub(super) has_eol: bool,
 }
 
 impl Default for TokenizingPatterns {

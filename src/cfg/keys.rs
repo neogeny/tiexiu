@@ -55,7 +55,8 @@ pub fn config(cfga: &CfgA) -> Cfg {
         .merge(&cfga.into())
 }
 
-pub trait CfgBoxWrapper {
+pub(crate) trait CfgBoxWrapper {
+    #[allow(dead_code)]
     fn trace(&self) -> bool;
     fn heartbeat(&self) -> Option<&HeartbeatRef>;
     fn start(&self) -> Option<&str>;

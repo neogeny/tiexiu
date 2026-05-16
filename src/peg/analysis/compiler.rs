@@ -13,7 +13,7 @@ use crate::types::Str;
 use std::rc::Rc;
 
 #[derive(Debug, Default)]
-pub struct GrammarCompiler {}
+pub(crate) struct GrammarCompiler {}
 
 fn parse_node(node: &Tree) -> CompileResult<(Str, &Tree)> {
     let Tree::Node { typename, tree } = node else {

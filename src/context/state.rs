@@ -21,9 +21,10 @@ pub type PatternCache = HashMap<String, Pattern>;
 pub type CallStack = TokenStack;
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct Alert {
-    pub level: usize,
-    pub message: Str,
+    level: usize,
+    message: Str,
 }
 
 #[derive(Debug)]
@@ -47,8 +48,9 @@ pub struct HeavyState<'t> {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct ParseStateStack<U: Cursor + Clone> {
-    pub state_stack: Vec<ParseState<U>>,
+    state_stack: Vec<ParseState<U>>,
 }
 
 impl<U: Cursor + Clone> Clone for ParseState<U> {
@@ -106,16 +108,20 @@ impl<U: Cursor + Clone> ParseState<U> {
         }
     }
 
+    #[allow(dead_code)]
     pub fn merge(&mut self, prev: &Self) -> &mut Self {
         self.cursor.reset(prev.cursor.mark());
         self
     }
 
+    #[allow(dead_code)]
     pub fn pop(&mut self, _into: &mut Self) {}
 
+    #[allow(dead_code)]
     pub fn undo(&mut self, _into: &mut Self) {}
 }
 
+#[allow(dead_code)]
 impl<U: Cursor + Clone> ParseStateStack<U> {
     pub fn new(cursor: U) -> Self {
         Self {

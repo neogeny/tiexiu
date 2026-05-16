@@ -176,17 +176,17 @@ impl Rule {
         self.flag(FLAG_NO_STAK)
     }
 
-    pub fn reset_left_recursion(&mut self) {
+    pub(crate) fn reset_left_recursion(&mut self) {
         self.set_flag(FLAG_IS_MEMO, !self.has_no_memo_flag());
         self.set_flag(FLAG_IS_LREC, false);
     }
 
-    pub fn set_left_recursive(&mut self) {
+    pub(crate) fn set_left_recursive(&mut self) {
         self.set_flag(FLAG_IS_LREC, true);
         self.set_flag(FLAG_IS_MEMO, false);
     }
 
-    pub fn set_no_memo(&mut self) {
+    pub(crate) fn set_no_memo(&mut self) {
         self.set_flag(FLAG_IS_MEMO, false);
     }
 }

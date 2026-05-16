@@ -126,7 +126,7 @@ impl Tree {
         }
     }
 
-    pub fn define(&mut self, names: &[Define]) {
+    pub(crate) fn define(&mut self, names: &[Define]) {
         if let Tree::Map(map) = self {
             let mut newmap = map.as_ref().clone();
             newmap.define(names);
@@ -134,14 +134,14 @@ impl Tree {
         }
     }
 
-    pub fn closed(self) -> Self {
+    pub(crate) fn closed(self) -> Self {
         match self {
             Tree::Seq(items) => Tree::List(items),
             _ => self,
         }
     }
 
-    pub fn append(self, node: Self) -> Self {
+    pub(crate) fn append(self, node: Self) -> Self {
         match (self, node) {
             (Self::Nil, n) => n,
             (s, Self::Nil) => s,
@@ -154,7 +154,7 @@ impl Tree {
         }
     }
 
-    pub fn append_as_list(self, node: Self) -> Self {
+    pub(crate) fn append_as_list(self, node: Self) -> Self {
         match (self, node) {
             (Self::Nil, n) => Self::Seq(vec![n.into()].into()),
             (Self::Seq(list), Self::Nil) => Self::Seq(list),
@@ -167,7 +167,7 @@ impl Tree {
         }
     }
 
-    pub fn merge(self, node: Self) -> Self {
+    pub(crate) fn merge(self, node: Self) -> Self {
         match (self, node) {
             (Self::Nil, n) => n,
             (s, Self::Nil) => s,

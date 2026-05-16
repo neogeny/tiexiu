@@ -100,7 +100,7 @@ impl<K: Clone + Default + Send + Sync + PartialEq> Cfg<K> {
     }
 
     #[allow(clippy::boxed_local)]
-    pub fn from_boxed_slice(options: Box<[K]>) -> Self {
+    pub(crate) fn from_boxed_slice(options: Box<[K]>) -> Self {
         let mut vec = Vec::with_capacity(options.len());
         for opt in options.iter() {
             if !vec.contains(opt) {

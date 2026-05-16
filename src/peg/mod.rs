@@ -6,20 +6,20 @@
 mod build;
 
 // --- Public Submodules ---
-pub mod analysis;
+pub(crate) mod analysis;
 pub mod error;
 pub mod exp;
-pub mod fold;
+pub(crate) mod fold;
 pub mod grammar;
 pub mod parser;
-pub mod parsing;
-pub mod pretty;
+pub(crate) mod parsing;
+pub(crate) mod pretty;
 pub mod rule;
 
 // --- Public Re-exports (The "Facade") ---
 // This allows users to call `tiexiu::peg::Grammar`
 // instead of `tiexiu::peg::grammar::Grammar`
-pub use error::{CompileError, CompileResult, ParseFailure};
+pub use error::{CompileError, ParseFailure};
 pub use exp::{Exp, ExpKind};
 pub use grammar::Grammar;
 pub use parser::Parser;

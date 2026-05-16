@@ -5,7 +5,5 @@ pub mod export;
 pub mod import;
 pub mod tryfrom;
 
-pub use json::value as json;
-
 #[cfg(feature = "serde_json")]
 pub mod cross;

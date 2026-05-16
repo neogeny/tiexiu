@@ -4,7 +4,7 @@
 pub use super::ctx::{Ctx, CtxI};
 use super::memo::{Memo, MemoKey};
 use super::state::{CallStack, HeavyState, ParseState};
-use super::trace::{Tracer, CONSOLE_TRACER, NULL_TRACER};
+use super::trace::{CONSOLE_TRACER, NULL_TRACER, Tracer};
 use crate::cfg::*;
 use crate::context::Snap;
 use crate::input::Cursor;
@@ -273,10 +273,7 @@ mod tests {
             cloned_ctx.cut_seen(),
             "cloned context should have same cutseen"
         );
-        assert!(
-            ctx.cut_seen(),
-            "original cuseen should be unchanged"
-        );
+        assert!(ctx.cut_seen(), "original cuseen should be unchanged");
         ctx.take_cut();
         assert!(
             !cloned_ctx.cut_seen(),

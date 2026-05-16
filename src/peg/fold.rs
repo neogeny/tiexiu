@@ -5,6 +5,7 @@ use super::exp::{Exp, ExpKind};
 use crate::util;
 use crate::util::fold::Folds;
 
+#[allow(dead_code)]
 pub trait Folder<O>: util::fold::Folder<Exp, O> {
     fn fold(&mut self, item: &Exp, children: &[O]) -> O;
 }

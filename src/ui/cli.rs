@@ -12,7 +12,7 @@ use tiexiu::api::{
     boot_grammar_pretty, boot_grammar_to_json_string, compile, load_grammar_from_json, parse_input,
 };
 use tiexiu::cfg::{Cfg, CfgA};
-use tiexiu::peg::pretty::*;
+use tiexiu::PrettyPrint;
 use tiexiu::tools::rails::*;
 use tiexiu::{CfgKey, Grammar, Result, boot_grammar, config};
 

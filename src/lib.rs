@@ -30,7 +30,7 @@ pub mod cfg;
 pub mod context;
 pub mod error;
 pub mod input;
-pub mod json;
+pub(crate) mod json;
 pub mod peg;
 pub mod tools;
 pub mod trees;

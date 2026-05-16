@@ -55,7 +55,7 @@ impl Grammar {
         }
     }
 
-    pub fn initialize(&mut self) -> Result<(), ParseFailure> {
+    pub(crate) fn initialize(&mut self) -> Result<(), ParseFailure> {
         self.mark_left_recursion();
         self.link()?;
         self.analyzed = true;
@@ -66,7 +66,7 @@ impl Grammar {
         &self.directives
     }
 
-    pub fn set_directives(&mut self, directives: GrammarDirectives) {
+    pub(crate) fn set_directives(&mut self, directives: GrammarDirectives) {
         self.directives = directives;
         if let Some(CfgKey::Grammar(name)) = self
             .directives
@@ -77,7 +77,7 @@ impl Grammar {
         }
     }
 
-    pub fn set_keywords(&mut self, keywords: &[KeywordRef]) {
+    pub(crate) fn set_keywords(&mut self, keywords: &[KeywordRef]) {
         let mut vec: Vec<KeywordRef> = keywords.to_vec();
 
         vec.sort();
@@ -120,7 +120,11 @@ impl Grammar {
         }
     }
 
-    pub fn parse_tree_from<C: Ctx>(&self, ctx: C, start: &str) -> crate::error::Result<Tree> {
+    pub(crate) fn parse_tree_from<C: Ctx>(
+        &self,
+        ctx: C,
+        start: &str,
+    ) -> crate::error::Result<Tree> {
         let start_mark = ctx.mark();
         match self.parse_from(ctx.push(), start) {
             Ok(Yeap(_, tree)) => Ok(Rc::unwrap_or_clone(tree)),
@@ -136,7 +140,7 @@ impl Grammar {
         }
     }
 
-    pub fn parse_from<C: Ctx>(&self, mut ctx: C, start: &str) -> ParseResult {
+    pub(crate) fn parse_from<C: Ctx>(&self, mut ctx: C, start: &str) -> ParseResult {
         let start_mark = ctx.mark();
         ctx.configure(&self.directives);
         ctx.set_keywords(&self.keywords);
@@ -162,6 +166,7 @@ impl Grammar {
         }
     }
 
+    #[allow(dead_code)]
     pub fn parse_input_from(
         &self,
         text: &str,
@@ -204,6 +209,7 @@ impl Grammar {
             .ok_or_else(|| RuleNotFound(name.into()))
     }
 
+    #[allow(dead_code)]
     pub fn get_rule_mut(&mut self, name: &str) -> Result<&mut Rule, ParseFailure> {
         self.rules
             .get_mut(name)
@@ -215,7 +221,7 @@ impl Grammar {
         self.rules.values().map(|r| r.as_ref())
     }
 
-    pub fn rules_mut(&mut self) -> impl Iterator<Item = &mut Rule> {
+    pub(crate) fn rules_mut(&mut self) -> impl Iterator<Item = &mut Rule> {
         self.rules.values_mut().map(Arc::make_mut)
     }
 }

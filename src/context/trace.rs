@@ -6,14 +6,14 @@ use console::style;
 use std::fmt::Debug;
 // use std::io::Write;
 
-pub static NULL_TRACER: NullTracer = NullTracer {};
-pub static CONSOLE_TRACER: ConsoleTracer = ConsoleTracer {};
+pub(crate) static NULL_TRACER: NullTracer = NullTracer {};
+pub(crate) static CONSOLE_TRACER: ConsoleTracer = ConsoleTracer {};
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
-pub struct NullTracer {}
+pub(crate) struct NullTracer {}
 
 #[derive(Debug, Default, Clone)]
-pub struct ConsoleTracer {}
+pub(crate) struct ConsoleTracer {}
 
 impl Tracer for NullTracer {}
 
