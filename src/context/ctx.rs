@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::memo::{Memo, MemoKey};
+use crate::SYM_ETX;
 use crate::cfg::Configurable;
 use crate::context::state::CallStack;
 use crate::context::trace::Tracer;
@@ -10,8 +11,7 @@ use crate::peg::error::Nope;
 use crate::peg::error::{DisasterReport, ParseFailure};
 use crate::trees::tree::Tree;
 use crate::types::Str;
-use crate::util::pyre::{escape, Pattern};
-use crate::SYM_ETX;
+use crate::util::pyre::{Pattern, escape};
 use std::fmt::Debug;
 use std::rc::Rc;
 
@@ -196,6 +196,7 @@ pub trait Ctx: CtxI + Clone + Debug {
     fn clear_error_memos(&mut self);
 
     fn cut(&mut self);
+    fn push_cut(&mut self);
     fn take_cut(&mut self) -> bool;
 
     fn prune_cache(&mut self);

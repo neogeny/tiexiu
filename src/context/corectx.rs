@@ -4,7 +4,7 @@
 pub use super::ctx::{Ctx, CtxI};
 use super::memo::{Memo, MemoKey};
 use super::state::{CallStack, HeavyState, ParseState};
-use super::trace::{Tracer, CONSOLE_TRACER, NULL_TRACER};
+use super::trace::{CONSOLE_TRACER, NULL_TRACER, Tracer};
 use crate::cfg::*;
 use crate::context::Snap;
 use crate::input::Cursor;
@@ -84,7 +84,7 @@ where
 
     #[inline]
     fn cut_seen(&self) -> bool {
-        self.state.cutseen
+        *self.heavy.borrow().cutstack.last().unwrap_or(&false)
     }
 }
 
@@ -187,13 +187,19 @@ where
 
     fn cut(&mut self) {
         self.tracer().trace_cut(self);
-        self.state_mut().cutseen = true;
+        if let Some(last) = self.heavy.borrow_mut().cutstack.last_mut() {
+            *last = true;
+        }
         // self.prune_cache();
+    }
+
+    fn push_cut(&mut self) {
+        self.heavy.borrow_mut().cutstack.push(false);
     }
 
     fn take_cut(&mut self) -> bool {
         let cutseen = self.cut_seen();
-        self.state_mut().cutseen = false;
+        self.heavy.borrow_mut().cutstack.pop();
         cutseen
     }
 
@@ -216,7 +222,6 @@ where
 
     fn merge(&mut self, snap: &Snap) {
         self.reset(snap.mark);
-        self.state_mut().cutseen = snap.cutseen;
     }
 }
 

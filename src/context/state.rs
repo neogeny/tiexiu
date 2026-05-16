@@ -4,7 +4,7 @@
 //! A translation of the TatSu module with the same name
 
 use super::memo::{KeyTrack, MemoCache};
-use super::trace::{Tracer, NULL_TRACER};
+use super::trace::{NULL_TRACER, Tracer};
 use crate::cfg::HeartbeatRef;
 use crate::input::Cursor;
 use crate::parser::TokenStack;
@@ -29,7 +29,6 @@ pub struct Alert {
 #[derive(Debug)]
 pub struct ParseState<U: Cursor + Clone> {
     pub cursor: U,
-    pub cutseen: bool,
     pub keytrack: KeyTrack,
 }
 
@@ -44,6 +43,7 @@ pub struct HeavyState<'t> {
     pub input_len: usize,
     pub instant: Instant,
     pub callstack: CallStack,
+    pub cutstack: Vec<bool>,
 }
 
 #[derive(Debug, Clone)]
@@ -75,6 +75,7 @@ impl<'t> HeavyState<'t> {
             input_len: 0,
             instant: Instant::now(),
             callstack: CallStack::new(),
+            cutstack: vec![false],
         }
     }
 
@@ -94,7 +95,6 @@ impl<U: Cursor + Clone> ParseState<U> {
     pub fn new(cursor: U) -> Self {
         Self {
             cursor,
-            cutseen: false,
             keytrack: KeyTrack::default(),
         }
     }
@@ -102,14 +102,12 @@ impl<U: Cursor + Clone> ParseState<U> {
     pub fn from_state(other: &Self) -> Self {
         Self {
             cursor: other.cursor.clone(),
-            cutseen: false,
             keytrack: KeyTrack::default(),
         }
     }
 
     pub fn merge(&mut self, prev: &Self) -> &mut Self {
         self.cursor.reset(prev.cursor.mark());
-        self.cutseen = prev.cutseen;
         self
     }
 
