@@ -9,18 +9,20 @@
 
 use std::collections::HashMap;
 
+/// Trait defining the pyre Pattern interface (mirroring Python's re module).
 pub trait Pattern: Clone {
     type Match<'a>: Match<'a>
     where
         Self: 'a;
     type Error: std::error::Error;
 
+    /// Searches for the pattern anywhere in the text.
     fn search<'a>(&self, text: &'a str) -> Option<Self::Match<'a>>;
-
+    /// Matches the pattern at the beginning of text.
     fn match_<'a>(&self, text: &'a str) -> Option<Self::Match<'a>>;
-
+    /// Matches the pattern against the entire text.
     fn fullmatch<'a>(&self, text: &'a str) -> Option<Self::Match<'a>>;
-
+    /// Splits text by pattern matches.
     fn split(&self, text: &str, maxsplit: Option<usize>) -> Vec<String>;
 
     /// Returns a vector of matches. Each match is represented as a vector of
@@ -31,12 +33,13 @@ pub trait Pattern: Clone {
     /// non-participating groups), matching Python's `re.findall` semantics.
     fn findall(&self, text: &str) -> Vec<Vec<String>>;
 
+    /// Returns all non-overlapping matches as Match objects.
     fn finditer<'a>(&self, text: &'a str) -> Vec<Self::Match<'a>>;
-
+    /// Replaces pattern matches with a replacement string.
     fn sub(&self, repl: &str, text: &str, count: Option<usize>) -> String;
-
+    /// Replaces pattern matches and returns the count of replacements.
     fn subn(&self, repl: &str, text: &str, count: Option<usize>) -> (String, usize);
-
+    /// Returns the original pattern string.
     fn pattern(&self) -> &str;
 
     /// Returns true if the pattern matches an empty string.
@@ -61,15 +64,17 @@ pub trait Pattern: Clone {
     fn groups_count(&self) -> usize;
 }
 
+/// Trait defining the pyre Match interface (mirroring Python's re module).
 pub trait Match<'a> {
+    /// Returns the captured group by index.
     fn group(&self, group: usize) -> Option<&'a str>;
-
+    /// Returns all captured groups.
     fn groups(&self) -> Vec<Option<&'a str>>;
-
+    /// Returns the start position of a group match.
     fn start(&self, group: Option<usize>) -> isize;
-
+    /// Returns the end position of a group match.
     fn end(&self, group: Option<usize>) -> isize;
-
+    /// Returns the (start, end) span of a group match.
     fn span(&self, group: Option<usize>) -> (usize, usize);
 
     /// Returns the subgroup named `name`.

@@ -8,6 +8,7 @@
 
 use super::Pattern;
 
+/// Truncates a pattern to a max length, appending "..." if truncated.
 pub fn truncate_pattern(pattern: &str, max: usize) -> Box<str> {
     if pattern.len() <= max {
         return pattern.into();
@@ -22,6 +23,7 @@ pub fn truncate_pattern(pattern: &str, max: usize) -> Box<str> {
     format!("{}...", &pattern[..end]).into_boxed_str()
 }
 
+/// Pretty-prints a regex pattern as a Python raw string literal.
 pub fn regexpp(regex: impl AsRef<str>) -> Result<String, String> {
     let pattern_text = regex.as_ref();
 

@@ -6,6 +6,7 @@ use crate::types::Str;
 use crate::util::ensure::Ensure;
 use thiserror::Error;
 
+/// A result type for grammar compilation.
 pub type CompileResult<T> = Result<T, CompileError>;
 
 impl From<Ensure> for ParseFailure {
@@ -14,6 +15,7 @@ impl From<Ensure> for ParseFailure {
     }
 }
 
+/// Errors that can occur during parsing.
 #[derive(Error, Default, Debug, Clone, PartialEq)]
 pub enum ParseFailure {
     /// Corresponds to Self::Fail
@@ -93,6 +95,7 @@ pub enum ParseFailure {
     Ensure(&'static str),
 }
 
+/// Errors that can occur during grammar compilation/linking.
 #[derive(Debug, Error, Clone, PartialEq)]
 pub enum CompileError {
     #[error("expected {0} to be a Tree::Node")]

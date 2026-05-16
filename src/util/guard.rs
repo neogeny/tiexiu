@@ -10,7 +10,7 @@ pub struct ScopeGuard<T, F: FnOnce(&mut T)> {
     action: Option<F>,
 }
 
-/// Helper to create a new scope guard.
+/// Creates a new scope guard with the given subject and rollback action.
 pub fn guard<T, F: FnOnce(&mut T)>(subject: T, action: F) -> ScopeGuard<T, F> {
     ScopeGuard::new(subject, action)
 }

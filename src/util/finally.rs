@@ -1,30 +1,20 @@
 // Copyright (c) 2026 Juancarlo Añez
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-/// ```
-/// use tiexiu::util::finally;
-///
-/// fn example_operation() {
-///     // Logic starts here
-///     let _guard = finally(|| {
-///         // This is your "finally" block
-///         println!("Cleanup complete.");
-///     });
-///
-///     // If any code here returns early or panics, _guard is dropped.
-/// }
-/// ```
+/// A scope guard that runs an action on drop.
 pub struct Finally<F: FnOnce()> {
     action: Option<F>,
 }
 
 impl<F: FnOnce()> Finally<F> {
+    /// Creates a new Finally with the given action.
     pub fn new(action: F) -> Self {
         Self {
             action: Some(action),
         }
     }
 
+    /// Prevents the action from running on drop.
     pub fn defuse(&mut self) {
         self.action = None; // Clear the action
     }
@@ -39,6 +29,7 @@ impl<F: FnOnce()> Drop for Finally<F> {
     }
 }
 
+/// Creates a scope guard that runs the given action on drop.
 pub fn finally<F: FnOnce()>(f: F) -> Finally<F> {
     Finally::new(f)
 }

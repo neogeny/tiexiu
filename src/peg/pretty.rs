@@ -48,6 +48,7 @@ impl Display for ExpKind {
     }
 }
 
+/// Trait for pretty-printing grammar elements back to EBNF-like syntax.
 pub trait PrettyPrint {
     fn pretty_print_with(&self, f: &mut IndentWriter) -> String;
 

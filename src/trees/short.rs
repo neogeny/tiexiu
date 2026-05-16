@@ -5,21 +5,27 @@ use super::map::TreeMap;
 use super::tree::Tree;
 use crate::trees::KeyValue;
 
+/// The Nil tree constant.
 pub const NIL: Tree = Tree::Nil;
+/// The Bottom tree constant.
 pub const BOTTOM: Tree = Tree::Bottom;
 
+/// Shorthand for Tree::Text.
 pub fn t(value: &str) -> Tree {
     Tree::Text(value.into())
 }
 
+/// Shorthand for Tree::Seq.
 pub fn s(items: &[Tree]) -> Tree {
     Tree::Seq(items.iter().cloned().map(|t| t.into()).collect())
 }
 
+/// Shorthand for Tree::List.
 pub fn l(items: &[Tree]) -> Tree {
     Tree::List(items.iter().cloned().map(|t| t.into()).collect())
 }
 
+/// Shorthand for Tree::Map from key-value pairs.
 pub fn m(entries: &[(&str, Tree)]) -> Tree {
     let mut map = TreeMap::new();
     for (key, value) in entries {
@@ -28,24 +34,29 @@ pub fn m(entries: &[(&str, Tree)]) -> Tree {
     Tree::Map(map.into())
 }
 
+/// Shorthand for Tree::Named.
 pub fn k(key: &str, value: Tree) -> Tree {
     let keyval = KeyValue(key.into(), value.into());
     Tree::Named(keyval)
 }
 
+/// Shorthand for Tree::NamedAsList.
 pub fn kl(key: &str, value: Tree) -> Tree {
     let keyval = KeyValue(key.into(), value.into());
     Tree::NamedAsList(keyval)
 }
 
+/// Shorthand for Tree::Override.
 pub fn o(tree: Tree) -> Tree {
     Tree::Override(tree.into())
 }
 
+/// Shorthand for Tree::OverrideAsList.
 pub fn ol(tree: Tree) -> Tree {
     Tree::OverrideAsList(tree.into())
 }
 
+/// Shorthand for Tree::Node.
 pub fn n(typename: &str, tree: Tree) -> Tree {
     Tree::Node {
         typename: typename.into(),
@@ -53,10 +64,12 @@ pub fn n(typename: &str, tree: Tree) -> Tree {
     }
 }
 
+/// Shorthand for Tree::Bottom.
 pub fn bottom() -> Tree {
     Tree::Bottom
 }
 
+/// Shorthand for Tree::Nil.
 pub fn nil() -> Tree {
     Tree::Nil
 }

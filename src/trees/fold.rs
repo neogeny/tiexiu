@@ -5,11 +5,13 @@ use crate::Tree;
 use crate::trees::TreeRef;
 use crate::types::Str;
 
+/// A trait for tree folding/transformation.
 pub trait Folds {
     /// Reshapes and transforms the given tree, returning the folded result.
     fn fold(&self, tree: TreeRef) -> TreeRef;
 }
 
+/// A Folds implementation that wraps a tree in a Named node.
 pub struct FoldsNamed(pub Str);
 
 impl Folds for FoldsNamed {
@@ -18,6 +20,7 @@ impl Folds for FoldsNamed {
     }
 }
 
+/// A Folds implementation that wraps a tree in an Override node.
 pub struct FoldsOverride;
 
 impl Folds for FoldsOverride {

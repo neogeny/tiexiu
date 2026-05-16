@@ -7,6 +7,7 @@ use crate::types::Str;
 use console::style;
 use std::rc::Rc;
 
+/// A parse memento for structured error reporting.
 #[derive(Clone)]
 pub struct Memento {
     /// The name of the source (e.g., file path)
@@ -21,11 +22,14 @@ pub struct Memento {
     pub mark: usize,
     /// Rule invocations leading to this moment
     pub callstack: CallStack,
+    /// (line, column) position.
     pub pos: (usize, usize),
+    /// Lookahead text at the error location.
     pub la: Str,
 }
 
 impl Memento {
+    /// Create a new `Memento` from a context and message.
     pub fn new(start: usize, ctx: &dyn CtxI, msg: &str) -> Self {
         Self {
             input_source: ctx.cursor().input_source().into(),

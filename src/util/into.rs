@@ -5,17 +5,17 @@ use crate::types::Str;
 use std::rc::Rc;
 // use std::borrow::Cow;
 
-/// A convenience trait to provide a unified path for string-to-boxed-slice conversions.
-/// This allows you to use .into_box() as a more descriptive alternative to .into()
+/// A convenience trait for string-to-boxed-slice conversions.
 pub trait IntoStr {
+    /// Converts this value into a boxed Str.
     fn into_str(self) -> Str;
 }
 
-/// The "Call-Site Anchor" trait.
-/// You implement this for anything that should be turnable into your
-/// internal storage types (`Str` or `Rc<str>`).
+/// Trait for converting values to internal string storage types.
 pub trait ToInternalStr {
+    /// Converts to a boxed Str.
     fn to_internal(self) -> Str;
+    /// Converts to a reference-counted string.
     fn to_rc(self) -> Rc<str>;
 }
 
@@ -68,6 +68,7 @@ impl ToInternalStr for Str {
 
 // NOTE: An example
 
+/// A newtype wrapper for rule name strings.
 pub struct RuleName(pub Str);
 
 impl From<String> for RuleName {

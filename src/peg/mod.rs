@@ -5,22 +5,29 @@
 // These are files inside src/peg/ (e.g., src/peg/build.rs)
 mod build;
 
-// --- Public Submodules ---
-pub(crate) mod analysis;
+/// PEG parsing error types.
 pub mod error;
+/// PEG expression types (Exp, ExpKind).
 pub mod exp;
-pub(crate) mod fold;
+/// The Grammar type and its parsing methods.
 pub mod grammar;
+/// The Parser trait for parsing at a context.
 pub mod parser;
-pub(crate) mod parsing;
-pub(crate) mod pretty;
+/// Rule type and its parsing logic.
 pub mod rule;
 
-// --- Public Re-exports (The "Facade") ---
-// This allows users to call `tiexiu::peg::Grammar`
-// instead of `tiexiu::peg::grammar::Grammar`
+pub(crate) mod analysis;
+pub(crate) mod fold;
+pub(crate) mod parsing;
+pub(crate) mod pretty;
+
+/// Re-export of error types.
 pub use error::{CompileError, ParseFailure};
+/// Re-export of expression types.
 pub use exp::{Exp, ExpKind};
+/// Re-export of Grammar.
 pub use grammar::Grammar;
+/// Re-export of the Parser trait.
 pub use parser::Parser;
+/// Re-export of Rule.
 pub use rule::Rule;

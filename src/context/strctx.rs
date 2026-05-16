@@ -4,6 +4,7 @@
 use super::corectx::CoreCtx;
 use crate::input::strcursor::StrCursor;
 
+/// A parsing context backed by a `StrCursor`.
 pub type StrCtx<'c> = CoreCtx<'c, StrCursor>;
 
 impl<'c> From<&str> for StrCtx<'c> {

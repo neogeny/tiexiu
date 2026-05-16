@@ -3,6 +3,7 @@
 
 use thiserror::Error;
 
+/// Tree-related errors.
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("expected tree kind `{expected}`, found `{found}`")]

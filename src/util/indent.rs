@@ -5,12 +5,12 @@ use std::fmt::Write;
 
 const BLACK_LEN: usize = 88;
 
-/// Trim text of common, leading whitespace except  the first line
+/// Trims common leading whitespace from all lines except the first.
 pub fn dedent(text: &str) -> Str {
     _dedent(text, false)
 }
 
-/// Trim text of common, leading whitespace
+/// Trims common leading whitespace from all lines including the first.
 pub fn dedent_all(text: &str) -> Str {
     _dedent(text, true)
 }
@@ -41,6 +41,7 @@ fn _dedent(text: &str, all: bool) -> Str {
     buf.trim().into()
 }
 
+/// A writer that maintains indentation level for pretty-printing.
 pub struct IndentWriter {
     buffer: String,
     level: usize,
@@ -49,6 +50,7 @@ pub struct IndentWriter {
 }
 
 impl IndentWriter {
+    /// Creates a new IndentWriter with the given indent amount.
     pub fn new(amount: usize) -> Self {
         Self {
             buffer: String::new(),
@@ -58,10 +60,12 @@ impl IndentWriter {
         }
     }
 
+    /// Returns the current buffer and clears it.
     pub fn take(&mut self) -> String {
         std::mem::take(&mut self.buffer)
     }
 
+    /// Runs a closure with increased indentation level.
     pub fn with_indent<F>(&mut self, f: F)
     where
         F: FnOnce(&mut Self),
@@ -71,6 +75,7 @@ impl IndentWriter {
         self.level -= 1;
     }
 
+    /// Writes a line with current indentation.
     pub fn writeln(&mut self, text: &str) -> &mut Self {
         if text.is_empty() {
             writeln!(self.buffer).unwrap();
@@ -113,6 +118,7 @@ impl IndentWriter {
         self
     }
 
+    /// Writes items with prefix/separator/suffix, folding horizontally or vertically.
     pub fn fold(
         &mut self,
         extra_levels: usize,

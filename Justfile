@@ -41,6 +41,9 @@ book:
     mdbook build docs
     mdbook test docs
 
+doc:
+    cargo doc
+
 clean:
     cargo clean -p {{self}}
 

@@ -4,6 +4,7 @@
 use crate::util::pyre::Error as ReError;
 use thiserror::Error;
 
+/// Input-related errors (e.g. invalid regex patterns).
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("invalid {kind} regex pattern `{pattern}`: {source}")]

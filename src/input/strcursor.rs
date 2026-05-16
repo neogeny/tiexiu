@@ -10,6 +10,7 @@ use crate::util::newlines::{take_linebreak_len, take_non_newline_whitespace_len}
 use crate::util::pyre::Pattern;
 use std::rc::Rc;
 
+/// Shared cursor configuration (CoW handle).
 #[derive(Debug, Clone)]
 pub struct CursorHeavy {
     ignorecase: bool,
@@ -18,6 +19,7 @@ pub struct CursorHeavy {
     patterns: Rc<TokenizingPatterns>,
 }
 
+/// A cursor that parses an in-memory string.
 #[derive(Debug, Clone)]
 pub struct StrCursor {
     text: Rc<str>,
@@ -33,6 +35,7 @@ impl From<&str> for StrCursor {
 }
 
 impl StrCursor {
+    /// Create a new `StrCursor` from a text string.
     pub fn new(text: &str) -> Self {
         Self {
             text: text.into(),
@@ -46,6 +49,7 @@ impl StrCursor {
             .into(),
         }
     }
+    /// Create a cursor with a named source and optional start offset.
     pub fn from_source(source: &str, text: &str, mut start: usize) -> Self {
         start = start.min(text.len());
         while start < text.len() && !text.is_char_boundary(start) {
@@ -64,6 +68,7 @@ impl StrCursor {
         }
     }
 
+    /// Create a cursor with custom tokenizing patterns.
     pub fn with_patterns(text: &str, patterns: TokenizingPatterns) -> Result<Self, Error> {
         Ok(Self {
             text: text.into(),

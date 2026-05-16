@@ -125,6 +125,7 @@ impl<K: Clone + Default + Send + Sync + PartialEq> Cfg<K> {
         }
     }
 
+    /// Returns a new Cfg with the given key added.
     pub fn add(&self, key: K) -> Self {
         if self.contains(&key) {
             self.clone()
@@ -137,20 +138,24 @@ impl<K: Clone + Default + Send + Sync + PartialEq> Cfg<K> {
         }
     }
 
+    /// Returns true if the Cfg contains the given key.
     pub fn contains(&self, key: &K) -> bool {
         self.cfga.iter().any(|k| k == key)
     }
 }
 
 impl<K: Clone + Default + Send + Sync> Cfg<K> {
+    /// Returns true if the configuration is empty.
     pub fn is_empty(&self) -> bool {
         self.cfga.is_empty()
     }
 
+    /// Returns an iterator over the configured options.
     pub fn iter(&self) -> impl Iterator<Item = &K> {
         self.cfga.iter()
     }
 
+    /// Returns the configuration as a slice.
     pub fn as_slice(&self) -> &[K] {
         &self.cfga
     }

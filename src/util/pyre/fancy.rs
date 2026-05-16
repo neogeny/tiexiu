@@ -14,34 +14,42 @@ use fancy_regex;
 use fancy_regex::{Captures, Regex};
 use std::collections::HashMap;
 
+/// A compiled regular expression pattern.
 #[derive(Debug, Clone)]
 pub struct Pattern {
     regex: Regex,
 }
 
+/// A regex match result.
 #[derive(Debug)]
 pub struct Match<'a> {
+    /// The original input string being matched.
     pub string: &'a str,
     captures: Captures<'a>,
 }
 
+/// Escapes special regex characters in a pattern string.
 pub fn escape(pattern: &str) -> Box<str> {
     fancy_regex::escape(pattern).into()
 }
 
+/// Compiles a regex pattern string into a Pattern.
 pub fn compile(pattern: &str) -> Result<Pattern> {
     Pattern::new(pattern)
 }
 
+/// Clears the internal regex cache (no-op in this implementation).
 pub fn purge() {}
 
 impl Pattern {
+    /// Creates a new compiled Pattern from a regex string.
     pub fn new(pattern: &str) -> Result<Self> {
         Ok(Self {
             regex: Regex::new(pattern)?,
         })
     }
 
+    /// Searches for the pattern anywhere in the text.
     pub fn search<'a>(&self, text: &'a str) -> Option<Match<'a>> {
         match self.regex.captures(text) {
             Ok(Some(captures)) => Some(Match {
@@ -52,6 +60,7 @@ impl Pattern {
         }
     }
 
+    /// Matches the pattern at the beginning of text.
     pub fn match_<'a>(&self, text: &'a str) -> Option<Match<'a>> {
         match self.regex.captures(text) {
             Ok(Some(captures)) => {
@@ -68,6 +77,7 @@ impl Pattern {
         }
     }
 
+    /// Matches the pattern against the entire text.
     pub fn fullmatch<'a>(&self, text: &'a str) -> Option<Match<'a>> {
         let m = self.match_(text)?;
         if m.end(None) != text.len() as isize {
@@ -76,6 +86,7 @@ impl Pattern {
         Some(m)
     }
 
+    /// Splits text by pattern matches.
     pub fn split(&self, text: &str, maxsplit: Option<usize>) -> Vec<String> {
         let maxsplit = maxsplit.unwrap_or(0);
         let mut result = Vec::new();
@@ -105,6 +116,7 @@ impl Pattern {
         result
     }
 
+    /// Returns all non-overlapping matches as vector of groups.
     pub fn findall(&self, text: &str) -> Vec<Vec<String>> {
         self.regex
             .captures_iter(text)
@@ -133,6 +145,7 @@ impl Pattern {
             .collect()
     }
 
+    /// Returns all non-overlapping matches as Match objects.
     pub fn finditer<'a>(&self, text: &'a str) -> Vec<Match<'a>> {
         self.regex
             .captures_iter(text)
@@ -144,10 +157,12 @@ impl Pattern {
             .collect()
     }
 
+    /// Replaces pattern matches with a replacement string.
     pub fn sub(&self, repl: &str, text: &str, count: Option<usize>) -> String {
         self.subn(repl, text, count).0
     }
 
+    /// Replaces pattern matches and returns the count of replacements.
     pub fn subn(&self, repl: &str, text: &str, count: Option<usize>) -> (String, usize) {
         let count = count.unwrap_or(0);
         let mut result = String::new();
@@ -171,16 +186,19 @@ impl Pattern {
         (result, replacements)
     }
 
+    /// Returns the original pattern string.
     pub fn pattern(&self) -> &str {
         self.regex.as_str()
     }
 }
 
 impl<'a> Match<'a> {
+    /// Returns the captured group by index.
     pub fn group(&self, group: usize) -> Option<&'a str> {
         self.captures.get(group).map(|m| m.as_str())
     }
 
+    /// Returns all captured groups.
     pub fn groups(&self) -> Vec<Option<&'a str>> {
         self.captures
             .iter()
@@ -188,6 +206,7 @@ impl<'a> Match<'a> {
             .collect()
     }
 
+    /// Returns the start position of a group match.
     pub fn start(&self, group: Option<usize>) -> isize {
         let group = group.unwrap_or(0);
         self.captures
@@ -196,6 +215,7 @@ impl<'a> Match<'a> {
             .unwrap_or(-1)
     }
 
+    /// Returns the end position of a group match.
     pub fn end(&self, group: Option<usize>) -> isize {
         let group = group.unwrap_or(0);
         self.captures
@@ -204,6 +224,7 @@ impl<'a> Match<'a> {
             .unwrap_or(-1)
     }
 
+    /// Returns the (start, end) span of a group match.
     pub fn span(&self, group: Option<usize>) -> (usize, usize) {
         let group = group.unwrap_or(0);
         self.captures

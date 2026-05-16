@@ -8,11 +8,15 @@ use crate::util::pyre::Pattern;
 use std::fmt::Debug;
 use std::rc::Rc;
 
+/// A source location (filename, line, column).
 pub struct Location {
+    /// Source name.
     pub source: Str,
+    /// (line, column) position.
     pub pos: (usize, usize),
 }
 
+/// Trait for input cursors that drive parsing.
 pub trait Cursor: Debug + Configurable {
     fn input_source(&self) -> &str;
     fn mark(&self) -> usize;

@@ -12,24 +12,40 @@ use indexmap::IndexMap;
 use std::rc::Rc;
 use std::sync::Arc;
 
+/// Flag indicating no memoization.
 pub const FLAG_NO_MEMO: &str = "no_memo";
+/// Flag indicating stack/trace should be disabled.
 pub const FLAG_NO_STAK: &str = "no_stak";
+/// Flag indicating this rule is a name rule.
 pub const FLAG_IS_NAME: &str = "is_name";
+/// Flag indicating this rule is a token rule.
 pub const FLAG_IS_TOKN: &str = "is_tokn";
+/// Flag indicating this rule is memoizable.
 pub const FLAG_IS_MEMO: &str = "is_memo";
+/// Flag indicating this rule is left-recursive.
 pub const FLAG_IS_LREC: &str = "is_lrec";
 
+/// A rule name string.
 pub type RuleName = Str;
+/// An atomically reference-counted rule.
 pub type RuleRef = Arc<Rule>;
+/// A map from rule name to its index position.
 pub type RuleIndex = IndexMap<Str, usize>;
+/// A boxed slice of rules.
 pub type Rules = Box<[Rule]>;
+/// A map from rule names to rule references.
 pub type RuleMap = IndexMap<RuleName, RuleRef>;
 
+/// A PEG parsing rule with name, parameters, flags, and expression.
 #[derive(Debug, Clone)]
 pub struct Rule {
+    /// The rule name.
     pub name: RuleName,
+    /// The rule parameters (if any, first is the typename).
     pub params: Box<[Str]>,
+    /// Rule flags (is_token, is_memo, is_lrec, etc.).
     pub flags: FlagMap,
+    /// The parsing expression for this rule.
     pub exp: Exp,
 }
 
@@ -69,6 +85,7 @@ impl Rule {
         self.flags.insert(key.into(), value);
     }
 
+    /// Creates a new Rule with the given name, params, and expression.
     pub fn new(name: &str, params: &[Str], mut exp: Exp) -> Self {
         exp.initialize_caches();
         Self {
@@ -79,6 +96,7 @@ impl Rule {
         }
     }
 
+    /// Creates a Rule from individual parts with flag control.
     #[allow(clippy::too_many_arguments)]
     pub fn from_parts(
         name: String,
@@ -100,6 +118,7 @@ impl Rule {
         }
     }
 
+    /// Parses at the current context position using this rule's expression.
     pub fn parse_at<C: Ctx>(&self, mut ctx: C) -> ParseResult {
         match self.exp.parse_at(ctx.push()) {
             Err(nope) => Err(nope),
@@ -127,18 +146,22 @@ impl Rule {
         }
     }
 
+    /// Returns true if this rule is marked as left-recursive.
     pub fn is_left_recursive(&self) -> bool {
         self.flag(FLAG_IS_LREC)
     }
 
+    /// Returns true if this rule should be memoized.
     pub fn is_memoizable(&self) -> bool {
         self.is_left_recursive() || self.flag(FLAG_IS_MEMO) && !self.flag(FLAG_NO_MEMO)
     }
 
+    /// Returns true if this rule has the is_name flag.
     pub fn is_name(&self) -> bool {
         self.has_is_name_flag()
     }
 
+    /// Returns true if this rule is a token rule.
     pub fn is_token(&self) -> bool {
         self.has_is_tokn_flag()
             || self
@@ -148,30 +171,37 @@ impl Rule {
                 .is_some_and(|c| c.is_uppercase())
     }
 
+    /// Returns true if this rule should be traced.
     pub fn should_trace(&self) -> bool {
         !self.has_no_stak_flag() && !self.is_token()
     }
 
+    /// Returns true if the is_name flag is set.
     pub fn has_is_name_flag(&self) -> bool {
         self.flag(FLAG_IS_NAME)
     }
 
+    /// Returns true if the is_tokn flag is set.
     pub fn has_is_tokn_flag(&self) -> bool {
         self.flag(FLAG_IS_TOKN)
     }
 
+    /// Returns true if the no_memo flag is set.
     pub fn has_no_memo_flag(&self) -> bool {
         self.flag(FLAG_NO_MEMO)
     }
 
+    /// Returns true if the is_memo flag is set.
     pub fn has_is_memo_flag(&self) -> bool {
         self.flag(FLAG_IS_MEMO)
     }
 
+    /// Returns true if the is_lrec flag is set.
     pub fn has_is_lrec_flag(&self) -> bool {
         self.flag(FLAG_IS_LREC)
     }
 
+    /// Returns true if the no_stak flag is set.
     pub fn has_no_stak_flag(&self) -> bool {
         self.flag(FLAG_NO_STAK)
     }

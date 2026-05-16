@@ -25,29 +25,32 @@ use tikv_jemallocator::Jemalloc;
 #[global_allocator]
 static GLOBAL: Jemalloc = Jemalloc;
 
+/// Functional API (free functions) and the OO `TieXiu` wrapper.
 pub mod api;
+/// Configuration system for the parser engine.
 pub mod cfg;
+/// Parsing context types (cursor, memoization, state).
 pub mod context;
+/// Public error types and result alias.
 pub mod error;
+/// Input sources and cursor abstractions.
 pub mod input;
 pub(crate) mod json;
+/// PEG grammar representation, compilation, and parsing.
 pub mod peg;
+/// Visualization and diagramming utilities (e.g., railroad diagrams).
 pub mod tools;
+/// Parse-tree types including `Tree` and `TreeMap`.
 pub mod trees;
+/// Internal utility modules (string tools, patterns, etc.).
 pub mod util;
 
 pub use api::*;
+#[doc(inline)]
 #[allow(unused_imports)]
-pub use error::{Error, Result};
-
-pub use peg::Exp;
-pub use peg::ExpKind;
-// re-exports
-/// A comment about why this is re-exported here
-pub use peg::Grammar;
-pub use peg::Rule;
-pub use trees::Tree;
-pub use trees::TreeMap;
+pub use error::Error;
+#[doc(inline)]
+pub use error::Result;
 
 #[cfg(feature = "pyo3")]
 pyo3::create_exception!(_tiexiu, ParseError, pyo3::exceptions::PyException);

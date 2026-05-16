@@ -6,36 +6,43 @@ use crate::cfg::types::{Define, Str};
 use std::collections::LinkedList;
 use std::rc::Rc;
 
+/// A reference-counted tree node.
 pub type TreeRef = Rc<Tree>;
+/// A linked list of tree references.
 pub type TreeList = LinkedList<TreeRef>;
 
+/// A key-value pair for named elements in a tree.
 #[derive(Debug, Clone, PartialEq)]
 pub struct KeyValue(pub Str, pub TreeRef);
 
+/// The abstract syntax tree representation for parsed input.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Tree {
-    Text(Str),            // Tokens or patterns
-    Seq(Rc<[Rc<Tree>]>),  // Sequences of values
-    List(Rc<[Rc<Tree>]>), // Non-mergeable list of values
-    Map(Rc<TreeMap>),     // A mapping of named elements
-
-    Node {
-        // The result of parsing a rule call
-        typename: Str,
-        tree: Rc<Tree>,
-    },
-
-    // INTERNAL
-    // The folowing variants do not appear in merged trees
-    Nil,                      // Parsing that didn't consume any input
-    Named(KeyValue),          // Named elements add to the merged TreeMap
-    NamedAsList(KeyValue),    // Named elements forced into a list
-    Override(Rc<Tree>),       // Adds value to the merged tree
-    OverrideAsList(Rc<Tree>), // Adds value to the merged tree, forces list
-
-    Bottom, // The marker for failure used in memoization
+    /// A text/leaf node from tokens or patterns.
+    Text(Str),
+    /// A sequence of values (mergeable).
+    Seq(Rc<[Rc<Tree>]>),
+    /// A non-mergeable list of values.
+    List(Rc<[Rc<Tree>]>),
+    /// A mapping of named elements.
+    Map(Rc<TreeMap>),
+    /// The result of parsing a rule call.
+    Node { typename: Str, tree: Rc<Tree> },
+    /// Parsing that didn't consume any input (internal).
+    Nil,
+    /// A named element for tree merging (internal).
+    Named(KeyValue),
+    /// A named element forced into a list (internal).
+    NamedAsList(KeyValue),
+    /// Override value for merged tree (internal).
+    Override(Rc<Tree>),
+    /// Override value forced into a list (internal).
+    OverrideAsList(Rc<Tree>),
+    /// Failure marker used in memoization (internal).
+    Bottom,
 }
 
+/// Creates a KeyValue pair from a name and a tree.
 pub fn keyval(name: &str, tree: Tree) -> KeyValue {
     KeyValue(name.into(), tree.into())
 }
@@ -113,6 +120,7 @@ impl TreeMerge {
 }
 
 impl Tree {
+    /// Folds the tree by resolving Named/Override/Nil into merged Map/Seq form.
     pub fn fold(self) -> Tree {
         let mut gather = TreeMerge::new();
         let tree = self.clean_and_fold(&mut gather);
@@ -233,6 +241,7 @@ impl Tree {
         }
     }
 
+    /// Returns the total character width of text nodes in this tree.
     pub fn width(&self) -> usize {
         match self {
             Tree::Text(text) => text.len(),
@@ -248,6 +257,7 @@ impl Tree {
         }
     }
 
+    /// Returns the text value of this tree or a debug representation.
     pub fn value(&self) -> Str {
         match self {
             Tree::Text(text) => text.clone(),
@@ -255,6 +265,7 @@ impl Tree {
         }
     }
 
+    /// Returns the child elements if this is a Seq or List, or an empty slice.
     pub fn list_value(&self) -> Rc<[Rc<Tree>]> {
         match self {
             Tree::Seq(items) | Tree::List(items) => items.clone(),
@@ -262,10 +273,12 @@ impl Tree {
         }
     }
 
+    /// Returns the child elements as text values, or an empty slice.
     pub fn str_list_value(&self) -> Rc<[Str]> {
         self.list_value().iter().map(|t| t.value()).collect()
     }
 
+    /// Returns the inner TreeMap if this is a Map variant.
     pub fn map_value(&self) -> Option<&TreeMap> {
         match self {
             Tree::Map(map) => Some(map),
@@ -273,6 +286,7 @@ impl Tree {
         }
     }
 
+    /// Looks up a key in the Map variant and returns the corresponding tree.
     pub fn get(&self, key: &str) -> Option<&Tree> {
         match self {
             Tree::Map(map) => map.get(key),
@@ -280,18 +294,21 @@ impl Tree {
         }
     }
 
+    /// Looks up a key and returns its text value, or an empty string.
     pub fn get_value(&self, key: &str) -> Str {
         self.get(key)
             .map(|n| n.value())
             .unwrap_or_else(|| "".into())
     }
 
+    /// Looks up a key and returns its list children, or an empty slice.
     pub fn get_list(&self, key: &str) -> Rc<[Rc<Tree>]> {
         self.get(key)
             .map(|n| n.list_value().clone())
             .unwrap_or_else(|| [].into())
     }
 
+    /// Looks up a key and returns its children as text values.
     pub fn get_str_list(&self, key: &str) -> Rc<[Str]> {
         self.get_list(key).iter().map(|t| t.value()).collect()
     }

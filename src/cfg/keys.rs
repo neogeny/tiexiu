@@ -8,33 +8,51 @@ use super::ENV_PREFIX;
 pub use crate::util::cfg;
 pub use cfg::*;
 
+/// Type alias for a configuration array.
 pub type CfgA = cfg::CfgA<CfgKey>;
+/// Type alias for a concrete configuration box.
 pub type Cfg = cfg::Cfg<CfgKey>;
 
 /// Configuration Key are addditive, so the default is empty
 const DEFAULT_CFGA: &CfgA = &[];
 
+/// Configuration key for the TieXiu parser engine.
 #[derive(Debug, Clone, Default)]
 pub enum CfgKey {
+    /// No-op placeholder.
     #[default]
     Null,
 
+    /// Enable debug output.
     Debug,
+    /// Enable verbose output.
     Verbose,
+    /// Enable trace output.
     Trace,
 
     // Grammar directives
+    /// Name of the grammar.
     Grammar(String),
+    /// Whitespace pattern.
     Wsp(String),
+    /// Comment pattern.
     Cmt(String),
+    /// End-of-line comment pattern.
     Eol(String),
+    /// Allowed name characters.
     NameChars(String),
+    /// Start rule name.
     Start(String),
 
+    /// Enable case-insensitive matching.
     IgnoreCase,
+    /// Enable name guard.
     NameGuard,
+    /// Disable left-recursion support.
     NoLeftRecursion,
+    /// Disable parse info tracking.
     NoParseInfo,
+    /// Disable memoization.
     NoMemoization,
 
     // Cursor
@@ -45,7 +63,7 @@ pub enum CfgKey {
     Heartbeat(HeartbeatRef),
 }
 
-/// Add configurations over default and env
+/// Build a `Cfg` by merging defaults, environment, and the given overrides.
 pub fn config(cfga: &CfgA) -> Cfg {
     // NOTE:
     //  Configurations are meant to be mostly one-time

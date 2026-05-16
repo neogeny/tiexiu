@@ -11,10 +11,12 @@ use std::rc::Rc;
 
 type Rails = Vec<Rc<str>>;
 
+/// Generates railroad diagram tracks for a grammar.
 pub fn tracks(grammar: &Grammar) -> Rails {
     walk_grammar(grammar)
 }
 
+/// Generates railroad diagram text for a grammar.
 pub fn text(grammar: &Grammar) -> String {
     let tracks = walk_grammar(grammar);
     let tracks: Vec<String> = tracks
@@ -24,6 +26,7 @@ pub fn text(grammar: &Grammar) -> String {
     tracks.join("\n")
 }
 
+/// Draws railroad diagram for a grammar to stdout.
 pub fn draw(grammar: &Grammar) {
     let tracks = walk_grammar(grammar);
     for line in tracks {
@@ -31,7 +34,9 @@ pub fn draw(grammar: &Grammar) {
     }
 }
 
+/// A trait for generating railroad diagram representations.
 pub trait ToRailroad {
+    /// Returns the railroad diagram as a string.
     fn railroads(&self) -> String;
 }
 

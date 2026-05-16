@@ -3,10 +3,13 @@
 
 use thiserror::Error;
 
+/// Utility-level result type.
 pub type Result<T> = std::result::Result<T, Error>;
 
+/// Utility error type.
 #[derive(Debug, Error)]
 pub enum Error {
+    /// An unknown configuration option was encountered.
     #[error("Unknown Cfg option {0}")]
     UnknownCfgOption(Box<str>),
 }

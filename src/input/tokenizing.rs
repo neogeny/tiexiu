@@ -7,6 +7,7 @@ use crate::input::Error;
 use crate::util::pyre::Pattern;
 use crate::util::pyre::traits::Pattern as _;
 
+/// Whitespace, comment, and EOL patterns used during tokenization.
 #[derive(Clone, Debug)]
 pub struct TokenizingPatterns {
     pub(super) wsp: Pattern,
@@ -17,6 +18,7 @@ pub struct TokenizingPatterns {
     pub(super) has_eol: bool,
 }
 
+/// Default patterns: standard whitespace, no comments, no EOL comments.
 impl Default for TokenizingPatterns {
     fn default() -> Self {
         Self::try_new(r"(?m)\s+", "", "").expect("default patterns must be valid")
@@ -24,6 +26,7 @@ impl Default for TokenizingPatterns {
 }
 
 impl TokenizingPatterns {
+    /// Configure patterns from a `Cfg` key set.
     pub fn configure(&mut self, cfg: &Cfg) {
         for opt in cfg.iter() {
             match opt {
@@ -56,6 +59,7 @@ impl TokenizingPatterns {
         }
     }
 
+    /// Compile a pattern, validating it does not match empty.
     pub fn compile(kind: &'static str, mut pattern: &str) -> Result<Pattern, Error> {
         if pattern.is_empty() {
             pattern = "(?!)";
@@ -69,6 +73,7 @@ impl TokenizingPatterns {
         Ok(p)
     }
 
+    /// Build tokenizing patterns from a configuration.
     pub fn from_cfg(cfg: &Cfg) -> Result<Self, Error> {
         let mut wsp = "";
         let mut cmt = "";
@@ -86,6 +91,7 @@ impl TokenizingPatterns {
         TokenizingPatterns::try_new(wsp, cmt, eol)
     }
 
+    /// Assert that a pattern does not match the empty string.
     pub fn validate_no_empty_match(pattern: &Pattern, kind: &str) {
         assert!(
             !pattern.matches_empty(),
@@ -95,6 +101,7 @@ impl TokenizingPatterns {
         );
     }
 
+    /// Try to create patterns from wsp, comment, and EOL strings.
     pub fn try_new(ws: &str, cm: &str, eo: &str) -> Result<Self, Error> {
         let wsp = Self::compile(STR_WHITESPACE, ws)?;
         let cmt = Self::compile(STR_COMMENTS, cm)?;

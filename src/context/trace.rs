@@ -24,6 +24,7 @@ impl Tracer for ConsoleTracer {
         term.write_line(msg).ok();
     }
 }
+/// Tracing event type.
 pub enum Event {
     Entry,
     Success,
@@ -34,6 +35,7 @@ pub enum Event {
     NoMatch,
 }
 
+/// Trait for tracing parse events.
 pub trait Tracer: Debug {
     fn trace(&self, ctx: &dyn CtxI, msg: &str) {
         let _ = ctx;

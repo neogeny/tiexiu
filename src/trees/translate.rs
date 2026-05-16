@@ -4,11 +4,15 @@
 use super::tree::Tree;
 use crate::trees::KeyValue;
 
+/// A trait for translating/codegen from a tree to an output type.
 pub trait Translator<O> {
+    /// Translate a single tree node given its processed children.
     fn translate(&mut self, tree: &Tree, children: &[O]) -> O;
 }
 
+/// A trait for types that can be translated using a Translator.
 pub trait Translates<O> {
+    /// Translate this tree using the given translator.
     fn translate_with<T: Translator<O> + ?Sized>(&self, trans: &mut T) -> O;
 }
 

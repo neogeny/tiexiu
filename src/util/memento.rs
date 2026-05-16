@@ -3,6 +3,7 @@
 
 use std::sync::atomic::{AtomicU64, Ordering};
 
+/// A globally-unique identifier based on an atomic counter.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Memento(u64);
 
@@ -13,6 +14,7 @@ impl Default for Memento {
 }
 
 impl Memento {
+    /// Creates a new globally-unique Memento.
     pub fn new() -> Self {
         // A global, static counter that lives for the duration of the program
         static COUNTER: AtomicU64 = AtomicU64::new(0);
@@ -22,6 +24,7 @@ impl Memento {
         Memento(id)
     }
 
+    /// Returns the unique identifier.
     pub fn id(&self) -> u64 {
         self.0
     }

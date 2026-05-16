@@ -15,11 +15,15 @@ use crate::util::pyre::{Pattern, escape};
 use std::fmt::Debug;
 use std::rc::Rc;
 
+/// Maximum allowed recursion depth for parsing.
 pub const MAX_RECURSION_DEPTH: usize = 64;
 
+/// A snapshot of parser state (position and cut status).
 #[derive(Debug, Clone, PartialEq)]
 pub struct Snap {
+    /// The cursor position at the snapshot.
     pub mark: usize,
+    /// Whether a cut was seen.
     pub cutseen: bool,
 }
 
@@ -37,6 +41,7 @@ impl<C: Ctx> From<C> for Snap {
 
 impl Snap {}
 
+/// Immutable context interface for reading parser state.
 pub trait CtxI: Configurable {
     fn cursor(&self) -> &dyn Cursor;
     fn callstack(&self) -> CallStack;
@@ -53,6 +58,7 @@ pub trait CtxI: Configurable {
     }
 }
 
+/// Mutable context interface for parsing operations.
 pub trait Ctx: CtxI + Clone + Debug {
     fn id(&self) -> usize {
         self as *const Self as usize

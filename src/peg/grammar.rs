@@ -14,16 +14,25 @@ use crate::{StrCursor, Tree, new_ctx};
 use std::rc::Rc;
 use std::sync::Arc;
 
+/// A reference to a grammar keyword string.
 pub type KeywordRef = Str;
+/// A heap-allocated slice of keyword references.
 pub type GrammarKeywords = Ref<[KeywordRef]>;
+/// Grammar-level directives configuration.
 pub type GrammarDirectives = Cfg;
 
+/// A parsed grammar containing rules, keywords, and directives.
 #[derive(Debug, Clone)]
 pub struct Grammar {
+    /// The grammar name.
     pub name: Str,
+    /// Whether the grammar has been analyzed (linked, left-recursion marked).
     pub analyzed: bool,
+    /// Grammar directives.
     pub directives: GrammarDirectives,
+    /// Sorted, deduplicated keywords for keyword matching.
     pub keywords: GrammarKeywords,
+    /// The map of rule names to rules.
     pub rules: RuleMap,
 }
 
@@ -44,6 +53,7 @@ where
 }
 
 impl Grammar {
+    /// Creates a new Grammar with the given name and rules.
     pub fn new(name: &str, rules: &[RuleRef]) -> Self {
         let rules: RuleMap = rules.iter().cloned().map(|r| (r.name.clone(), r)).collect();
         Self {
@@ -62,6 +72,7 @@ impl Grammar {
         Ok(())
     }
 
+    /// Returns a reference to the grammar directives.
     pub fn get_directives(&self) -> &GrammarDirectives {
         &self.directives
     }
@@ -86,12 +97,14 @@ impl Grammar {
         self.keywords = vec.into();
     }
 
+    /// Returns true if the given name is a reserved keyword.
     pub fn is_keyword(&self, name: &str) -> bool {
         self.keywords
             .binary_search_by(|k| k.as_ref().cmp(name))
             .is_ok()
     }
 
+    /// Returns the name of the start rule ("start" or the first rule).
     pub fn start_rule(&self) -> Result<RuleName, ParseFailure> {
         if self.rules.is_empty() {
             return Err(ParseFailure::NoRulesInGrammar);
@@ -106,6 +119,7 @@ impl Grammar {
         }
     }
 
+    /// Parses at the current context position using the start rule.
     pub fn parse_at<C: Ctx>(&self, mut ctx: C) -> ParseResult {
         match self.start_rule() {
             Ok(start) => self.parse_from(ctx, start.as_ref()),
@@ -113,6 +127,7 @@ impl Grammar {
         }
     }
 
+    /// Parses input and returns the resulting Tree on success.
     pub fn parse_tree<C: Ctx>(&self, ctx: C) -> crate::error::Result<Tree> {
         match self.start_rule() {
             Ok(start) => self.parse_tree_from(ctx, start.as_ref()),
@@ -150,6 +165,7 @@ impl Grammar {
         }
     }
 
+    /// Parses a string input using the given config and returns the resulting Tree.
     pub fn parse_input(&self, text: &str, cfga: &CfgA) -> crate::error::Result<Tree> {
         let cursor = StrCursor::new(text);
         let ctx = new_ctx(cursor, cfga);
@@ -166,6 +182,7 @@ impl Grammar {
         }
     }
 
+    /// Parses a string input from a specific start rule.
     #[allow(dead_code)]
     pub fn parse_input_from(
         &self,
@@ -181,6 +198,7 @@ impl Grammar {
         }
     }
 
+    /// Returns a reference to the rule with the given name.
     pub fn get_rule(&self, name: &str) -> Result<&Rule, ParseFailure> {
         self.rules
             .get(name)
@@ -188,6 +206,7 @@ impl Grammar {
             .ok_or_else(|| RuleNotFound(name.into()))
     }
 
+    /// Returns an Arc reference to the rule with the given name.
     pub fn get_rule_ref(&self, name: &str) -> Result<RuleRef, ParseFailure> {
         self.rules
             .get(name)
@@ -195,20 +214,24 @@ impl Grammar {
             .ok_or_else(|| RuleNotFound(name.into()))
     }
 
+    /// Returns a reference to the rule at the given index position.
     pub fn get_rule_at(&self, id: usize) -> Option<&Rule> {
         self.rules.get_index(id).map(|(_, r)| r.as_ref())
     }
 
+    /// Returns a reference to the rule by its numeric id.
     pub fn get_rule_by_id(&self, id: usize) -> Option<&Rule> {
         self.get_rule_at(id)
     }
 
+    /// Returns the index of the rule with the given name.
     pub fn get_rule_id(&self, name: &str) -> Result<usize, ParseFailure> {
         self.rules
             .get_index_of(name)
             .ok_or_else(|| RuleNotFound(name.into()))
     }
 
+    /// Returns a mutable reference to the rule with the given name.
     #[allow(dead_code)]
     pub fn get_rule_mut(&mut self, name: &str) -> Result<&mut Rule, ParseFailure> {
         self.rules
@@ -217,6 +240,7 @@ impl Grammar {
             .ok_or_else(|| RuleNotFound(name.into()))
     }
 
+    /// Returns an iterator over all rules in the grammar.
     pub fn rules(&self) -> impl Iterator<Item = &Rule> {
         self.rules.values().map(|r| r.as_ref())
     }

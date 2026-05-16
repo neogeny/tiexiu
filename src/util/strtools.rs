@@ -30,6 +30,7 @@ fn isreserved(name: &str) -> bool {
         || WEAK_KEYWORDS.contains(&name)
 }
 
+/// Sanitizes a string into a valid identifier, using `plug` for replacements.
 pub fn safe_name(name: &str, plug: &str) -> Result<String, String> {
     if name.is_empty() {
         return Err("Input string cannot be empty.".into());
@@ -106,14 +107,17 @@ fn is_valid_identifier(s: &str) -> bool {
     chars.all(|c| c.is_ascii_alphanumeric() || c == '_')
 }
 
+/// Returns the display width of a string respecting Unicode widths.
 pub fn unicode_display_len(s: &str) -> usize {
     s.width()
 }
 
+/// Returns the display width of a character respecting Unicode widths.
 pub fn unicode_width(c: char) -> usize {
     c.width().unwrap_or(0)
 }
 
+/// Returns the number of lines in a string (minimum 1).
 pub fn linecount(s: &str) -> usize {
     if s.is_empty() {
         1
@@ -122,16 +126,21 @@ pub fn linecount(s: &str) -> usize {
     }
 }
 
+/// Returns true if the string contains more than one line.
 pub fn ismultiline(s: &str) -> bool {
     linecount(s) > 1
 }
 
+/// Result of counting lines in a string (total and logical).
 #[derive(Debug, Clone, Copy, Default)]
 pub struct LineCount {
+    /// Total line count.
     pub tots: usize,
+    /// Logical line count (at least 1 if non-empty).
     pub totl: usize,
 }
 
+/// Counts lines in a string, returning both total and logical counts.
 pub fn countlines(s: &str) -> LineCount {
     if s.is_empty() {
         LineCount::default()
@@ -142,6 +151,7 @@ pub fn countlines(s: &str) -> LineCount {
     }
 }
 
+/// Converts a CamelCase identifier to snake_case.
 pub fn to_snake_case(name: &str) -> Result<String, String> {
     if name.is_empty() {
         return Ok(name.into());

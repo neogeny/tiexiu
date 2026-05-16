@@ -1,9 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-/// Returns the byte length of non-newline whitespace starting from the beginning of the text.
-/// If the current line contains non-whitespace characters or a line separator,
-/// the scan stops at that boundary.
+/// Returns the byte length of leading non-newline whitespace.
 pub fn take_non_newline_whitespace_len(text: &str) -> usize {
     // Get the first line as defined by .lines()
     match text.lines().next() {

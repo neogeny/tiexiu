@@ -6,9 +6,13 @@ pub(crate) const ENV_PREFIX: &str = "TIEXIU";
 
 // Paths for unit tests
 
+/// Path to the TatSu EBNF grammar file.
 pub const PATH_TATSU_GRAMMAR_EBNF: &str = "grammar/tatsu.ebnf";
+/// Path to the TatSu JSON grammar file.
 pub const PATH_TATSU_GRAMMAR_JSON: &str = "grammar/tatsu.json";
+/// Path to the Calc JSON grammar file.
 pub const PATH_CALC_GRAMMAR_JSON: &str = "grammar/calc.json";
+/// Path to the Calc EBNF grammar file.
 pub const PATH_CALC_GRAMMAR_EBNF: &str = "grammar/calc.ebnf";
 
 // Grammar directives (from TatSu)

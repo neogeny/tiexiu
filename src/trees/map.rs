@@ -6,8 +6,10 @@ use crate::cfg::types::Define;
 use crate::types::Str;
 use std::rc::Rc;
 
+/// A reference-counted slice of key-tree entries for TreeMap.
 pub type TreeEntrySlice = Rc<[(Str, Rc<Tree>)]>;
 
+/// An ordered map of named tree elements.
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct TreeMap(pub TreeEntrySlice);
 
@@ -31,18 +33,22 @@ impl From<TreeMap> for Vec<(Str, Rc<Tree>)> {
 }
 
 impl TreeMap {
+    /// Creates an empty TreeMap.
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Returns an iterator over (key, tree) entries.
     pub fn iter(&self) -> std::slice::Iter<'_, (Str, Rc<Tree>)> {
         self.0.iter()
     }
 
+    /// Returns true if the map contains no entries.
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
 
+    /// Looks up a key and returns a reference to its tree value.
     pub fn get(&self, key: &str) -> Option<&Tree> {
         self.0
             .iter()
@@ -50,6 +56,7 @@ impl TreeMap {
             .map(|(_, v)| v.as_ref())
     }
 
+    /// Merges entries from another TreeMap into this one.
     pub fn update(&mut self, other: &TreeMap) {
         for (key, value) in other.0.iter() {
             if let Tree::Seq(items) = value.as_ref() {
@@ -82,6 +89,7 @@ impl TreeMap {
         self.0 = entries.into();
     }
 
+    /// Inserts a value, merging with any existing entry for the same key.
     pub fn insert(&mut self, key: &str, item: Tree) {
         let key = self.safe_key(key);
         let mut entries: Vec<(Str, Rc<Tree>)> = self.0.as_ref().to_vec();
@@ -96,6 +104,7 @@ impl TreeMap {
         self.0 = entries.into();
     }
 
+    /// Inserts a value into a list entry for this key.
     pub fn insert_as_list(&mut self, key: &str, item: Tree) {
         let key = self.safe_key(key);
         let mut entries: Vec<(Str, Rc<Tree>)> = self.0.as_ref().to_vec();
