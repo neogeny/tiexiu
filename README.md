@@ -41,7 +41,26 @@ The [TatSu Documentation][] provides a vision of where the **TieXiu** project is
 
    The `PyO3` interface is there, but it's easier and more convenient to use **TatSu** directly when working with `Python`.
 
- **TieXiu** is today a powerful PEG parser generator in `Rust`, so it may find a home among the _rustacean_ community wanting to convert flat streams into semantic structures. 
+ **TieXiu** is today a powerful PEG parser generator in `Rust`, so it may find a home among the _rustacean_ community wanting to convert flat streams into semantic structures.
+
+### The Theoretical Ceiling: Why Rust Didn't "Run Circles"
+
+The humble `1.08x` speedup over highly optimized Python isn't a failure of Rust—it is a lesson in computer architecture governed by **Amdahl's Law** and the physical constraints of hardware.
+
+When applied to execution cost, Amdahl's Law dictates that the total time $T$ of a process across an optimization scale $n$ is bound by a fixed, unalterable baseline $b$:
+
+$$T(n) = b + \frac{T(1) - b}{n}$$
+
+In a hyper-optimized PEG engine like TatSu, the algorithmic design is already incredibly refined. The serial baseline $b$ represents the unavoidable physical mechanics of processing a formal language:
+
+1. **The Linear-Scan Lower Bound:** A parser cannot predict a grammar structure without reading the data. Every single byte must travel from RAM, through the cache hierarchy, and into a CPU register.
+2. **The Memory Wall:** Once code optimization strips away linguistic bloat (interpreter lookups, heavy object wrapping), the execution becomes entirely *Stream-Bound*. The CPU spends its clock cycles waiting on memory bus bandwidth.
+
+Because TatSu's core execution loop pushes those operations down into optimized C primitives and bitmaps, the remaining runtime overhead left to optimize ($T(1) - b$) is incredibly small.
+
+Rewriting the engine in Rust completely eliminates Python's memory management friction, heavy object boxing, and Garbage Collection pauses, but it cannot bypass the physical limits of silicon. Once an engine achieves true **Mechanical Sympathy** with the underlying hardware, the language it is written in becomes secondary—the physics of the text stream call the shots.
+
+
 
 ## Non-Features
 
