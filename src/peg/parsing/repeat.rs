@@ -3,8 +3,8 @@
 
 use crate::context::Ctx;
 use crate::peg::error::*;
-use crate::trees::TreeList;
 use crate::trees::short::NIL;
+use crate::trees::TreeList;
 use crate::{Exp, Tree};
 
 impl Exp {
@@ -60,7 +60,7 @@ impl Exp {
     pub fn repeat_with_sep<C: Ctx>(
         mut ctx: C,
         exp: &Exp,
-        pre: &Exp,
+        sep: &Exp,
         positive: bool,
         keep_pre: bool,
     ) -> ParseResult {
@@ -83,14 +83,14 @@ impl Exp {
         loop {
             let mark = ctx.mark();
             ctx.push_cut();
-            let result = pre.parse_at(ctx.push());
+            let result = sep.parse_at(ctx.push());
             let cutseen = ctx.take_cut();
             match result {
                 Err(nope) => {
                     if cutseen {
                         return Err(nope);
                     }
-                    return Ok(yeap(&ctx.into(), NIL.into()));
+                    return Ok(yeap(&ctx.into(), Tree::from(res).into()));
                 }
                 Ok(Yeap(snap, pre_tree)) => {
                     if snap.mark == mark {
@@ -122,8 +122,8 @@ impl Exp {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::context::CtxI;
     use crate::context::new_ctx;
+    use crate::context::CtxI;
     use crate::input::strcursor::StrCursor;
 
     fn setup(input: &str) -> impl Ctx {
@@ -159,30 +159,28 @@ mod tests {
     }
 
     #[test]
-    fn test_repeat_with_pre() {
-        let mut ctx = setup(",abc,abc");
+    fn test_repeat_with_sep() {
+        let mut ctx = setup("abc,abc,abc");
         let exp = Exp::token("abc");
-        let pre = Exp::token(",");
-        if let Ok(Yeap(snap, _)) = Exp::repeat_with_sep(ctx.push(), &exp, &pre, false, true) {
+        let sep = Exp::token(",");
+        if let Ok(Yeap(snap, tree)) = Exp::repeat_with_sep(ctx.push(), &exp, &sep, false, true) {
             ctx.merge(&snap);
-            // FIXME
-            // assert_eq!(res.len(), 4);
-            assert_eq!(ctx.cursor().mark(), 8);
+            assert_eq!(tree.width(), 11);
+            assert_eq!(ctx.cursor().mark(), 11);
         } else {
             panic!("repeat_with_pre failed")
         }
     }
 
     #[test]
-    fn test_repeat_with_pre_no_keep() {
-        let mut ctx = setup(",abc,abc");
+    fn test_repeat_with_sep_no_keep() {
+        let mut ctx = setup("abc,abc,abc");
         let exp = Exp::token("abc");
         let pre = Exp::token(",");
-        if let Ok(Yeap(snap, _)) = Exp::repeat_with_sep(ctx.push(), &exp, &pre, false, false) {
+        if let Ok(Yeap(snap, tree)) = Exp::repeat_with_sep(ctx.push(), &exp, &pre, false, false) {
             ctx.merge(&snap);
-            // FIXME
-            // assert_eq!(res.len(), 2);
-            assert_eq!(ctx.cursor().mark(), 8);
+            assert_eq!(tree.width(), 9);
+            assert_eq!(ctx.cursor().mark(), 11);
         } else {
             panic!("repeat_with_pre failed")
         }

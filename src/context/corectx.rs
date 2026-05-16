@@ -4,7 +4,7 @@
 pub use super::ctx::{Ctx, CtxI};
 use super::memo::{Memo, MemoKey};
 use super::state::{CallStack, HeavyState, ParseState};
-use super::trace::{CONSOLE_TRACER, NULL_TRACER, Tracer};
+use super::trace::{Tracer, CONSOLE_TRACER, NULL_TRACER};
 use crate::cfg::*;
 use crate::context::Snap;
 use crate::input::Cursor;
@@ -266,13 +266,25 @@ mod tests {
         assert!(ctx.cut_seen());
 
         let cloned_ctx = ctx.push();
+        // NOTE:
+        //   Cut has a stack independent of Ctx cloning
+        //   Ctx cloning dealss with `mark` backtracking
+        assert!(
+            cloned_ctx.cut_seen(),
+            "cloned context should have same cutseen"
+        );
+        assert!(
+            ctx.cut_seen(),
+            "original cuseen should be unchanged"
+        );
+        ctx.take_cut();
         assert!(
             !cloned_ctx.cut_seen(),
             "cloned context should have cutseen as false"
         );
         assert!(
-            ctx.cut_seen(),
-            "original context should still have cutseen as true"
+            !ctx.cut_seen(),
+            "original context should have cutseen as false"
         );
     }
 

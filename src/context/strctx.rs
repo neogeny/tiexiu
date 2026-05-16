@@ -76,7 +76,7 @@ mod tests {
 
         ctx2.cut();
         assert!(ctx2.cut_seen(), "Ctx2 should be cut");
-        assert!(!ctx1.cut_seen(), "Ctx1 should remain uncut (CoW)");
+        assert!(ctx1.cut_seen(), "Ctx1 should have a consistent cut state");
     }
 
     #[test]
