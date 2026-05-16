@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::failure::ParseFailure;
+use crate::Tree;
 use crate::context::{CtxI, Snap};
 use crate::input::memento::Memento;
-use crate::Tree;
 use std::fmt::Debug;
 use std::panic::Location;
 use std::rc::Rc;
@@ -112,10 +112,10 @@ impl Yeap {
 
 #[cfg(test)]
 mod tests {
-    use crate::context::CtxI;
-    use crate::peg::error::nope::{yeap, Nope};
-    use crate::peg::error::Yeap;
     use crate::Tree;
+    use crate::context::CtxI;
+    use crate::peg::error::Yeap;
+    use crate::peg::error::nope::{Nope, yeap};
     use std::rc::Rc;
 
     const TARGET: usize = 32;
