@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::memo::{Memo, MemoKey};
-use crate::SYM_ETX;
 use crate::cfg::Configurable;
 use crate::context::state::CallStack;
 use crate::context::trace::Tracer;
@@ -11,7 +10,8 @@ use crate::peg::error::Nope;
 use crate::peg::error::{DisasterReport, ParseFailure};
 use crate::trees::tree::Tree;
 use crate::types::Str;
-use crate::util::pyre::{Pattern, escape};
+use crate::util::pyre::{escape, Pattern};
+use crate::SYM_ETX;
 use std::fmt::Debug;
 use std::rc::Rc;
 
@@ -35,25 +35,7 @@ impl<C: Ctx> From<C> for Snap {
     }
 }
 
-impl Snap {
-    pub fn cut_seen(&self) -> bool {
-        self.cutseen
-    }
-
-    pub fn set_cut(&mut self) {
-        self.cutseen = true;
-    }
-
-    pub fn or_cut(&mut self, value: bool) {
-        self.cutseen |= value;
-    }
-
-    pub fn take_cut(&mut self) -> bool {
-        let cutseen = self.cutseen;
-        self.cutseen = false;
-        cutseen
-    }
-}
+impl Snap {}
 
 pub trait CtxI: Configurable {
     fn cursor(&self) -> &dyn Cursor;
@@ -61,12 +43,12 @@ pub trait CtxI: Configurable {
     fn mark(&self) -> usize {
         self.cursor().mark()
     }
-    fn _cut_seen(&self) -> bool;
+    fn cut_seen(&self) -> bool;
 
     fn click(&self) -> Snap {
         Snap {
             mark: self.mark(),
-            cutseen: false,
+            cutseen: self.cut_seen(),
         }
     }
 }
@@ -99,7 +81,7 @@ pub trait Ctx: CtxI + Clone + Debug {
 
     #[track_caller]
     fn failure(&mut self, start: usize, source: ParseFailure) -> Nope {
-        let nope = Nope::new(false);
+        let nope = Nope::default();
         self.cursor_mut().reset(start);
         if let Some(furthest) = self.furthest_failure()
             && furthest.start() >= start
@@ -213,8 +195,8 @@ pub trait Ctx: CtxI + Clone + Debug {
 
     fn clear_error_memos(&mut self);
 
-    fn _cut(&mut self);
-    fn _clear_cut(&mut self);
+    fn cut(&mut self);
+    fn take_cut(&mut self) -> bool;
 
     fn prune_cache(&mut self);
 
@@ -226,14 +208,11 @@ pub trait Ctx: CtxI + Clone + Debug {
         let _ = keywords;
     }
 
-    fn merge(&mut self, snap: &Snap) {
-        self.reset(snap.mark);
-    }
+    fn merge(&mut self, snap: &Snap);
 
     fn push(&self) -> Self {
         let mut new = self.clone();
-        // FIXME
-        new._clear_cut();
+        new.take_cut();
         new
     }
 }

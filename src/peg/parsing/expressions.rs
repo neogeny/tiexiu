@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::api::error::nope::ParseResult;
-use crate::context::{Ctx, Snap};
+use crate::context::Ctx;
 use crate::peg::error::Yeap;
 use crate::peg::error::nope::yeap;
 use crate::peg::{Exp, ExpKind, ParseFailure::*, Parser};
@@ -77,13 +77,14 @@ impl Exp {
                         ctx.merge(&snap);
                         Ok(yeap(&ctx.click(), tree))
                     }
-                    Err(mut nope) => {
-                        nope.take_cut();
-                        Err(nope)
-                    }
+                    err => err,
                 },
             },
-            ExpKind::Cut => Err(ctx.failure(start, CutWithNoSequence)),
+            ExpKind::Cut => {
+                ctx.cut();
+                ctx.tracer().trace_cut(&ctx);
+                Ok(yeap(&ctx.click(), Tree::Nil.into()))
+            }
             ExpKind::Void => {
                 ctx.match_void();
                 Ok(yeap(&ctx.click(), Tree::Nil.into()))
@@ -180,10 +181,7 @@ impl Exp {
                         ctx.merge(&snap);
                         Ok(yeap(&ctx.click(), tree))
                     }
-                    Err(mut nope) => {
-                        nope.take_cut();
-                        Err(nope)
-                    }
+                    err => err,
                 }
             }
             ExpKind::SkipGroup(exp) => {
@@ -218,11 +216,9 @@ impl Exp {
 
             ExpKind::Sequence(sequence) => {
                 let mut results: Vec<Rc<Tree>> = Vec::with_capacity(sequence.len());
-                let mut cut = false;
                 for exp in &**sequence {
                     if let ExpKind::Cut = exp.kind {
                         // ctx.cut();
-                        cut = true;
                         ctx.tracer().trace_cut(&ctx);
                         ctx.prune_cache();
                         continue;
@@ -232,14 +228,12 @@ impl Exp {
                             results.push(tree);
                             ctx.merge(&snap);
                         }
-                        Err(mut nope) => {
-                            nope.cutseen |= cut;
+                        Err(nope) => {
                             return Err(nope);
                         }
                     }
                 }
-                let mut snap: Snap = ctx.into();
-                snap.or_cut(cut);
+                let snap = ctx.click();
                 if results.is_empty() {
                     Ok(yeap(&snap, Tree::Nil.into()))
                 } else if results.len() == 1 {
@@ -399,8 +393,8 @@ mod tests {
         );
         let _ = grammar;
         let mut ctx = StrCtx::new(StrCursor::new("abc"), &[]);
-        ctx._cut();
-        assert!(ctx._cut_seen(), "ctx should have cut set before choice");
+        ctx.cut();
+        assert!(ctx.cut_seen(), "ctx should have cut set before choice");
 
         let exp = Exp::choice(vec![Exp::token("abc"), Exp::token("xyz")]);
         let result = exp.parse_at(ctx.clone());
@@ -408,7 +402,7 @@ mod tests {
         let succ = result.unwrap();
         ctx.merge(&succ.0);
         assert!(
-            ctx._cut_seen(),
+            ctx.cut_seen(),
             "cut should be restored after choice success"
         );
     }
@@ -421,8 +415,8 @@ mod tests {
         );
         let _ = grammar;
         let mut ctx = StrCtx::new(StrCursor::new("abc"), &[]);
-        ctx._cut();
-        assert!(ctx._cut_seen(), "ctx should have cut set before choice");
+        ctx.cut();
+        assert!(ctx.cut_seen(), "ctx should have cut set before choice");
 
         let exp = Exp::choice(vec![Exp::token("xyz"), Exp::token("123")]);
         let result = exp.parse_at(ctx);
@@ -440,7 +434,7 @@ mod tests {
         );
         let _ = grammar;
         let mut ctx = StrCtx::new(StrCursor::new("abc"), &[]);
-        assert!(!ctx._cut_seen(), "ctx should not have cut set");
+        assert!(!ctx.cut_seen(), "ctx should not have cut set");
 
         let exp = Exp::choice(vec![Exp::token("abc"), Exp::token("xyz")]);
         let result = exp.parse_at(ctx.clone());
@@ -448,7 +442,7 @@ mod tests {
         let succ = result?;
         ctx.merge(&succ.0);
         assert!(
-            !ctx._cut_seen(),
+            !ctx.cut_seen(),
             "cut should be cleared when not set on entry"
         );
         Ok(())
@@ -462,8 +456,8 @@ mod tests {
         );
         let _ = grammar;
         let mut ctx = StrCtx::new(StrCursor::new("abc"), &[]);
-        ctx._cut();
-        assert!(ctx._cut_seen(), "ctx should have cut set before optional");
+        ctx.cut();
+        assert!(ctx.cut_seen(), "ctx should have cut set before optional");
 
         let exp = Exp::optional(Exp::token("abc"));
         let result = exp.parse_at(ctx.clone());
@@ -471,7 +465,7 @@ mod tests {
         let succ = result.unwrap();
         ctx.merge(&succ.0);
         assert!(
-            ctx._cut_seen(),
+            ctx.cut_seen(),
             "cut should be restored after optional success"
         );
     }
@@ -482,8 +476,8 @@ mod tests {
             crate::peg::Grammar::new("test", &[Rule::new("start", &[], Exp::token("xyz")).into()]);
         let _ = grammar;
         let mut ctx = StrCtx::new(StrCursor::new("abc"), &[]);
-        ctx._cut();
-        assert!(ctx._cut_seen(), "ctx should have cut set before optional");
+        ctx.cut();
+        assert!(ctx.cut_seen(), "ctx should have cut set before optional");
 
         let exp = Exp::optional(Exp::token("xyz"));
         let result = exp.parse_at(ctx.clone());
@@ -491,7 +485,7 @@ mod tests {
         let succ = result.unwrap();
         ctx.merge(&succ.0);
         assert!(
-            ctx._cut_seen(),
+            ctx.cut_seen(),
             "cut should be restored after optional failure"
         );
     }
@@ -502,7 +496,7 @@ mod tests {
             crate::peg::Grammar::new("test", &[Rule::new("start", &[], Exp::token("abc")).into()]);
         let _ = grammar;
         let mut ctx = StrCtx::new(StrCursor::new("abc"), &[]);
-        assert!(!ctx._cut_seen(), "ctx should not have cut set");
+        assert!(!ctx.cut_seen(), "ctx should not have cut set");
 
         let exp = Exp::optional(Exp::token("abc"));
         let result = exp.parse_at(ctx.clone());
@@ -510,7 +504,7 @@ mod tests {
         let succ = result.unwrap();
         ctx.merge(&succ.0);
         assert!(
-            !ctx._cut_seen(),
+            !ctx.cut_seen(),
             "cut should be cleared when not set on entry"
         );
     }

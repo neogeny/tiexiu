@@ -4,8 +4,9 @@
 pub use super::ctx::{Ctx, CtxI};
 use super::memo::{Memo, MemoKey};
 use super::state::{CallStack, HeavyState, ParseState};
-use super::trace::{CONSOLE_TRACER, NULL_TRACER, Tracer};
+use super::trace::{Tracer, CONSOLE_TRACER, NULL_TRACER};
 use crate::cfg::*;
+use crate::context::Snap;
 use crate::input::Cursor;
 use crate::peg::error::DisasterReport;
 use crate::trees::Tree;
@@ -82,7 +83,7 @@ where
     }
 
     #[inline]
-    fn _cut_seen(&self) -> bool {
+    fn cut_seen(&self) -> bool {
         self.state.cutseen
     }
 }
@@ -184,14 +185,16 @@ where
         self.heavy.borrow_mut().memos.clear_error_memos();
     }
 
-    fn _cut(&mut self) {
+    fn cut(&mut self) {
         self.tracer().trace_cut(self);
         self.state_mut().cutseen = true;
         // self.prune_cache();
     }
 
-    fn _clear_cut(&mut self) {
+    fn take_cut(&mut self) -> bool {
+        let cutseen = self.cut_seen();
         self.state_mut().cutseen = false;
+        cutseen
     }
 
     fn prune_cache(&mut self) {
@@ -211,11 +214,10 @@ where
         self.heavy.borrow_mut().keywords = keywords.into()
     }
 
-    // FIXME
-    // fn merge(mut self, other: &Self) -> Self {
-    //     self.state_mut().merge(&other.state);
-    //     self
-    // }
+    fn merge(&mut self, snap: &Snap) {
+        self.reset(snap.mark);
+        self.state_mut().cutseen = snap.cutseen;
+    }
 }
 
 #[cfg(test)]
@@ -228,7 +230,7 @@ mod tests {
         let cursor = StrCursor::new("test");
         let ctx = CoreCtx::new(cursor, &[]);
 
-        assert!(!ctx._cut_seen());
+        assert!(!ctx.cut_seen());
     }
 
     #[test]
@@ -246,8 +248,8 @@ mod tests {
         let cursor = StrCursor::new("test");
         let mut ctx = CoreCtx::new(cursor, &[]);
 
-        ctx._cut();
-        assert!(ctx._cut_seen());
+        ctx.cut();
+        assert!(ctx.cut_seen());
     }
 
     #[test]
@@ -255,16 +257,16 @@ mod tests {
         let cursor = StrCursor::new("test");
         let mut ctx = CoreCtx::new(cursor, &[]);
 
-        ctx._cut();
-        assert!(ctx._cut_seen());
+        ctx.cut();
+        assert!(ctx.cut_seen());
 
         let cloned_ctx = ctx.push();
         assert!(
-            !cloned_ctx._cut_seen(),
+            !cloned_ctx.cut_seen(),
             "cloned context should have cutseen as false"
         );
         assert!(
-            ctx._cut_seen(),
+            ctx.cut_seen(),
             "original context should still have cutseen as true"
         );
     }

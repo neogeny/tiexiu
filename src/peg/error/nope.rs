@@ -18,10 +18,8 @@ pub fn yeap(snap: &Snap, tree: Rc<Tree>) -> Yeap {
     Yeap(snap.clone().into(), tree)
 }
 
-#[derive(thiserror::Error, Debug, Clone, PartialEq)]
-pub struct Nope {
-    pub cutseen: bool,
-}
+#[derive(thiserror::Error, Debug, Default, Clone, PartialEq)]
+pub struct Nope {}
 
 #[derive(Clone, Debug)]
 pub struct DisasterReport {
@@ -77,29 +75,6 @@ impl DisasterReport {
         let was_cut = self.cutseen;
         self.cutseen = false;
         was_cut
-    }
-}
-
-impl Nope {
-    #[track_caller]
-    pub fn new(cutseen: bool) -> Self {
-        Self { cutseen }
-    }
-
-    pub fn setcut(&mut self) {
-        self.cutseen = true;
-    }
-
-    pub fn take_cut(&mut self) -> bool {
-        let was_cut = self.cutseen;
-        self.cutseen = false;
-        was_cut
-    }
-
-    pub fn restore_cut(&mut self, was_cut: bool) {
-        if !was_cut {
-            self.cutseen = false;
-        }
     }
 }
 

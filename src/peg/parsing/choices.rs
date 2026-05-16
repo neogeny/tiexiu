@@ -30,8 +30,8 @@ impl Exp {
                         ctx.merge(&snap);
                         return Ok(yeap(&ctx.click(), tree));
                     }
-                    Err(mut nope) => {
-                        if nope.take_cut() {
+                    Err(nope) => {
+                        if ctx.take_cut() {
                             return Err(nope);
                         }
                     }
@@ -49,8 +49,8 @@ impl Exp {
                 ctx.merge(&snap);
                 Ok(yeap(&ctx.into(), tree))
             }
-            Err(mut nope) => {
-                if nope.take_cut() {
+            Err(nope) => {
+                if ctx.take_cut() {
                     return Err(nope);
                 }
                 Ok(yeap(&ctx.into(), Tree::Nil.into()))

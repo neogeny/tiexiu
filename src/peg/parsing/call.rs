@@ -47,13 +47,12 @@ impl Exp {
                 ctx.heartbeat_tick();
                 Ok(yeap(&snap, tree))
             }
-            Err(mut nope) => {
+            Err(nope) => {
                 if rule.should_trace() {
                     ctx.leave();
                 }
                 ctx.tracer().trace_failure(&ctx, name);
                 ctx.memoize(&key, &Tree::Bottom.into(), ctx.mark());
-                nope.take_cut();
                 Err(nope)
             }
         }
