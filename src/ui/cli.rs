@@ -8,11 +8,11 @@ use clap::{Parser, Subcommand};
 use console::style;
 use std::fmt::Write;
 use std::path::PathBuf;
+use tiexiu::PrettyPrint;
 use tiexiu::api::{
     boot_grammar_pretty, boot_grammar_to_json_string, compile, load_grammar_from_json, parse_input,
 };
 use tiexiu::cfg::{Cfg, CfgA};
-use tiexiu::PrettyPrint;
 use tiexiu::tools::rails::*;
 use tiexiu::{CfgKey, Grammar, Result, boot_grammar, config};
 
