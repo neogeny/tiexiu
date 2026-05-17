@@ -29,14 +29,14 @@ The [TatSu Documentation][] provides a vision of where the **TieXiu** project is
 
 ## On The (Non-Blazing) Speed
 
-**TieXiu** was started with the aim of learning `Rust` and applying AI Agents over a meaningful project (versus books or simple exercises). **TatSu** has rich parser-generator semantics that had to be replicated in `Rust` for completeness and compatibility. 
+**TieXiu** was started with the aim of learning `Rust` and applying AI Agents over a meaningful project (versus books or simple exercises). **TatSu** has rich parser-generator semantics that had to be replicated in `Rust` for completeness and compatibility.
 
- Not a primary objective, it was expected that parsing with otpimized `Rust` over its runtime would run circles around the `Python` implementation. 
- 
+ Not a primary objective, it was expected that parsing with otpimized `Rust` over its runtime would run circles around the `Python` implementation.
+
  **It was not so**.
 
  As if implementing the semantics wasn't difficult enough on a languate so strict about memory management and with so little reasonable and efficient defaults, the first complete runs of parser generation and parsing were `3x` times _slower_ than the best `Python` counterpart.
- 
+
  It took an important amount of _Rust-specific_ optimizations and some algorithm redesign to reach the current `1.08x` speed.`Rust` is not friendly to the deep recursion required to parse a language like, for example, `Java`, and its default data structures, like `Vec`, don't behave well when used as short-lived containers. The complete history of optimizations that include an imported _heap manager_ figure in the `Git` logs.
 
    The `PyO3` interface is there, but it's easier and more convenient to use **TatSu** directly when working with `Python`.
@@ -51,15 +51,18 @@ When applied to execution cost, Amdahl's Law dictates that the total time $T$ of
 
 $$T(n) = b + \frac{T(1) - b}{n}$$
 
-In a hyper-optimized PEG engine like TatSu, the algorithmic design is already incredibly refined. The serial baseline $b$ represents the unavoidable physical mechanics of processing a formal language:
+In an optimized PEG engine like **TatSu**, the algorithmic design is already incredibly refined. The serial baseline $b$ represents the unavoidable physical mechanics of processing a formal language:
 
-1. **The Linear-Scan Lower Bound:** A parser cannot predict a grammar structure without reading the data. Every single byte must travel from RAM, through the cache hierarchy, and into a CPU register.
-2. **The Memory Wall:** Once code optimization strips away linguistic bloat (interpreter lookups, heavy object wrapping), the execution becomes entirely *Stream-Bound*. The CPU spends its clock cycles waiting on memory bus bandwidth.
+1. **The Linear-Scan Lower Bound:** A parser cannot predict the input structure without scanning the _all_ the input. Every single byte must travel from RAM, through the cache hierarchy, and into a CPU register, and _it must be matched_ against _"something"_ as specified by the grammar.
+2. **The Memory Wall:** Once code optimization strips away linguistic bloat (interpreter lookups, heavy object wrapping), the execution becomes entirely *Stream-Bound*. The CPU spends its clock cycles waiting on memory bus bandwidth, or moving through the states of a regexp automata.
 
-Because TatSu's core execution loop pushes those operations down into optimized C primitives and bitmaps, the remaining runtime overhead left to optimize ($T(1) - b$) is incredibly small.
+Because **TatSu**'s core execution loop pushes those operations down into optimized C primitives and bitmaps, the remaining runtime overhead left to optimize ($T(1) - b$) is incredibly small.
 
 Rewriting the engine in Rust completely eliminates Python's memory management friction, heavy object boxing, and Garbage Collection pauses, but it cannot bypass the physical limits of silicon. Once an engine achieves true **Mechanical Sympathy** with the underlying hardware, the language it is written in becomes secondary—the physics of the text stream call the shots.
 
+[OgoPEGo][] is a brand new implementation of the semantics in `Go`. It's quite beautiful and very efficient, and _it also hits the same asymptotic bound on parsing speed_.
+
+[OgoPEGo]: https://github.com/neogeny/ogopego
 
 
 ## Non-Features
