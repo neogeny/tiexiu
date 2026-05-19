@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::trees::short::BOTTOM;
 use crate::trees::tree::Tree;
 use crate::types::{FastIndexSet, Str};
 use ahash::{AHashMap, RandomState};
@@ -118,7 +119,10 @@ impl MemoCache {
     }
 
     pub fn prune(&mut self, cutpoint: usize) {
-        self.memos.retain(|key, _| key.mark >= cutpoint);
+        self.memos.retain(
+            |key, memo|
+                key.mark >= cutpoint && *memo.tree != BOTTOM
+        );
     }
 }
 

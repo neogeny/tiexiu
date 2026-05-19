@@ -4,7 +4,7 @@
 pub use super::ctx::{Ctx, CtxI};
 use super::memo::{Memo, MemoKey};
 use super::state::{CallStack, HeavyState, ParseState};
-use super::trace::{CONSOLE_TRACER, NULL_TRACER, Tracer};
+use super::trace::{Tracer, CONSOLE_TRACER, NULL_TRACER};
 use crate::cfg::*;
 use crate::context::Snap;
 use crate::input::Cursor;
@@ -190,7 +190,7 @@ where
         if let Some(last) = self.heavy.borrow_mut().cutstack.last_mut() {
             *last = true;
         }
-        // self.prune_cache();
+        self.prune_cache();
     }
 
     fn push_cut(&mut self) {
