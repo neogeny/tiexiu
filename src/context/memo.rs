@@ -119,10 +119,8 @@ impl MemoCache {
     }
 
     pub fn prune(&mut self, cutpoint: usize) {
-        self.memos.retain(
-            |key, memo|
-                key.mark >= cutpoint && *memo.tree != BOTTOM
-        );
+        self.memos
+            .retain(|key, memo| key.mark >= cutpoint && *memo.tree != BOTTOM);
     }
 }
 
