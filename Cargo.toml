@@ -52,13 +52,8 @@ cli = [
     "dep:clap",
     "dep:syntect",
     "dep:indicatif",
-    "mimalloc",
 ]
 pyo3 = ["dep:pyo3", "cli"]
-mimalloc = ["dep:mimalloc"]
-dhat = ["dep:dhat"]
-dhat-heap = []    # if you are doing heap profiling
-dhat-ad-hoc = []  # if you are doing ad hoc profiling
 
 
 #interpolation = ["dep:strfmt", "dep:evalexpr"]
@@ -69,8 +64,6 @@ thiserror = "2.0.18"
 fancy-regex = "0.18"
 console = "0.16.3"
 json = "0.12.4"
-
-dhat = { version = "0.3.3", optional = true }
 
 pyo3 = {
     version = "0.28",
@@ -86,7 +79,6 @@ serde_json = { version = "1.0.149", features = ["preserve_order"], optional = tr
 unicode-width = "0.2.2"
 derivative = "2.2.0"
 indicatif = { version = "0.18.4", optional = true }
-mimalloc = { version = "0.1.50", optional = true }
 ahash = { version = "0.8.12", features = ["no-rng", "std"] }
 
 #evalexpr = { version = "13.1.0", optional = true }

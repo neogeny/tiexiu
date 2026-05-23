@@ -4,18 +4,6 @@
 #![allow(clippy::collapsible_if)]
 #![allow(clippy::collapsible_match)]
 
-#[cfg(not(feature = "dhat"))]
-#[cfg(feature = "mimalloc")]
-use mimalloc::MiMalloc;
-#[cfg(not(feature = "dhat"))]
-#[global_allocator]
-#[cfg(feature = "mimalloc")]
-static GLOBAL: MiMalloc = MiMalloc;
-
-#[cfg(feature = "dhat")]
-#[global_allocator]
-static ALLOC: dhat::Alloc = dhat::Alloc;
-
 /// Functional API (free functions) and the OO `TieXiu` wrapper.
 pub mod api;
 /// Configuration system for the parser engine.

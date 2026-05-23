@@ -7,9 +7,6 @@ use tiexiu::Error;
 use tiexiu::error::Result;
 
 fn main() -> Result<()> {
-    #[cfg(feature = "dhat")]
-    let _profiler = dhat::Profiler::new_heap();
-
     use std::io::{self, Write};
     let mut out_handle = io::stdout().lock();
     let mut err_handle = io::stderr().lock();
