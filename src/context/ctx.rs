@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::memo::{Memo, MemoKey};
-use crate::SYM_ETX;
 use crate::cfg::Configurable;
 use crate::context::state::CallStack;
 use crate::context::trace::Tracer;
@@ -12,11 +11,9 @@ use crate::peg::error::{DisasterReport, ParseFailure};
 use crate::trees::tree::Tree;
 use crate::types::Str;
 use crate::util::pyre::{Pattern, escape};
+use crate::{MAX_RECURSION_DEPTH, SYM_ETX};
 use std::fmt::Debug;
 use std::rc::Rc;
-
-/// Maximum allowed recursion depth for parsing.
-pub const MAX_RECURSION_DEPTH: usize = 64;
 
 /// A snapshot of parser state (position and cut status).
 #[derive(Debug, Clone, PartialEq)]

@@ -1,10 +1,14 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-pub(crate) const TATSU_TYPE_TAG: &str = "__class__";
+/// Prefix for recognized environment variables
 pub(crate) const ENV_PREFIX: &str = "TIEXIU";
 
-// Paths for unit tests
+/// Maximum allowed recursion depth for parsing.
+pub const MAX_RECURSION_DEPTH: usize = 64;
+
+/// Tag use for nodes in JSON versions of grammars
+pub(crate) const TATSU_TYPE_TAG: &str = "__class__";
 
 /// Path to the TatSu EBNF grammar file.
 pub const PATH_TATSU_GRAMMAR_EBNF: &str = "grammar/tatsu.ebnf";
