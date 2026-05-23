@@ -37,7 +37,7 @@ The [TatSu Documentation][] provides a vision of where the **TieXiu** project is
 
  As if implementing the semantics wasn't difficult enough on a languate so strict about memory management and with so little reasonable and efficient defaults, the first complete runs of parser generation and parsing were `3x` times _slower_ than the best `Python` counterpart.
 
- It took an important amount of _Rust-specific_ optimizations and some algorithm redesign to reach the current `1.08x` speed.`Rust` is not friendly to the deep recursion required to parse a language like, for example, `Java`, and its default data structures, like `Vec`, don't behave well when used as short-lived containers. The complete history of optimizations that include an imported _heap manager_ figure in the `Git` logs.
+ It took an important amount of _Rust-specific_ optimizations and some algorithm redesign to reach the current `1.08x` speed.`Rust` is not friendly to the deep recursion required to parse a language like, for example, `Java`, and its default data structures, like `Vec`, don't behave well when used as short-lived containers. The complete history of optimizations that include an imported _heap manager_ (jemalloc) figure in the `Git` logs. The custom allocator has since been removed for cross-platform compatibility — the system allocator is used on all platforms.
 
    The `PyO3` interface is there, but it's easier and more convenient to use **TatSu** directly when working with `Python`.
 
