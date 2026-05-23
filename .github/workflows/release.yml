@@ -45,7 +45,7 @@ jobs:
           python-version: '3.12'
 
       - name: Build wheels
-        uses: PyO3/maturin-action@v1
+        uses: PyO3/maturin-action@v2
         with:
           target: ${{ matrix.target }}
           # Added -i python3.15 to force the interpreter link if not using abi3
@@ -64,7 +64,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Build sdist
-        uses: PyO3/maturin-action@v1
+        uses: PyO3/maturin-action@v2
         with:
           command: sdist
           args: --out dist
