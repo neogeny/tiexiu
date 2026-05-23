@@ -9,6 +9,7 @@ use std::rc::Rc;
 
 pub(crate) type Token = str;
 
+/// A Lisp-like cons-list of tokens, optimized for push (O(1)) and iteration.
 pub struct TokenStack(Rc<Node>);
 
 #[derive(Debug, Clone)]
@@ -53,10 +54,12 @@ impl fmt::Debug for TokenStack {
 }
 
 impl TokenStack {
+    /// Creates an empty token stack.
     pub fn new() -> Self {
         Self(Node::Nil.into())
     }
 
+    /// Creates a token stack containing a single atom.
     pub fn atom(a: &str) -> Self {
         Self(Node::Atom(a.into()).into())
     }
@@ -74,6 +77,7 @@ impl TokenStack {
         Self(self.0.new_with_tail(a).into())
     }
 
+    /// Returns the tail of the list (everything after the first element), if any.
     pub fn tail(&self) -> Option<TokenStack> {
         match self.0.as_ref() {
             Node::Cons(_, cdr) => Some(Self(cdr.clone())),
@@ -81,6 +85,7 @@ impl TokenStack {
         }
     }
 
+    /// Returns the first element of the list, if any.
     pub fn first(&self) -> Option<&str> {
         let mut current = &self.0;
         loop {
@@ -92,19 +97,23 @@ impl TokenStack {
         }
     }
 
+    /// Returns an iterator over the elements in the stack.
     pub fn iter(&self) -> TokenListIter<'_> {
         TokenListIter::new(self)
     }
 
+    /// Returns true if the stack contains no elements.
     pub fn is_empty(&self) -> bool {
         matches!(self.0.as_ref(), Node::Nil)
     }
 
+    /// Collects the stack elements into a `Vec<&str>`.
     pub fn to_vec(&self) -> Vec<&str> {
         self.iter().collect()
     }
 }
 
+/// An iterator over the elements of a `TokenStack`.
 pub struct TokenListIter<'a> {
     stack: Vec<&'a Node>,
 }

@@ -1,6 +1,10 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+//! Stack-based parsing context with push/undo/merge state management.
+//!
+//! **Note:** This module is currently dead code and not compiled.
+
 pub use super::ctx::{Ctx, CtxI};
 use super::memo::{Key, Memo};
 use super::state::{CallStack, HeavyState, ParseState, ParseStateStack};
@@ -11,12 +15,15 @@ use crate::input::Cursor;
 use crate::trees::Tree;
 use crate::util::pyre::Pattern;
 
+/// A parsing context that maintains a stack of parse states for backtracking.
 #[derive(Clone, Debug)]
 pub struct StackCtx<'c, U>
 where
     U: Cursor + Clone,
 {
+    /// The stack of parse states (cursor positions, key tracking).
     pub states: ParseStateStack<U>,
+    /// Shared heavyweight state (memos, patterns, keywords, etc.).
     pub heavy: HeavyState<'c>,
 }
 
@@ -24,6 +31,7 @@ impl<'c, U> StackCtx<'c, U>
 where
     U: Cursor + Clone,
 {
+    /// Creates a new `StackCtx` from a cursor and configuration.
     pub fn new(cursor: U, cfga: &CfgA) -> Self {
         let len = cursor.as_str().len();
         let mut ctx = Self {
@@ -35,6 +43,7 @@ where
         ctx
     }
 
+    /// Wraps this context in a `CtxProxy` for shared ownership.
     pub fn proxy(self) -> CtxProxy<Self> {
         CtxProxy::new(self)
     }
@@ -50,10 +59,12 @@ where
         self.states.state_mut()
     }
 
+    /// Sets a custom tracer for debugging parse execution.
     pub fn trace_with(&mut self, tracer: &'c dyn Tracer) {
         self.heavy.tracer = tracer
     }
 
+    /// Enables or disables console tracing for parse execution.
     pub fn set_trace(&mut self, on: bool) {
         if on {
             self.trace_with(&CONSOLE_TRACER);

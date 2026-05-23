@@ -18,11 +18,13 @@ impl<C: Ctx> Parser<C> for Exp {
 }
 
 impl Exp {
+    /// Pre-computes lookahead and defines caches for this expression.
     pub fn initialize_caches(&mut self) {
         self.cache_lookahead();
         self.cache_defines();
     }
 
+    /// Returns the lookahead set joined into a single string for error messages.
     pub fn lookahead_str(&self) -> Str {
         self.la
             .as_ref()
@@ -31,6 +33,7 @@ impl Exp {
             .into()
     }
 
+    /// Parses at the current context position, applying defines after a successful match.
     pub fn parse_at<C: Ctx>(&self, ctx: C) -> ParseResult {
         match self.do_parse_at(ctx) {
             Err(err) => Err(err),

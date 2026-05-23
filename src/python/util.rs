@@ -4,6 +4,7 @@ use pyo3::prelude::*;
 use pyo3::IntoPyObjectExt;
 use pyo3::types::{PyDict, PyDictMethods, PyList, PyListMethods};
 
+/// Converts a `json::JsonValue` into the equivalent Python object.
 pub fn pythonize(py: Python<'_>, value: &JsonValue) -> PyResult<Py<PyAny>> {
     match value {
         JsonValue::Null => Ok(py.None()),

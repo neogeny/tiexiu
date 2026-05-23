@@ -97,6 +97,7 @@ impl StrCursor {
         false
     }
 
+    /// Consumes whitespace characters that are not newlines.
     pub fn eat_spaces_no_newlines(&mut self) {
         let mut p = usize::MAX;
         let eol = self.heavy.patterns.eol.clone();

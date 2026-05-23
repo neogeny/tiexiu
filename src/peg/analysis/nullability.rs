@@ -5,20 +5,24 @@ use crate::exp::{Exp, ExpKind};
 use crate::util::pyre;
 
 impl Exp {
+    /// Returns references to child expressions reachable via calls or includes.
     pub fn callable_from(&self) -> Vec<&Exp> {
         self.kind.callable_from()
     }
 
+    /// Returns mutable references to child expressions reachable via calls or includes.
     pub fn callable_from_mut(&mut self) -> Vec<&mut Exp> {
         self.kind.callable_from_mut()
     }
 
+    /// Returns `true` if this expression can match zero characters (empty string).
     pub fn is_nullable(&self) -> bool {
         self.kind.is_nullable()
     }
 }
 
 impl ExpKind {
+    /// Returns `true` if this expression kind can match zero characters.
     pub fn is_nullable(&self) -> bool {
         match &self {
             Self::Nil => true,
@@ -77,6 +81,7 @@ impl ExpKind {
             }
         }
     }
+    /// Returns the child expressions reachable from this expression kind.
     //noinspection DuplicatedCode
     pub fn callable_from(&self) -> Vec<&Exp> {
         match &self {
@@ -140,6 +145,7 @@ impl ExpKind {
         }
     }
 
+    /// Returns mutable references to child expressions reachable from this expression kind.
     //noinspection DuplicatedCode
     pub fn callable_from_mut(&mut self) -> Vec<&mut Exp> {
         match self {

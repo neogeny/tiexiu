@@ -24,6 +24,7 @@ fn cli_styles() -> Styles {
         .placeholder(AnsiColor::Cyan.on_default())
 }
 
+/// Output format for grammar serialization.
 #[derive(clap::ValueEnum, Clone, Debug)]
 pub enum OutputFormat {
     /// Output the grammar as a minified JSON object
@@ -132,6 +133,7 @@ pub enum Commands {
     },
 }
 
+/// Runs the TieXiu CLI with command-line arguments.
 pub fn cli(out: &mut std::io::StdoutLock) -> Result<()> {
     use crate::ui::progress::ProgressUI;
     use std::io::Write;
@@ -325,6 +327,7 @@ fn configure_color(color: clap::ColorChoice) -> bool {
     }
 }
 
+/// Applies syntax highlighting to content using pygments, optionally disabling color.
 pub fn pygmentize(content: &str, extension: &str, use_color: bool) -> Result<String> {
     let mut out = String::new();
 

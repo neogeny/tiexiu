@@ -11,6 +11,7 @@ use crate::{Exp, ExpKind};
 use std::rc::Rc;
 
 impl Exp {
+    /// Returns the lookahead set as a boxed slice of strings.
     pub fn la_boxed(&self) -> Rc<[Str]> {
         self.la
             .as_ref()
@@ -19,6 +20,7 @@ impl Exp {
             .into()
     }
 
+    /// Parses an ordered choice — tries each option in sequence, committing on cut.
     pub fn parse_choice<C: Ctx>(&self, mut ctx: C, options: &[Exp]) -> ParseResult {
         let start = ctx.mark();
 
@@ -45,6 +47,7 @@ impl Exp {
         Err(ctx.failure(start, NoViableOption(self.lookahead_str())))
     }
 
+    /// Parses an optional expression — succeeds with `Tree::Nil` if the inner expression fails.
     pub fn parse_optional<C: Ctx>(&self, mut ctx: C, exp: &Exp) -> ParseResult {
         ctx.push_cut();
         let result = exp.parse_at(ctx.push());

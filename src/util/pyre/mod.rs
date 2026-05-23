@@ -23,6 +23,7 @@ pub fn truncate_pattern(pattern: &str, limit: usize) -> &str {
     }
 }
 
+/// Escapes special regex characters for use as a literal.
 pub fn escape(pattern: &str) -> Box<str> {
     fancy::escape(pattern)
 }

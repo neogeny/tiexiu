@@ -4,12 +4,14 @@
 use super::heartbeat::CliHeartbeat;
 use tiexiu::HeartbeatRef;
 
+/// Progress bar for loading global resources (spinner style).
 pub struct LoadProgress {
     pb: indicatif::ProgressBar,
     hb: HeartbeatRef,
 }
 
 impl LoadProgress {
+    /// Creates a new spinner progress bar with the given message.
     pub fn new(mp: &indicatif::MultiProgress, msg: &'static str) -> Self {
         let pb = mp.insert(
             0,
@@ -24,15 +26,18 @@ impl LoadProgress {
         Self { pb, hb }
     }
 
+    /// Returns a reference to the underlying heartbeat callback.
     pub fn heartbeat(&self) -> &HeartbeatRef {
         &self.hb
     }
 
+    /// Marks the loading as finished.
     pub fn finish(self) {
         self.pb.finish_with_message("loaded");
     }
 }
 
+/// Progress bar for tracking individual file parsing (bar style).
 pub struct FileProgress {
     pb: indicatif::ProgressBar,
     hb: HeartbeatRef,
@@ -58,29 +63,35 @@ impl FileProgress {
         Self { pb, hb }
     }
 
+    /// Returns a reference to the underlying heartbeat callback.
     pub fn heartbeat(&self) -> &HeartbeatRef {
         &self.hb
     }
 
+    /// Sets the expected total number of bytes.
     pub fn set_length(&self, len: usize) {
         self.pb.set_length(len as u64);
     }
 
+    /// Marks the file as successfully processed.
     pub fn success(self) {
         self.pb.finish_with_message("done");
     }
 
+    /// Marks the file as failed (currently a no-op).
     pub fn fail(self, _msg: &str) {
         // self.pb.finish_with_message(msg.to_string());
     }
 }
 
+/// Top-level progress UI with a multi-progress bar for batch processing.
 pub struct ProgressUI {
     mp: indicatif::MultiProgress,
     files: indicatif::ProgressBar,
 }
 
 impl ProgressUI {
+    /// Creates a new progress UI for processing `total` files.
     pub fn new(total: u64) -> Self {
         let mp = indicatif::MultiProgress::new();
         let files = mp.add(indicatif::ProgressBar::new(total)
@@ -95,18 +106,22 @@ impl ProgressUI {
         Self { mp, files }
     }
 
+    /// Starts a spinner progress for a named loading phase.
     pub fn loading(&self, msg: &'static str) -> LoadProgress {
         LoadProgress::new(&self.mp, msg)
     }
 
+    /// Starts a progress bar for processing a named file.
     pub fn add_file(&self, name: &str) -> FileProgress {
         FileProgress::new(&self.mp, name)
     }
 
+    /// Increments the file counter.
     pub fn inc_files(&self) {
         self.files.inc(1);
     }
 
+    /// Marks all processing as finished.
     pub fn finish(self) {
         self.files.finish_with_message("done");
     }

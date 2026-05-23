@@ -7,6 +7,7 @@
 use json::JsonValue;
 use serde_json::Value as SerdeValue;
 
+/// Converts a `serde_json::Value` to a `json::JsonValue`.
 #[allow(dead_code)]
 pub fn serde_to_json(v: SerdeValue) -> JsonValue {
     match v {
@@ -39,6 +40,7 @@ pub fn serde_to_json(v: SerdeValue) -> JsonValue {
     }
 }
 
+/// Converts a `json::JsonValue` to a `serde_json::Value`.
 #[allow(dead_code)]
 pub fn json_to_serde(v: JsonValue) -> SerdeValue {
     match v {

@@ -32,6 +32,7 @@ macro_rules! ensure {
     };
 }
 
+/// Captures a failed `ensure!()` condition with source location.
 #[derive(Clone, Debug, PartialEq, thiserror::Error)]
 pub struct Ensure {
     pub condition: &'static str,

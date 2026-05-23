@@ -38,6 +38,7 @@ fn update_cfg_from_kwargs(tx: &mut TieXiu, kwargs: Option<&Bound<'_, PyDict>>) -
     Ok(())
 }
 
+/// Python wrapper around the OO `TieXiu` API.
 #[pyclass(module = "_tiexiu", unsendable)]
 pub struct TieXiuPy(pub TieXiu);
 

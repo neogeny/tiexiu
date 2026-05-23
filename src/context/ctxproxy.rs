@@ -1,6 +1,10 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+//! Context proxy wrapping an inner context in `Rc<RefCell>` for shared ownership.
+//!
+//! **Note:** This module is currently dead code and not compiled.
+
 use super::ctx::{Ctx, CtxI};
 use super::memo::{Key, Memo};
 use crate::cfg::*;
@@ -12,8 +16,10 @@ use crate::util::pyre::Pattern;
 use std::cell::{Ref, RefCell, RefMut};
 use std::rc::Rc;
 
+/// A context wrapper that provides shared ownership of an inner `Ctx` via `Rc<RefCell>`.
 #[derive(Debug)]
 pub struct CtxProxy<C: Ctx> {
+    /// The inner context wrapped in shared ownership.
     pub inner: Rc<RefCell<C>>,
     frozen: Option<usize>,
 }
@@ -30,6 +36,7 @@ impl<C: Ctx> Clone for CtxProxy<C> {
 }
 
 impl<C: Ctx> CtxProxy<C> {
+    /// Wraps a context in a shared `Rc<RefCell>`.
     pub fn new(inner: C) -> Self {
         Self {
             inner: Rc::new(RefCell::new(inner)),
@@ -37,15 +44,18 @@ impl<C: Ctx> CtxProxy<C> {
         }
     }
 
+    /// Borrows the inner context immutably.
     pub fn inner(&self) -> Ref<'_, C> {
         self.inner.borrow()
     }
 
+    /// Borrows the inner context mutably.
     pub fn inner_mut(&mut self) -> RefMut<'_, C> {
         self.frozen = None;
         self.inner.borrow_mut()
     }
 
+    /// Freezes the proxy at the current mark (placeholder).
     pub fn freeze(&mut self) {
         // todo!("freeze not resolved")
     }

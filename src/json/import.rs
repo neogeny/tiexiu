@@ -14,18 +14,25 @@ use crate::peg::rule::Rule;
 use crate::types::Str;
 use json::JsonValue;
 
+/// Helper for traversing JSON values during deserialization, tracking the path
+/// for error reporting.
 #[derive(Clone)]
 pub struct JsonSerializationHelper {
+    /// The current JSON value being processed.
     value: JsonValue,
+    /// The path to the current value (for error messages).
     path: Vec<String>,
 }
 
 impl Grammar {
+    /// Parses a JSON string and deserializes it into a `Grammar`.
+    /// Parses a JSON string and deserializes it into a `Grammar`.
     pub fn from_json(json: &str) -> Result<Self, JsonError> {
         let value = json::parse(json)?;
         Self::from_json_value(&value)
     }
 
+    /// Deserializes a `JsonValue` into a `Grammar`.
     pub fn from_json_value(value: &JsonValue) -> Result<Self, JsonError> {
         let path = JsonSerializationHelper::new(value.clone());
         let class = path.get_class()?;
@@ -98,11 +105,13 @@ impl Grammar {
 }
 
 impl Rule {
+    /// Deserializes a `JsonValue` into a `Rule`.
     pub fn from_json_value(value: &JsonValue) -> Result<Self, JsonError> {
         let path = JsonSerializationHelper::new(value.clone());
         Self::from_json_with_path(path)
     }
 
+    /// Deserializes a `Rule` from a `JsonSerializationHelper` at the current path.
     pub fn from_json_with_path(path: JsonSerializationHelper) -> Result<Self, JsonError> {
         let class = path.get_class()?;
 
@@ -144,11 +153,13 @@ impl Rule {
 }
 
 impl Exp {
+    /// Deserializes a `JsonValue` into an `Exp`.
     pub fn from_json_value(value: &JsonValue) -> Result<Self, JsonError> {
         let path = JsonSerializationHelper::new(value.clone());
         Self::from_json_with_path(path)
     }
 
+    /// Deserializes an `Exp` from a `JsonSerializationHelper` at the current path.
     pub fn from_json_with_path(path: JsonSerializationHelper) -> Result<Self, JsonError> {
         let class = path.get_class()?;
 

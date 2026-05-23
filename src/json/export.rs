@@ -15,12 +15,14 @@ use crate::peg::rule::Rule;
 use json::JsonValue;
 
 impl Grammar {
+    /// Serializes the grammar to a `serde_json::Value` (requires `serde_json` feature).
     #[cfg(feature = "serde_json")]
     pub fn to_json_serde(&self) -> serde_json::Value {
         let json_str = self.to_json().dump();
         serde_json::from_str(&json_str).unwrap_or(serde_json::Value::Null)
     }
 
+    /// Serializes this grammar into a `JsonValue`.
     pub fn to_json(&self) -> JsonValue {
         let mut obj = JsonValue::new_object();
 
@@ -59,16 +61,19 @@ impl Grammar {
         obj
     }
 
+    /// Serializes the grammar to a compact JSON string.
     pub fn to_json_str(&self) -> Result<Box<str>> {
         Ok(self.to_json().dump().into())
     }
 
+    /// Serializes the grammar to a pretty-printed JSON string.
     pub fn to_json_string(&self) -> Result<String> {
         Ok(self.to_json().pretty(2))
     }
 }
 
 impl Rule {
+    /// Serializes this rule into a `JsonValue`.
     pub fn to_json(&self) -> JsonValue {
         let mut obj = JsonValue::new_object();
 
@@ -96,12 +101,14 @@ impl Rule {
 }
 
 impl Exp {
+    /// Serializes this expression into a `JsonValue`.
     pub fn to_json(&self) -> JsonValue {
         self.kind.to_json_value()
     }
 }
 
 impl ExpKind {
+    /// Serializes this expression kind into a `JsonValue`.
     pub fn to_json_value(&self) -> JsonValue {
         let mut obj = JsonValue::new_object();
         let tag = TATSU_TYPE_TAG.to_string();

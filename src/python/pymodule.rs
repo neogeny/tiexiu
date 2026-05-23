@@ -7,6 +7,7 @@ use super::pyooapi::TieXiuPy;
 use crate::ParseError;
 use pyo3::prelude::*;
 
+/// Python module initializer: registers `_tiexiu` with all functions and classes.
 #[pymodule(name = "_tiexiu")]
 pub fn tiexiu(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;

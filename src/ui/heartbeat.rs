@@ -4,6 +4,7 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 use tiexiu::Heartbeat;
 
+/// CLI heartbeat that updates a progress bar position.
 #[derive(Debug)]
 pub struct CliHeartbeat {
     pb: indicatif::ProgressBar,
@@ -11,6 +12,7 @@ pub struct CliHeartbeat {
 }
 
 impl CliHeartbeat {
+    /// Creates a new `CliHeartbeat` that drives the given progress bar.
     pub fn new(pb: indicatif::ProgressBar) -> Self {
         Self {
             pb,

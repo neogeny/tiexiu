@@ -4,6 +4,7 @@
 use crate::json::error::JsonError;
 use crate::peg::Grammar;
 
+/// The embedded TatSu PEG grammar serialized as JSON.
 pub const TATSU_GRAMMAR_JSON: &str = include_str!("../../grammar/tatsu.json");
 
 /// Loads the embedded TatSu grammar from its JSON representation.

@@ -8,14 +8,17 @@ use crate::peg::pretty::PrettyPrint;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
+/// A compiled grammar exposed to Python.
 #[pyclass(module = "_tiexiu", unsendable)]
 pub struct GrammarPy(crate::peg::Grammar);
 
 impl GrammarPy {
+    /// Wraps a compiled `Grammar` for Python use.
     pub fn new(grammar: Grammar) -> Self {
         Self(grammar)
     }
 
+    /// Returns a reference to the inner `Grammar`.
     pub fn grammar(&self) -> &Grammar {
         &self.0
     }

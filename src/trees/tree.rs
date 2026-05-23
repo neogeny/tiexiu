@@ -111,6 +111,7 @@ struct TreeMerge {
 }
 
 impl TreeMerge {
+    /// Creates a new empty `TreeMerge`.
     pub fn new() -> Self {
         Self {
             root: Tree::Nil,

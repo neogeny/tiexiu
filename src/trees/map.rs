@@ -73,6 +73,7 @@ impl TreeMap {
         }
     }
 
+    /// Ensures that the given definition keys exist in the map, inserting defaults if missing.
     pub fn define(&mut self, keys: &[Define]) {
         let mut entries: Vec<(Str, Rc<Tree>)> = self.0.as_ref().to_vec();
         for (k, aslist) in keys {

@@ -12,6 +12,7 @@ use crate::trees::{Tree, TreeMap};
 use crate::types::Str;
 use std::rc::Rc;
 
+/// Compiles a parse tree (from the PEG grammar) into a compiled `Grammar`.
 #[derive(Debug, Default)]
 pub(crate) struct GrammarCompiler {}
 
@@ -66,6 +67,7 @@ fn map_get_default(map: &Tree, key: &'static str, default: &'static str) -> Str 
 }
 
 impl Grammar {
+    /// Compiles a parse tree into a `Grammar`, running analysis and initialization.
     pub fn compile(tree: &Tree, cfga: &CfgA) -> CompileResult<Self> {
         let mut compiler = GrammarCompiler::new();
         compiler.compile_grammar(tree, cfga)
@@ -73,10 +75,12 @@ impl Grammar {
 }
 
 impl GrammarCompiler {
+    /// Creates a new `GrammarCompiler`.
     pub fn new() -> GrammarCompiler {
         GrammarCompiler {}
     }
 
+    /// Compiles a grammar parse tree into a `Grammar`, running full initialization.
     pub fn compile_grammar(&mut self, tree: &Tree, cfga: &CfgA) -> CompileResult<Grammar> {
         let cfg = config(cfga);
         let _debug = cfg.contains(&CfgKey::Debug);
@@ -134,6 +138,7 @@ impl GrammarCompiler {
         Ok(grammar)
     }
 
+    /// Compiles a single rule from its parse tree representation.
     pub fn compile_rule(&self, tree: &Tree) -> CompileResult<Rule> {
         let ctx = "Rule";
         let map = parse_node_check(tree, ctx)?;
@@ -148,6 +153,7 @@ impl GrammarCompiler {
         Ok(Rule::new(&name, &params, exp))
     }
 
+    /// Recursively compiles an expression from its parse tree node.
     pub fn parse_exp(&self, tree: &Tree) -> CompileResult<Exp> {
         let (typename, tree) = parse_node(tree)?;
         let typename = typename.to_string();

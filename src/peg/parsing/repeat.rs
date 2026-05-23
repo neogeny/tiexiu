@@ -8,6 +8,7 @@ use crate::trees::short::NIL;
 use crate::{Exp, Tree};
 
 impl Exp {
+    /// Attempts to parse an expression and appends the result to a list.
     pub fn add_exp<C: Ctx>(mut ctx: C, exp: &Exp, res: &mut TreeList) -> ParseResult {
         match exp.parse_at(ctx.clone()) {
             Ok(Yeap(snap, tree)) => {
@@ -19,6 +20,7 @@ impl Exp {
         }
     }
 
+    /// Parses zero or more (`closure`) or one or more (`positive_closure`) repetitions.
     pub fn repeat<C: Ctx>(mut ctx: C, exp: &Exp, positive: bool) -> ParseResult {
         let mut res = TreeList::new();
         if positive {
@@ -57,6 +59,7 @@ impl Exp {
         }
     }
 
+    /// Parses repetitions separated by a separator expression (`join` / `gather`).
     pub fn repeat_with_sep<C: Ctx>(
         mut ctx: C,
         exp: &Exp,

@@ -17,12 +17,19 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Instant;
 
+/// The primary parsing context, wrapping a cursor and shared parsing state.
+///
+/// `CoreCtx` is the default context used by `new_ctx()`.  It owns the cursor
+/// position (`ParseState`) and shares memo tables, pattern caches, keywords
+/// and tracing infrastructure via `HeavyState`.
 #[derive(Clone, Debug)]
 pub struct CoreCtx<'c, U>
 where
     U: Cursor + Clone,
 {
+    /// The mutable parse state (cursor position, key tracking).
     pub state: Cow<'c, Box<ParseState<U>>>,
+    /// Shared heavyweight state (memos, patterns, tracer, heartbeat, etc.).
     pub heavy: Rc<RefCell<HeavyState<'c>>>,
 }
 
@@ -30,6 +37,7 @@ impl<'c, U> CoreCtx<'c, U>
 where
     U: Cursor + Clone + 'c,
 {
+    /// Creates a new `CoreCtx` from a cursor and configuration array.
     pub fn new(cursor: U, cfga: &CfgA) -> Self {
         let len = cursor.as_str().len();
         let mut ctx = Self {
@@ -55,10 +63,12 @@ where
         f(&mut heavy)
     }
 
+    /// Sets a custom tracer for debugging parse execution.
     pub fn trace_with(&mut self, tracer: &'c dyn Tracer) {
         self.heavy.borrow_mut().tracer = tracer
     }
 
+    /// Enables or disables console tracing for parse execution.
     pub fn set_trace(&mut self, on: bool) {
         if on {
             self.trace_with(&CONSOLE_TRACER);

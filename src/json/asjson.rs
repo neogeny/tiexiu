@@ -24,28 +24,34 @@ impl Serialize for Tree {
 }
 
 impl Tree {
+    /// Parses a JSON string into a `Tree`.
     pub fn from_json_str(json: &str) -> Result<Self, JsonError> {
         let value = json::parse(json)?;
         let tree = Self::from_json(&value);
         Ok(tree)
     }
 
+    /// Serializes the tree to a compact JSON string.
     pub fn to_json_str(&self) -> Box<str> {
         self.to_json_string_pretty().into()
     }
 
+    /// Serializes the tree to a compact JSON string.
     pub fn to_json_string(&self) -> String {
         self.to_json().dump()
     }
 
+    /// Serializes the tree to a pretty-printed JSON string.
     pub fn to_json_string_pretty(&self) -> String {
         self.to_json().pretty(2)
     }
 
+    /// Returns the tree as a `JsonValue`.
     pub fn to_value(&self) -> JsonValue {
         self.to_json()
     }
 
+    /// Converts this tree into a `JsonValue`.
     pub fn to_json(&self) -> JsonValue {
         match self {
             Tree::Bottom | Tree::Nil => JsonValue::Null,
@@ -94,6 +100,7 @@ impl Tree {
         }
     }
 
+    /// Converts a `JsonValue` back into a `Tree`.
     pub fn from_json(value: &JsonValue) -> Self {
         match value {
             JsonValue::Null => Tree::Nil,
