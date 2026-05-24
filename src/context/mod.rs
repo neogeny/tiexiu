@@ -31,6 +31,6 @@ pub mod prelude {
 }
 
 /// Create a new parsing context from a cursor and config.
-pub fn new_ctx<'c, U: Cursor + Clone + 'c>(cursor: U, cfga: &'c CfgA) -> impl Ctx {
+pub fn new_ctx<'c, U: Cursor + 'c>(cursor: U, cfga: &'c CfgA) -> impl Ctx {
     corectx::CoreCtx::new(cursor, cfga)
 }

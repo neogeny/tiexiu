@@ -11,60 +11,44 @@ use crate::peg::error::DisasterReport;
 use crate::trees::Tree;
 use crate::types::Str;
 use crate::util::pyre::Pattern;
-use std::borrow::Cow;
-use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Instant;
 
 /// The primary parsing context, wrapping a cursor and shared parsing state.
 ///
 /// `CoreCtx` is the default context used by `new_ctx()`.  It owns the cursor
-/// position (`ParseState`) and shares memo tables, pattern caches, keywords
-/// and tracing infrastructure via `HeavyState`.
-#[derive(Clone, Debug)]
+/// position (`ParseState`) and holds the memo tables, pattern caches, keywords
+/// and tracing infrastructure in [`HeavyState`].
+#[derive(Debug)]
 pub struct CoreCtx<'c, U>
 where
-    U: Cursor + Clone,
+    U: Cursor,
 {
     /// The mutable parse state (cursor position, key tracking).
-    pub state: Cow<'c, Box<ParseState<U>>>,
-    /// Shared heavyweight state (memos, patterns, tracer, heartbeat, etc.).
-    pub heavy: Rc<RefCell<HeavyState<'c>>>,
+    pub state: ParseState<U>,
+    /// Heavyweight state (memos, patterns, tracer, heartbeat, etc.).
+    pub heavy: HeavyState<'c>,
 }
 
 impl<'c, U> CoreCtx<'c, U>
 where
-    U: Cursor + Clone + 'c,
+    U: Cursor + 'c,
 {
     /// Creates a new `CoreCtx` from a cursor and configuration array.
     pub fn new(cursor: U, cfga: &CfgA) -> Self {
         let len = cursor.as_str().len();
         let mut ctx = Self {
-            state: Cow::Owned(ParseState::new(cursor).into()),
-            heavy: RefCell::new(HeavyState::new()).into(),
+            state: ParseState::new(cursor),
+            heavy: HeavyState::new(),
         };
-        ctx.heavy.borrow_mut().input_len = len;
+        ctx.heavy.input_len = len;
         ctx.configure(&config(cfga));
         ctx
     }
 
-    #[inline]
-    fn state_mut(&mut self) -> &mut ParseState<U> {
-        self.state.to_mut()
-    }
-
-    #[inline]
-    fn _with_heavy_mut<F, R>(&self, f: F) -> R
-    where
-        F: FnOnce(&mut HeavyState) -> R,
-    {
-        let mut heavy = self.heavy.borrow_mut();
-        f(&mut heavy)
-    }
-
     /// Sets a custom tracer for debugging parse execution.
     pub fn trace_with(&mut self, tracer: &'c dyn Tracer) {
-        self.heavy.borrow_mut().tracer = tracer
+        self.heavy.tracer = tracer
     }
 
     /// Enables or disables console tracing for parse execution.
@@ -79,7 +63,7 @@ where
 
 impl<'c, U> CtxI for CoreCtx<'c, U>
 where
-    U: Cursor + Clone,
+    U: Cursor + 'c,
 {
     #[inline]
     fn cursor(&self) -> &dyn Cursor {
@@ -88,18 +72,18 @@ where
 
     #[inline]
     fn callstack(&self) -> CallStack {
-        self.heavy.borrow_mut().callstack.clone()
+        self.heavy.callstack.clone()
     }
 
     #[inline]
     fn cut_seen(&self) -> bool {
-        *self.heavy.borrow().cutstack.last().unwrap_or(&false)
+        *self.heavy.cutstack.last().unwrap_or(&false)
     }
 }
 
 impl<'c, U> Configurable for CoreCtx<'c, U>
 where
-    U: Cursor + Clone,
+    U: Cursor + 'c,
 {
     fn configure(&mut self, cfg: &Cfg) {
         self.cursor_mut().configure(cfg);
@@ -109,62 +93,61 @@ where
         }
 
         if let Some(hb) = cfg.heartbeat() {
-            self.heavy.borrow_mut().heartbeat = Some(hb.clone());
+            self.heavy.heartbeat = Some(hb.clone());
         }
     }
 }
 
 impl<'c, U> Ctx for CoreCtx<'c, U>
 where
-    U: Cursor + Clone,
+    U: Cursor + 'c,
 {
     #[inline]
     fn cursor_mut(&mut self) -> &mut dyn Cursor {
-        &mut self.state_mut().cursor
+        &mut self.state.cursor
     }
 
     fn enter(&mut self, name: &str) {
-        self.heavy.borrow_mut().callstack.push(name);
+        self.heavy.callstack.push(name);
     }
 
     fn leave(&mut self) {
-        let tail = self.heavy.borrow().callstack.tail().unwrap_or_default();
-        self.heavy.borrow_mut().callstack = tail;
+        self.heavy.callstack = self.heavy.callstack.tail().unwrap_or_default();
     }
 
     fn untrack(&mut self, key: &MemoKey) -> usize {
-        self.state_mut().keytrack.untrack(key)
+        self.state.keytrack.untrack(key)
     }
 
     fn tracer(&self) -> &dyn Tracer {
-        self.heavy.borrow().tracer
+        self.heavy.tracer
     }
 
     fn track(&mut self, key: &MemoKey) -> usize {
-        self.state_mut().keytrack.track(key)
+        self.state.keytrack.track(key)
     }
 
     fn intern(&mut self, s: &str) -> Str {
-        self.heavy.borrow_mut().memos.intern(s)
+        self.heavy.memos.intern(s)
     }
 
     fn set_furthest_failure(&mut self, dis: DisasterReport) {
-        self.heavy.borrow_mut().set_furthest_failure(dis);
+        self.heavy.set_furthest_failure(dis);
     }
 
     fn furthest_failure(&self) -> Option<DisasterReport> {
-        self.heavy.borrow().furthest_failure.clone()
+        self.heavy.furthest_failure.clone()
     }
 
     fn get_pattern(&mut self, pattern: &str) -> Pattern {
-        self.heavy.borrow_mut().get_pattern(pattern)
+        self.heavy.get_pattern(pattern)
     }
 
     fn heartbeat_tick(&mut self) {
-        if self.heavy.borrow().instant.elapsed().as_millis() < 128 {
+        if self.heavy.instant.elapsed().as_millis() < 128 {
             return;
         }
-        if let Some(hb) = self.heavy.borrow().heartbeat.clone() {
+        if let Some(hb) = self.heavy.heartbeat.clone() {
             let mark = self.mark();
             let total = self.cursor().as_str().len();
             if total == 0 {
@@ -172,61 +155,54 @@ where
             }
             hb.tick(mark, total);
         }
-        self.heavy.borrow_mut().instant = Instant::now();
+        self.heavy.instant = Instant::now();
     }
 
     fn key(&mut self, name: &str, can_memo: bool) -> MemoKey {
-        self.heavy
-            .borrow_mut()
-            .memos
-            .key(self.mark(), name.into(), can_memo)
+        self.heavy.memos.key(self.mark(), name.into(), can_memo)
     }
 
     fn memo(&mut self, key: &MemoKey) -> Option<Memo> {
-        self.heavy.borrow_mut().memos.memo(key)
+        self.heavy.memos.memo(key)
     }
 
     fn memoize(&mut self, key: &MemoKey, tree: &Rc<Tree>, lastmark: usize) {
-        self.heavy.borrow_mut().memos.memoize(key, tree, lastmark);
+        self.heavy.memos.memoize(key, tree, lastmark);
     }
 
     fn clear_error_memos(&mut self) {
-        self.heavy.borrow_mut().memos.clear_error_memos();
+        self.heavy.memos.clear_error_memos();
     }
 
     fn cut(&mut self) {
         self.tracer().trace_cut(self);
-        if let Some(last) = self.heavy.borrow_mut().cutstack.last_mut() {
+        if let Some(last) = self.heavy.cutstack.last_mut() {
             *last = true;
         }
         self.prune_cache();
     }
 
     fn push_cut(&mut self) {
-        self.heavy.borrow_mut().cutstack.push(false);
+        self.heavy.cutstack.push(false);
     }
 
     fn take_cut(&mut self) -> bool {
         let cutseen = self.cut_seen();
-        self.heavy.borrow_mut().cutstack.pop();
+        self.heavy.cutstack.pop();
         cutseen
     }
 
     fn prune_cache(&mut self) {
         let cutpoint = self.mark();
-        self.heavy.borrow_mut().memos.prune(cutpoint);
+        self.heavy.memos.prune(cutpoint);
     }
 
     fn is_keyword(&self, name: &str) -> bool {
-        self.heavy
-            .borrow()
-            .keywords
-            .binary_search(&name.into())
-            .is_ok()
+        self.heavy.keywords.binary_search(&name.into()).is_ok()
     }
 
     fn set_keywords(&mut self, keywords: &[Str]) {
-        self.heavy.borrow_mut().keywords = keywords.into()
+        self.heavy.keywords = keywords.into()
     }
 }
 
@@ -260,34 +236,6 @@ mod tests {
 
         ctx.cut();
         assert!(ctx.cut_seen());
-    }
-
-    #[test]
-    fn clone_resets_cutseen() {
-        let cursor = StrCursor::new("test");
-        let mut ctx = CoreCtx::new(cursor, &[]);
-
-        ctx.cut();
-        assert!(ctx.cut_seen());
-
-        let cloned_ctx = ctx.clone();
-        // NOTE:
-        //   Cut has a stack independent of Ctx cloning
-        //   Ctx cloning dealss with `mark` backtracking
-        assert!(
-            cloned_ctx.cut_seen(),
-            "cloned context should have same cutseen"
-        );
-        assert!(ctx.cut_seen(), "original cuseen should be unchanged");
-        ctx.take_cut();
-        assert!(
-            !cloned_ctx.cut_seen(),
-            "cloned context should have cutseen as false"
-        );
-        assert!(
-            !ctx.cut_seen(),
-            "original context should have cutseen as false"
-        );
     }
 
     #[test]

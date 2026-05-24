@@ -35,7 +35,7 @@ pub struct Alert {
 
 /// Mutable parse state: cursor position and recursion tracking.
 #[derive(Debug)]
-pub struct ParseState<U: Cursor + Clone> {
+pub struct ParseState<U: Cursor> {
     /// The input cursor.
     pub cursor: U,
     /// Tracks memo key recursion depth for left-recursion detection.
@@ -46,7 +46,7 @@ pub struct ParseState<U: Cursor + Clone> {
 ///
 /// Holds memo tables, compiled patterns, keywords, the furthest failure,
 /// tracer, heartbeat, call stack, and cut stack.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct HeavyState<'t> {
     /// Memoization cache for rule results.
     pub memos: MemoCache,
@@ -68,19 +68,6 @@ pub struct HeavyState<'t> {
     pub callstack: CallStack,
     /// Cut stack tracking which alternatives have seen a cut operator.
     pub cutstack: Vec<bool>,
-}
-
-/// A stack-based container for `ParseState`, supporting push/undo/merge.
-#[derive(Debug, Clone)]
-#[allow(dead_code)]
-pub struct ParseStateStack<U: Cursor + Clone> {
-    state_stack: Vec<ParseState<U>>,
-}
-
-impl<U: Cursor + Clone> Clone for ParseState<U> {
-    fn clone(&self) -> Self {
-        Self::new(self.cursor.clone())
-    }
 }
 
 impl<'t> Default for HeavyState<'t> {
@@ -120,93 +107,12 @@ impl<'t> HeavyState<'t> {
     }
 }
 
-impl<U: Cursor + Clone> ParseState<U> {
+impl<U: Cursor> ParseState<U> {
     /// Creates a new `ParseState` with the given cursor.
     pub fn new(cursor: U) -> Self {
         Self {
             cursor,
             keytrack: KeyTrack::default(),
         }
-    }
-
-    /// Creates a `ParseState` by cloning the cursor from another state.
-    pub fn from_state(other: &Self) -> Self {
-        Self {
-            cursor: other.cursor.clone(),
-            keytrack: KeyTrack::default(),
-        }
-    }
-
-    /// Resets the cursor to a previous position.
-    #[allow(dead_code)]
-    pub fn merge(&mut self, prev: &Self) -> &mut Self {
-        self.cursor.reset(prev.cursor.mark());
-        self
-    }
-
-    /// Placeholder for state pop logic.
-    #[allow(dead_code)]
-    pub fn pop(&mut self, _into: &mut Self) {}
-
-    /// Placeholder for state undo logic.
-    #[allow(dead_code)]
-    pub fn undo(&mut self, _into: &mut Self) {}
-}
-
-#[allow(dead_code)]
-impl<U: Cursor + Clone> ParseStateStack<U> {
-    /// Creates a new stack with an initial parse state at the given cursor.
-    pub fn new(cursor: U) -> Self {
-        Self {
-            state_stack: vec![ParseState::new(cursor)],
-        }
-    }
-
-    /// Returns a reference to the current (top) parse state.
-    #[track_caller]
-    pub fn state(&self) -> &ParseState<U> {
-        self.state_stack.last().expect("empty state stack")
-    }
-
-    /// Returns a mutable reference to the current (top) parse state.
-    #[track_caller]
-    pub fn state_mut(&mut self) -> &mut ParseState<U> {
-        self.state_stack.last_mut().expect("empty state stack")
-    }
-
-    /// Pops the top state and applies undo to the new top.
-    #[track_caller]
-    pub fn undo(&mut self) -> ParseState<U> {
-        let mut prev = self.state_stack.pop().expect("empty state stack");
-        prev.undo(self.state_mut());
-        prev
-    }
-
-    /// Pops the top state and applies pop to the new top.
-    #[track_caller]
-    pub fn pop(&mut self) -> ParseState<U> {
-        let mut prev = self.state_stack.pop().expect("empty state stack");
-        prev.pop(self.state_mut());
-        prev
-    }
-
-    /// Pushes a new parse state initialized with a fresh cursor.
-    pub fn new_state(&mut self) -> &mut ParseState<U> {
-        let new_s = ParseState::new(self.state().cursor.clone());
-        self.state_stack.push(new_s);
-        self.state_mut()
-    }
-
-    /// Pushes a new parse state cloned from the current state.
-    pub fn push(&mut self) -> &mut ParseState<U> {
-        let new_s = ParseState::from_state(self.state());
-        self.state_stack.push(new_s);
-        self.state_mut()
-    }
-
-    /// Pops the top state and merges it into the new top.
-    pub fn merge(&mut self) -> &mut ParseState<U> {
-        let prev = self.pop();
-        self.state_mut().merge(&prev)
     }
 }

@@ -88,15 +88,6 @@ fn bench_nested_expression(c: &mut Criterion) {
     });
 }
 
-fn bench_context_clone(c: &mut Criterion) {
-    let cursor: StrCursor = "some text to parse".into();
-    let ctx = StrCtx::new(cursor, &[]);
-
-    c.bench_function("context_clone_cow", |b| {
-        b.iter(|| black_box(ctx.clone()));
-    });
-}
-
 fn bench_grammar_from_json(c: &mut Criterion) {
     let json = std::fs::read_to_string("grammar/calc.json").expect("calc.json missing");
 
@@ -158,7 +149,6 @@ criterion_group!(
             bench_choice_parse,
             bench_closure_parse,
             bench_nested_expression,
-            bench_context_clone,
             bench_grammar_from_json,
             bench_optional_parse,
             bench_lookahead_parse,

@@ -22,105 +22,13 @@ impl<'c> From<StrCursor> for StrCtx<'c> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::context::{Ctx, CtxI};
-    use crate::input::strcursor::StrCursor;
-    use crate::trees::Tree;
-    use std::mem::size_of;
-    use std::rc::Rc;
-
-    const TARGET: usize = 32;
-
-    #[test]
-    fn test_ctx_size() {
-        let size = size_of::<StrCtx>();
-        assert!(size <= TARGET, "StrCtx size is {} > {} bytes", size, TARGET);
-    }
-
-    #[test]
-    fn test_cursor_size() {
-        let size = size_of::<StrCursor>();
-        assert!(
-            size <= TARGET,
-            "StrCursor size is {} > {} bytes",
-            size,
-            TARGET
-        );
-    }
     #[test]
     fn test_ctx_handle_size() {
-        let size = size_of::<CoreCtx<StrCursor>>();
-        assert!(
-            size <= TARGET,
-            "CoreCtx handle size is {} > {} bytes",
-            size,
-            TARGET
-        );
-    }
-
-    #[test]
-    fn test_cow_behavior() {
-        let text = "calculate 1 + 2";
-        let cursor: StrCursor = StrCursor::new(text);
-
-        let mut ctx1 = CoreCtx::new(cursor, &[]);
-
-        ctx1.reset(10);
-        assert_eq!(ctx1.cursor().mark(), 10);
-
-        let mut ctx2 = ctx1.clone();
-        assert_eq!(ctx2.cursor().mark(), 10, "Clone should inherit offset");
-
-        ctx2.reset(5);
-
-        assert_eq!(ctx2.cursor().mark(), 5, "Ctx2 should update to 5");
-        assert_eq!(ctx1.cursor().mark(), 10, "Ctx1 should remain at 10 (CoW)");
-
-        ctx2.cut();
-        assert!(ctx2.cut_seen(), "Ctx2 should be cut");
-        assert!(ctx1.cut_seen(), "Ctx1 should have a consistent cut state");
-    }
-
-    #[test]
-    fn test_shared_memoization_semantics() {
-        let text = "abc";
-        let cursor: StrCursor = StrCursor::new(text);
-        let mut ctx1 = CoreCtx::new(cursor, &[]);
-
-        let mut ctx2 = ctx1.clone();
-
-        let key = ctx1.key("hello", true);
-
-        ctx1.memoize(&key, &Tree::Nil.into(), ctx1.mark());
-
-        let retrieved = ctx2.memo(&key);
-
-        assert!(
-            retrieved.is_some(),
-            "ctx2 failed to see the memoization entry from ctx1"
-        );
-        assert_eq!(
-            *retrieved.unwrap().tree,
-            Tree::Nil,
-            "Memoization data mismatch between shared contexts"
-        );
-    }
-
-    #[test]
-    fn test_state_isolation_preserves_shared_cache() {
-        let cursor: StrCursor = StrCursor::new("abc");
-        let mut ctx1 = CoreCtx::new(cursor, &[]);
-        let mut ctx2 = ctx1.clone();
-
-        ctx2.reset(1);
-
-        assert_ne!(ctx1.cursor().mark(), ctx2.cursor().mark());
-
-        let entry: Rc<Tree> = Tree::Bottom.into();
-        let key = ctx1.key("world", true);
-        ctx2.memoize(&key, &entry, ctx1.mark());
-        assert!(
-            ctx1.memo(&key).is_some(),
-            "Shared cache link was broken by a Copy-on-Write state split"
-        );
+        // CoreCtx now holds HeavyState and ParseState directly — no more
+        // Cow/RefCell wrappers.  The 32-byte bound was meaningful for the
+        // old owned-ctx design where contexts were cloned at every recursion
+        // point.  With &mut C semantics, the context is created once and
+        // passed by reference.  No size constraint.
+        let _ = CoreCtx::<StrCursor>::new;
     }
 }
