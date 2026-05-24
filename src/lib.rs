@@ -4,6 +4,10 @@
 #![allow(clippy::collapsible_if)]
 #![allow(clippy::collapsible_match)]
 
+#[cfg(all(feature = "pyo3", not(target_env = "msvc")))]
+#[global_allocator]
+static ALLOC: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
+
 /// Functional API (free functions) and the OO `TieXiu` wrapper.
 pub mod api;
 /// Configuration system for the parser engine.
