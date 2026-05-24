@@ -5,7 +5,7 @@
 
 #[macro_use]
 extern crate json;
-use tiexiu::context::{CtxI, new_ctx};
+use tiexiu::context::{Ctx, new_ctx};
 use tiexiu::input::strcursor::StrCursor;
 use tiexiu::parse_input;
 use tiexiu::*;

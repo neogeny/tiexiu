@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-pub use super::ctx::{Ctx, CtxI};
+pub use super::ctx::{Ctx, CtxSem};
 use super::memo::{Memo, MemoKey};
 use super::state::{CallStack, HeavyState, ParseState};
 use super::trace::{CONSOLE_TRACER, NULL_TRACER, Tracer};
@@ -61,7 +61,7 @@ where
     }
 }
 
-impl<'c, U> CtxI for CoreCtx<'c, U>
+impl<'c, U> Ctx for CoreCtx<'c, U>
 where
     U: Cursor + 'c,
 {
@@ -98,7 +98,7 @@ where
     }
 }
 
-impl<'c, U> Ctx for CoreCtx<'c, U>
+impl<'c, U> CtxSem for CoreCtx<'c, U>
 where
     U: Cursor + 'c,
 {

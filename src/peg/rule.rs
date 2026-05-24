@@ -4,7 +4,7 @@
 use super::Parser;
 use super::exp::Exp;
 use crate::cfg::types::FlagMap;
-use crate::context::Ctx;
+use crate::context::CtxSem;
 use crate::peg::error::ParseResult;
 use crate::trees::Tree;
 use crate::types::Str;
@@ -51,7 +51,7 @@ pub struct Rule {
 
 impl<C> Parser<C> for Rule
 where
-    C: Ctx,
+    C: CtxSem,
 {
     fn parse_at(&self, ctx: &mut C) -> ParseResult {
         Rule::parse_at(self, ctx)
@@ -119,7 +119,7 @@ impl Rule {
     }
 
     /// Parses at the current context position using this rule's expression.
-    pub fn parse_at<C: Ctx>(&self, ctx: &mut C) -> ParseResult {
+    pub fn parse_at<C: CtxSem>(&self, ctx: &mut C) -> ParseResult {
         match self.exp.parse_at(ctx) {
             Err(nope) => Err(nope),
             Ok(tree) => {

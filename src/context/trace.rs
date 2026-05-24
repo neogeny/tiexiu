@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::CtxI;
+use super::Ctx;
 use console::style;
 use std::fmt::Debug;
 // use std::io::Write;
@@ -18,7 +18,7 @@ pub(crate) struct ConsoleTracer {}
 impl Tracer for NullTracer {}
 
 impl Tracer for ConsoleTracer {
-    fn trace(&self, ctx: &dyn CtxI, msg: &str) {
+    fn trace(&self, ctx: &dyn Ctx, msg: &str) {
         let _ = ctx;
         let term = console::Term::stderr();
         term.write_line(msg).ok();
@@ -37,12 +37,12 @@ pub enum Event {
 
 /// Trait for tracing parse events.
 pub trait Tracer: Debug {
-    fn trace(&self, ctx: &dyn CtxI, msg: &str) {
+    fn trace(&self, ctx: &dyn Ctx, msg: &str) {
         let _ = ctx;
         let _ = msg;
     }
 
-    fn trace_event(&self, ctx: &dyn CtxI, event: Event, msg: &str) {
+    fn trace_event(&self, ctx: &dyn Ctx, event: Event, msg: &str) {
         let event_symbol: String = match event {
             Event::Entry => style("↙").yellow(),
             Event::Success => style("≡").green(),
@@ -85,28 +85,28 @@ pub trait Tracer: Debug {
         self.trace(ctx, msg.as_str());
     }
 
-    fn trace_entry(&self, ctx: &dyn CtxI) {
+    fn trace_entry(&self, ctx: &dyn Ctx) {
         self.trace_event(ctx, Event::Entry, "");
     }
 
-    fn trace_success(&self, ctx: &dyn CtxI) {
+    fn trace_success(&self, ctx: &dyn Ctx) {
         self.trace_event(ctx, Event::Success, "");
     }
 
-    fn trace_failure(&self, ctx: &dyn CtxI, error: &str) {
+    fn trace_failure(&self, ctx: &dyn Ctx, error: &str) {
         let errstr = format!(" {}", style(error).red());
         self.trace_event(ctx, Event::Failure, &errstr);
     }
 
-    fn trace_recursion(&self, ctx: &dyn CtxI) {
+    fn trace_recursion(&self, ctx: &dyn Ctx) {
         self.trace_event(ctx, Event::Recursion, "");
     }
 
-    fn trace_cut(&self, ctx: &dyn CtxI) {
+    fn trace_cut(&self, ctx: &dyn Ctx) {
         self.trace_event(ctx, Event::Cut, "");
     }
 
-    fn trace_match(&self, ctx: &dyn CtxI, token: &str, name: &str) -> bool {
+    fn trace_match(&self, ctx: &dyn Ctx, token: &str, name: &str) -> bool {
         let mut tag = name.to_string();
         if !tag.is_empty() {
             tag = format!("/{tag}/");
@@ -116,7 +116,7 @@ pub trait Tracer: Debug {
         true
     }
 
-    fn trace_no_match(&self, ctx: &dyn CtxI, token: &str, name: &str) -> bool {
+    fn trace_no_match(&self, ctx: &dyn Ctx, token: &str, name: &str) -> bool {
         let msg = if !token.is_empty() {
             style(format!(" '{token}'")).red().to_string()
         } else {

@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::api::error::nope::ParseResult;
-use crate::context::Ctx;
+use crate::context::CtxSem;
 use crate::peg::{Exp, ExpKind, ParseFailure::*, Parser};
 use crate::trees::Tree;
 use crate::types::Str;
 use crate::util::pyre;
 use std::rc::Rc;
 
-impl<C: Ctx> Parser<C> for Exp {
+impl<C: CtxSem> Parser<C> for Exp {
     fn parse_at(&self, ctx: &mut C) -> ParseResult {
         Exp::parse_at(self, ctx)
     }
@@ -32,7 +32,7 @@ impl Exp {
     }
 
     /// Parses at the current context position, applying defines after a successful match.
-    pub fn parse_at<C: Ctx>(&self, ctx: &mut C) -> ParseResult {
+    pub fn parse_at<C: CtxSem>(&self, ctx: &mut C) -> ParseResult {
         match self.do_parse_at(ctx) {
             Err(err) => Err(err),
             Ok(tree) => {
@@ -47,7 +47,7 @@ impl Exp {
         }
     }
 
-    fn do_parse_at<C: Ctx>(&self, ctx: &mut C) -> ParseResult {
+    fn do_parse_at<C: CtxSem>(&self, ctx: &mut C) -> ParseResult {
         let start = ctx.mark();
         let mut exp = self;
         while let ExpKind::RuleInclude { .. } | ExpKind::Group(_) = &exp.kind {

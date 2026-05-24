@@ -4,7 +4,7 @@
 //! Implementation of `call` logic for `Exp`.
 //! Moved from `Ctx` trait to decouple parsing logic from context management.
 
-use crate::context::Ctx;
+use crate::context::CtxSem;
 use crate::peg::Exp;
 use crate::peg::error::{Nope, ParseFailure, ParseResult};
 use crate::peg::rule::Rule;
@@ -14,7 +14,7 @@ use std::rc::Rc;
 impl Exp {
     /// Core entry point for calling a rule.
     /// Handles setup, tracing, token skipping, and delegation to `do_call`.
-    pub fn rule_call<C: Ctx>(ctx: &mut C, name: &str, rule: &Rule) -> ParseResult {
+    pub fn rule_call<C: CtxSem>(ctx: &mut C, name: &str, rule: &Rule) -> ParseResult {
         let start = ctx.mark();
         let key = ctx.key(name, rule.is_memoizable());
 
@@ -61,7 +61,7 @@ impl Exp {
 
     /// Internal dispatch for a call, handling memoization and left recursion.
     /// This mirrors the logic previously in `Ctx::do_call`.
-    fn do_call<C: Ctx>(ctx: &mut C, name: &str, rule: &Rule) -> ParseResult {
+    fn do_call<C: CtxSem>(ctx: &mut C, name: &str, rule: &Rule) -> ParseResult {
         let start = ctx.mark();
         let key = ctx.key(name, rule.is_memoizable());
 
@@ -86,7 +86,7 @@ impl Exp {
     }
 
     /// Handles left-recursive rule invocations using the iterative bootstrapping approach.
-    fn call_recursive<C: Ctx>(
+    fn call_recursive<C: CtxSem>(
         ctx: &mut C,
         key: &crate::context::memo::MemoKey,
         rule: &Rule,

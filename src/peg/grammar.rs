@@ -6,7 +6,7 @@ pub use super::pretty::*;
 use super::rule::{Rule, RuleMap, RuleRef};
 use crate::api::error::{DisasterReport, ParseResult};
 use crate::cfg::*;
-use crate::context::Ctx;
+use crate::context::CtxSem;
 use crate::peg::ParseFailure::RuleNotFound;
 use crate::rule::RuleName;
 use crate::types::{Ref, Str};
@@ -45,7 +45,7 @@ impl Default for Grammar {
 
 impl<C> crate::peg::Parser<C> for Grammar
 where
-    C: Ctx,
+    C: CtxSem,
 {
     fn parse_at(&self, ctx: &mut C) -> ParseResult {
         Grammar::parse_at(self, ctx)
@@ -120,7 +120,7 @@ impl Grammar {
     }
 
     /// Parses at the current context position using the start rule.
-    pub fn parse_at<C: Ctx>(&self, ctx: &mut C) -> ParseResult {
+    pub fn parse_at<C: CtxSem>(&self, ctx: &mut C) -> ParseResult {
         match self.start_rule() {
             Ok(start) => self.parse_from(ctx, start.as_ref()),
             Err(e) => Err(ctx.failure(ctx.mark(), e)),
@@ -128,14 +128,14 @@ impl Grammar {
     }
 
     /// Parses input and returns the resulting Tree on success.
-    pub fn parse_tree<C: Ctx>(&self, ctx: &mut C) -> crate::error::Result<Tree> {
+    pub fn parse_tree<C: CtxSem>(&self, ctx: &mut C) -> crate::error::Result<Tree> {
         match self.start_rule() {
             Ok(start) => self.parse_tree_from(ctx, start.as_ref()),
             Err(e) => Err(e.into()),
         }
     }
 
-    pub(crate) fn parse_tree_from<C: Ctx>(
+    pub(crate) fn parse_tree_from<C: CtxSem>(
         &self,
         ctx: &mut C,
         start: &str,
@@ -155,7 +155,7 @@ impl Grammar {
         }
     }
 
-    pub(crate) fn parse_from<C: Ctx>(&self, ctx: &mut C, start: &str) -> ParseResult {
+    pub(crate) fn parse_from<C: CtxSem>(&self, ctx: &mut C, start: &str) -> ParseResult {
         let start_mark = ctx.mark();
         ctx.configure(&self.directives);
         ctx.set_keywords(&self.keywords);

@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::context::CtxI;
+use crate::context::Ctx;
 use crate::context::state::CallStack;
 use crate::types::Str;
 use console::style;
@@ -30,7 +30,7 @@ pub struct Memento {
 
 impl Memento {
     /// Create a new `Memento` from a context and message.
-    pub fn new(start: usize, ctx: &dyn CtxI, msg: &str) -> Self {
+    pub fn new(start: usize, ctx: &dyn Ctx, msg: &str) -> Self {
         Self {
             input_source: ctx.cursor().input_source().into(),
             start,

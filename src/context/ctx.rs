@@ -16,7 +16,7 @@ use std::fmt::Debug;
 use std::rc::Rc;
 
 /// Immutable context interface for reading parser state.
-pub trait CtxI: Configurable {
+pub trait Ctx: Configurable {
     fn cursor(&self) -> &dyn Cursor;
     fn callstack(&self) -> CallStack;
     fn mark(&self) -> usize {
@@ -26,7 +26,7 @@ pub trait CtxI: Configurable {
 }
 
 /// Mutable context interface for parsing operations.
-pub trait Ctx: CtxI + Debug + Sized {
+pub trait CtxSem: Ctx + Debug + Sized {
     fn cursor_mut(&mut self) -> &mut dyn Cursor;
     fn enter(&mut self, name: &str);
     fn leave(&mut self);

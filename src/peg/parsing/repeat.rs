@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::context::Ctx;
+use crate::context::CtxSem;
 use crate::peg::error::*;
 use crate::trees::TreeList;
 use crate::trees::short::NIL;
@@ -9,7 +9,7 @@ use crate::{Exp, Tree};
 
 impl Exp {
     /// Parses zero or more (`closure`) or one or more (`positive_closure`) repetitions.
-    pub fn repeat<C: Ctx>(ctx: &mut C, exp: &Exp, positive: bool) -> ParseResult {
+    pub fn repeat<C: CtxSem>(ctx: &mut C, exp: &Exp, positive: bool) -> ParseResult {
         let mut res = TreeList::new();
         if positive {
             ctx.push_cut();
@@ -46,7 +46,7 @@ impl Exp {
     }
 
     /// Parses repetitions separated by a separator expression (`join` / `gather`).
-    pub fn repeat_with_sep<C: Ctx>(
+    pub fn repeat_with_sep<C: CtxSem>(
         ctx: &mut C,
         exp: &Exp,
         sep: &Exp,
@@ -108,11 +108,11 @@ impl Exp {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::context::CtxI;
+    use crate::context::Ctx;
     use crate::context::new_ctx;
     use crate::input::strcursor::StrCursor;
 
-    fn setup(input: &str) -> impl Ctx {
+    fn setup(input: &str) -> impl CtxSem {
         new_ctx(StrCursor::new(input), &[])
     }
 

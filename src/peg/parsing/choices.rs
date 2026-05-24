@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::context::Ctx;
+use crate::context::CtxSem;
 use crate::peg::error::ParseFailure::*;
 use crate::peg::error::ParseResult;
 use crate::trees::Tree;
@@ -20,7 +20,7 @@ impl Exp {
     }
 
     /// Parses an ordered choice — tries each option in sequence, committing on cut.
-    pub fn parse_choice<C: Ctx>(&self, ctx: &mut C, options: &[Exp]) -> ParseResult {
+    pub fn parse_choice<C: CtxSem>(&self, ctx: &mut C, options: &[Exp]) -> ParseResult {
         let start = ctx.mark();
 
         for option in options.iter() {
@@ -48,7 +48,7 @@ impl Exp {
     }
 
     /// Parses an optional expression — succeeds with `Tree::Nil` if the inner expression fails.
-    pub fn parse_optional<C: Ctx>(&self, ctx: &mut C, exp: &Exp) -> ParseResult {
+    pub fn parse_optional<C: CtxSem>(&self, ctx: &mut C, exp: &Exp) -> ParseResult {
         let start = ctx.mark();
         ctx.push_cut();
         let result = exp.parse_at(ctx);

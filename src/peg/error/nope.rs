@@ -3,7 +3,7 @@
 
 use super::failure::ParseFailure;
 use crate::Tree;
-use crate::context::CtxI;
+use crate::context::Ctx;
 use crate::input::memento::Memento;
 use std::fmt::Debug;
 use std::panic::Location;
@@ -50,7 +50,7 @@ impl std::error::Error for DisasterReport {
 impl DisasterReport {
     /// Creates a new disaster report from parsing context and failure.
     #[track_caller]
-    pub fn new(start: usize, cutseen: bool, ctx: &dyn CtxI, error: &ParseFailure) -> Self {
+    pub fn new(start: usize, cutseen: bool, ctx: &dyn Ctx, error: &ParseFailure) -> Self {
         let memento = Memento::new(start, ctx, error.to_string().as_str());
         Self {
             cutseen,
