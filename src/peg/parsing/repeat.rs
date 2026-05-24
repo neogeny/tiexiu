@@ -8,29 +8,16 @@ use crate::trees::short::NIL;
 use crate::{Exp, Tree};
 
 impl Exp {
-    /// Attempts to parse an expression and appends the result to a list.
-    pub fn add_exp<C: Ctx>(mut ctx: C, exp: &Exp, res: &mut TreeList) -> ParseResult {
-        match exp.parse_at(ctx.clone()) {
-            Ok(Yeap(snap, tree)) => {
-                res.push_back(tree.clone());
-                ctx.merge(&snap);
-                Ok(yeap(&ctx.into(), tree))
-            }
-            err => err,
-        }
-    }
-
     /// Parses zero or more (`closure`) or one or more (`positive_closure`) repetitions.
-    pub fn repeat<C: Ctx>(mut ctx: C, exp: &Exp, positive: bool) -> ParseResult {
+    pub fn repeat<C: Ctx>(ctx: &mut C, exp: &Exp, positive: bool) -> ParseResult {
         let mut res = TreeList::new();
         if positive {
             ctx.push_cut();
-            let result = exp.parse_at(ctx.push());
+            let result = exp.parse_at(ctx);
             ctx.take_cut();
             match result {
                 Err(nope) => return Err(nope),
-                Ok(Yeap(snap, tree)) => {
-                    ctx.merge(&snap);
+                Ok(Yeap(tree)) => {
                     res.push_back(tree);
                 }
             }
@@ -39,21 +26,20 @@ impl Exp {
         loop {
             let mark = ctx.mark();
             ctx.push_cut();
-            let result = exp.parse_at(ctx.push());
+            let result = exp.parse_at(ctx);
             let cutseen = ctx.take_cut();
             match result {
-                Ok(Yeap(snap, tree)) => {
-                    if snap.mark == mark {
+                Ok(Yeap(tree)) => {
+                    if ctx.mark() == mark {
                         return Err(ctx.failure(mark, ParseFailure::ClosureMatchedVoid()));
                     }
                     res.push_back(tree);
-                    ctx.merge(&snap);
                 }
                 Err(nope) => {
                     if cutseen {
                         return Err(nope);
                     }
-                    return Ok(yeap(&ctx.into(), Tree::from(res).into()));
+                    return Ok(yeap(Tree::from(res).into()));
                 }
             }
         }
@@ -61,7 +47,7 @@ impl Exp {
 
     /// Parses repetitions separated by a separator expression (`join` / `gather`).
     pub fn repeat_with_sep<C: Ctx>(
-        mut ctx: C,
+        ctx: &mut C,
         exp: &Exp,
         sep: &Exp,
         positive: bool,
@@ -69,43 +55,40 @@ impl Exp {
     ) -> ParseResult {
         let mut res = TreeList::new();
         ctx.push_cut();
-        let result = exp.parse_at(ctx.push());
+        let result = exp.parse_at(ctx);
         let cutseen = ctx.take_cut();
         match result {
             Err(nope) => {
                 if positive || cutseen {
                     return Err(nope);
                 }
-                return Ok(yeap(&ctx.click(), NIL.into()));
+                return Ok(yeap(NIL.into()));
             }
-            Ok(Yeap(snap, tree)) => {
-                ctx.merge(&snap);
+            Ok(Yeap(tree)) => {
                 res.push_back(tree);
             }
         }
         loop {
             let mark = ctx.mark();
             ctx.push_cut();
-            let result = sep.parse_at(ctx.push());
+            let result = sep.parse_at(ctx);
             let cutseen = ctx.take_cut();
             match result {
                 Err(nope) => {
                     if cutseen {
                         return Err(nope);
                     }
-                    return Ok(yeap(&ctx.into(), Tree::from(res).into()));
+                    return Ok(yeap(Tree::from(res).into()));
                 }
-                Ok(Yeap(snap, pre_tree)) => {
-                    if snap.mark == mark {
+                Ok(Yeap(pre_tree)) => {
+                    if ctx.mark() == mark {
                         return Err(ctx.failure(mark, ParseFailure::ClosureMatchedVoid()));
                     }
-                    ctx.merge(&snap);
                     ctx.push_cut();
-                    let result = exp.parse_at(ctx.push());
+                    let result = exp.parse_at(ctx);
                     ctx.take_cut();
                     match result {
-                        Ok(Yeap(snap, tree)) => {
-                            ctx.merge(&snap);
+                        Ok(Yeap(tree)) => {
                             if keep_pre {
                                 res.push_back(pre_tree);
                             }
@@ -134,27 +117,10 @@ mod tests {
     }
 
     #[test]
-    fn test_add_exp() {
-        let mut ctx = setup("abc");
-        let exp = Exp::token("abc");
-        let mut res = TreeList::new();
-        let result = Exp::add_exp(ctx.clone(), &exp, &mut res);
-        assert!(result.is_ok());
-        if let Ok(Yeap(snap, _)) = result {
-            ctx.merge(&snap);
-        }
-        assert_eq!(res.len(), 1);
-        assert_eq!(ctx.cursor().mark(), 3);
-    }
-
-    #[test]
     fn test_repeat() {
         let mut ctx = setup("abcabcabc");
         let exp = Exp::token("abc");
-        if let Ok(Yeap(snap, _tree)) = Exp::repeat(ctx.push(), &exp, false) {
-            ctx.merge(&snap);
-            // FIXME
-            // assert_eq!(res.len(), 3);
+        if let Ok(Yeap(_tree)) = Exp::repeat(&mut ctx, &exp, false) {
             assert_eq!(ctx.cursor().mark(), 9);
         } else {
             panic!("repeat  failed")
@@ -166,8 +132,7 @@ mod tests {
         let mut ctx = setup("abc,abc,abc");
         let exp = Exp::token("abc");
         let sep = Exp::token(",");
-        if let Ok(Yeap(snap, tree)) = Exp::repeat_with_sep(ctx.push(), &exp, &sep, false, true) {
-            ctx.merge(&snap);
+        if let Ok(Yeap(tree)) = Exp::repeat_with_sep(&mut ctx, &exp, &sep, false, true) {
             assert_eq!(tree.width(), 11);
             assert_eq!(ctx.cursor().mark(), 11);
         } else {
@@ -180,8 +145,7 @@ mod tests {
         let mut ctx = setup("abc,abc,abc");
         let exp = Exp::token("abc");
         let pre = Exp::token(",");
-        if let Ok(Yeap(snap, tree)) = Exp::repeat_with_sep(ctx.push(), &exp, &pre, false, false) {
-            ctx.merge(&snap);
+        if let Ok(Yeap(tree)) = Exp::repeat_with_sep(&mut ctx, &exp, &pre, false, false) {
             assert_eq!(tree.width(), 9);
             assert_eq!(ctx.cursor().mark(), 11);
         } else {
@@ -197,10 +161,7 @@ mod tests {
         assert!(ctx.cut_seen(), "ctx should have cut set before repeat");
 
         let exp = Exp::token("abc");
-        if let Ok(Yeap(snap, _)) = Exp::repeat(ctx.clone(), &exp, false) {
-            ctx.merge(&snap);
-            // FIXME
-            // assert_eq!(res.len(), 3);
+        if let Ok(Yeap(_)) = Exp::repeat(&mut ctx, &exp, false) {
             assert!(ctx.cut_seen(), "cut should be restored after repeat");
         } else {
             panic!("repeat failed")
@@ -212,18 +173,10 @@ mod tests {
     fn test_repeat_with_pre_restores_entered_cut() {
         let mut ctx = setup(",abc,abc");
         ctx.cut();
-        // FIXME
-        // assert!(
-        //     ctx.cut_seen(),
-        //     "ctx should have cut set before repeat_with_pre"
-        // );
 
         let exp = Exp::token("abc");
         let pre = Exp::token(",");
-        if let Ok(Yeap(snap, _)) = Exp::repeat_with_sep(ctx.clone(), &exp, &pre, false, true) {
-            ctx.merge(&snap);
-            // FIXME
-            // assert_eq!(res.len(), 4);
+        if let Ok(Yeap(_)) = Exp::repeat_with_sep(&mut ctx, &exp, &pre, false, true) {
             assert!(
                 ctx.cut_seen(),
                 "cut should be restored after repeat_with_pre"
@@ -243,10 +196,7 @@ mod tests {
 
         let exp = Exp::token("abc");
         let pre = Exp::token(",");
-        if let Ok(Yeap(snap, _)) = Exp::repeat_with_sep(ctx.clone(), &exp, &pre, false, true) {
-            ctx.merge(&snap);
-            // FIXME
-            // assert_eq!(res.len(), 4);
+        if let Ok(Yeap(_)) = Exp::repeat_with_sep(&mut ctx, &exp, &pre, false, true) {
             assert!(
                 !ctx.cut_seen(),
                 "cut should be cleared when not set on entry"

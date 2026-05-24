@@ -14,7 +14,7 @@ use std::rc::Rc;
 impl Exp {
     /// Core entry point for calling a rule.
     /// Handles setup, tracing, token skipping, and delegation to `do_call`.
-    pub fn rule_call<C: Ctx>(mut ctx: C, name: &str, rule: &Rule) -> ParseResult {
+    pub fn rule_call<C: Ctx>(ctx: &mut C, name: &str, rule: &Rule) -> ParseResult {
         let start = ctx.mark();
         let key = ctx.key(name, rule.is_memoizable());
 
@@ -24,12 +24,11 @@ impl Exp {
 
         if rule.should_trace() {
             ctx.enter(name);
-            ctx.tracer().trace_entry(&ctx);
+            ctx.tracer().trace_entry(ctx);
         }
 
-        match Self::do_call(ctx.push(), name, rule) {
-            Ok(Yeap(snap, tree)) => {
-                ctx.merge(&snap);
+        match Self::do_call(ctx, name, rule) {
+            Ok(Yeap(tree)) => {
                 if rule.should_trace() {
                     ctx.leave();
                 }
@@ -37,21 +36,23 @@ impl Exp {
                     && let Tree::Text(name) = tree.as_ref()
                     && ctx.is_keyword(name)
                 {
+                    ctx.reset(start);
                     ctx.memoize(&key, &Tree::Bottom.into(), ctx.mark());
                     let error = ParseFailure::ReservedWord(name.clone());
-                    ctx.tracer().trace_failure(&ctx, name);
+                    ctx.tracer().trace_failure(ctx, name);
                     return Err(ctx.failure(start, error));
                 }
-                ctx.tracer().trace_success(&ctx);
+                ctx.tracer().trace_success(ctx);
                 ctx.memoize(&key, &tree, ctx.mark());
                 ctx.heartbeat_tick();
-                Ok(yeap(&snap, tree))
+                Ok(yeap(tree))
             }
             Err(nope) => {
+                ctx.reset(start);
                 if rule.should_trace() {
                     ctx.leave();
                 }
-                ctx.tracer().trace_failure(&ctx, name);
+                ctx.tracer().trace_failure(ctx, name);
                 ctx.memoize(&key, &Tree::Bottom.into(), ctx.mark());
                 Err(nope)
             }
@@ -60,7 +61,7 @@ impl Exp {
 
     /// Internal dispatch for a call, handling memoization and left recursion.
     /// This mirrors the logic previously in `Ctx::do_call`.
-    fn do_call<C: Ctx>(mut ctx: C, name: &str, rule: &Rule) -> ParseResult {
+    fn do_call<C: Ctx>(ctx: &mut C, name: &str, rule: &Rule) -> ParseResult {
         let start = ctx.mark();
         let key = ctx.key(name, rule.is_memoizable());
 
@@ -72,7 +73,7 @@ impl Exp {
                 }
                 _ => {
                     ctx.reset(memo.mark);
-                    Ok(yeap(&ctx.into(), memo.tree))
+                    Ok(yeap(memo.tree.clone()))
                 }
             };
         }
@@ -86,11 +87,11 @@ impl Exp {
 
     /// Handles left-recursive rule invocations using the iterative bootstrapping approach.
     fn call_recursive<C: Ctx>(
-        mut ctx: C,
+        ctx: &mut C,
         key: &crate::context::memo::MemoKey,
         rule: &Rule,
     ) -> ParseResult {
-        ctx.tracer().trace_recursion(&ctx);
+        ctx.tracer().trace_recursion(ctx);
         if !rule.is_left_recursive() {
             panic!("Recursive call on non-LRec rule");
         }
@@ -106,8 +107,7 @@ impl Exp {
             ctx.reset(start);
             ctx.track_recursion_depth(key)?;
 
-            // We need to push a context state here to attempt the parse safely
-            let result = rule.parse_at(ctx.push());
+            let result = rule.parse_at(ctx);
             ctx.untrack(key);
 
             match result {
@@ -115,15 +115,13 @@ impl Exp {
                     lastnope = Some(nope);
                     break;
                 }
-                Ok(Yeap(snap, tree)) => {
-                    let endmark = snap.mark;
-                    let endtree = tree;
+                Ok(Yeap(tree)) => {
+                    let endmark = ctx.mark();
                     if endmark <= lastmark {
                         break;
                     }
                     lastmark = endmark;
-                    lasttree = Rc::unwrap_or_clone(endtree);
-                    ctx.merge(&snap);
+                    lasttree = Rc::unwrap_or_clone(tree);
                     ctx.memoize(key, &lasttree.clone().into(), lastmark);
                 }
             }
@@ -133,17 +131,19 @@ impl Exp {
         ctx.memoize(key, &lasttree.clone().into(), lastmark);
 
         if lasttree == Tree::Bottom {
-            let nope = lastnope.unwrap_or(ctx.failure(
-                start,
-                ParseFailure::FailedRecursion(
-                    rule.name.clone(),
+            let nope = lastnope.unwrap_or_else(|| {
+                ctx.failure(
                     start,
-                    lastmark,
-                    lasttree.clone().into(),
-                ),
-            ));
+                    ParseFailure::FailedRecursion(
+                        rule.name.clone(),
+                        start,
+                        lastmark,
+                        lasttree.clone().into(),
+                    ),
+                )
+            });
             return Err(nope);
         }
-        Ok(yeap(&ctx.into(), lasttree.into()))
+        Ok(yeap(lasttree.into()))
     }
 }

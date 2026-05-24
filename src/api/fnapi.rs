@@ -39,8 +39,8 @@ where
     U: Cursor + Clone,
 {
     let boot = boot_grammar()?;
-    let ctx = new_ctx(cursor, cfg);
-    boot.parse_tree(ctx)
+    let mut ctx = new_ctx(cursor, cfg);
+    boot.parse_tree(&mut ctx)
 }
 
 /// Parse grammar from cursor and return as JSON value.

@@ -9,5 +9,5 @@ use std::fmt::Debug;
 /// A trait for types that can parse input at a given context position.
 pub trait Parser<C: Ctx>: Debug {
     /// Parse at the current context position, returning success or failure.
-    fn parse_at(&self, ctx: C) -> ParseResult;
+    fn parse_at(&self, ctx: &mut C) -> ParseResult;
 }

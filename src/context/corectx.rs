@@ -6,7 +6,6 @@ use super::memo::{Memo, MemoKey};
 use super::state::{CallStack, HeavyState, ParseState};
 use super::trace::{CONSOLE_TRACER, NULL_TRACER, Tracer};
 use crate::cfg::*;
-use crate::context::Snap;
 use crate::input::Cursor;
 use crate::peg::error::DisasterReport;
 use crate::trees::Tree;
@@ -229,10 +228,6 @@ where
     fn set_keywords(&mut self, keywords: &[Str]) {
         self.heavy.borrow_mut().keywords = keywords.into()
     }
-
-    fn merge(&mut self, snap: &Snap) {
-        self.reset(snap.mark);
-    }
 }
 
 #[cfg(test)]
@@ -275,7 +270,7 @@ mod tests {
         ctx.cut();
         assert!(ctx.cut_seen());
 
-        let cloned_ctx = ctx.push();
+        let cloned_ctx = ctx.clone();
         // NOTE:
         //   Cut has a stack independent of Ctx cloning
         //   Ctx cloning dealss with `mark` backtracking

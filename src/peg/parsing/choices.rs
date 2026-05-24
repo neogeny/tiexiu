@@ -21,26 +21,27 @@ impl Exp {
     }
 
     /// Parses an ordered choice — tries each option in sequence, committing on cut.
-    pub fn parse_choice<C: Ctx>(&self, mut ctx: C, options: &[Exp]) -> ParseResult {
+    pub fn parse_choice<C: Ctx>(&self, ctx: &mut C, options: &[Exp]) -> ParseResult {
         let start = ctx.mark();
 
         for option in options.iter() {
             if let ExpKind::Alt(exp) = &option.kind {
                 ctx.push_cut();
-                let result = exp.parse_at(ctx.push());
+                let result = exp.parse_at(ctx);
                 let cutseen = ctx.take_cut();
                 match result {
-                    Ok(Yeap(snap, tree)) => {
-                        ctx.merge(&snap);
-                        return Ok(yeap(&ctx.click(), tree));
+                    Ok(Yeap(tree)) => {
+                        return Ok(yeap(tree));
                     }
                     Err(nope) => {
+                        ctx.reset(start);
                         if cutseen {
                             return Err(nope);
                         }
                     }
                 }
             } else {
+                ctx.reset(start);
                 return Err(ctx.failure(start, ChoiceOptionWithNoAlt));
             }
         }
@@ -48,20 +49,19 @@ impl Exp {
     }
 
     /// Parses an optional expression — succeeds with `Tree::Nil` if the inner expression fails.
-    pub fn parse_optional<C: Ctx>(&self, mut ctx: C, exp: &Exp) -> ParseResult {
+    pub fn parse_optional<C: Ctx>(&self, ctx: &mut C, exp: &Exp) -> ParseResult {
+        let start = ctx.mark();
         ctx.push_cut();
-        let result = exp.parse_at(ctx.push());
+        let result = exp.parse_at(ctx);
         let cutseen = ctx.take_cut();
         match result {
-            Ok(Yeap(snap, tree)) => {
-                ctx.merge(&snap);
-                Ok(yeap(&ctx.click(), tree))
-            }
+            Ok(Yeap(tree)) => Ok(yeap(tree)),
             Err(nope) => {
+                ctx.reset(start);
                 if cutseen {
                     return Err(nope);
                 }
-                Ok(yeap(&ctx.into(), Tree::Nil.into()))
+                Ok(yeap(Tree::Nil.into()))
             }
         }
     }

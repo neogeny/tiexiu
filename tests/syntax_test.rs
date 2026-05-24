@@ -14,8 +14,8 @@ use tiexiu::{CfgA, CfgKey, Result};
 
 fn parse_input(grammar: &Grammar, input: &str, cfg: &CfgA) -> Result<tiexiu::trees::Tree> {
     let cursor = StrCursor::new(input);
-    let ctx = context::new_ctx(cursor, cfg);
-    grammar.parse_tree(ctx)
+    let mut ctx = context::new_ctx(cursor, cfg);
+    grammar.parse_tree(&mut ctx)
 }
 
 // ============================================================================

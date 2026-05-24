@@ -3,7 +3,7 @@
 
 use super::failure::ParseFailure;
 use crate::Tree;
-use crate::context::{CtxI, Snap};
+use crate::context::CtxI;
 use crate::input::memento::Memento;
 use std::fmt::Debug;
 use std::panic::Location;
@@ -12,13 +12,13 @@ use std::rc::Rc;
 /// Result of a PEG parse attempt: success (Yeap) or failure (Nope).
 pub type ParseResult = Result<Yeap, Nope>;
 
-/// A successful parse result containing snapshot and tree.
+/// A successful parse result containing the parse tree.
 #[derive(Debug, Clone, PartialEq)]
-pub struct Yeap(pub Rc<Snap>, pub Rc<Tree>);
+pub struct Yeap(pub Rc<Tree>);
 
-/// Creates a Yeap success value from a snapshot and a tree.
-pub fn yeap(snap: &Snap, tree: Rc<Tree>) -> Yeap {
-    Yeap(snap.clone().into(), tree)
+/// Creates a Yeap success value from a tree.
+pub fn yeap(tree: Rc<Tree>) -> Yeap {
+    Yeap(tree)
 }
 
 /// A parse failure (no details — details are in DisasterReport).
@@ -96,17 +96,14 @@ impl Yeap {
     /// Consumes the Yeap and returns the inner tree.
     #[inline]
     pub fn tree(self) -> Rc<Tree> {
-        self.1
+        self.0
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::Tree;
-    use crate::context::CtxI;
     use crate::peg::error::Yeap;
-    use crate::peg::error::nope::{Nope, yeap};
-    use std::rc::Rc;
+    use crate::peg::error::nope::Nope;
 
     const TARGET: usize = 32;
 
@@ -120,17 +117,5 @@ mod tests {
     fn test_nope_size() {
         let size = size_of::<Nope>();
         assert!(size <= TARGET, "Nope size is {} > {} bytes", size, TARGET);
-    }
-
-    #[test]
-    fn test_yeap_tree_returns_rc() {
-        use crate::context::strctx::StrCtx;
-        use crate::input::StrCursor;
-
-        let tree = Tree::Text("hello".into());
-        let ctx = StrCtx::new(StrCursor::new("hello"), &[]);
-        let yeap = yeap(&ctx.click(), tree.into());
-        let rc: Rc<Tree> = yeap.tree();
-        assert!(matches!(rc.as_ref(), Tree::Text(_)));
     }
 }

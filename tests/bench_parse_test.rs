@@ -43,8 +43,8 @@ fn test_bench_compile_calc_grammar() -> Result<()> {
 #[test]
 fn test_bench_parse_arithmetic_expression() -> tiexiu::Result<()> {
     let model = compile(CALC_GRAMMAR, &[])?;
-    let ctx = StrCtx::from("3 + 5 * ( 10 - 20 )");
-    let tree = model.parse_tree(ctx)?;
+    let mut ctx = StrCtx::from("3 + 5 * ( 10 - 20 )");
+    let tree = model.parse_tree(&mut ctx)?;
     // Just verify it parses without error
     let _ = tree;
     Ok(())
@@ -53,8 +53,8 @@ fn test_bench_parse_arithmetic_expression() -> tiexiu::Result<()> {
 #[test]
 fn test_bench_parse_complex_expression() -> tiexiu::Result<()> {
     let model = compile(CALC_GRAMMAR, &[])?;
-    let ctx = StrCtx::from("((1 + 2) * (3 + 4)) + ((5 - 6) * (7 + 8)) - 9 * (10 + 11)");
-    let tree = model.parse_tree(ctx)?;
+    let mut ctx = StrCtx::from("((1 + 2) * (3 + 4)) + ((5 - 6) * (7 + 8)) - 9 * (10 + 11)");
+    let tree = model.parse_tree(&mut ctx)?;
     // Just verify it parses without error
     let _ = tree;
     Ok(())

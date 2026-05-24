@@ -53,7 +53,7 @@ impl<C> Parser<C> for Rule
 where
     C: Ctx,
 {
-    fn parse_at(&self, ctx: C) -> ParseResult {
+    fn parse_at(&self, ctx: &mut C) -> ParseResult {
         Rule::parse_at(self, ctx)
     }
 }
@@ -119,29 +119,25 @@ impl Rule {
     }
 
     /// Parses at the current context position using this rule's expression.
-    pub fn parse_at<C: Ctx>(&self, mut ctx: C) -> ParseResult {
-        match self.exp.parse_at(ctx.push()) {
+    pub fn parse_at<C: Ctx>(&self, ctx: &mut C) -> ParseResult {
+        match self.exp.parse_at(ctx) {
             Err(nope) => Err(nope),
-            Ok(Yeap(snap, tree)) => {
+            Ok(Yeap(tree)) => {
                 let folded = Rc::unwrap_or_clone(tree).fold();
-                ctx.merge(&snap);
-                Ok(yeap(
-                    &ctx.into(),
-                    if self.params.is_empty() {
+                Ok(yeap(if self.params.is_empty() {
+                    folded.into()
+                } else {
+                    let typename = self.params[0].clone();
+                    if typename.as_ref() == "bool" {
                         folded.into()
                     } else {
-                        let typename = self.params[0].clone();
-                        if typename.as_ref() == "bool" {
-                            folded.into()
-                        } else {
-                            Tree::Node {
-                                typename,
-                                tree: folded.into(),
-                            }
-                            .into()
+                        Tree::Node {
+                            typename,
+                            tree: folded.into(),
                         }
-                    },
-                ))
+                        .into()
+                    }
+                }))
             }
         }
     }

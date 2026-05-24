@@ -47,7 +47,7 @@ impl<C> crate::peg::Parser<C> for Grammar
 where
     C: Ctx,
 {
-    fn parse_at(&self, ctx: C) -> ParseResult {
+    fn parse_at(&self, ctx: &mut C) -> ParseResult {
         Grammar::parse_at(self, ctx)
     }
 }
@@ -120,7 +120,7 @@ impl Grammar {
     }
 
     /// Parses at the current context position using the start rule.
-    pub fn parse_at<C: Ctx>(&self, mut ctx: C) -> ParseResult {
+    pub fn parse_at<C: Ctx>(&self, ctx: &mut C) -> ParseResult {
         match self.start_rule() {
             Ok(start) => self.parse_from(ctx, start.as_ref()),
             Err(e) => Err(ctx.failure(ctx.mark(), e)),
@@ -128,7 +128,7 @@ impl Grammar {
     }
 
     /// Parses input and returns the resulting Tree on success.
-    pub fn parse_tree<C: Ctx>(&self, ctx: C) -> crate::error::Result<Tree> {
+    pub fn parse_tree<C: Ctx>(&self, ctx: &mut C) -> crate::error::Result<Tree> {
         match self.start_rule() {
             Ok(start) => self.parse_tree_from(ctx, start.as_ref()),
             Err(e) => Err(e.into()),
@@ -137,30 +137,30 @@ impl Grammar {
 
     pub(crate) fn parse_tree_from<C: Ctx>(
         &self,
-        ctx: C,
+        ctx: &mut C,
         start: &str,
     ) -> crate::error::Result<Tree> {
         let start_mark = ctx.mark();
-        match self.parse_from(ctx.push(), start) {
-            Ok(Yeap(_, tree)) => Ok(Rc::unwrap_or_clone(tree)),
+        match self.parse_from(ctx, start) {
+            Ok(Yeap(tree)) => Ok(Rc::unwrap_or_clone(tree)),
             Err(_) => Err(ctx
                 .furthest_failure()
                 .unwrap_or(DisasterReport::new(
                     start_mark,
                     false,
-                    &ctx,
+                    ctx,
                     &ParseFailure::Fail,
                 ))
                 .into()),
         }
     }
 
-    pub(crate) fn parse_from<C: Ctx>(&self, mut ctx: C, start: &str) -> ParseResult {
+    pub(crate) fn parse_from<C: Ctx>(&self, ctx: &mut C, start: &str) -> ParseResult {
         let start_mark = ctx.mark();
         ctx.configure(&self.directives);
         ctx.set_keywords(&self.keywords);
         match self.get_rule(start) {
-            Ok(rule) => rule.parse_at(ctx.push()),
+            Ok(rule) => rule.parse_at(ctx),
             Err(err) => Err(ctx.failure(start_mark, err)),
         }
     }
@@ -168,14 +168,14 @@ impl Grammar {
     /// Parses a string input using the given config and returns the resulting Tree.
     pub fn parse_input(&self, text: &str, cfga: &CfgA) -> crate::error::Result<Tree> {
         let cursor = StrCursor::new(text);
-        let ctx = new_ctx(cursor, cfga);
+        let mut ctx = new_ctx(cursor, cfga);
         if let Some(start) = config(cfga).start() {
-            match self.parse_tree_from(ctx, start) {
+            match self.parse_tree_from(&mut ctx, start) {
                 Ok(tree) => Ok(tree),
                 Err(failure) => Err(failure),
             }
         } else {
-            match self.parse_tree(ctx) {
+            match self.parse_tree(&mut ctx) {
                 Ok(tree) => Ok(tree),
                 Err(failure) => Err(failure),
             }
@@ -191,8 +191,8 @@ impl Grammar {
         cfga: &CfgA,
     ) -> crate::error::Result<Tree> {
         let cursor = StrCursor::new(text);
-        let ctx = new_ctx(cursor, cfga);
-        match self.parse_tree_from(ctx, start) {
+        let mut ctx = new_ctx(cursor, cfga);
+        match self.parse_tree_from(&mut ctx, start) {
             Ok(tree) => Ok(tree),
             Err(failure) => Err(failure),
         }

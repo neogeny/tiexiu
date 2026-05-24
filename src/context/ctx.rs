@@ -30,12 +30,6 @@ impl From<&dyn CtxI> for Snap {
     }
 }
 
-impl<C: Ctx> From<C> for Snap {
-    fn from(ctx: C) -> Self {
-        ctx.click()
-    }
-}
-
 impl Snap {}
 
 /// Immutable context interface for reading parser state.
@@ -56,7 +50,7 @@ pub trait CtxI: Configurable {
 }
 
 /// Mutable context interface for parsing operations.
-pub trait Ctx: CtxI + Clone + Debug {
+pub trait Ctx: CtxI + Debug + Sized {
     fn id(&self) -> usize {
         self as *const Self as usize
     }
@@ -84,17 +78,12 @@ pub trait Ctx: CtxI + Clone + Debug {
 
     #[track_caller]
     fn failure(&mut self, start: usize, source: ParseFailure) -> Nope {
-        let nope = Nope::default();
-        self.cursor_mut().reset(start);
-        if let Some(furthest) = self.furthest_failure()
-            && furthest.start() >= start
-        {
-            return nope;
+        if self.furthest_failure().is_some_and(|f| f.start() >= start) {
+            return Nope::default();
         }
-
         let dis = DisasterReport::new(start, false, self, &source);
-        self.set_furthest_failure(dis.clone());
-        nope
+        self.set_furthest_failure(dis);
+        Nope::default()
     }
 
     fn set_furthest_failure(&mut self, dis: DisasterReport);
@@ -210,11 +199,5 @@ pub trait Ctx: CtxI + Clone + Debug {
     }
     fn set_keywords(&mut self, keywords: &[Str]) {
         let _ = keywords;
-    }
-
-    fn merge(&mut self, snap: &Snap);
-
-    fn push(&self) -> Self {
-        self.clone()
     }
 }

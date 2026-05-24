@@ -103,11 +103,8 @@ impl TieXiu {
         U: Cursor + Clone,
     {
         let boot = self.boot_grammar()?;
-        let ctx = new_ctx(cursor, &self.cfg);
-        match boot.parse_tree(ctx) {
-            Ok(tree) => Ok(tree),
-            Err(failure) => Err(failure),
-        }
+        let mut ctx = new_ctx(cursor, &self.cfg);
+        boot.parse_tree(&mut ctx)
     }
 
     /// Parse grammar from cursor and return as JSON.
@@ -185,11 +182,8 @@ impl TieXiu {
     pub fn parse(&mut self, grammar: &str, text: &str) -> Result<Tree> {
         let parser = self.compile(grammar)?;
         let cursor = StrCursor::new(text);
-        let ctx = new_ctx(cursor, &self.cfg);
-        match parser.parse_tree(ctx) {
-            Ok(tree) => Ok(tree),
-            Err(failure) => Err(failure),
-        }
+        let mut ctx = new_ctx(cursor, &self.cfg);
+        parser.parse_tree(&mut ctx)
     }
 
     /// Parse input text and return result as JSON value.
@@ -207,11 +201,8 @@ impl TieXiu {
     /// Parse input text with a pre-compiled `Grammar`.
     pub fn parse_input(&mut self, parser: &Grammar, text: &str) -> Result<Tree> {
         let cursor = StrCursor::new(text);
-        let ctx = new_ctx(cursor, &self.cfg);
-        match parser.parse_tree(ctx) {
-            Ok(tree) => Ok(tree),
-            Err(failure) => Err(failure),
-        }
+        let mut ctx = new_ctx(cursor, &self.cfg);
+        parser.parse_tree(&mut ctx)
     }
 
     /// Parse input with a pre-compiled grammar and return JSON value.
