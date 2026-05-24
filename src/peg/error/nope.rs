@@ -9,17 +9,8 @@ use std::fmt::Debug;
 use std::panic::Location;
 use std::rc::Rc;
 
-/// Result of a PEG parse attempt: success (Yeap) or failure (Nope).
-pub type ParseResult = Result<Yeap, Nope>;
-
-/// A successful parse result containing the parse tree.
-#[derive(Debug, Clone, PartialEq)]
-pub struct Yeap(pub Rc<Tree>);
-
-/// Creates a Yeap success value from a tree.
-pub fn yeap(tree: Rc<Tree>) -> Yeap {
-    Yeap(tree)
-}
+/// Result of a PEG parse attempt: success (Rc<Tree>) or failure (Nope).
+pub type ParseResult = Result<Rc<Tree>, Nope>;
 
 /// A parse failure (no details — details are in DisasterReport).
 #[derive(thiserror::Error, Debug, Default, Clone, PartialEq)]
@@ -92,26 +83,11 @@ impl DisasterReport {
     }
 }
 
-impl Yeap {
-    /// Consumes the Yeap and returns the inner tree.
-    #[inline]
-    pub fn tree(self) -> Rc<Tree> {
-        self.0
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use crate::peg::error::Yeap;
     use crate::peg::error::nope::Nope;
 
     const TARGET: usize = 32;
-
-    #[test]
-    fn test_yeap_size() {
-        let size = size_of::<Yeap>();
-        assert!(size <= TARGET, "Yeap size is {} > {} bytes", size, TARGET);
-    }
 
     #[test]
     fn test_nope_size() {

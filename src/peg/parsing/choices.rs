@@ -3,8 +3,7 @@
 
 use crate::context::Ctx;
 use crate::peg::error::ParseFailure::*;
-use crate::peg::error::yeap;
-use crate::peg::error::{ParseResult, Yeap};
+use crate::peg::error::ParseResult;
 use crate::trees::Tree;
 use crate::types::Str;
 use crate::{Exp, ExpKind};
@@ -30,8 +29,8 @@ impl Exp {
                 let result = exp.parse_at(ctx);
                 let cutseen = ctx.take_cut();
                 match result {
-                    Ok(Yeap(tree)) => {
-                        return Ok(yeap(tree));
+                    Ok(tree) => {
+                        return Ok(tree);
                     }
                     Err(nope) => {
                         ctx.reset(start);
@@ -55,13 +54,13 @@ impl Exp {
         let result = exp.parse_at(ctx);
         let cutseen = ctx.take_cut();
         match result {
-            Ok(Yeap(tree)) => Ok(yeap(tree)),
+            Ok(tree) => Ok(tree),
             Err(nope) => {
                 ctx.reset(start);
                 if cutseen {
                     return Err(nope);
                 }
-                Ok(yeap(Tree::Nil.into()))
+                Ok(Tree::Nil.into())
             }
         }
     }

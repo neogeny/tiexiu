@@ -3,7 +3,7 @@
 
 /// Parse failure and compile error types.
 pub mod failure;
-/// Parse result (Yeap/Nope) and disaster report types.
+/// Parse result (Rc<Tree>/Nope) and disaster report types.
 pub mod nope;
 
 pub use failure::*;

@@ -5,7 +5,7 @@ use super::Parser;
 use super::exp::Exp;
 use crate::cfg::types::FlagMap;
 use crate::context::Ctx;
-use crate::peg::error::{ParseResult, Yeap, yeap};
+use crate::peg::error::ParseResult;
 use crate::trees::Tree;
 use crate::types::Str;
 use indexmap::IndexMap;
@@ -122,9 +122,9 @@ impl Rule {
     pub fn parse_at<C: Ctx>(&self, ctx: &mut C) -> ParseResult {
         match self.exp.parse_at(ctx) {
             Err(nope) => Err(nope),
-            Ok(Yeap(tree)) => {
+            Ok(tree) => {
                 let folded = Rc::unwrap_or_clone(tree).fold();
-                Ok(yeap(if self.params.is_empty() {
+                Ok(if self.params.is_empty() {
                     folded.into()
                 } else {
                     let typename = self.params[0].clone();
@@ -137,7 +137,7 @@ impl Rule {
                         }
                         .into()
                     }
-                }))
+                })
             }
         }
     }

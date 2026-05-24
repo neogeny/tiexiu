@@ -6,7 +6,7 @@
 
 use crate::context::Ctx;
 use crate::peg::Exp;
-use crate::peg::error::{Nope, ParseFailure, ParseResult, Yeap, yeap};
+use crate::peg::error::{Nope, ParseFailure, ParseResult};
 use crate::peg::rule::Rule;
 use crate::trees::tree::Tree;
 use std::rc::Rc;
@@ -28,7 +28,7 @@ impl Exp {
         }
 
         match Self::do_call(ctx, name, rule) {
-            Ok(Yeap(tree)) => {
+            Ok(tree) => {
                 if rule.should_trace() {
                     ctx.leave();
                 }
@@ -45,7 +45,7 @@ impl Exp {
                 ctx.tracer().trace_success(ctx);
                 ctx.memoize(&key, &tree, ctx.mark());
                 ctx.heartbeat_tick();
-                Ok(yeap(tree))
+                Ok(tree)
             }
             Err(nope) => {
                 ctx.reset(start);
@@ -73,7 +73,7 @@ impl Exp {
                 }
                 _ => {
                     ctx.reset(memo.mark);
-                    Ok(yeap(memo.tree.clone()))
+                    Ok(memo.tree.clone())
                 }
             };
         }
@@ -115,7 +115,7 @@ impl Exp {
                     lastnope = Some(nope);
                     break;
                 }
-                Ok(Yeap(tree)) => {
+                Ok(tree) => {
                     let endmark = ctx.mark();
                     if endmark <= lastmark {
                         break;
@@ -144,6 +144,6 @@ impl Exp {
             });
             return Err(nope);
         }
-        Ok(yeap(lasttree.into()))
+        Ok(lasttree.into())
     }
 }
