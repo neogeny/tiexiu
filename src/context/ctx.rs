@@ -15,23 +15,6 @@ use crate::{MAX_RECURSION_DEPTH, SYM_ETX};
 use std::fmt::Debug;
 use std::rc::Rc;
 
-/// A snapshot of parser state (position and cut status).
-#[derive(Debug, Clone, PartialEq)]
-pub struct Snap {
-    /// The cursor position at the snapshot.
-    pub mark: usize,
-    /// Whether a cut was seen.
-    pub cutseen: bool,
-}
-
-impl From<&dyn CtxI> for Snap {
-    fn from(ctx: &dyn CtxI) -> Self {
-        ctx.click()
-    }
-}
-
-impl Snap {}
-
 /// Immutable context interface for reading parser state.
 pub trait CtxI: Configurable {
     fn cursor(&self) -> &dyn Cursor;
@@ -40,21 +23,10 @@ pub trait CtxI: Configurable {
         self.cursor().mark()
     }
     fn cut_seen(&self) -> bool;
-
-    fn click(&self) -> Snap {
-        Snap {
-            mark: self.mark(),
-            cutseen: self.cut_seen(),
-        }
-    }
 }
 
 /// Mutable context interface for parsing operations.
 pub trait Ctx: CtxI + Debug + Sized {
-    fn id(&self) -> usize {
-        self as *const Self as usize
-    }
-
     fn cursor_mut(&mut self) -> &mut dyn Cursor;
     fn enter(&mut self, name: &str);
     fn leave(&mut self);
@@ -112,16 +84,8 @@ pub trait Ctx: CtxI + Debug + Sized {
         result
     }
 
-    fn dot(&mut self) -> Option<char> {
-        self.next()
-    }
-
     fn next(&mut self) -> Option<char> {
         self.cursor_mut().next()
-    }
-
-    fn peek(&mut self) -> Option<char> {
-        self.cursor_mut().peek()
     }
 
     fn get_pattern(&mut self, pattern: &str) -> Pattern;
@@ -184,8 +148,6 @@ pub trait Ctx: CtxI + Debug + Sized {
     fn memo(&mut self, key: &MemoKey) -> Option<Memo>;
 
     fn memoize(&mut self, key: &MemoKey, tree: &Rc<Tree>, lastmark: usize);
-
-    fn clear_error_memos(&mut self);
 
     fn cut(&mut self);
     fn push_cut(&mut self);

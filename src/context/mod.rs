@@ -18,7 +18,7 @@ pub mod trace;
 // pub mod ctxproxy;
 
 use crate::{CfgA, Cursor};
-/// Traits for reading parser state (Ctx, CtxI, Snap).
+/// Traits for reading parser state (Ctx, CtxI).
 pub use ctx::*;
 /// Context operation failures.
 pub use error::Error;

@@ -170,10 +170,6 @@ where
         self.heavy.memos.memoize(key, tree, lastmark);
     }
 
-    fn clear_error_memos(&mut self) {
-        self.heavy.memos.clear_error_memos();
-    }
-
     fn cut(&mut self) {
         self.tracer().trace_cut(self);
         if let Some(last) = self.heavy.cutstack.last_mut() {
