@@ -3,8 +3,8 @@
 
 use crate::context::CtxSem;
 use crate::peg::error::*;
-use crate::trees::short::NIL;
 use crate::trees::TreeList;
+use crate::trees::short::NIL;
 use crate::{Exp, Tree};
 
 impl Exp {
@@ -108,8 +108,8 @@ impl Exp {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::context::new_ctx;
     use crate::context::Ctx;
+    use crate::context::new_ctx;
     use crate::input::strcursor::StrCursor;
 
     fn setup(input: &str) -> impl CtxSem {
