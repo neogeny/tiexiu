@@ -139,6 +139,23 @@ impl Rule {
             vec![]
         };
 
+        let decorators: Vec<String> = if let Ok(obj) = path.get_obj() {
+            if let Some(params_val) = obj.get("decorators") {
+                if let JsonValue::Array(arr) = params_val {
+                    arr.iter()
+                        .filter_map(|v| v.as_str())
+                        .map(String::from)
+                        .collect()
+                } else {
+                    vec![]
+                }
+            } else {
+                vec![]
+            }
+        } else {
+            vec![]
+        };
+
         let no_memo = path.opt_bool("no_memo", false);
         let no_stak = path.opt_bool("no_stak", false);
         let is_name = path.opt_bool("is_name", false);
@@ -147,7 +164,16 @@ impl Rule {
         let is_lrec = path.opt_bool("is_lrec", false);
 
         Ok(Rule::from_parts(
-            name, params, rhs, is_name, is_tokn, is_memo, is_lrec, no_memo, no_stak,
+            name,
+            params,
+            decorators,
+            rhs,
+            is_name,
+            is_tokn,
+            is_memo,
+            is_lrec,
+            no_memo,
+            no_stak,
         ))
     }
 }

@@ -28,10 +28,10 @@ impl Grammar {
 
         obj["__class__"] = JsonValue::String("Grammar".into());
         obj["name"] = JsonValue::String(self.name.to_string());
-        obj["analyzed"] = JsonValue::Boolean(self.analyzed);
 
+        let dirs = self.get_directives();
         let mut directives = JsonValue::new_object();
-        for opt in self.get_directives().iter() {
+        for opt in dirs.iter() {
             match opt {
                 CfgKey::Grammar(name) => directives[STR_GRAMMAR_NAME] = name.to_string().into(),
                 CfgKey::Wsp(p) => directives[STR_WHITESPACE] = p.to_string().into(),
@@ -39,11 +39,12 @@ impl Grammar {
                 CfgKey::Eol(p) => directives[STR_EOL_COMMENTS] = p.to_string().into(),
                 CfgKey::NameChars(p) => directives[STR_NAMECHARS] = p.to_string().into(),
                 CfgKey::IgnoreCase => directives[STR_IGNORECASE] = true.into(),
+                CfgKey::NoIgnoreCase => directives[STR_IGNORECASE] = false.into(),
                 CfgKey::NameGuard => directives[STR_NAMEGUARD] = true.into(),
                 CfgKey::NoLeftRecursion => directives[STR_LEFTREC] = false.into(),
                 CfgKey::NoParseInfo => directives[STR_PARSEINFO] = false.into(),
                 CfgKey::NoMemoization => directives[STR_MEMOIZATION] = false.into(),
-                _ => continue, // Skip unsupported keys
+                _ => {}
             };
         }
         obj["directives"] = directives;
@@ -68,7 +69,9 @@ impl Grammar {
 
     /// Serializes the grammar to a pretty-printed JSON string.
     pub fn to_json_string(&self) -> Result<String> {
-        Ok(self.to_json().pretty(2))
+        let mut s = self.to_json().pretty(2);
+        s.push('\n');
+        Ok(s)
     }
 }
 
@@ -80,6 +83,8 @@ impl Rule {
         obj["__class__"] = JsonValue::String("Rule".into());
         obj["name"] = JsonValue::String(self.name.to_string());
 
+        obj["exp"] = self.exp.to_json();
+
         let params: Vec<JsonValue> = self
             .params
             .iter()
@@ -87,14 +92,21 @@ impl Rule {
             .collect();
         obj["params"] = JsonValue::Array(params);
 
-        obj["no_memo"] = JsonValue::Boolean(self.has_no_memo_flag());
-        obj["no_stak"] = JsonValue::Boolean(self.has_no_stak_flag());
+        obj["kwparams"] = JsonValue::new_object();
+        obj["decorators"] = JsonValue::Array(
+            self.decorators
+                .iter()
+                .map(|d| JsonValue::String(d.to_string()))
+                .collect(),
+        );
+        obj["base"] = JsonValue::Null;
+
         obj["is_name"] = JsonValue::Boolean(self.is_name());
         obj["is_tokn"] = JsonValue::Boolean(self.has_is_tokn_flag());
+        obj["no_memo"] = JsonValue::Boolean(self.has_no_memo_flag());
+        obj["no_stak"] = JsonValue::Boolean(self.has_no_stak_flag());
         obj["is_memo"] = JsonValue::Boolean(self.has_is_memo_flag());
         obj["is_lrec"] = JsonValue::Boolean(self.has_is_lrec_flag());
-
-        obj["exp"] = self.exp.to_json();
 
         obj
     }
@@ -116,9 +128,11 @@ impl ExpKind {
         match self {
             Self::EmptyClosure => {
                 obj[&tag] = JsonValue::String("EmptyClosure".into());
+                obj["ast"] = JsonValue::new_array();
             }
             ExpKind::Nil | ExpKind::Void => {
                 obj[&tag] = JsonValue::String("Void".into());
+                obj["ast"] = JsonValue::String("()".into());
             }
             ExpKind::Fail => {
                 obj[&tag] = JsonValue::String("Fail".into());

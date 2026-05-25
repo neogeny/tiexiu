@@ -43,6 +43,8 @@ pub struct Rule {
     pub name: RuleName,
     /// The rule parameters (if any, first is the typename).
     pub params: Box<[Str]>,
+    /// Decorator keywords from the EBNF grammar (@name, @nomemo, etc.).
+    pub decorators: Box<[Str]>,
     /// Rule flags (is_token, is_memo, is_lrec, etc.).
     pub flags: FlagMap,
     /// The parsing expression for this rule.
@@ -91,6 +93,7 @@ impl Rule {
         Self {
             name: name.into(),
             params: params.into(),
+            decorators: [].into(),
             flags: Self::make_flags(false, false, false, false, true, false),
             exp,
         }
@@ -101,6 +104,7 @@ impl Rule {
     pub fn from_parts(
         name: String,
         params: Vec<String>,
+        decorators: Vec<String>,
         mut exp: Exp,
         is_name: bool,
         is_tokn: bool,
@@ -113,6 +117,7 @@ impl Rule {
         Self {
             name: name.into(),
             params: params.into_iter().map(|p| p.into()).collect(),
+            decorators: decorators.into_iter().map(|d| d.into()).collect(),
             flags: Self::make_flags(is_name, is_tokn, no_memo, no_stak, is_memo, is_lrec),
             exp,
         }
