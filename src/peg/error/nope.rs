@@ -21,8 +21,6 @@ pub struct Nope {}
 pub struct DisasterReport {
     /// Source location where the error was created.
     pub location: &'static Location<'static>,
-    /// Whether a cut operator was seen before this error.
-    pub cutseen: bool,
     /// The underlying parse failure.
     pub error: Rc<ParseFailure>,
     /// Memento with the error position and message.
@@ -50,10 +48,9 @@ impl std::error::Error for DisasterReport {
 impl DisasterReport {
     /// Creates a new disaster report from parsing context and failure.
     #[track_caller]
-    pub fn new(start: usize, cutseen: bool, ctx: &dyn Ctx, error: &ParseFailure) -> Self {
+    pub fn new(start: usize, _cutseen: bool, ctx: &dyn Ctx, error: &ParseFailure) -> Self {
         let memento = Memento::new(start, ctx, error.to_string().as_str());
         Self {
-            cutseen,
             memento: memento.into(),
             error: error.clone().into(),
             location: Location::caller(),
@@ -63,23 +60,6 @@ impl DisasterReport {
     /// Returns the error start position.
     pub fn start(&self) -> usize {
         self.memento.start
-    }
-
-    /// Returns the error mark position.
-    pub fn mark(&self) -> usize {
-        self.memento.mark
-    }
-
-    /// Marks that a cut was seen.
-    pub fn setcut(&mut self) {
-        self.cutseen = true;
-    }
-
-    /// Returns whether a cut was seen and resets the flag.
-    pub fn take_cut(&mut self) -> bool {
-        let was_cut = self.cutseen;
-        self.cutseen = false;
-        was_cut
     }
 }
 
