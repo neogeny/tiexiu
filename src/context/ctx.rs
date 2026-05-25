@@ -10,7 +10,7 @@ use crate::peg::error::Nope;
 use crate::peg::error::{DisasterReport, ParseFailure};
 use crate::trees::tree::Tree;
 use crate::types::Str;
-use crate::util::pyre::{Pattern, escape};
+use crate::util::pyre::Pattern;
 use crate::{MAX_RECURSION_DEPTH, SYM_ETX};
 use std::fmt::Debug;
 use std::rc::Rc;
@@ -96,18 +96,18 @@ pub trait CtxSem: Ctx + Debug + Sized {
     fn match_token(&mut self, token: &str) -> bool {
         self.next_token();
         let result = {
-            let wordlike = token.chars().all(|c| c.is_alphanumeric());
-            let escaped = escape(token);
-            if wordlike && *escaped == *token && self.cursor().name_guard() {
-                let bound = if self.cursor().ignore_case() {
-                    format!(r"{}\b", token)
-                } else {
-                    format!(r"(?i){}\b", token)
-                };
-                self.match_pattern(bound.as_str()).is_some()
-            } else {
-                self.cursor_mut().match_token(token)
-            }
+            // let wordlike = token.chars().all(|c| c.is_alphanumeric());
+            // let escaped = escape(token);
+            // if wordlike && *escaped == *token && self.cursor().name_guard() {
+            //     let bound = if self.cursor().ignore_case() {
+            //         format!(r"{}\b", token)
+            //     } else {
+            //         format!(r"(?i){}\b", token)
+            //     };
+            //     self.match_pattern(bound.as_str()).is_some()
+            // } else {
+            self.cursor_mut().match_token(token)
+            // }
         };
         if result {
             self.tracer().trace_match(self, token, "");

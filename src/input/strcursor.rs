@@ -15,6 +15,7 @@ use std::rc::Rc;
 pub struct CursorHeavy {
     ignorecase: bool,
     nameguard: bool,
+    namechars: String,
     source: String,
     patterns: Rc<TokenizingPatterns>,
 }
@@ -43,6 +44,7 @@ impl StrCursor {
             heavy: CursorHeavy {
                 ignorecase: false,
                 nameguard: false,
+                namechars: String::new(),
                 source: "some input".into(),
                 patterns: TokenizingPatterns::default().into(),
             }
@@ -61,6 +63,7 @@ impl StrCursor {
             heavy: CursorHeavy {
                 ignorecase: false,
                 nameguard: false,
+                namechars: String::new(),
                 source: source.into(),
                 patterns: TokenizingPatterns::default().into(),
             }
@@ -76,6 +79,7 @@ impl StrCursor {
             heavy: CursorHeavy {
                 ignorecase: false,
                 nameguard: false,
+                namechars: String::new(),
                 source: "some input".into(),
                 patterns: patterns.into(),
             }
@@ -135,11 +139,25 @@ impl Configurable for StrCursor {
             .next()
             .unwrap_or(&self.heavy.source);
 
+        let namechars: String = cfg
+            .iter()
+            .filter_map(|k| {
+                if let CfgKey::NameChars(s) = k {
+                    Some(s.clone())
+                } else {
+                    None
+                }
+            })
+            .next()
+            .unwrap_or_default();
+
         let nameguard = cfg.contains(&CfgKey::NameGuard(true))
-            || (!cfg.contains(&CfgKey::NameGuard(false)) && !patterns.wsp.pattern().is_empty());
+            || (!cfg.contains(&CfgKey::NameGuard(false))
+                && (!patterns.wsp.pattern().is_empty() || !namechars.is_empty()));
         self.heavy = CursorHeavy {
             ignorecase: cfg.contains(&CfgKey::IgnoreCase),
             nameguard,
+            namechars,
             source: source.into(),
             patterns: patterns.into(),
         }
@@ -200,12 +218,37 @@ impl Cursor for StrCursor {
         }
     }
 
-    fn match_token(&mut self, token: &str) -> bool {
-        if self.peek_token(token) {
-            self.offset += token.len();
-            return true;
+    fn is_name_char(&self, c: char) -> bool {
+        c.is_alphanumeric() || self.heavy.namechars.contains(c)
+    }
+
+    fn is_name(&self, s: &str) -> bool {
+        if s.is_empty() {
+            return false;
         }
-        false
+        let mut chars = s.chars();
+        let first = chars.next().unwrap();
+        if !first.is_alphabetic() && !self.heavy.namechars.contains(first) {
+            return false;
+        }
+        chars.all(|c| self.is_name_char(c))
+    }
+
+    fn match_token(&mut self, token: &str) -> bool {
+        if !self.peek_token(token) {
+            return false;
+        }
+        let mark = self.offset;
+        self.offset += token.len();
+        if self.name_guard() && self.is_name(token) {
+            if let Some(c) = self.text[self.offset..].chars().next() {
+                if self.is_name_char(c) {
+                    self.offset = mark;
+                    return false;
+                }
+            }
+        }
+        true
     }
 
     fn match_pattern(&mut self, pat: &Pattern) -> Option<String> {
@@ -260,6 +303,7 @@ impl Cursor for StrCursor {
         self.heavy = CursorHeavy {
             ignorecase: self.heavy.ignorecase,
             nameguard: self.heavy.nameguard,
+            namechars: self.heavy.namechars.clone(),
             source: self.heavy.source.clone(),
             patterns: patterns.clone().into(),
         }
