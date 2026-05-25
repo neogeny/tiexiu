@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::json::error::JsonError;
-use crate::peg::error::{CompileError, DisasterReport, Nope};
 use crate::peg::ParseFailure;
+use crate::peg::error::{CompileError, DisasterReport, Nope};
 use crate::util::ensure::Ensure;
 
 /// Result type alias with `Error` as the error variant.
