@@ -3,7 +3,6 @@
 
 use crate::ExpKind;
 use crate::api::error::{CompileError, CompileResult};
-use crate::cfg::types::FlagMap;
 use crate::cfg::*;
 use crate::peg::grammar::KeywordRef;
 use crate::peg::rule::{RuleMap, RuleRef};
@@ -142,15 +141,44 @@ impl GrammarCompiler {
     pub fn compile_rule(&self, tree: &Tree) -> CompileResult<Rule> {
         let ctx = "Rule";
         let map = parse_node_check(tree, ctx)?;
-        let name = map_get(map, ctx, "name")?.value();
+        let name = map_get(map, ctx, "name")?.value().to_string();
 
-        let _flags = FlagMap::new();
         let exp = self.parse_exp(map_get(map, ctx, "exp")?)?;
-        let params = match map_get(map, ctx, "params") {
-            Err(_) => [].into(),
-            Ok(p) => p.str_list_value(),
+        let params: Vec<String> = match map_get(map, ctx, "params") {
+            Err(_) => Vec::new(),
+            Ok(p) => p.str_list_value().iter().map(|s| s.to_string()).collect(),
         };
-        Ok(Rule::new(&name, &params, exp))
+        let decorators: Vec<String> = match map_get(map, ctx, "decorators") {
+            Err(_) => Vec::new(),
+            Ok(d) => d.str_list_value().iter().map(|s| s.to_string()).collect(),
+        };
+
+        // TatSu decorator → flag mapping (see _tatsu.ebnf:86,
+        // tatsu/contexts/decorator/basic.py)
+        let is_name = decorators
+            .iter()
+            .any(|d| d == "name" || d == "isname");
+        let no_memo = decorators.iter().any(|d| d == "nomemo");
+        let no_stak = decorators.iter().any(|d| d == "nostak");
+        // TatSu heuristic: uppercase rule name → is_tokn (model.py:295)
+        let is_tokn = name
+            .trim_start_matches('_')
+            .chars()
+            .next()
+            .is_some_and(|c| c.is_uppercase());
+
+        Ok(Rule::from_parts(
+            name,
+            params,
+            decorators,
+            exp,
+            is_name,
+            is_tokn,
+            true,  // is_memo
+            false, // is_lrec
+            no_memo,
+            no_stak,
+        ))
     }
 
     /// Recursively compiles an expression from its parse tree node.

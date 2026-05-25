@@ -13,8 +13,8 @@ fn test_parse() -> Result<()> {
     use tiexiu::peg::ExpKind;
     for rule in parser.rules() {
         match &rule.exp.kind {
-            ExpKind::Sequence(exps) => {
-                assert_eq!(exps.len(), 1, "Sequence should have 1 item");
+            ExpKind::Pattern(p) => {
+                assert_eq!(p.as_ref(), "a");
             }
             other => panic!("Unexpected: {:?}", other),
         }
