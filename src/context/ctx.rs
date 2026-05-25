@@ -10,7 +10,7 @@ use crate::peg::error::Nope;
 use crate::peg::error::{DisasterReport, ParseFailure};
 use crate::trees::tree::Tree;
 use crate::types::Str;
-use crate::util::pyre::{Pattern, escape};
+use crate::util::pyre::{escape, Pattern};
 use crate::{MAX_RECURSION_DEPTH, SYM_ETX};
 use std::fmt::Debug;
 use std::rc::Rc;
@@ -53,12 +53,14 @@ pub trait CtxSem: Ctx + Debug + Sized {
 
     #[track_caller]
     fn failure(&mut self, start: usize, source: ParseFailure) -> Nope {
-        if self.furthest_failure().is_some_and(|f| f.start() >= start) {
-            return Nope::default();
-        }
         let dis = DisasterReport::new(start, false, self, &source);
-        self.set_furthest_failure(dis);
-        Nope::default()
+        let furthest = self.furthest_failure();
+        if furthest.is_none() || furthest.is_some_and(|f| f.mark() <= self.mark()) {
+            self.set_furthest_failure(dis.clone());
+        }
+        Nope {
+            report: dis.into(),
+        }
     }
 
     fn set_furthest_failure(&mut self, dis: DisasterReport);
