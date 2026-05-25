@@ -42,7 +42,7 @@ impl StrCursor {
             offset: 0,
             heavy: CursorHeavy {
                 ignorecase: false,
-                nameguard: true,
+                nameguard: false,
                 source: "some input".into(),
                 patterns: TokenizingPatterns::default().into(),
             }
@@ -60,7 +60,7 @@ impl StrCursor {
             offset: start.min(text.len()),
             heavy: CursorHeavy {
                 ignorecase: false,
-                nameguard: true,
+                nameguard: false,
                 source: source.into(),
                 patterns: TokenizingPatterns::default().into(),
             }
@@ -75,7 +75,7 @@ impl StrCursor {
             offset: 0,
             heavy: CursorHeavy {
                 ignorecase: false,
-                nameguard: true,
+                nameguard: false,
                 source: "some input".into(),
                 patterns: patterns.into(),
             }
@@ -134,9 +134,11 @@ impl Configurable for StrCursor {
             })
             .next()
             .unwrap_or(&self.heavy.source);
+
+        let nameguard = cfg.contains(&CfgKey::NameGuard) || !patterns.wsp.pattern().is_empty();
         self.heavy = CursorHeavy {
             ignorecase: cfg.contains(&CfgKey::IgnoreCase),
-            nameguard: cfg.contains(&CfgKey::NameGuard),
+            nameguard,
             source: source.into(),
             patterns: patterns.into(),
         }
