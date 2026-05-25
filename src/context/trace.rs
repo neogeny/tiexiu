@@ -72,7 +72,7 @@ pub trait Tracer: Debug {
         for call in ctx.callstack().iter() {
             callstack.push_str(&style(call).white().bold().to_string());
             callstack.push_str(&stack_symbol);
-            if callstack.chars().count() > (cols - 5).into() {
+            if callstack.chars().count() > (cols - 5) {
                 callstack.push_str(" ... ");
                 break;
             }

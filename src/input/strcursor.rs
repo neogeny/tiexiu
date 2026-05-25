@@ -135,7 +135,8 @@ impl Configurable for StrCursor {
             .next()
             .unwrap_or(&self.heavy.source);
 
-        let nameguard = cfg.contains(&CfgKey::NameGuard) || !patterns.wsp.pattern().is_empty();
+        let nameguard = cfg.contains(&CfgKey::NameGuard(true))
+            || (!cfg.contains(&CfgKey::NameGuard(false)) && !patterns.wsp.pattern().is_empty());
         self.heavy = CursorHeavy {
             ignorecase: cfg.contains(&CfgKey::IgnoreCase),
             nameguard,

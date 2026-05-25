@@ -48,8 +48,8 @@ pub enum CfgKey {
     IgnoreCase,
     /// Disable case-insensitive matching.
     NoIgnoreCase,
-    /// Enable name guard.
-    NameGuard,
+    /// Enable or disable name guard (bool).
+    NameGuard(bool),
     /// Disable left-recursion support.
     NoLeftRecursion,
     /// Disable parse info tracking.
@@ -117,7 +117,7 @@ impl PartialEq for CfgKey {
             (Self::Start(a), Self::Start(b)) => a == b,
             (Self::IgnoreCase, Self::IgnoreCase) => true,
             (Self::NoIgnoreCase, Self::NoIgnoreCase) => true,
-            (Self::NameGuard, Self::NameGuard) => true,
+            (Self::NameGuard(a), Self::NameGuard(b)) => a == b,
             (Self::NoLeftRecursion, Self::NoLeftRecursion) => true,
             (Self::NoParseInfo, Self::NoParseInfo) => true,
             (Self::NoMemoization, Self::NoMemoization) => true,
@@ -208,7 +208,7 @@ impl Cfg {
             CfgKey::Start(_) => 8,
             CfgKey::IgnoreCase => 9,
             CfgKey::NoIgnoreCase => 10,
-            CfgKey::NameGuard => 11,
+            CfgKey::NameGuard(_) => 11,
             CfgKey::NoLeftRecursion => 12,
             CfgKey::NoParseInfo => 13,
             CfgKey::NoMemoization => 14,
@@ -257,13 +257,7 @@ impl CfgMapper<CfgKey> for CfgKey {
                     Some(CfgKey::NoIgnoreCase)
                 }
             }
-            (STR_NAMEGUARD, _) => {
-                if is_truthy {
-                    Some(CfgKey::NameGuard)
-                } else {
-                    Some(CfgKey::Null)
-                }
-            }
+            (STR_NAMEGUARD, _) => Some(CfgKey::NameGuard(is_truthy)),
             (STR_LEFTREC, _) => {
                 if !is_truthy {
                     Some(CfgKey::NoLeftRecursion)
@@ -308,7 +302,8 @@ impl CfgMapper<CfgKey> for CfgKey {
 
             CfgKey::IgnoreCase => Some((STR_IGNORECASE, true_str)),
             CfgKey::NoIgnoreCase => Some((STR_IGNORECASE, false_str)),
-            CfgKey::NameGuard => Some((STR_NAMEGUARD, true_str)),
+            CfgKey::NameGuard(true) => Some((STR_NAMEGUARD, true_str)),
+            CfgKey::NameGuard(false) => Some((STR_NAMEGUARD, false_str)),
             CfgKey::NoLeftRecursion => Some((STR_LEFTREC, false_str)),
             CfgKey::NoParseInfo => Some((STR_PARSEINFO, false_str)),
             CfgKey::NoMemoization => Some((STR_MEMOIZATION, false_str)),

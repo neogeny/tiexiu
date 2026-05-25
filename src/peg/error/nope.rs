@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::failure::ParseFailure;
+use crate::Tree;
 use crate::context::Ctx;
 use crate::input::memento::Memento;
-use crate::Tree;
 use std::fmt::Debug;
 use std::panic::Location;
 use std::rc::Rc;
