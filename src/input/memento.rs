@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::context::Ctx;
 use crate::context::state::CallStack;
+use crate::context::Ctx;
 use crate::types::Str;
 use console::style;
 use std::rc::Rc;
@@ -59,19 +59,19 @@ impl Memento {
             "  {} {}:{}:{}",
             arrow, self.input_source, line_num, col_num
         )?;
-        writeln!(f, "    {}", blue_pipe)?;
 
         // Windowing logic: find line boundaries without pre-collecting
         let lines: Vec<&str> = self.text.lines().collect();
         let mark_line_idx = line_num.saturating_sub(1);
         let start_line_idx = mark_line_idx.saturating_sub(4);
 
+        writeln!(f, "{:>4} {}", "", blue_pipe)?;
         for i in start_line_idx..=mark_line_idx {
             if let Some(content) = lines.get(i) {
                 let current_line_num = i + 1;
                 writeln!(
                     f,
-                    "{:>2} {} {}",
+                    "{:>4} {} {}",
                     style(current_line_num).blue().bold(),
                     blue_pipe,
                     content
@@ -81,7 +81,8 @@ impl Memento {
                     let padding = " ".repeat(col_num.saturating_sub(1));
                     writeln!(
                         f,
-                        "    {} {}{} {}",
+                        "{:>4} {} {}{} {}",
+                        "",
                         blue_pipe,
                         padding,
                         style("^").red().bold(),
