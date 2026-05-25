@@ -4,7 +4,7 @@
 pub use super::ctx::{Ctx, CtxSem};
 use super::memo::{Memo, MemoKey};
 use super::state::{CallStack, HeavyState, ParseState};
-use super::trace::{CONSOLE_TRACER, NULL_TRACER, Tracer};
+use super::trace::{Tracer, CONSOLE_TRACER, NULL_TRACER};
 use crate::cfg::*;
 use crate::input::Cursor;
 use crate::peg::error::DisasterReport;
@@ -185,18 +185,19 @@ where
             *last = true;
         }
 
+        // NOTE
+        //  Kota Mizushima et al explain memo cache prunning over cut
+        //  _
+        //      https://kmizu.github.io/papers/paste513-mizushima.pdf
+        //      https://ceur-ws.org/Vol-1269/paper232.pdf
+        //
         let mark = self.mark();
-        if self.state.lookahead_depth == 0 && mark > self.state.last_cut_mark {
-            // NOTE
-            //  Kota Mizushima et al explain memo cache prunning over cut
-            //  _
-            //      https://kmizu.github.io/papers/paste513-mizushima.pdf
-            //      https://ceur-ws.org/Vol-1269/paper232.pdf
-            //
-            let cutpoint = mark;
-            self.heavy.memos.prune(cutpoint);
-            self.state.last_cut_mark = mark;
-        }
+        let cutpoint = mark;
+        self.heavy.memos.prune(cutpoint);
+        // if self.state.lookahead_depth == 0 && mark > self.state.last_cut_mark {
+        //     self.heavy.memos.prune(cutpoint);
+        //     self.state.last_cut_mark = mark;
+        // }
     }
 
     fn push_cut(&mut self) {
