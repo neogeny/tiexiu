@@ -12,9 +12,12 @@ use std::rc::Rc;
 /// Result of a PEG parse attempt: success (Rc<Tree>) or failure (Nope).
 pub type ParseResult = Result<Rc<Tree>, Nope>;
 
-/// A parse failure (no details — details are in DisasterReport).
-#[derive(thiserror::Error, Debug, Default, Clone, PartialEq)]
-pub struct Nope {}
+/// A parse failure carrying a disaster report.
+#[derive(thiserror::Error, Debug, Clone)]
+pub struct Nope {
+    /// The underlying disaster report with the error details.
+    pub report: Box<DisasterReport>,
+}
 
 /// A detailed report of a parse failure with position and error context.
 #[derive(Clone, Debug)]
@@ -29,7 +32,7 @@ pub struct DisasterReport {
 
 impl std::fmt::Display for Nope {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::fmt::Display::fmt(&self, f)
+        std::fmt::Display::fmt(&self.report, f)
     }
 }
 
@@ -57,6 +60,10 @@ impl DisasterReport {
         }
     }
 
+    pub fn mark(&self) -> usize {
+        self.memento.mark
+    }
+
     /// Returns the error start position.
     pub fn start(&self) -> usize {
         self.memento.start
@@ -67,11 +74,14 @@ impl DisasterReport {
 mod tests {
     use crate::peg::error::nope::Nope;
 
-    const TARGET: usize = 32;
-
     #[test]
     fn test_nope_size() {
+        // Nope contains a Box<DisasterReport>.
         let size = size_of::<Nope>();
-        assert!(size <= TARGET, "Nope size is {} > {} bytes", size, TARGET);
+        assert_eq!(
+            size, 8,
+            "Nope should be pointer-sized (Box), got {} bytes",
+            size
+        );
     }
 }
