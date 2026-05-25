@@ -113,12 +113,14 @@ mod tests {
     use crate::input::strcursor::StrCursor;
 
     fn setup(input: &str) -> impl CtxSem {
-        new_ctx(StrCursor::new(input), &[])
+        let cursor = StrCursor::new(input);
+        new_ctx(cursor, &[])
     }
 
     #[test]
     fn test_repeat() {
         let mut ctx = setup("abcabcabc");
+        assert!(!ctx.cursor().name_guard());
         let exp = Exp::token("abc");
         if let Ok(_tree) = Exp::repeat(&mut ctx, &exp, false) {
             assert_eq!(ctx.cursor().mark(), 9);

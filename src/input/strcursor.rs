@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::Cursor;
 use super::error::Error;
 use super::tokenizing::TokenizingPatterns;
+use super::Cursor;
 use crate::cfg::keys::config;
 use crate::cfg::*;
 use crate::util::newlines::{take_linebreak_len, take_non_newline_whitespace_len};
@@ -135,8 +135,8 @@ impl Configurable for StrCursor {
             .next()
             .unwrap_or(&self.heavy.source);
 
-        let nameguard = cfg.contains(&CfgKey::NameGuard(true))
-            || (!cfg.contains(&CfgKey::NameGuard(false)) && !patterns.wsp.pattern().is_empty());
+        let nameguard = !cfg.contains(&CfgKey::NameGuard(false))
+            && (cfg.contains(&CfgKey::NameGuard(true)) || patterns.has_wsp);
         self.heavy = CursorHeavy {
             ignorecase: cfg.contains(&CfgKey::IgnoreCase),
             nameguard,
@@ -273,21 +273,18 @@ mod tests {
     use crate::Result;
 
     #[test]
-    #[should_panic(expected = "matches empty string")]
     fn whitespace_pattern_cannot_match_empty() {
-        let _ = TokenizingPatterns::try_new(r"[ \t]*", "/* */", "//.*$");
+        assert!(TokenizingPatterns::try_new(r"[ \t]*", "/* */", "//.*$").is_err());
     }
 
     #[test]
-    #[should_panic(expected = "matches empty string")]
     fn comment_pattern_cannot_match_empty() {
-        let _ = TokenizingPatterns::try_new(r"\s+", ".*", "//.*$");
+        assert!(TokenizingPatterns::try_new(r"\s+", ".*", "//.*$").is_err());
     }
 
     #[test]
-    #[should_panic(expected = "matches empty string")]
     fn eol_pattern_cannot_match_empty() {
-        let _ = TokenizingPatterns::try_new(r"\s+", "/* */", r"\w?");
+        assert!(TokenizingPatterns::try_new(r"\s+", "/* */", r"\w?").is_err());
     }
 
     #[test]
