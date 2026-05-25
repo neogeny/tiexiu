@@ -164,16 +164,7 @@ impl Rule {
         let is_lrec = path.opt_bool("is_lrec", false);
 
         Ok(Rule::from_parts(
-            name,
-            params,
-            decorators,
-            rhs,
-            is_name,
-            is_tokn,
-            is_memo,
-            is_lrec,
-            no_memo,
-            no_stak,
+            name, params, decorators, rhs, is_name, is_tokn, is_memo, is_lrec, no_memo, no_stak,
         ))
     }
 }
