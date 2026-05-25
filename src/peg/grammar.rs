@@ -1,10 +1,10 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::error::ParseFailure;
+use super::error::{DisasterReport, ParseFailure};
 pub use super::pretty::*;
 use super::rule::{Rule, RuleMap, RuleRef};
-use crate::api::error::{DisasterReport, ParseResult};
+use crate::api::error::ParseResult;
 use crate::cfg::*;
 use crate::context::CtxSem;
 use crate::peg::ParseFailure::RuleNotFound;
