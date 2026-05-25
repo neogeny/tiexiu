@@ -6,7 +6,7 @@
 #[macro_use]
 extern crate json;
 use tiexiu::api::compile;
-use tiexiu::{Result, parse};
+use tiexiu::{parse, Result};
 
 #[test]
 #[ignore = "@@include will not be implemented"]

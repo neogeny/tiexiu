@@ -4,8 +4,8 @@
 use crate::cfg::constants::*;
 use crate::cfg::*;
 use crate::input::Error;
-use crate::util::pyre::Pattern;
 use crate::util::pyre::traits::Pattern as _;
+use crate::util::pyre::Pattern;
 
 /// Whitespace, comment, and EOL patterns used during tokenization.
 #[derive(Clone, Debug)]
@@ -13,15 +13,14 @@ pub struct TokenizingPatterns {
     pub(super) wsp: Pattern,
     pub(super) cmt: Pattern,
     pub(super) eol: Pattern,
+    // wsp is not the default
     pub(super) has_wsp: bool,
-    pub(super) has_cmt: bool,
-    pub(super) has_eol: bool,
 }
 
 /// Default patterns: standard whitespace, no comments, no EOL comments.
 impl Default for TokenizingPatterns {
     fn default() -> Self {
-        Self::try_new(r"(?m)\s+", "", "").expect("default patterns must be valid")
+        Self::try_new(r"(?m)\s+", "(?!)", "(?!)").expect("default patterns must be valid")
     }
 }
 
@@ -31,25 +30,17 @@ impl TokenizingPatterns {
         for opt in cfg.iter() {
             match opt {
                 CfgKey::Wsp(p) => {
-                    if p.is_empty() {
-                        self.has_wsp = false;
-                    }
+                    self.has_wsp = !p.is_empty();
                     if let Ok(new) = Self::compile(STR_WHITESPACE, p.as_str()) {
                         self.wsp = new;
                     }
                 }
                 CfgKey::Cmt(p) => {
-                    if p.is_empty() {
-                        self.has_cmt = false;
-                    }
                     if let Ok(new) = Self::compile(STR_COMMENTS, p.as_str()) {
                         self.cmt = new;
                     }
                 }
                 CfgKey::Eol(p) => {
-                    if p.is_empty() {
-                        self.has_eol = false;
-                    }
                     if let Ok(new) = Self::compile(STR_EOL_COMMENTS, p.as_str()) {
                         self.eol = new;
                     }
@@ -60,45 +51,25 @@ impl TokenizingPatterns {
     }
 
     /// Compile a pattern, validating it does not match empty.
-    pub fn compile(kind: &'static str, mut pattern: &str) -> Result<Pattern, Error> {
-        if pattern.is_empty() {
-            pattern = "(?!)";
-        }
+    pub fn compile(kind: &'static str, pattern: &str) -> Result<Pattern, Error> {
         let p = Pattern::new(pattern).map_err(|source| Error::InvalidRegex {
             kind,
             pattern: pattern.to_string(),
             source,
         })?;
-        Self::validate_no_empty_match(&p, kind);
-        Ok(p)
+        Self::validate_no_empty_match(kind, p)
     }
 
-    /// Build tokenizing patterns from a configuration.
-    pub fn from_cfg(cfg: &Cfg) -> Result<Self, Error> {
-        let mut wsp = "";
-        let mut cmt = "";
-        let mut eol = "";
-
-        for opt in cfg.iter() {
-            match opt {
-                CfgKey::Wsp(p) => wsp = p.as_str(),
-                CfgKey::Cmt(p) => cmt = p.as_str(),
-                CfgKey::Eol(p) => eol = p.as_str(),
-                _ => {}
-            }
+    pub fn validate_no_empty_match(kind: &'static str, pattern: Pattern) -> Result<Pattern, Error> {
+        if !pattern.pattern().is_empty() && pattern.matches_empty() {
+            return Err(
+                Error::RegexMatchesEmpty {
+                    kind,
+                    pattern: pattern.pattern().to_string(),
+                }
+            )
         }
-
-        TokenizingPatterns::try_new(wsp, cmt, eol)
-    }
-
-    /// Assert that a pattern does not match the empty string.
-    pub fn validate_no_empty_match(pattern: &Pattern, kind: &str) {
-        assert!(
-            !pattern.matches_empty(),
-            "pattern '{}' for {} matches empty string, which would cause infinite loop",
-            pattern.pattern(),
-            kind
-        );
+        Ok(pattern)
     }
 
     /// Try to create patterns from wsp, comment, and EOL strings.
@@ -107,23 +78,11 @@ impl TokenizingPatterns {
         let cmt = Self::compile(STR_COMMENTS, cm)?;
         let eol = Self::compile(STR_EOL_COMMENTS, eo)?;
 
-        let mut parts = Vec::new();
-        if !wsp.is_empty() {
-            parts.push(format!("(?:{})", wsp.pattern()));
-        }
-        if !cmt.is_empty() {
-            parts.push(format!("(?:{})", cmt.pattern()));
-        }
-        if !eol.is_empty() {
-            parts.push(format!("(?:{})", eol.pattern()));
-        }
         Ok(Self {
             wsp,
             cmt,
             eol,
-            has_wsp: !ws.is_empty(),
-            has_cmt: !cm.is_empty(),
-            has_eol: !eo.is_empty(),
+            has_wsp: false,
         })
     }
 }
