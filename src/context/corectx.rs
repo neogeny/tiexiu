@@ -129,7 +129,7 @@ where
 
     fn leave_lookahead(&mut self) {
         debug_assert!(self.state.lookahead_depth >= 1);
-        self.state.lookahead_depth += 1;
+        self.state.lookahead_depth -= 1;
     }
 
     fn track(&mut self, key: &MemoKey) -> usize {
