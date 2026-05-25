@@ -3,8 +3,8 @@
 
 mod ui;
 
-use tiexiu::Error;
 use tiexiu::error::Result;
+use tiexiu::Error;
 
 fn main() -> Result<()> {
     use std::io::{self, Write};
@@ -16,15 +16,20 @@ fn main() -> Result<()> {
             let _ = out_handle.flush();
             Ok(())
         }
-        Err(err) => match &err {
-            Error::Io(e) if e.kind() == io::ErrorKind::BrokenPipe => Ok(()),
-            _ => {
-                #[cfg(debug_assertions)]
-                writeln!(err_handle, "{:#?}", err).ok();
-                #[cfg(not(debug_assertions))]
-                writeln!(err_handle, "{}", err).ok();
-                let _ = err_handle.flush();
-                Err(err)
+        Err(err) => {
+            match &err {
+                Error::Io(e) if e.kind() == io::ErrorKind::BrokenPipe => Ok(()),
+                Error::AndNowAMessageFromYourFriendlyTest(_) => {
+                    Err(err)
+                }
+                _ => {
+                    #[cfg(debug_assertions)]
+                    writeln!(err_handle, "{:#?}", err).ok();
+                    #[cfg(not(debug_assertions))]
+                    writeln!(err_handle, "{}", err).ok();
+                    let _ = err_handle.flush();
+                    Err(err)
+                }
             }
         },
     }

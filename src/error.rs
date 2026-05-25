@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::json::error::JsonError;
-use crate::peg::ParseFailure;
 use crate::peg::error::{CompileError, DisasterReport, Nope};
+use crate::peg::ParseFailure;
 use crate::util::ensure::Ensure;
 
 /// Result type alias with `Error` as the error variant.
@@ -27,8 +27,20 @@ impl From<String> for Error {
     }
 }
 
+impl std::fmt::Debug for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Error::AndNowAMessageFromYourFriendlyTest(msg) => {
+                write!(f, "{}", msg)
+            }
+            // Uses your #[error("...")] definitions. Safely breaks the loop!
+            other => std::fmt::Display::fmt(other, f),
+        }
+    }
+}
+
 /// Unified error type for all TieXiu operations.
-#[derive(Debug, thiserror::Error)]
+#[derive(thiserror::Error)]
 pub enum Error {
     /// Regex compilation error.
     #[error("JSON import/export failed: {0}")]
