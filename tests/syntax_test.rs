@@ -258,7 +258,7 @@ fn test_empty_closure() -> Result<()> {
         start = {'x'}+ {} 'y' $;
     "#;
 
-    let model = compile(grammar, &[CfgKey::Wsp("".to_string())])?;
+    let model = compile(grammar, &[])?;
     let ast = parse_input(&model, "xxxy", &[CfgKey::Wsp("".to_string())])?;
     assert_eq!(ast.to_json(), value!([["x", "x", "x"], [], "y"]));
 
@@ -376,7 +376,7 @@ fn test_ast_assignment() -> Result<()> {
     "#;
 
     let model = compile(grammar, &[])?;
-    let cfg = &[CfgKey::Wsp("".to_string())];
+    let cfg = &[];
 
     // Rule 'n': @: override of {"a"}* (result is not forced to be a list)
     assert_eq!(model.parse_input_from("", "n", cfg)?.to_json(), value!([]));

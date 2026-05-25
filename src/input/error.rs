@@ -15,11 +15,6 @@ pub enum Error {
         source: ReError,
     },
 
-    #[error(
-        "pattern `{pattern}` for {kind} matches the empty string"
-    )]
-    RegexMatchesEmpty {
-        kind: &'static str,
-        pattern: String,
-    }
+    #[error("pattern `{pattern}` for {kind} matches the empty string")]
+    RegexMatchesEmpty { kind: &'static str, pattern: String },
 }

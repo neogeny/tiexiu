@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use super::Cursor;
 use super::error::Error;
 use super::tokenizing::TokenizingPatterns;
-use super::Cursor;
 use crate::cfg::keys::config;
 use crate::cfg::*;
 use crate::util::newlines::{take_linebreak_len, take_non_newline_whitespace_len};
@@ -153,9 +153,8 @@ impl Configurable for StrCursor {
 
         let nameguard = !cfg.contains(&CfgKey::NameGuard(false))
             && (cfg.contains(&CfgKey::NameGuard(true))
-            || patterns.has_wsp
-            || !namechars.is_empty()
-        );
+                || patterns.not_default && !patterns.wsp.pattern().is_empty()
+                || !namechars.is_empty());
         self.heavy = CursorHeavy {
             ignorecase: cfg.contains(&CfgKey::IgnoreCase),
             nameguard,
