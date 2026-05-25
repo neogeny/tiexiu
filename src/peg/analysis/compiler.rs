@@ -260,7 +260,11 @@ impl GrammarCompiler {
                     .iter()
                     .map(|t| self.parse_exp(t))
                     .collect::<CompileResult<_>>()?;
-                Exp::sequence(exps)
+                if exps.len() == 1 {
+                    exps.into_iter().next().unwrap()
+                } else {
+                    Exp::sequence(exps)
+                }
             }
             "SkipGroup" => Exp::skip_group(self.parse_exp(tree)?),
             "SkipTo" => Exp::skip_to(self.parse_exp(tree)?),

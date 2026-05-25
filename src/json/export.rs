@@ -30,22 +30,23 @@ impl Grammar {
         obj["name"] = JsonValue::String(self.name.to_string());
         obj["analyzed"] = JsonValue::Boolean(self.analyzed);
 
+        let dirs = self.get_directives();
         let mut directives = JsonValue::new_object();
-        for opt in self.get_directives().iter() {
+        for opt in dirs.iter() {
             match opt {
                 CfgKey::Grammar(name) => directives[STR_GRAMMAR_NAME] = name.to_string().into(),
                 CfgKey::Wsp(p) => directives[STR_WHITESPACE] = p.to_string().into(),
                 CfgKey::Cmt(p) => directives[STR_COMMENTS] = p.to_string().into(),
                 CfgKey::Eol(p) => directives[STR_EOL_COMMENTS] = p.to_string().into(),
                 CfgKey::NameChars(p) => directives[STR_NAMECHARS] = p.to_string().into(),
-                CfgKey::IgnoreCase => directives[STR_IGNORECASE] = true.into(),
-                CfgKey::NameGuard => directives[STR_NAMEGUARD] = true.into(),
-                CfgKey::NoLeftRecursion => directives[STR_LEFTREC] = false.into(),
-                CfgKey::NoParseInfo => directives[STR_PARSEINFO] = false.into(),
-                CfgKey::NoMemoization => directives[STR_MEMOIZATION] = false.into(),
-                _ => continue, // Skip unsupported keys
+                _ => {}
             };
         }
+        directives[STR_IGNORECASE] = dirs.contains(&CfgKey::IgnoreCase).into();
+        directives[STR_NAMEGUARD] = dirs.contains(&CfgKey::NameGuard).into();
+        directives[STR_LEFTREC] = (!dirs.contains(&CfgKey::NoLeftRecursion)).into();
+        directives[STR_PARSEINFO] = (!dirs.contains(&CfgKey::NoParseInfo)).into();
+        directives[STR_MEMOIZATION] = (!dirs.contains(&CfgKey::NoMemoization)).into();
         obj["directives"] = directives;
 
         let keywords: Vec<JsonValue> = self
@@ -119,6 +120,7 @@ impl ExpKind {
             }
             ExpKind::Nil | ExpKind::Void => {
                 obj[&tag] = JsonValue::String("Void".into());
+                obj["ast"] = JsonValue::String("()".into());
             }
             ExpKind::Fail => {
                 obj[&tag] = JsonValue::String("Fail".into());

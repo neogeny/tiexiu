@@ -210,6 +210,10 @@ impl Exp {
                 let seq_start = ctx.mark();
                 let mut results: Vec<Rc<Tree>> = Vec::with_capacity(sequence.len());
                 for exp in &**sequence {
+                    if let ExpKind::Cut = exp.kind {
+                        // ctx.cut();
+                        continue;
+                    }
                     match exp.parse_at(ctx) {
                         Ok(tree) => results.push(tree),
                         Err(nope) => {
