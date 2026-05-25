@@ -76,7 +76,6 @@ impl Exp {
             },
             ExpKind::Cut => {
                 ctx.cut();
-                ctx.tracer().trace_cut(ctx);
                 Ok(Tree::Nil.into())
             }
             ExpKind::Void => {
@@ -164,26 +163,32 @@ impl Exp {
             }
             ExpKind::Lookahead(exp) => {
                 let branch = ctx.mark();
+                ctx.enter_lookahead();
                 match exp.parse_at(ctx) {
                     Ok(_) => {
                         ctx.reset(branch);
+                        ctx.leave_lookahead();
                         Ok(Tree::Nil.into())
                     }
                     Err(nope) => {
                         ctx.reset(branch);
+                        ctx.leave_lookahead();
                         Err(nope)
                     }
                 }
             }
             ExpKind::NegativeLookahead(exp) => {
                 let branch = ctx.mark();
+                ctx.enter_lookahead();
                 match exp.parse_at(ctx) {
                     Ok(_) => {
                         ctx.reset(branch);
+                        ctx.leave_lookahead();
                         Err(ctx.failure(start, NotExpecting(exp.lookahead_str())))
                     }
                     Err(_) => {
                         ctx.reset(branch);
+                        ctx.leave_lookahead();
                         Ok(Tree::Nil.into())
                     }
                 }
@@ -206,8 +211,7 @@ impl Exp {
                 let mut results: Vec<Rc<Tree>> = Vec::with_capacity(sequence.len());
                 for exp in &**sequence {
                     if let ExpKind::Cut = exp.kind {
-                        ctx.tracer().trace_cut(ctx);
-                        ctx.prune_cache();
+                        // ctx.cut();
                         continue;
                     }
                     match exp.parse_at(ctx) {

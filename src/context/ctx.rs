@@ -33,6 +33,9 @@ pub trait CtxSem: Ctx + Debug + Sized {
     fn untrack(&mut self, key: &MemoKey) -> usize;
     fn tracer(&self) -> &dyn Tracer;
 
+    fn enter_lookahead(&mut self);
+    fn leave_lookahead(&mut self);
+
     /// Checks recursion depth to prevent stack overflow.
     fn track(&mut self, key: &MemoKey) -> usize;
     fn track_recursion_depth(&mut self, key: &MemoKey) -> Result<(), Nope> {
@@ -144,16 +147,12 @@ pub trait CtxSem: Ctx + Debug + Sized {
     }
 
     fn key(&mut self, name: &str, can_memo: bool) -> MemoKey;
-
     fn memo(&mut self, key: &MemoKey) -> Option<Memo>;
-
     fn memoize(&mut self, key: &MemoKey, tree: &Rc<Tree>, lastmark: usize);
 
     fn cut(&mut self);
     fn push_cut(&mut self);
     fn take_cut(&mut self) -> bool;
-
-    fn prune_cache(&mut self);
 
     fn is_keyword(&self, name: &str) -> bool {
         let _ = name;

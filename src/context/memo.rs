@@ -1,10 +1,12 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::cfg::MEMO_CACHE_CAPACITY;
 use crate::trees::short::BOTTOM;
 use crate::trees::tree::Tree;
 use crate::types::{FastIndexSet, Str};
-use ahash::{AHashMap, RandomState};
+use ahash::RandomState;
+use quick_cache::unsync::Cache;
 use std::rc::Rc;
 
 /// Key for memoizing a parse result at a specific position for a named rule.
@@ -27,11 +29,11 @@ pub struct Memo {
     pub mark: usize,
 }
 
-/// A cache for memoized parse results, keyed by position and rule name.
-#[derive(Clone, Debug)]
+/// A bounded cache for memoized parse results, keyed by position and rule name.
+#[derive(Debug)]
 pub struct MemoCache {
     strings: FastIndexSet<Str>,
-    memos: AHashMap<MemoKey, Memo>,
+    memos: Cache<MemoKey, Memo>,
 }
 
 /// Tracks the recursion depth of a memo key for detecting left-recursion loops.
@@ -45,7 +47,70 @@ pub struct KeyTrack {
 
 impl Default for MemoCache {
     fn default() -> Self {
-        Self::new()
+        Self {
+            strings: FastIndexSet::with_hasher(RandomState::new()),
+            memos: Cache::new(MEMO_CACHE_CAPACITY),
+        }
+    }
+}
+
+impl MemoCache {
+    /// Creates a new `MemoCache` with default capacity.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Interns a string, returning a reference-counted copy from the cache.
+    pub fn intern(&mut self, s: &str) -> Str {
+        if let Some(existing) = self.strings.get(s) {
+            return existing.clone();
+        }
+
+        let new: Str = s.into();
+        self.strings.insert(new.clone());
+        new
+    }
+
+    /// Interns a string and returns its index in the string table.
+    pub fn intern_index(&mut self, s: Str) -> usize {
+        if let Some(index) = self.strings.get_index_of(&s) {
+            return index;
+        }
+
+        let (index, _) = self.strings.insert_full(s);
+        index
+    }
+
+    /// Creates a `MemoKey` from position, rule name, and memoization flag.
+    pub fn key(&mut self, mark: usize, name: Str, can_memo: bool) -> MemoKey {
+        MemoKey {
+            mark,
+            name,
+            can_memo,
+        }
+    }
+
+    /// Looks up a memoized result for the given key.
+    pub fn memo(&mut self, key: &MemoKey) -> Option<Memo> {
+        self.memos.get(key).cloned()
+    }
+
+    /// Stores a memoized parse result, respecting the key's `can_memo` flag.
+    pub fn memoize(&mut self, key: &MemoKey, tree: &Rc<Tree>, mark: usize) {
+        if !key.can_memo {
+            return;
+        }
+        let memo = Memo {
+            tree: tree.clone(),
+            mark,
+        };
+        self.memos.insert(key.clone(), memo);
+    }
+
+    /// Removes all memo entries before `cutpoint`, except `BOTTOM` sentinels.
+    pub fn prune(&mut self, cutpoint: usize) {
+        self.memos
+            .retain(|key, memo| key.mark >= cutpoint || *memo.tree == BOTTOM);
     }
 }
 
@@ -75,81 +140,10 @@ impl KeyTrack {
     }
 }
 
-impl MemoCache {
-    /// Creates a new empty `MemoCache`.
-    pub fn new() -> Self {
-        Self {
-            strings: FastIndexSet::with_hasher(RandomState::new()),
-            memos: AHashMap::new(),
-        }
-    }
-
-    /// Removes all memo entries whose result is `Tree::Bottom` (failed parse markers).
-    pub fn clear_error_memos(&mut self) {
-        self.memos.retain(|_, memo| *memo.tree != Tree::Bottom);
-    }
-
-    /// Interns a string, returning a reference-counted copy from the cache.
-    pub fn intern(&mut self, s: &str) -> Str {
-        if let Some(existing) = self.strings.get(s) {
-            return existing.clone();
-        }
-
-        let new: Str = s.into();
-        self.strings.insert(new.clone());
-        new
-    }
-
-    /// Interns a string and returns its index in the string table.
-    pub fn intern_index(&mut self, s: Str) -> usize {
-        if let Some(index) = self.strings.get_index_of(&s) {
-            return index;
-        }
-
-        let (index, _) = self.strings.insert_full(s);
-        index
-    }
-}
-
-impl MemoCache {
-    /// Creates a `MemoKey` from position, rule name, and memoization flag.
-    pub fn key(&mut self, mark: usize, name: Str, can_memo: bool) -> MemoKey {
-        MemoKey {
-            mark,
-            name,
-            can_memo,
-        }
-    }
-
-    /// Looks up a memoized result for the given key.
-    pub fn memo(&mut self, key: &MemoKey) -> Option<Memo> {
-        self.memos.get(key).cloned()
-    }
-
-    /// Stores a memoized parse result, respecting the key's `can_memo` flag.
-    pub fn memoize(&mut self, key: &MemoKey, tree: &Rc<Tree>, mark: usize) {
-        if !key.can_memo {
-            return;
-        }
-        let memo = Memo {
-            tree: tree.clone(),
-            mark,
-        };
-        self.memos.insert(key.clone(), memo);
-    }
-
-    /// Removes all memo entries whose start position is before `cutpoint`,
-    /// except for `Tree::Bottom` sentinels.
-    pub fn prune(&mut self, cutpoint: usize) {
-        self.memos
-            .retain(|key, memo| key.mark >= cutpoint && *memo.tree != BOTTOM);
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::trees::Tree;
+    use crate::trees::tree::Tree;
 
     #[test]
     fn new_cache_is_empty() {

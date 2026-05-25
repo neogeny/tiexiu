@@ -123,6 +123,15 @@ where
         self.heavy.tracer
     }
 
+    fn enter_lookahead(&mut self) {
+        self.state.lookahead_depth += 1;
+    }
+
+    fn leave_lookahead(&mut self) {
+        debug_assert!(self.state.lookahead_depth >= 1);
+        self.state.lookahead_depth += 1;
+    }
+
     fn track(&mut self, key: &MemoKey) -> usize {
         self.state.keytrack.track(key)
     }
@@ -175,7 +184,17 @@ where
         if let Some(last) = self.heavy.cutstack.last_mut() {
             *last = true;
         }
-        self.prune_cache();
+        if self.state.lookahead_depth == 0 {
+            // NOTE
+            //  Kota Mizushima et al explain memo cache prunning over cut
+            //  _
+            //      https://kmizu.github.io/papers/paste513-mizushima.pdf
+            //      https://ceur-ws.org/Vol-1269/paper232.pdf
+            //
+            let cutpoint = self.state.last_cut_mark;
+            self.heavy.memos.prune(cutpoint);
+            self.state.last_cut_mark = self.mark();
+        }
     }
 
     fn push_cut(&mut self) {
@@ -186,11 +205,6 @@ where
         let cutseen = self.cut_seen();
         self.heavy.cutstack.pop();
         cutseen
-    }
-
-    fn prune_cache(&mut self) {
-        let cutpoint = self.mark();
-        self.heavy.memos.prune(cutpoint);
     }
 
     fn is_keyword(&self, name: &str) -> bool {

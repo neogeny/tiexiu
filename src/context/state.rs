@@ -40,6 +40,8 @@ pub struct ParseState<U: Cursor> {
     pub cursor: U,
     /// Tracks memo key recursion depth for left-recursion detection.
     pub keytrack: KeyTrack,
+    pub last_cut_mark: usize,
+    pub lookahead_depth: usize,
 }
 
 /// Shared heavyweight state used across context clones.
@@ -113,6 +115,8 @@ impl<U: Cursor> ParseState<U> {
         Self {
             cursor,
             keytrack: KeyTrack::default(),
+            last_cut_mark: 0,
+            lookahead_depth: 0,
         }
     }
 }

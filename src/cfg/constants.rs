@@ -4,6 +4,9 @@
 /// Prefix for recognized environment variables
 pub(crate) const ENV_PREFIX: &str = "TIEXIU";
 
+// Maximum number of memos in Memo cache
+pub(crate) const MEMO_CACHE_CAPACITY: usize = 8 * 1024;
+
 /// Maximum allowed recursion depth for parsing.
 pub const MAX_RECURSION_DEPTH: usize = 64;
 
