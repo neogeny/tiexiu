@@ -239,6 +239,9 @@ pub fn cli(out: &mut std::io::StdoutLock) -> Result<()> {
                     style("".to_string()).white()
                 },
             );
+            if errcount > 0 {
+                return Err("Some files could not be parsed".into());
+            }
             (output, format)
         }
         Commands::Grammar {
