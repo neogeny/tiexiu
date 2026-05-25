@@ -4,7 +4,8 @@
 use super::Ctx;
 use console::style;
 use std::fmt::Debug;
-// use std::io::Write;
+
+pub(crate) const LINE_LEN: usize = 120;
 
 pub(crate) static NULL_TRACER: NullTracer = NullTracer {};
 pub(crate) static CONSOLE_TRACER: ConsoleTracer = ConsoleTracer {};
@@ -67,13 +68,14 @@ pub trait Tracer: Debug {
         let mut callstack = String::new();
         // let term = Term::stderr();
         // let (_rows, cols) = term.size();
+        let cols = LINE_LEN;
         for call in ctx.callstack().iter() {
             callstack.push_str(&style(call).white().bold().to_string());
             callstack.push_str(&stack_symbol);
-            // if callstack.chars().count() > (cols - 5).into() {
-            //     callstack.push_str(" ... ");
-            //     break;
-            // }
+            if callstack.chars().count() > (cols - 5) {
+                callstack.push_str(" ... ");
+                break;
+            }
         }
         let location = ctx.cursor().location();
         let _source = location.source.to_string();

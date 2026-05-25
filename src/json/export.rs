@@ -40,7 +40,7 @@ impl Grammar {
                 CfgKey::NameChars(p) => directives[STR_NAMECHARS] = p.to_string().into(),
                 CfgKey::IgnoreCase => directives[STR_IGNORECASE] = true.into(),
                 CfgKey::NoIgnoreCase => directives[STR_IGNORECASE] = false.into(),
-                CfgKey::NameGuard => directives[STR_NAMEGUARD] = true.into(),
+                CfgKey::NameGuard(v) => directives[STR_NAMEGUARD] = (*v).into(),
                 CfgKey::NoLeftRecursion => directives[STR_LEFTREC] = false.into(),
                 CfgKey::NoParseInfo => directives[STR_PARSEINFO] = false.into(),
                 CfgKey::NoMemoization => directives[STR_MEMOIZATION] = false.into(),

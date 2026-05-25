@@ -18,6 +18,7 @@ fn main() -> Result<()> {
         }
         Err(err) => match &err {
             Error::Io(e) if e.kind() == io::ErrorKind::BrokenPipe => Ok(()),
+            Error::AndNowAMessageFromYourFriendlyTest(_) => Err(err),
             _ => {
                 #[cfg(debug_assertions)]
                 writeln!(err_handle, "{:#?}", err).ok();

@@ -51,7 +51,7 @@ impl Exp {
         exp: &Exp,
         sep: &Exp,
         positive: bool,
-        keep_pre: bool,
+        keep_sep: bool,
     ) -> ParseResult {
         let mut res = TreeList::new();
         ctx.push_cut();
@@ -89,7 +89,7 @@ impl Exp {
                     ctx.take_cut();
                     match result {
                         Ok(tree) => {
-                            if keep_pre {
+                            if keep_sep {
                                 res.push_back(pre_tree);
                             }
                             res.push_back(tree);
@@ -136,7 +136,7 @@ mod tests {
             assert_eq!(tree.width(), 11);
             assert_eq!(ctx.cursor().mark(), 11);
         } else {
-            panic!("repeat_with_pre failed")
+            panic!("repeat_with_sep failed")
         }
     }
 
@@ -149,7 +149,7 @@ mod tests {
             assert_eq!(tree.width(), 9);
             assert_eq!(ctx.cursor().mark(), 11);
         } else {
-            panic!("repeat_with_pre failed")
+            panic!("repeat_with_sep failed")
         }
     }
 
@@ -167,7 +167,7 @@ mod tests {
 
     #[test]
     #[ignore = "Ctx.cutseen is being removed"]
-    fn test_repeat_with_pre_restores_entered_cut() {
+    fn test_repeat_with_sep_restores_entered_cut() {
         let mut ctx = setup(",abc,abc");
         ctx.cut();
 
@@ -176,16 +176,16 @@ mod tests {
         assert!(Exp::repeat_with_sep(&mut ctx, &exp, &pre, false, true).is_ok());
         assert!(
             ctx.cut_seen(),
-            "cut should be restored after repeat_with_pre"
+            "cut should be restored after repeat_with_sep"
         );
     }
 
     #[test]
-    fn test_repeat_with_pre_no_cut_enters_clears() {
+    fn test_repeat_with_sep_no_cut_enters_clears() {
         let mut ctx = setup(",abc,abc");
         assert!(
             !ctx.cut_seen(),
-            "ctx should not have cut set before repeat_with_pre"
+            "ctx should not have cut set before repeat_with_sep"
         );
 
         let exp = Exp::token("abc");

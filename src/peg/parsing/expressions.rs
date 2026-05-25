@@ -211,11 +211,22 @@ impl Exp {
                 let mut results: Vec<Rc<Tree>> = Vec::with_capacity(sequence.len());
                 for exp in &**sequence {
                     if let ExpKind::Cut = exp.kind {
-                        // ctx.cut();
+                        // NOTE
+                        //   this is a minor optimization because
+                        //      parse_at(Exp::ExpKind::Cut)
+                        //   will just return Tree::Nil
+                        ctx.cut();
                         continue;
                     }
                     match exp.parse_at(ctx) {
-                        Ok(tree) => results.push(tree),
+                        Ok(tree) => {
+                            if *tree == Tree::Nil {
+                                // note: minor optimization
+                                // note: the likes does not apply to closures
+                                continue;
+                            }
+                            results.push(tree);
+                        }
                         Err(nope) => {
                             ctx.reset(seq_start);
                             return Err(nope);

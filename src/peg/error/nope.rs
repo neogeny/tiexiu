@@ -12,17 +12,18 @@ use std::rc::Rc;
 /// Result of a PEG parse attempt: success (Rc<Tree>) or failure (Nope).
 pub type ParseResult = Result<Rc<Tree>, Nope>;
 
-/// A parse failure (no details — details are in DisasterReport).
-#[derive(thiserror::Error, Debug, Default, Clone, PartialEq)]
-pub struct Nope {}
+/// A parse failure carrying a disaster report.
+#[derive(thiserror::Error, Debug, Clone)]
+pub struct Nope {
+    /// The underlying disaster report with the error details.
+    pub report: Rc<DisasterReport>,
+}
 
 /// A detailed report of a parse failure with position and error context.
 #[derive(Clone, Debug)]
 pub struct DisasterReport {
     /// Source location where the error was created.
     pub location: &'static Location<'static>,
-    /// Whether a cut operator was seen before this error.
-    pub cutseen: bool,
     /// The underlying parse failure.
     pub error: Rc<ParseFailure>,
     /// Memento with the error position and message.
@@ -31,7 +32,7 @@ pub struct DisasterReport {
 
 impl std::fmt::Display for Nope {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::fmt::Display::fmt(&self, f)
+        std::fmt::Display::fmt(&self.report, f)
     }
 }
 
@@ -50,36 +51,22 @@ impl std::error::Error for DisasterReport {
 impl DisasterReport {
     /// Creates a new disaster report from parsing context and failure.
     #[track_caller]
-    pub fn new(start: usize, cutseen: bool, ctx: &dyn Ctx, error: &ParseFailure) -> Self {
+    pub fn new(start: usize, _cutseen: bool, ctx: &dyn Ctx, error: &ParseFailure) -> Self {
         let memento = Memento::new(start, ctx, error.to_string().as_str());
         Self {
-            cutseen,
             memento: memento.into(),
             error: error.clone().into(),
             location: Location::caller(),
         }
     }
 
-    /// Returns the error start position.
-    pub fn start(&self) -> usize {
-        self.memento.start
-    }
-
-    /// Returns the error mark position.
     pub fn mark(&self) -> usize {
         self.memento.mark
     }
 
-    /// Marks that a cut was seen.
-    pub fn setcut(&mut self) {
-        self.cutseen = true;
-    }
-
-    /// Returns whether a cut was seen and resets the flag.
-    pub fn take_cut(&mut self) -> bool {
-        let was_cut = self.cutseen;
-        self.cutseen = false;
-        was_cut
+    /// Returns the error start position.
+    pub fn start(&self) -> usize {
+        self.memento.start
     }
 }
 
@@ -87,11 +74,14 @@ impl DisasterReport {
 mod tests {
     use crate::peg::error::nope::Nope;
 
-    const TARGET: usize = 32;
-
     #[test]
     fn test_nope_size() {
+        // Nope contains a Box<DisasterReport>.
         let size = size_of::<Nope>();
-        assert!(size <= TARGET, "Nope size is {} > {} bytes", size, TARGET);
+        assert_eq!(
+            size, 8,
+            "Nope should be pointer-sized (Box), got {} bytes",
+            size
+        );
     }
 }

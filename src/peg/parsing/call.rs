@@ -27,7 +27,10 @@ impl Exp {
             ctx.tracer().trace_entry(ctx);
         }
 
-        match Self::do_call(ctx, name, rule) {
+        ctx.push_cut();
+        let result = Self::do_call(ctx, name, rule);
+        let _cutseen = ctx.take_cut();
+        match result {
             Ok(tree) => {
                 if rule.should_trace() {
                     ctx.leave();

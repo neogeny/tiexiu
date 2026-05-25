@@ -155,9 +155,7 @@ impl GrammarCompiler {
 
         // TatSu decorator → flag mapping (see _tatsu.ebnf:86,
         // tatsu/contexts/decorator/basic.py)
-        let is_name = decorators
-            .iter()
-            .any(|d| d == "name" || d == "isname");
+        let is_name = decorators.iter().any(|d| d == "name" || d == "isname");
         let no_memo = decorators.iter().any(|d| d == "nomemo");
         let no_stak = decorators.iter().any(|d| d == "nostak");
         // TatSu heuristic: uppercase rule name → is_tokn (model.py:295)
@@ -168,16 +166,9 @@ impl GrammarCompiler {
             .is_some_and(|c| c.is_uppercase());
 
         Ok(Rule::from_parts(
-            name,
-            params,
-            decorators,
-            exp,
-            is_name,
-            is_tokn,
-            true,  // is_memo
+            name, params, decorators, exp, is_name, is_tokn, true,  // is_memo
             false, // is_lrec
-            no_memo,
-            no_stak,
+            no_memo, no_stak,
         ))
     }
 
