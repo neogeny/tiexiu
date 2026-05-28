@@ -6,9 +6,9 @@ use super::error::Error;
 use super::tokenizing::TokenizingPatterns;
 use crate::cfg::keys::config;
 use crate::cfg::*;
+use crate::types::{Ref, Str};
 use crate::util::newlines::{take_linebreak_len, take_non_newline_whitespace_len};
 use crate::util::pyre::Pattern;
-use std::rc::Rc;
 
 /// Shared cursor configuration (CoW handle).
 #[derive(Debug, Clone)]
@@ -17,15 +17,15 @@ pub struct CursorHeavy {
     nameguard: bool,
     namechars: String,
     source: String,
-    patterns: Rc<TokenizingPatterns>,
+    patterns: Ref<TokenizingPatterns>,
 }
 
 /// A cursor that parses an in-memory string.
 #[derive(Debug, Clone)]
 pub struct StrCursor {
-    text: Rc<str>,
+    text: Str,
     offset: usize,
-    heavy: Rc<CursorHeavy>,
+    heavy: Ref<CursorHeavy>,
 }
 
 impl From<&str> for StrCursor {
@@ -182,7 +182,7 @@ impl Cursor for StrCursor {
     fn as_str(&self) -> &str {
         &self.text
     }
-    fn as_ref(&self) -> Rc<str> {
+    fn as_ref(&self) -> Str {
         self.text.clone()
     }
 

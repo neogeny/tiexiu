@@ -9,7 +9,6 @@ use crate::peg::error::ParseResult;
 use crate::trees::Tree;
 use crate::types::Str;
 use indexmap::IndexMap;
-use std::rc::Rc;
 use std::sync::Arc;
 
 /// Flag indicating no memoization.
@@ -128,7 +127,7 @@ impl Rule {
         match self.exp.parse_at(ctx) {
             Err(nope) => Err(nope),
             Ok(tree) => {
-                let folded = Rc::unwrap_or_clone(tree).fold();
+                let folded = Arc::unwrap_or_clone(tree).fold();
                 Ok(if self.params.is_empty() {
                     folded.into()
                 } else {

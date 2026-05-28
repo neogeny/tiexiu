@@ -7,9 +7,9 @@
 
 use crate::cfg::constants::{SYM_EOL, SYM_ETX};
 use crate::peg::{Exp, ExpKind, Grammar, Rule};
-use std::rc::Rc;
+use crate::types::Str;
 
-type Rails = Vec<Rc<str>>;
+type Rails = Vec<Str>;
 
 /// Generates railroad diagram tracks for a grammar.
 pub fn tracks(grammar: &Grammar) -> Rails {
@@ -68,7 +68,7 @@ impl ToRailroad for Exp {
     }
 }
 
-fn make_rail(s: &str) -> Rc<str> {
+fn make_rail(s: &str) -> Str {
     s.into()
 }
 
@@ -94,7 +94,7 @@ fn blankpad(s: &str, maxl: usize) -> String {
     pad(s, ' ', maxl)
 }
 
-fn weld(a: &[Rc<str>], b: &[Rc<str>]) -> Rails {
+fn weld(a: &[Str], b: &[Str]) -> Rails {
     if a.is_empty() {
         return b.into();
     }
@@ -110,7 +110,7 @@ fn weld(a: &[Rc<str>], b: &[Rc<str>]) -> Rails {
     let height = a.len().max(b.len());
     let common = a.len().min(b.len());
 
-    let mut out: Vec<Rc<str>> = a.to_vec();
+    let mut out: Vec<Str> = a.to_vec();
     for i in 0..height {
         if i < common {
             out[i] = format!("{}{}", out[i].as_ref(), b[i].as_ref()).into();

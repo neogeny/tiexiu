@@ -2,21 +2,21 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::failure::ParseFailure;
-use crate::Tree;
 use crate::context::Ctx;
 use crate::input::memento::Memento;
+use crate::trees::TreeRef;
+use crate::types::Ref;
 use std::fmt::Debug;
 use std::panic::Location;
-use std::rc::Rc;
 
-/// Result of a PEG parse attempt: success (Rc<Tree>) or failure (Nope).
-pub type ParseResult = Result<Rc<Tree>, Nope>;
+/// Result of a PEG parse attempt
+pub type ParseResult = Result<TreeRef, Nope>;
 
 /// A parse failure carrying a disaster report.
 #[derive(thiserror::Error, Debug, Clone)]
 pub struct Nope {
     /// The underlying disaster report with the error details.
-    pub report: Rc<DisasterReport>,
+    pub report: Ref<DisasterReport>,
 }
 
 /// A detailed report of a parse failure with position and error context.
@@ -25,9 +25,9 @@ pub struct DisasterReport {
     /// Source location where the error was created.
     pub location: &'static Location<'static>,
     /// The underlying parse failure.
-    pub error: Rc<ParseFailure>,
+    pub error: Ref<ParseFailure>,
     /// Memento with the error position and message.
-    pub memento: Rc<Memento>,
+    pub memento: Ref<Memento>,
 }
 
 impl std::fmt::Display for Nope {

@@ -5,13 +5,12 @@ use crate::context::CtxSem;
 use crate::peg::error::ParseFailure::*;
 use crate::peg::error::ParseResult;
 use crate::trees::Tree;
-use crate::types::Str;
+use crate::types::{Ref, Str};
 use crate::{Exp, ExpKind};
-use std::rc::Rc;
 
 impl Exp {
     /// Returns the lookahead set as a boxed slice of strings.
-    pub fn la_boxed(&self) -> Rc<[Str]> {
+    pub fn la_boxed(&self) -> Ref<[Str]> {
         self.la
             .as_ref()
             .map(|la| la.iter().cloned().collect::<Vec<_>>())

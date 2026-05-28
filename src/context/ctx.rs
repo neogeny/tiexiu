@@ -8,12 +8,11 @@ use crate::context::trace::Tracer;
 use crate::input::Cursor;
 use crate::peg::error::Nope;
 use crate::peg::error::{DisasterReport, ParseFailure};
-use crate::trees::tree::Tree;
+use crate::trees::TreeRef;
 use crate::types::Str;
 use crate::util::pyre::Pattern;
 use crate::{MAX_RECURSION_DEPTH, SYM_ETX};
 use std::fmt::Debug;
-use std::rc::Rc;
 
 /// Immutable context interface for reading parser state.
 pub trait Ctx: Configurable {
@@ -135,7 +134,7 @@ pub trait CtxSem: Ctx + Debug + Sized {
 
     fn key(&mut self, name: &str, can_memo: bool) -> MemoKey;
     fn memo(&mut self, key: &MemoKey) -> Option<Memo>;
-    fn memoize(&mut self, key: &MemoKey, tree: &Rc<Tree>, lastmark: usize);
+    fn memoize(&mut self, key: &MemoKey, tree: &TreeRef, lastmark: usize);
 
     fn cut(&mut self);
     fn push_cut(&mut self);

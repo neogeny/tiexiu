@@ -5,7 +5,6 @@ use crate::context::Ctx;
 use crate::context::state::CallStack;
 use crate::types::Str;
 use console::style;
-use std::rc::Rc;
 
 /// A parse memento for structured error reporting.
 #[derive(Clone)]
@@ -15,7 +14,7 @@ pub struct Memento {
     /// The specific error (e.g., "expected semicolon")
     pub msg: Str,
     /// The full input text. Stored as a reference/Arc to avoid copying.
-    pub text: Rc<str>,
+    pub text: Str,
     /// The start of the relevant span for highlighting
     pub start: usize,
     /// The absolute byte offset of the error

@@ -1,9 +1,8 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::trees::{KeyValue, Tree, TreeMap};
+use crate::trees::{KeyValue, Tree, TreeMap, TreeRef};
 use json::JsonValue;
-use std::rc::Rc;
 
 use crate::json::error::JsonError;
 
@@ -107,7 +106,7 @@ impl Tree {
             JsonValue::String(s) => Tree::Text(s.clone().into()),
             JsonValue::Short(s) => Tree::Text(s.to_string().into()),
             JsonValue::Array(arr) => {
-                let items: Vec<Rc<Tree>> = arr.iter().map(|v| Tree::from_json(v).into()).collect();
+                let items: Vec<TreeRef> = arr.iter().map(|v| Tree::from_json(v).into()).collect();
                 Tree::Seq(items.into())
             }
             JsonValue::Object(obj) => {

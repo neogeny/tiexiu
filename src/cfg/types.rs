@@ -2,12 +2,12 @@
 
 use ahash::RandomState;
 use indexmap::{IndexMap, IndexSet};
-use std::rc::Rc;
+use std::sync::Arc;
 
 /// Reference-counted pointer.
-pub type Ref<T> = Rc<T>;
+pub type Ref<T> = Arc<T>;
 /// Reference-counted string slice.
-pub type Str = Rc<str>;
+pub type Str = Ref<str>;
 /// A definition pair (name, is_flag).
 pub type Define = (Str, bool);
 

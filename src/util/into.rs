@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::types::Str;
-use std::rc::Rc;
 // use std::borrow::Cow;
 
 /// A convenience trait for string-to-boxed-slice conversions.
@@ -16,7 +15,7 @@ pub trait ToInternalStr {
     /// Converts to a boxed Str.
     fn to_internal(self) -> Str;
     /// Converts to a reference-counted string.
-    fn to_rc(self) -> Rc<str>;
+    fn to_ref(self) -> Str;
 }
 
 impl IntoStr for String {
@@ -39,7 +38,7 @@ impl ToInternalStr for String {
         self.into()
     }
     #[inline]
-    fn to_rc(self) -> Rc<str> {
+    fn to_ref(self) -> Str {
         self.into()
     }
 }
@@ -50,7 +49,7 @@ impl ToInternalStr for &str {
         self.into()
     }
     #[inline]
-    fn to_rc(self) -> Rc<str> {
+    fn to_ref(self) -> Str {
         self.into()
     }
 }
@@ -61,7 +60,7 @@ impl ToInternalStr for Str {
         self
     }
     #[inline]
-    fn to_rc(self) -> Rc<str> {
+    fn to_ref(self) -> Str {
         self
     }
 }

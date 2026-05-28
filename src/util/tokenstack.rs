@@ -4,18 +4,18 @@
 //! A simple Lisp-like List implementation.
 //! Optimized for ergonomic one-liners and memory safety.
 
+use crate::types::Ref;
 use std::fmt;
-use std::rc::Rc;
 
 pub(crate) type Token = str;
 
 /// A Lisp-like cons-list of tokens, optimized for push (O(1)) and iteration.
-pub struct TokenStack(Rc<Node>);
+pub struct TokenStack(Ref<Node>);
 
 #[derive(Debug, Clone)]
 enum Node {
-    Cons(Rc<Node>, Rc<Node>),
-    Atom(Rc<Token>),
+    Cons(Ref<Node>, Ref<Node>),
+    Atom(Ref<Token>),
     Nil,
 }
 
@@ -65,7 +65,7 @@ impl TokenStack {
     }
 
     /// Prepends a new atom to the list (O(1)).
-    /// Reuses the existing list structure via Rc::clone.
+    /// Reuses the existing list structure via Ref::clone.
     pub fn push(&mut self, a: &str) {
         let atom = Node::Atom(a.into());
         let new_node = Node::Cons(atom.into(), self.0.clone());
@@ -153,8 +153,8 @@ impl<'a> IntoIterator for &'a TokenStack {
     }
 }
 
-impl FromIterator<Rc<Token>> for TokenStack {
-    fn from_iter<I: IntoIterator<Item = Rc<Token>>>(iter: I) -> Self {
+impl FromIterator<Ref<Token>> for TokenStack {
+    fn from_iter<I: IntoIterator<Item = Ref<Token>>>(iter: I) -> Self {
         let mut list = TokenStack::new();
         for token in iter {
             let atom = Node::Atom(token);
@@ -170,7 +170,7 @@ mod tests {
     use super::*;
     use std::mem::size_of;
 
-    const TARGET: usize = 8; // On 64-bit, Rc is 8 bytes
+    const TARGET: usize = 8; // On 64-bit, Ref is 8 bytes
 
     #[test]
     fn test_tokelist_size() {

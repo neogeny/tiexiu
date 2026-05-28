@@ -2,12 +2,11 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::cfg::MEMO_CACHE_CAPACITY;
+use crate::trees::TreeRef;
 use crate::trees::short::BOTTOM;
-use crate::trees::tree::Tree;
 use crate::types::{FastIndexSet, Str};
 use ahash::RandomState;
 use quick_cache::unsync::Cache;
-use std::rc::Rc;
 
 /// Key for memoizing a parse result at a specific position for a named rule.
 #[derive(Clone, Default, Debug, Eq, PartialEq, Hash)]
@@ -24,7 +23,7 @@ pub struct MemoKey {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Memo {
     /// The resulting parse tree.
-    pub tree: Rc<Tree>,
+    pub tree: TreeRef,
     /// The cursor position after the matched rule.
     pub mark: usize,
 }
@@ -96,7 +95,7 @@ impl MemoCache {
     }
 
     /// Stores a memoized parse result, respecting the key's `can_memo` flag.
-    pub fn memoize(&mut self, key: &MemoKey, tree: &Rc<Tree>, mark: usize) {
+    pub fn memoize(&mut self, key: &MemoKey, tree: &TreeRef, mark: usize) {
         if !key.can_memo {
             return;
         }
@@ -143,6 +142,7 @@ impl KeyTrack {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::trees::TreeRef;
     use crate::trees::tree::Tree;
 
     #[test]
@@ -156,7 +156,7 @@ mod tests {
     fn memoize_and_retrieve() {
         let mut cache = MemoCache::new();
         let key = cache.key(0, "rule".into(), true);
-        let tree: Rc<Tree> = Tree::Text("test".into()).into();
+        let tree: TreeRef = Tree::Text("test".into()).into();
 
         cache.memoize(&key, &tree, 5);
 
@@ -170,8 +170,8 @@ mod tests {
         let mut cache = MemoCache::new();
         let key1 = cache.key(0, "rule1".into(), true);
         let key2 = cache.key(0, "rule2".into(), true);
-        let tree1: Rc<Tree> = Tree::Text("a".into()).into();
-        let tree2: Rc<Tree> = Tree::Text("b".into()).into();
+        let tree1: TreeRef = Tree::Text("a".into()).into();
+        let tree2: TreeRef = Tree::Text("b".into()).into();
 
         cache.memoize(&key1, &tree1, 1);
         cache.memoize(&key2, &tree2, 2);
@@ -184,7 +184,7 @@ mod tests {
     fn prune_keeps_after_cutpoint() {
         let mut cache = MemoCache::new();
         let key = cache.key(5, "rule".into(), true);
-        let tree: Rc<Tree> = Tree::Text("test".into()).into();
+        let tree: TreeRef = Tree::Text("test".into()).into();
 
         cache.memoize(&key, &tree, 5);
         cache.prune(5);
@@ -196,7 +196,7 @@ mod tests {
     fn prune_removes_before_cutpoint() {
         let mut cache = MemoCache::new();
         let key = cache.key(3, "rule".into(), true);
-        let tree: Rc<Tree> = Tree::Text("test".into()).into();
+        let tree: TreeRef = Tree::Text("test".into()).into();
 
         cache.memoize(&key, &tree, 3);
         cache.prune(5);

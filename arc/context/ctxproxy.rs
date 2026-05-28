@@ -13,14 +13,13 @@ use crate::engine::trace::Tracer;
 use crate::input::Cursor;
 use crate::trees::Tree;
 use crate::util::pyre::Pattern;
-use std::cell::{Ref, RefCell, RefMut};
-use std::rc::Rc;
+use std::cell::{RefCell, RefMut};
 
-/// A context wrapper that provides shared ownership of an inner `Ctx` via `Rc<RefCell>`.
+/// A context wrapper that provides shared ownership of an inner `Ctx` via `Ref<RefCell>`.
 #[derive(Debug)]
 pub struct CtxProxy<C: Ctx> {
     /// The inner context wrapped in shared ownership.
-    pub inner: Rc<RefCell<C>>,
+    pub inner: Ref<RefCell<C>>,
     frozen: Option<usize>,
 }
 

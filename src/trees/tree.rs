@@ -3,11 +3,11 @@
 
 use super::map::TreeMap;
 use crate::cfg::types::{Define, Str};
+use crate::types::Ref;
 use std::collections::LinkedList;
-use std::rc::Rc;
 
 /// A reference-counted tree node.
-pub type TreeRef = Rc<Tree>;
+pub type TreeRef = Ref<Tree>;
 /// A linked list of tree references.
 pub type TreeList = LinkedList<TreeRef>;
 
@@ -21,13 +21,13 @@ pub enum Tree {
     /// A text/leaf node from tokens or patterns.
     Text(Str),
     /// A sequence of values (mergeable).
-    Seq(Rc<[Rc<Tree>]>),
+    Seq(Ref<[TreeRef]>),
     /// A non-mergeable list of values.
-    List(Rc<[Rc<Tree>]>),
+    List(Ref<[TreeRef]>),
     /// A mapping of named elements.
-    Map(Rc<TreeMap>),
+    Map(Ref<TreeMap>),
     /// The result of parsing a rule call.
-    Node { typename: Str, tree: Rc<Tree> },
+    Node { typename: Str, tree: TreeRef },
     /// Parsing that didn't consume any input (internal).
     Nil,
     /// A named element for tree merging (internal).
@@ -35,9 +35,9 @@ pub enum Tree {
     /// A named element forced into a list (internal).
     NamedAsList(KeyValue),
     /// Override value for merged tree (internal).
-    Override(Rc<Tree>),
+    Override(TreeRef),
     /// Override value forced into a list (internal).
-    OverrideAsList(Rc<Tree>),
+    OverrideAsList(TreeRef),
     /// Failure marker used in memoization (internal).
     Bottom,
 }
@@ -49,7 +49,7 @@ pub fn keyval(name: &str, tree: Tree) -> KeyValue {
 
 impl From<Vec<Tree>> for Tree {
     fn from(v: Vec<Tree>) -> Self {
-        let clean: Vec<Rc<Tree>> = v
+        let clean: Vec<TreeRef> = v
             .into_iter()
             .filter(|item| *item != Tree::Nil)
             .map(|t| t.into())
@@ -60,7 +60,7 @@ impl From<Vec<Tree>> for Tree {
 
 impl<const N: usize> From<[Tree; N]> for Tree {
     fn from(arr: [Tree; N]) -> Self {
-        let clean: Vec<Rc<Tree>> = arr
+        let clean: Vec<TreeRef> = arr
             .into_iter()
             .filter(|item| *item != Tree::Nil)
             .map(|t| t.into())
@@ -69,15 +69,15 @@ impl<const N: usize> From<[Tree; N]> for Tree {
     }
 }
 
-impl From<Vec<Rc<Tree>>> for Tree {
-    fn from(v: Vec<Rc<Tree>>) -> Self {
+impl From<Vec<TreeRef>> for Tree {
+    fn from(v: Vec<TreeRef>) -> Self {
         Tree::Seq(v.into())
     }
 }
 
 impl From<&[Tree]> for Tree {
     fn from(slice: &[Tree]) -> Self {
-        let clean: Vec<Rc<Tree>> = slice
+        let clean: Vec<TreeRef> = slice
             .iter()
             .filter(|item| **item != Tree::Nil)
             .cloned()
@@ -87,8 +87,8 @@ impl From<&[Tree]> for Tree {
     }
 }
 
-impl From<&[Rc<Tree>]> for Tree {
-    fn from(slice: &[Rc<Tree>]) -> Self {
+impl From<&[TreeRef]> for Tree {
+    fn from(slice: &[TreeRef]) -> Self {
         Tree::Seq(slice.into())
     }
 }
@@ -155,7 +155,7 @@ impl Tree {
             (Self::Nil, n) => n,
             (s, Self::Nil) => s,
             (Self::Seq(list), node) => {
-                let mut v: Vec<Rc<Tree>> = list.to_vec();
+                let mut v: Vec<TreeRef> = list.to_vec();
                 v.push(node.into());
                 Self::Seq(v.into())
             }
@@ -168,7 +168,7 @@ impl Tree {
             (Self::Nil, n) => Self::Seq(vec![n.into()].into()),
             (Self::Seq(list), Self::Nil) => Self::Seq(list),
             (Self::Seq(list), n) => {
-                let mut v: Vec<Rc<Tree>> = list.to_vec();
+                let mut v: Vec<TreeRef> = list.to_vec();
                 v.push(n.into());
                 Self::Seq(v.into())
             }
@@ -181,17 +181,17 @@ impl Tree {
             (Self::Nil, n) => n,
             (s, Self::Nil) => s,
             (Self::Seq(l1), Self::Seq(l2)) => {
-                let mut v: Vec<Rc<Tree>> = l1.to_vec();
+                let mut v: Vec<TreeRef> = l1.to_vec();
                 v.extend(l2.iter().cloned());
                 Self::Seq(v.into())
             }
             (s, Self::Seq(l2)) => {
-                let mut v: Vec<Rc<Tree>> = vec![s.into()];
+                let mut v: Vec<TreeRef> = vec![s.into()];
                 v.extend(l2.iter().cloned());
                 Self::Seq(v.into())
             }
             (Self::Seq(l1), n) => {
-                let mut v: Vec<Rc<Tree>> = l1.to_vec();
+                let mut v: Vec<TreeRef> = l1.to_vec();
                 v.push(n.into());
                 Self::Seq(v.into())
             }
@@ -209,7 +209,7 @@ impl Tree {
                 out
             }
             Tree::List(elements) => {
-                let clean: Vec<Rc<Tree>> = elements
+                let clean: Vec<TreeRef> = elements
                     .iter()
                     .map(|s| s.as_ref().clean_and_fold(gather).into())
                     .collect();
@@ -267,7 +267,7 @@ impl Tree {
     }
 
     /// Returns the child elements if this is a Seq or List, or an empty slice.
-    pub fn list_value(&self) -> Rc<[Rc<Tree>]> {
+    pub fn list_value(&self) -> Ref<[TreeRef]> {
         match self {
             Tree::Seq(items) | Tree::List(items) => items.clone(),
             _ => [].into(),
@@ -275,7 +275,7 @@ impl Tree {
     }
 
     /// Returns the child elements as text values, or an empty slice.
-    pub fn str_list_value(&self) -> Rc<[Str]> {
+    pub fn str_list_value(&self) -> Ref<[Str]> {
         self.list_value().iter().map(|t| t.value()).collect()
     }
 
@@ -303,14 +303,14 @@ impl Tree {
     }
 
     /// Looks up a key and returns its list children, or an empty slice.
-    pub fn get_list(&self, key: &str) -> Rc<[Rc<Tree>]> {
+    pub fn get_list(&self, key: &str) -> Ref<[TreeRef]> {
         self.get(key)
             .map(|n| n.list_value().clone())
             .unwrap_or_else(|| [].into())
     }
 
     /// Looks up a key and returns its children as text values.
-    pub fn get_str_list(&self, key: &str) -> Rc<[Str]> {
+    pub fn get_str_list(&self, key: &str) -> Ref<[Str]> {
         self.get_list(key).iter().map(|t| t.value()).collect()
     }
 }

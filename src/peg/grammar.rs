@@ -11,7 +11,6 @@ use crate::peg::ParseFailure::RuleNotFound;
 use crate::rule::RuleName;
 use crate::types::{Ref, Str};
 use crate::{StrCursor, Tree, new_ctx};
-use std::rc::Rc;
 use std::sync::Arc;
 
 /// A reference to a grammar keyword string.
@@ -142,7 +141,7 @@ impl Grammar {
     ) -> crate::error::Result<Tree> {
         let start_mark = ctx.mark();
         match self.parse_from(ctx, start) {
-            Ok(tree) => Ok(Rc::unwrap_or_clone(tree)),
+            Ok(tree) => Ok(Arc::unwrap_or_clone(tree)),
             Err(_) => Err(ctx
                 .furthest_failure()
                 .unwrap_or(DisasterReport::new(

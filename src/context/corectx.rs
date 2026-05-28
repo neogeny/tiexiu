@@ -8,10 +8,9 @@ use super::trace::{CONSOLE_TRACER, NULL_TRACER, Tracer};
 use crate::cfg::*;
 use crate::input::Cursor;
 use crate::peg::error::DisasterReport;
-use crate::trees::Tree;
+use crate::trees::TreeRef;
 use crate::types::Str;
 use crate::util::pyre::Pattern;
-use std::rc::Rc;
 use std::time::Instant;
 
 /// The primary parsing context, wrapping a cursor and shared parsing state.
@@ -175,7 +174,7 @@ where
         self.heavy.memos.memo(key)
     }
 
-    fn memoize(&mut self, key: &MemoKey, tree: &Rc<Tree>, lastmark: usize) {
+    fn memoize(&mut self, key: &MemoKey, tree: &TreeRef, lastmark: usize) {
         self.heavy.memos.memoize(key, tree, lastmark);
     }
 

@@ -8,8 +8,8 @@ use crate::context::CtxSem;
 use crate::peg::Exp;
 use crate::peg::error::{Nope, ParseFailure, ParseResult};
 use crate::peg::rule::Rule;
+use crate::trees::TreeRef;
 use crate::trees::tree::Tree;
-use std::rc::Rc;
 
 impl Exp {
     /// Core entry point for calling a rule.
@@ -100,7 +100,7 @@ impl Exp {
             return Err(ctx.failure(start, ParseFailure::FailedParse(rule.name.clone())));
         }
         let mut lastmark = start;
-        let mut lasttree: Tree = Tree::Nil;
+        let mut lasttree: TreeRef = Tree::Nil.into();
         let mut lastnope: Option<Nope> = None;
 
         ctx.memoize(key, &Tree::Bottom.into(), start);
@@ -123,16 +123,16 @@ impl Exp {
                         break;
                     }
                     lastmark = endmark;
-                    lasttree = Rc::unwrap_or_clone(tree);
-                    ctx.memoize(key, &lasttree.clone().into(), lastmark);
+                    lasttree = tree.clone();
+                    ctx.memoize(key, &lasttree.clone(), lastmark);
                 }
             }
         }
 
         ctx.reset(lastmark);
-        ctx.memoize(key, &lasttree.clone().into(), lastmark);
+        ctx.memoize(key, &lasttree.clone(), lastmark);
 
-        if lasttree == Tree::Bottom {
+        if *lasttree == Tree::Bottom {
             let nope = lastnope.unwrap_or_else(|| {
                 ctx.failure(
                     start,
@@ -140,12 +140,12 @@ impl Exp {
                         rule.name.clone(),
                         start,
                         lastmark,
-                        lasttree.clone().into(),
+                        lasttree.clone(),
                     ),
                 )
             });
             return Err(nope);
         }
-        Ok(lasttree.into())
+        Ok(lasttree)
     }
 }

@@ -4,10 +4,9 @@
 use crate::api::error::nope::ParseResult;
 use crate::context::CtxSem;
 use crate::peg::{Exp, ExpKind, ParseFailure::*, Parser};
-use crate::trees::Tree;
+use crate::trees::{Tree, TreeRef};
 use crate::types::Str;
 use crate::util::pyre;
-use std::rc::Rc;
 
 impl<C: CtxSem> Parser<C> for Exp {
     fn parse_at(&self, ctx: &mut C) -> ParseResult {
@@ -64,7 +63,7 @@ impl Exp {
         }
 
         match &exp.kind {
-            ExpKind::EmptyClosure => Ok(Tree::from(Vec::<Rc<Tree>>::new()).closed().into()),
+            ExpKind::EmptyClosure => Ok(Tree::from(Vec::<TreeRef>::new()).closed().into()),
             ExpKind::Nil => Ok(Tree::Nil.into()),
             ExpKind::RuleInclude { name, exp } => match exp {
                 None => Err(ctx.failure(start, RuleNotLinked(name.clone()))),
@@ -208,7 +207,7 @@ impl Exp {
 
             ExpKind::Sequence(sequence) => {
                 let seq_start = ctx.mark();
-                let mut results: Vec<Rc<Tree>> = Vec::with_capacity(sequence.len());
+                let mut results: Vec<TreeRef> = Vec::with_capacity(sequence.len());
                 for exp in &**sequence {
                     if let ExpKind::Cut = exp.kind {
                         // NOTE

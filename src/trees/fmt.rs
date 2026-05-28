@@ -1,10 +1,9 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::trees::{KeyValue, Tree, TreeMap};
+use crate::trees::{KeyValue, Tree, TreeMap, TreeRef};
 use std::fmt;
 use std::ops::Deref;
-use std::rc::Rc;
 
 impl fmt::Display for TreeMap {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -27,7 +26,7 @@ impl fmt::Display for KeyValue {
     }
 }
 
-fn fmt_items(items: &[Rc<Tree>]) -> String {
+fn fmt_items(items: &[TreeRef]) -> String {
     items
         .iter()
         .map(|item| item.to_string())

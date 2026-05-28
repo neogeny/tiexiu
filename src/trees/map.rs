@@ -3,30 +3,30 @@
 
 use super::tree::Tree;
 use crate::cfg::types::Define;
-use crate::types::Str;
-use std::rc::Rc;
+use crate::trees::TreeRef;
+use crate::types::{Ref, Str};
 
 /// A reference-counted slice of key-tree entries for TreeMap.
-pub type TreeEntrySlice = Rc<[(Str, Rc<Tree>)]>;
+pub type TreeEntrySlice = Ref<[(Str, TreeRef)]>;
 
 /// An ordered map of named tree elements.
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct TreeMap(pub TreeEntrySlice);
 
-impl From<Vec<(Str, Rc<Tree>)>> for TreeMap {
-    fn from(vec: Vec<(Str, Rc<Tree>)>) -> Self {
+impl From<Vec<(Str, TreeRef)>> for TreeMap {
+    fn from(vec: Vec<(Str, TreeRef)>) -> Self {
         TreeMap(vec.into())
     }
 }
 
 impl From<Vec<(Str, Tree)>> for TreeMap {
     fn from(vec: Vec<(Str, Tree)>) -> Self {
-        let converted: Vec<(Str, Rc<Tree>)> = vec.into_iter().map(|(k, v)| (k, v.into())).collect();
+        let converted: Vec<(Str, TreeRef)> = vec.into_iter().map(|(k, v)| (k, v.into())).collect();
         TreeMap(converted.into())
     }
 }
 
-impl From<TreeMap> for Vec<(Str, Rc<Tree>)> {
+impl From<TreeMap> for Vec<(Str, TreeRef)> {
     fn from(tree_map: TreeMap) -> Self {
         tree_map.0.as_ref().to_vec()
     }
@@ -39,7 +39,7 @@ impl TreeMap {
     }
 
     /// Returns an iterator over (key, tree) entries.
-    pub fn iter(&self) -> std::slice::Iter<'_, (Str, Rc<Tree>)> {
+    pub fn iter(&self) -> std::slice::Iter<'_, (Str, TreeRef)> {
         self.0.iter()
     }
 
@@ -75,11 +75,11 @@ impl TreeMap {
 
     /// Ensures that the given definition keys exist in the map, inserting defaults if missing.
     pub fn define(&mut self, keys: &[Define]) {
-        let mut entries: Vec<(Str, Rc<Tree>)> = self.0.as_ref().to_vec();
+        let mut entries: Vec<(Str, TreeRef)> = self.0.as_ref().to_vec();
         for (k, aslist) in keys {
             let key = self.safe_key(k);
             if !entries.iter().any(|(k, _)| k == &key) {
-                let val: Rc<Tree> = if *aslist {
+                let val: TreeRef = if *aslist {
                     Tree::seq(&[]).into()
                 } else {
                     Tree::Nil.into()
@@ -93,7 +93,7 @@ impl TreeMap {
     /// Inserts a value, merging with any existing entry for the same key.
     pub fn insert(&mut self, key: &str, item: Tree) {
         let key = self.safe_key(key);
-        let mut entries: Vec<(Str, Rc<Tree>)> = self.0.as_ref().to_vec();
+        let mut entries: Vec<(Str, TreeRef)> = self.0.as_ref().to_vec();
 
         let new_val = if let Some(current) = entries.iter().find(|(k, _)| k == &key) {
             current.1.as_ref().clone().append(item)
@@ -108,7 +108,7 @@ impl TreeMap {
     /// Inserts a value into a list entry for this key.
     pub fn insert_as_list(&mut self, key: &str, item: Tree) {
         let key = self.safe_key(key);
-        let mut entries: Vec<(Str, Rc<Tree>)> = self.0.as_ref().to_vec();
+        let mut entries: Vec<(Str, TreeRef)> = self.0.as_ref().to_vec();
 
         let new_val = if let Some(current) = entries.iter().find(|(k, _)| k == &key) {
             current.1.as_ref().clone().append_as_list(item)
@@ -120,7 +120,7 @@ impl TreeMap {
         self.0 = entries.into();
     }
 
-    fn update_or_push(&self, entries: &mut Vec<(Str, Rc<Tree>)>, key: Str, val: Tree) {
+    fn update_or_push(&self, entries: &mut Vec<(Str, TreeRef)>, key: Str, val: Tree) {
         if let Some(existing) = entries.iter_mut().find(|(k, _)| k == &key) {
             existing.1 = val.into();
         } else {

@@ -7,9 +7,8 @@ use crate::cfg::*;
 use crate::peg::grammar::KeywordRef;
 use crate::peg::rule::{RuleMap, RuleRef};
 use crate::peg::{Exp, Grammar, Rule};
-use crate::trees::{Tree, TreeMap};
+use crate::trees::{Tree, TreeMap, TreeRef};
 use crate::types::Str;
-use std::rc::Rc;
 
 /// Compiles a parse tree (from the PEG grammar) into a compiled `Grammar`.
 #[derive(Debug, Default)]
@@ -40,7 +39,7 @@ fn _parse_map(node: &Tree) -> CompileResult<&TreeMap> {
     Ok(map)
 }
 
-fn _parse_list(node: &Tree) -> CompileResult<&[Rc<Tree>]> {
+fn _parse_list(node: &Tree) -> CompileResult<&[TreeRef]> {
     match node {
         Tree::Seq(list) | Tree::List(list) => Ok(list),
         _ => Err(CompileError::ExpectedList(format!("{:?}", node))),
