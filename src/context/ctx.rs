@@ -95,20 +95,7 @@ pub trait CtxSem: Ctx + Debug + Sized {
 
     fn match_token(&mut self, token: &str) -> bool {
         self.next_token();
-        let result = {
-            // let wordlike = token.chars().all(|c| c.is_alphanumeric());
-            // let escaped = escape(token);
-            // if wordlike && *escaped == *token && self.cursor().name_guard() {
-            //     let bound = if self.cursor().ignore_case() {
-            //         format!(r"{}\b", token)
-            //     } else {
-            //         format!(r"(?i){}\b", token)
-            //     };
-            //     self.match_pattern(bound.as_str()).is_some()
-            // } else {
-            self.cursor_mut().match_token(token)
-            // }
-        };
+        let result = self.cursor_mut().match_token(token);
         if result {
             self.tracer().trace_match(self, token, "");
         } else {

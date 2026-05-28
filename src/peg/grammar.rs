@@ -159,6 +159,13 @@ impl Grammar {
         let start_mark = ctx.mark();
         ctx.configure(&self.directives);
         ctx.set_keywords(&self.keywords);
+
+        if self.directives.contains(&CfgKey::NoLeftRecursion)
+            && self.rules().any(|r| r.is_left_recursive())
+        {
+            return Err(ctx.failure(start_mark, ParseFailure::LeftRecursionDisabled));
+        }
+
         match self.get_rule(start) {
             Ok(rule) => rule.parse_at(ctx),
             Err(err) => Err(ctx.failure(start_mark, err)),

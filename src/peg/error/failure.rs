@@ -93,6 +93,10 @@ pub enum ParseFailure {
 
     #[error("!({0})")]
     Ensure(&'static str),
+
+    /// Left recursion is disabled but the grammar has left-recursive rules.
+    #[error("left recursion is disabled but the grammar has left-recursive rules")]
+    LeftRecursionDisabled,
 }
 
 /// Errors that can occur during grammar compilation/linking.

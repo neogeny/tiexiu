@@ -25,3 +25,62 @@ fn test_direct_left_recursion() -> Result<()> {
 
     Ok(())
 }
+
+#[test]
+fn test_indirect_left_recursion() -> Result<()> {
+    let grammar = r#"
+        @@left_recursion :: True
+        @@whitespace :: /\s+/
+        start = A $ ;
+        A = B | 'x' ;
+        B = A | 'y' ;
+    "#;
+    let model = compile(grammar, &[])?;
+
+    // Mutual left recursion: A → B → A via 'y'
+    let ast = tiexiu::parse_input(&model, "y", &[])?;
+    assert!(ast.to_json() == value!("y"));
+
+    // Direct match: A → 'x'
+    let ast = tiexiu::parse_input(&model, "x", &[])?;
+    assert!(ast.to_json() == value!("x"));
+
+    Ok(())
+}
+
+#[test]
+fn test_lr_disabled_via_directive() -> Result<()> {
+    // Grammar has left-recursive rules but LR is explicitly disabled
+    let grammar = r#"
+        @@left_recursion :: False
+        @@whitespace :: /\s+/
+        start = expression $ ;
+        expression = expression '+' factor | expression '-' factor | factor ;
+        factor = number ;
+        number = /[0-9]+/ ;
+    "#;
+    let model = compile(grammar, &[])?;
+
+    let result = tiexiu::parse_input(&model, "10 - 20", &[]);
+    assert!(result.is_err());
+
+    Ok(())
+}
+
+#[test]
+fn test_lr_disabled_normal_grammar() -> Result<()> {
+    // Non-left-recursive grammar with LR disabled should parse fine
+    let grammar = r#"
+        @@left_recursion :: False
+        @@whitespace :: /\s+/
+        start = expr $ ;
+        expr = '(' expr ')' | number ;
+        number = /[0-9]+/ ;
+    "#;
+    let model = compile(grammar, &[])?;
+
+    let ast = tiexiu::parse_input(&model, "((1))", &[])?;
+    assert_eq!(ast.to_json(), array!["(", array!("(", "1", ")"), ")"]);
+
+    Ok(())
+}

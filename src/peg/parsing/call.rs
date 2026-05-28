@@ -95,11 +95,10 @@ impl Exp {
         rule: &Rule,
     ) -> ParseResult {
         ctx.tracer().trace_recursion(ctx);
-        if !rule.is_left_recursive() {
-            panic!("Recursive call on non-LRec rule");
-        }
-
         let start = ctx.mark();
+        if !rule.is_left_recursive() {
+            return Err(ctx.failure(start, ParseFailure::FailedParse(rule.name.clone())));
+        }
         let mut lastmark = start;
         let mut lasttree: Tree = Tree::Nil;
         let mut lastnope: Option<Nope> = None;
