@@ -4,8 +4,7 @@
 use crate::cfg::constants::*;
 use crate::cfg::*;
 use crate::input::Error;
-use crate::util::pyre::Pattern;
-use crate::util::pyre::traits::Pattern as _;
+use crate::util::pyre::{Pattern, compile};
 
 /// Whitespace, comment, and EOL patterns used during tokenization.
 #[derive(Clone, Debug)]
@@ -20,7 +19,7 @@ pub struct TokenizingPatterns {
 /// Default patterns: standard whitespace, no comments, no EOL comments.
 impl Default for TokenizingPatterns {
     fn default() -> Self {
-        Self::try_new(r"(?m)\s+", "(?!)", "(?!)").expect("default patterns must be valid")
+        Self::try_new(r"(?m)\s+", r"[^\s\S]", r"[^\s\S]").expect("default patterns must be valid")
     }
 }
 
@@ -54,7 +53,7 @@ impl TokenizingPatterns {
 
     /// Compile a pattern, validating it does not match empty.
     pub fn compile(kind: &'static str, pattern: &str) -> Result<Pattern, Error> {
-        let p = Pattern::new(pattern).map_err(|source| Error::InvalidRegex {
+        let p = compile(pattern).map_err(|source| Error::InvalidRegex {
             kind,
             pattern: pattern.to_string(),
             source,
@@ -63,7 +62,7 @@ impl TokenizingPatterns {
     }
 
     pub fn validate_no_empty_match(kind: &'static str, pattern: Pattern) -> Result<Pattern, Error> {
-        if !pattern.pattern().is_empty() && pattern.matches_empty() {
+        if !pattern.is_empty() && pattern.matches_empty() {
             return Err(Error::RegexMatchesEmpty {
                 kind,
                 pattern: pattern.pattern().to_string(),

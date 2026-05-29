@@ -10,6 +10,7 @@
 
 use super::error::{Error, Result};
 use super::traits as traits_impl;
+use crate::types::Str;
 use fancy_regex;
 use fancy_regex::{Captures, Regex};
 use std::collections::HashMap;
@@ -29,7 +30,7 @@ pub struct Match<'a> {
 }
 
 /// Escapes special regex characters in a pattern string.
-pub fn escape(pattern: &str) -> Box<str> {
+pub fn escape(pattern: &str) -> Str {
     fancy_regex::escape(pattern).into()
 }
 

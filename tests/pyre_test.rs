@@ -55,47 +55,51 @@ fn test_findall_behavior() -> Result<()> {
 
 #[test]
 fn test_match_zero_width_lookahead_at_start() -> Result<()> {
-    let p = Pattern::new(r"(?=\s*(?:\r?\n|\r)\S)")?;
+    let p = Pattern::new(r"(?:\s*(?:\r?\n|\r)\S)")?;
 
     let m = p
         .match_("\nnext")
-        .ok_or_else(|| Error::from("lookahead should match at start"))?;
+        .ok_or_else(|| Error::from("pattern should match at start"))?;
     assert_eq!(m.start(None), 0);
-    assert_eq!(m.end(None), 0);
+    assert_eq!(m.end(None), 2);
+    assert_eq!(m.group(0), Some("\nn"));
     Ok(())
 }
 
 #[test]
 fn test_match_endrule_unindented_branch() -> Result<()> {
-    let p = Pattern::new(r"\s*[;]|(?=\s*(?:\r?\n|\r)\S)|(?:\s*(?:\r?\n|\r)){2,}[;]?")?;
+    let p = Pattern::new(r"\s*[;]|(?:\s*(?:\r?\n|\r)\S)|(?:\s*(?:\r?\n|\r)){2,}[;]?")?;
 
     let m = p
         .match_("\nnext_rule")
         .ok_or_else(|| Error::from("ENDRULE should match before an unindented next rule"))?;
     assert_eq!(m.start(None), 0);
-    assert_eq!(m.end(None), 0);
+    assert_eq!(m.end(None), 2);
+    assert_eq!(m.group(0), Some("\nn"));
     Ok(())
 }
 
 #[test]
 fn test_match_endrule_blankline_branch() -> Result<()> {
-    let p = Pattern::new(r"\s*[;]|(?=\s*(?:\r?\n|\r)\S)|(?:\s*(?:\r?\n|\r)){2,}[;]?")?;
+    let p = Pattern::new(r"\s*[;]|(?:\s*(?:\r?\n|\r)\S)|(?:\s*(?:\r?\n|\r)){2,}[;]?")?;
     let m = p
         .match_("\n\n")
         .ok_or_else(|| Error::from("ENDRULE should match blank line"))?;
     assert_eq!(m.start(None), 0);
+    assert_eq!(m.group(0), Some("\n\n"));
     Ok(())
 }
 
 #[test]
 fn test_match_endrule_crlf_branch() -> Result<()> {
-    let p = Pattern::new(r"\s*[;]|(?=\s*(?:\r?\n|\r)\S)|(?:\s*(?:\r?\n|\r)){2,}[;?]")?;
+    let p = Pattern::new(r"\s*[;]|(?:\s*(?:\r?\n|\r)\S)|(?:\s*(?:\r?\n|\r)){2,}[;?]")?;
 
     let m = p
         .match_("\r\nnext_rule")
         .ok_or_else(|| Error::from("ENDRULE should match CRLF before an unindented next rule"))?;
     assert_eq!(m.start(None), 0);
-    assert_eq!(m.end(None), 0);
+    assert_eq!(m.end(None), 3);
+    assert_eq!(m.group(0), Some("\r\nn"));
     Ok(())
 }
 

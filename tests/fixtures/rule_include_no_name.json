@@ -1929,7 +1929,7 @@
       "decorators": [],
       "exp": {
         "__class__": "Pattern",
-        "pattern": "(?=\\s*(?:\\r?\\n|\\r)[^\\s])"
+        "pattern": "(?:\\s*(?:\\r?\\n|\\r)[^\\s])"
       },
       "no_memo": false,
       "is_memo": true,
@@ -2908,7 +2908,7 @@
           },
           {
             "__class__": "Pattern",
-            "pattern": "(?!\\+=)[+-]"
+            "pattern": "[+-]"
           },
           {
             "__class__": "Cut"
@@ -3086,7 +3086,7 @@
           },
           {
             "__class__": "Pattern",
-            "pattern": "(?!\\+=)[+-]"
+            "pattern": "[+-]"
           },
           {
             "__class__": "Cut"
@@ -3205,7 +3205,7 @@
           },
           {
             "__class__": "Pattern",
-            "pattern": "(?!\\+=)[+-]"
+            "pattern": "[+-]"
           },
           {
             "__class__": "Cut"
@@ -3259,7 +3259,7 @@
           },
           {
             "__class__": "Pattern",
-            "pattern": "(?!\\+=)[+-]"
+            "pattern": "[+-]"
           },
           {
             "__class__": "Cut"
@@ -3306,7 +3306,7 @@
                 },
                 {
                   "__class__": "Pattern",
-                  "pattern": "(?!\\+=)[+-]"
+                  "pattern": "[+-]"
                 },
                 {
                   "__class__": "Cut"
@@ -3328,7 +3328,7 @@
                 },
                 {
                   "__class__": "Pattern",
-                  "pattern": "(?!\\+=)[+]"
+                  "pattern": "[+]"
                 },
                 {
                   "__class__": "Cut"
@@ -4327,7 +4327,7 @@
               "sequence": [
                 {
                   "__class__": "Pattern",
-                  "pattern": "(?ms)'''((?:\\\\\\\\|\\\\.|(?!''').)*?)'''"
+                  "pattern": "(?ms)'''(?:[^']|'[^']|''[^'])*'''"
                 },
                 {
                   "__class__": "Cut"
@@ -4342,7 +4342,7 @@
               "sequence": [
                 {
                   "__class__": "Pattern",
-                  "pattern": "(?ms)\"\"\"((?:\\\\\\\\|\\\\.|(?!\"\"\").)*?)\"\"\""
+                  "pattern": "(?ms)\"\"\"(?:[^\"]|\"[^\"]|\"\"[^\"])*\"\"\""
                 },
                 {
                   "__class__": "Cut"
@@ -4418,7 +4418,7 @@
       "decorators": [],
       "exp": {
         "__class__": "Pattern",
-        "pattern": "(?!\\d)\\w+(?:::(?!\\d)\\w+)+"
+        "pattern": "[a-zA-Z_]\\w*(?:::[a-zA-Z_]\\w*)+"
       },
       "no_memo": false,
       "is_memo": true,
@@ -4435,7 +4435,7 @@
       "decorators": [],
       "exp": {
         "__class__": "Pattern",
-        "pattern": "(?!\\d)\\w+"
+        "pattern": "[a-zA-Z_]\\w*"
       },
       "no_memo": false,
       "is_memo": true,

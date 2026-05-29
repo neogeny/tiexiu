@@ -6,7 +6,7 @@
 //! This module uses the pyre Trait Pattern to validate the regex,
 //! not fancy_regex.
 
-use super::Pattern;
+use super::compile;
 
 /// Truncates a pattern to a max length, appending "..." if truncated.
 pub fn truncate_pattern(pattern: &str, max: usize) -> Box<str> {
@@ -63,7 +63,7 @@ pub fn regexpp(regex: impl AsRef<str>) -> Result<String, String> {
     };
 
     let inner = &output[2..output.len() - 1];
-    Pattern::new(inner).map_err(|e| format!("Generated invalid regex: {}", e))?;
+    compile(inner).map_err(|e| format!("Generated invalid regex: {}", e))?;
 
     Ok(output)
 }

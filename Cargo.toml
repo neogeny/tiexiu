@@ -52,8 +52,10 @@ cli = [
     "dep:clap",
     "dep:syntect",
     "dep:indicatif",
+    "regex",
 ]
 pyo3 = ["dep:pyo3", "cli"]
+regex = ["dep:regex"]
 
 
 #interpolation = ["dep:strfmt", "dep:evalexpr"]
@@ -61,7 +63,6 @@ pyo3 = ["dep:pyo3", "cli"]
 [dependencies]
 indexmap = "2.13"
 thiserror = "2.0.18"
-fancy-regex = "0.18"
 console = "0.16.3"
 json = "0.12.4"
 
@@ -81,6 +82,7 @@ derivative = "2.2.0"
 indicatif = { version = "0.18.4", optional = true }
 ahash = { version = "0.8.12", features = ["no-rng", "std"] }
 quick_cache = { version = "0.6", default-features = false, features = ["ahash"] }
+regex = { version = "1.12.3", optional = true }
 
 #evalexpr = { version = "13.1.0", optional = true }
 #strfmt = { version = "0.2.5", optional = true }

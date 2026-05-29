@@ -5,7 +5,7 @@
 
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
-use crate::util::pyre::Pattern;
+use crate::util::pyre::compile;
 
 /// Strict keywords that cannot be used as identifiers (e.g., let, fn).
 pub const STRICT_KEYWORDS: &[&str] = &[
@@ -51,7 +51,7 @@ pub fn safe_name(name: &str, plug: &str) -> Result<String, String> {
     let mut result = name.to_string();
 
     // Replace non-word characters with plug
-    let non_word = Pattern::new(r"\W").map_err(|e| e.to_string())?;
+    let non_word = compile(r"\W").map_err(|e| e.to_string())?;
     result = non_word.sub(plug, &result, None);
 
     // If still not valid, filter to alphanumeric only

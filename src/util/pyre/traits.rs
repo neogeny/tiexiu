@@ -56,12 +56,6 @@ pub trait Pattern: Clone {
     fn is_empty(&self) -> bool {
         self.trim().is_empty()
     }
-
-    /// Returns a mapping of group names to group numbers.
-    fn groupindex(&self) -> HashMap<Box<str>, usize>;
-
-    /// Returns the number of capturing groups.
-    fn groups_count(&self) -> usize;
 }
 
 /// Trait defining the pyre Match interface (mirroring Python's re module).
