@@ -79,6 +79,7 @@ impl FileProgress {
     }
 
     /// Marks the file as failed (currently a no-op).
+    #[allow(dead_code)]
     pub fn fail(self, _msg: &str) {
         // self.pb.finish_with_message(msg.to_string());
     }
