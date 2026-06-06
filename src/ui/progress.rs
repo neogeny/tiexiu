@@ -13,8 +13,7 @@ pub struct LoadProgress {
 impl LoadProgress {
     /// Creates a new spinner progress bar with the given message.
     pub fn new(mp: &indicatif::MultiProgress, msg: &'static str) -> Self {
-        let pb = mp.insert(
-            0,
+        let pb = mp.add(
             indicatif::ProgressBar::new_spinner().with_style(
                 indicatif::ProgressStyle::with_template("{spinner:.cyan} {wide_msg}")
                     .unwrap()
@@ -33,7 +32,7 @@ impl LoadProgress {
 
     /// Marks the loading as finished.
     pub fn finish(self) {
-        self.pb.finish_with_message("loaded");
+        self.pb.finish_and_clear();
     }
 }
 
@@ -45,17 +44,15 @@ pub struct FileProgress {
 
 impl FileProgress {
     fn new(mp: &indicatif::MultiProgress, name: &str) -> Self {
-        let pb = mp.insert(
-            0,
+        let pb = mp.add(
             indicatif::ProgressBar::new(0)
                 .with_style(
                     indicatif::ProgressStyle::with_template(
-                        // "  {prefix:>40.bold} [{wide_bar:.cyan/black}] {pos:>8}/{len:<8} bytes",
-                        &("  {prefix:>40.bold} [{wide_bar:.yellow/black}]".to_string()
+                        &("  {prefix:>40.bold} {wide_bar:.green/black}".to_string()
                             + " {percent:>4}% {duration_precise}  "),
                     )
                     .unwrap()
-                    .progress_chars("░▓▒"),
+                    .progress_chars("━╸─"),
                 )
                 .with_prefix(name.to_string()),
         );
@@ -75,13 +72,19 @@ impl FileProgress {
 
     /// Marks the file as successfully processed.
     pub fn success(self) {
-        self.pb.finish_with_message("done");
+        self.pb.finish_and_clear();
     }
 
     /// Marks the file as failed (currently a no-op).
     #[allow(dead_code)]
     pub fn fail(self, _msg: &str) {
-        // self.pb.finish_with_message(msg.to_string());
+        self.pb.finish_and_clear();
+    }
+}
+
+impl Drop for FileProgress {
+    fn drop(&mut self) {
+        self.pb.finish_and_clear();
     }
 }
 
