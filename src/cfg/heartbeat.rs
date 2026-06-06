@@ -9,7 +9,7 @@ use std::sync::Arc;
 pub struct NullHeartbeat;
 
 /// Trait for progress-reporting callbacks during long operations.
-pub trait Heartbeat: Debug {
+pub trait Heartbeat: Debug + Send + Sync {
     fn tick(&self, _mark: usize, _total: usize) {}
 }
 

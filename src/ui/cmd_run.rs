@@ -105,6 +105,11 @@ pub fn cmd_run(
         let nworkers = max_workers.min(inputs.len());
         let (tx, rx) = std::sync::mpsc::channel::<WorkerResult>();
 
+        // Wrap ProgressUI in a mutex so all MultiProgress operations
+        // (insert, finish, drop) are serialized — this prevents a
+        // lock-ordering deadlock in indicatif between insert (MP→PB)
+        // and drop (PB→MP) when called from different threads.
+        let progress = std::sync::Arc::new(std::sync::Mutex::new(progress));
         let inputs = std::sync::Arc::new(inputs);
         let parser = std::sync::Arc::new(parser);
         let cfg = std::sync::Arc::new(Cfg::clone(cfg));
@@ -114,6 +119,7 @@ pub fn cmd_run(
             let inputs = std::sync::Arc::clone(&inputs);
             let parser = std::sync::Arc::clone(&parser);
             let cfg = std::sync::Arc::clone(&cfg);
+            let progress = std::sync::Arc::clone(&progress);
             let tx = tx.clone();
             handles.push(std::thread::spawn(move || {
                 for (file_idx, input) in inputs.iter().enumerate().skip(worker_id).step_by(nworkers)
@@ -126,11 +132,30 @@ pub fn cmd_run(
                         }
                         Ok(text) => text,
                     };
-                    let file_cfg =
-                        cfg.add(CfgKey::Source(input.as_path().to_string_lossy().into()));
+
+                    // Create per-file bar lazily, only when a task actually runs.
+                    let (fp, heartbeat) = {
+                        let prog = progress.lock().unwrap();
+                        let name = input.file_name().unwrap_or_default().to_string_lossy();
+                        let fp = prog.add_file(&name);
+                        if let Ok(meta) = std::fs::metadata(input) {
+                            fp.set_length(meta.len() as usize);
+                        }
+                        let hb = fp.heartbeat().clone();
+                        (fp, hb)
+                    };
+
+                    let file_cfg = cfg
+                        .add(CfgKey::Source(input.as_path().to_string_lossy().into()))
+                        .add(CfgKey::Heartbeat(heartbeat));
 
                     match parse_input(&parser, &text, &file_cfg) {
                         Ok(tree) => {
+                            {
+                                let prog = progress.lock().unwrap();
+                                fp.success();
+                                prog.inc_files();
+                            }
                             let this_output = if model {
                                 format!("{:#?}", tree).to_string()
                             } else if short {
@@ -141,6 +166,12 @@ pub fn cmd_run(
                             tx.send(WorkerResult::Success(file_idx, this_output)).ok();
                         }
                         Err(err) => {
+                            {
+                                let prog = progress.lock().unwrap();
+                                // Drop the bar to remove it from MultiProgress.
+                                drop(fp);
+                                prog.inc_files();
+                            }
                             tx.send(WorkerResult::Error(file_idx, err.to_string())).ok();
                         }
                     }
@@ -163,7 +194,6 @@ pub fn cmd_run(
                 }
             }
             done += 1;
-            progress.inc_files();
             if done == inputs.len() {
                 break;
             }
@@ -187,7 +217,7 @@ pub fn cmd_run(
             }
         }
 
-        progress.finish();
+        progress.lock().unwrap().finish();
         eprintln!(
             "{} {} {}",
             style(format!("Parsed {} files", inputs.len()))
