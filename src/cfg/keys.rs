@@ -337,12 +337,18 @@ mod tests {
     #[test]
     fn test_cfg_load_from_env() -> Result<()> {
         unsafe {
-            env::set_var("TIEXIU_TRACE", "1");
-            env::set_var("TIEXIU_WHITESPACE", r"\s+");
-            env::set_var("TIEXIU_PARSEINFO", "False");
+            env::set_var("CFG_TEST_TRACE", "1");
+            env::set_var("CFG_TEST_WHITESPACE", r"\s+");
+            env::set_var("CFG_TEST_PARSEINFO", "False");
         }
 
-        let cfg = CfgKey::load_from_env("TIEXIU_");
+        let cfg = CfgKey::load_from_env("CFG_TEST_");
+
+        unsafe {
+            env::remove_var("CFG_TEST_TRACE");
+            env::remove_var("CFG_TEST_WHITESPACE");
+            env::remove_var("CFG_TEST_PARSEINFO");
+        }
 
         assert!(cfg.contains(&CfgKey::Trace));
         assert!(cfg.contains(&CfgKey::Wsp(r"\s+".to_string())));
