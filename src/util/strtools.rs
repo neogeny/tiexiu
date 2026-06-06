@@ -118,12 +118,10 @@ pub fn unicode_width(c: char) -> usize {
 }
 
 /// Returns the number of lines in a string (minimum 1).
+///
+/// Uses Rust's `str::lines()` which splits on both `\n` and `\r\n`.
 pub fn linecount(s: &str) -> usize {
-    if s.is_empty() {
-        1
-    } else {
-        s.lines().count().max(1)
-    }
+    s.lines().count().max(1)
 }
 
 /// Returns true if the string contains more than one line.
@@ -131,23 +129,63 @@ pub fn ismultiline(s: &str) -> bool {
     linecount(s) > 1
 }
 
-/// Result of counting lines in a string (total and logical).
+/// SLOC (Source Lines of Code) result with "Editor View" semantics.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct LineCount {
-    /// Total line count.
-    pub tots: usize,
-    /// Logical line count (at least 1 if non-empty).
+    /// Total number of lines.
     pub totl: usize,
+    /// Blank (empty or whitespace-only) lines.
+    pub blnk: usize,
+    /// Comment lines.
+    pub cmnt: usize,
+    /// Code lines.
+    pub code: usize,
 }
 
-/// Counts lines in a string, returning both total and logical counts.
+/// Counts source lines of code (SLOC) with "Editor View" semantics.
+///
+/// Memory-efficient streaming via line iteration.
+/// The default comment marker is `#`.
 pub fn countlines(s: &str) -> LineCount {
-    if s.is_empty() {
-        LineCount::default()
-    } else {
-        let tots = s.lines().count();
-        let totl = tots.max(1);
-        LineCount { tots, totl }
+    countlines_with_comment(s, "#")
+}
+
+/// Like [`countlines`], but with a configurable comment marker set.
+///
+/// `cmtstr` contains characters that start a comment (e.g. `"#"` or `"#;"`).
+/// Equivalent to Python's `countlines(s, cmtstr)`.
+pub fn countlines_with_comment(s: &str, cmtstr: &str) -> LineCount {
+    let mut totl = 0usize;
+    let mut blnk = 0usize;
+    let mut cmnt = 0usize;
+    let mut code = 0usize;
+
+    for line in s.lines() {
+        totl += 1;
+
+        let trimmed = line.trim_start();
+        if trimmed.is_empty() {
+            blnk += 1;
+        } else if trimmed.starts_with(|c: char| cmtstr.contains(c)) {
+            cmnt += 1;
+        } else {
+            code += 1;
+        }
+    }
+
+    // Editor View adjustment:
+    // If the text ends with a break, there is a final ghost line.
+    if totl == 0 && s.ends_with(['\n', '\r']) {
+        totl += 1;
+        blnk += 1;
+    }
+
+    debug_assert_eq!(totl, blnk + cmnt + code);
+    LineCount {
+        totl,
+        blnk,
+        cmnt,
+        code,
     }
 }
 
@@ -271,9 +309,48 @@ mod tests {
     fn test_sloc_consistency() {
         let result = countlines("");
         assert_eq!(result.totl, 0);
+        assert_eq!(result.blnk, 0);
+        assert_eq!(result.cmnt, 0);
+        assert_eq!(result.code, 0);
+
         let result = countlines("x=1\n");
         assert_eq!(result.totl, 1);
+        assert_eq!(result.blnk, 0);
+        assert_eq!(result.cmnt, 0);
+        assert_eq!(result.code, 1);
+
         let result = countlines("\n\n");
         assert_eq!(result.totl, 2);
+        assert_eq!(result.blnk, 2);
+        assert_eq!(result.cmnt, 0);
+        assert_eq!(result.code, 0);
+
+        // comment lines
+        let result = countlines("# foo\nx=1\n");
+        assert_eq!(result.totl, 2);
+        assert_eq!(result.blnk, 0);
+        assert_eq!(result.cmnt, 1);
+        assert_eq!(result.code, 1);
+
+        // blank lines (whitespace-only)
+        let result = countlines("  \nx=1\n");
+        assert_eq!(result.totl, 2);
+        assert_eq!(result.blnk, 1);
+        assert_eq!(result.cmnt, 0);
+        assert_eq!(result.code, 1);
+
+        // \r\n handling
+        let result = countlines("x=1\r\ny=2");
+        assert_eq!(result.totl, 2);
+        assert_eq!(result.blnk, 0);
+        assert_eq!(result.cmnt, 0);
+        assert_eq!(result.code, 2);
+
+        // custom comment marker
+        let result = countlines_with_comment("; foo\nx=1\n", ";");
+        assert_eq!(result.totl, 2);
+        assert_eq!(result.blnk, 0);
+        assert_eq!(result.cmnt, 1);
+        assert_eq!(result.code, 1);
     }
 }
