@@ -1,16 +1,16 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::ui::cmd_run;
 use crate::ui::progress::ProgressUI;
 use clap;
 use clap::builder::styling::{AnsiColor, Styles};
 use clap::{Parser, Subcommand};
-use console::style;
 use std::fmt::Write;
 use std::path::PathBuf;
 use tiexiu::PrettyPrint;
 use tiexiu::api::{
-    boot_grammar_pretty, boot_grammar_to_json_string, compile, load_grammar_from_json, parse_input,
+    boot_grammar_pretty, boot_grammar_to_json_string, compile, load_grammar_from_json,
 };
 use tiexiu::cfg::{Cfg, CfgA};
 use tiexiu::tools::rails::*;
@@ -41,7 +41,7 @@ pub enum OutputFormat {
     version,
     about,
     styles = cli_styles(),
-    color = cli_color_strategy() // Hook into clap's internal color logic
+    color = cli_color_strategy()
 )]
 /// TieXiu: A high-performance PEG engine for TatSu grammars.
 pub struct Cli {
@@ -107,6 +107,10 @@ pub enum Commands {
         /// Print the Tree in "short" notation
         #[arg(short, long)]
         short: bool,
+
+        /// Number of concurrent parse tasks (default: number of CPUs)
+        #[arg(short = 'n', long)]
+        nproc: Option<usize>,
     },
 
     /// Grammar transformations
@@ -135,7 +139,6 @@ pub enum Commands {
 
 /// Runs the TieXiu CLI with command-line arguments.
 pub fn cli(out: &mut std::io::StdoutLock) -> Result<()> {
-    use crate::ui::progress::ProgressUI;
     use std::io::Write;
     let cli = Cli::parse();
     let use_color = configure_color(cli.color);
@@ -165,7 +168,6 @@ pub fn cli(out: &mut std::io::StdoutLock) -> Result<()> {
             } else if railroads {
                 (boot_grammar()?.railroads(), "apl")
             } else {
-                // Since json is default_value_t = true, this is the fallthrough
                 (boot_grammar_to_json_string(cfga)?, "json")
             }
         }
@@ -174,76 +176,9 @@ pub fn cli(out: &mut std::io::StdoutLock) -> Result<()> {
             inputs,
             model,
             short,
+            nproc,
             ..
-        } => {
-            let progress = ProgressUI::new(inputs.len() as u64);
-            let parser = load_grammar_from_path(&grammar, &progress, &cfg)?;
-
-            let mut format = "rust";
-            let mut output = String::new();
-
-            let mut errcount = 0;
-            for input in &inputs {
-                let name = input.file_name().unwrap_or_default().to_string_lossy();
-                let file_prog = progress.add_file(&name);
-
-                let text = match std::fs::read_to_string(input) {
-                    Err(error) => {
-                        file_prog.fail(&format!("{:#?}", error));
-                        errcount += 1;
-                        continue;
-                    }
-                    Ok(text) => text,
-                };
-                file_prog.set_length(text.len());
-
-                let file_cfg = cfg
-                    .add(CfgKey::Source(input.as_path().to_string_lossy().into()))
-                    .add(CfgKey::Heartbeat(file_prog.heartbeat().clone()));
-
-                match parse_input(&parser, &text, &file_cfg) {
-                    Ok(tree) => {
-                        file_prog.success();
-                        let this_output = if model {
-                            format!("{:#?}", tree).to_string()
-                        } else if short {
-                            format!("{:#}", tree.fold()).to_string()
-                        } else {
-                            format = "json";
-                            tree.to_json_string_pretty()
-                        };
-
-                        output.push_str(&this_output);
-                        output.push('\n');
-                    }
-                    Err(err) => {
-                        errcount += 1;
-                        file_prog.fail(&format!("{:#?}", err));
-                        eprintln!("{}", err);
-                    }
-                }
-                progress.inc_files();
-            }
-            progress.finish();
-            eprintln!(
-                "{} {} {}",
-                style(format!("Parsed {} files", inputs.len()))
-                    .white()
-                    .bold(),
-                style(format!("{} passed", inputs.len() - errcount))
-                    .green()
-                    .bold(),
-                if errcount > 0 {
-                    style(format!("{} errors", errcount)).red().bold()
-                } else {
-                    style("".to_string()).white()
-                },
-            );
-            if errcount > 0 {
-                return Err("Some files could not be parsed".into());
-            }
-            (output, format)
-        }
+        } => cmd_run::cmd_run(grammar, inputs, model, short, nproc, &cfg)?,
         Commands::Grammar {
             grammar,
             json,
@@ -285,7 +220,7 @@ pub fn cli(out: &mut std::io::StdoutLock) -> Result<()> {
     Ok(())
 }
 
-fn load_grammar_from_path(
+pub(crate) fn load_grammar_from_path(
     grammar: &PathBuf,
     progress: &ProgressUI,
     cfga: &CfgA,
@@ -313,9 +248,7 @@ fn load_grammar_from_path(
     Ok(parser)
 }
 
-// Optional: Tells clap which global color setting to use for its own help text
 fn cli_color_strategy() -> clap::ColorChoice {
-    // You can pull from env here if you want clap to be smart before parsing
     clap::ColorChoice::Auto
 }
 
@@ -356,11 +289,11 @@ pub fn pygmentize(content: &str, extension: &str, use_color: bool) -> Result<Str
     for line in LinesWithEndings::from(content) {
         let ranges = h.highlight_line(line, &ps).unwrap();
         let escaped = as_24_bit_terminal_escaped(&ranges[..], false);
-        write!(out, "{}", escaped)?;
+        let _ = write!(out, "{}", escaped);
     }
-    write!(out, "\x1b[0m")?;
+    let _ = write!(out, "\x1b[0m");
     if !content.ends_with('\n') {
-        writeln!(out)?;
+        let _ = writeln!(out);
     };
     Ok(out)
 }
