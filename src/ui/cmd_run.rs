@@ -3,15 +3,17 @@
 
 use console::style;
 use std::path::PathBuf;
+use std::time::Instant;
 use tiexiu::Result;
 use tiexiu::api::parse_input;
 use tiexiu::cfg::Cfg;
 use tiexiu::cfg::CfgKey;
 
 use crate::ui::progress::ProgressUI;
+use tiexiu::util::strtools::linecount;
 
 enum WorkerResult {
-    Success(usize, String),
+    Success(usize, String, usize),
     Error(usize, String),
 }
 
@@ -35,6 +37,9 @@ pub fn cmd_run(
         "json"
     };
 
+    let start = Instant::now();
+    let mut totl_sloc = 0usize;
+
     if nproc == Some(1) || inputs.len() <= 1 {
         let mut output = String::new();
         let mut errcount = 0;
@@ -51,6 +56,7 @@ pub fn cmd_run(
                 }
                 Ok(text) => text,
             };
+            totl_sloc += linecount(&text);
             file_prog.set_length(text.len());
 
             let file_cfg = cfg
@@ -78,8 +84,14 @@ pub fn cmd_run(
             progress.inc_files();
         }
         progress.finish();
+        let elapsed = start.elapsed();
+        let sloc_per_sec = if elapsed.as_secs_f64() > 0.0 {
+            totl_sloc as f64 / elapsed.as_secs_f64()
+        } else {
+            totl_sloc as f64
+        };
         eprintln!(
-            "{} {} {}",
+            "{}{}{}{}",
             style(format!("Parsed {} files", inputs.len()))
                 .white()
                 .bold(),
@@ -87,10 +99,11 @@ pub fn cmd_run(
                 .green()
                 .bold(),
             if errcount > 0 {
-                style(format!("{} errors", errcount)).red().bold()
+                style(format!(" {} errors", errcount)).red().bold()
             } else {
                 style("".to_string()).white()
             },
+            style(format!("{:.0} sloc/s", sloc_per_sec)).white().dim(),
         );
         if errcount > 0 {
             return Err("Some files could not be parsed".into());
@@ -156,6 +169,7 @@ pub fn cmd_run(
                                 fp.success();
                                 prog.inc_files();
                             }
+                            let sloc = linecount(&text);
                             let this_output = if model {
                                 format!("{:#?}", tree).to_string()
                             } else if short {
@@ -163,7 +177,8 @@ pub fn cmd_run(
                             } else {
                                 tree.to_json_string_pretty()
                             };
-                            tx.send(WorkerResult::Success(file_idx, this_output)).ok();
+                            tx.send(WorkerResult::Success(file_idx, this_output, sloc))
+                                .ok();
                         }
                         Err(err) => {
                             {
@@ -185,7 +200,8 @@ pub fn cmd_run(
         let mut done = 0;
         while let Ok(event) = rx.recv() {
             match event {
-                WorkerResult::Success(idx, out) => {
+                WorkerResult::Success(idx, out, sloc) => {
+                    totl_sloc += sloc;
                     results.push((idx, Some(out), None));
                 }
                 WorkerResult::Error(idx, err) => {
@@ -208,18 +224,25 @@ pub fn cmd_run(
         let mut output = String::new();
         let mut errcount = 0;
         for (_id, out, err) in &results {
+            if err.is_some() {
+                errcount += 1;
+                continue;
+            }
             if let Some(out) = out {
                 output.push_str(out);
                 output.push('\n');
             }
-            if err.is_some() {
-                errcount += 1;
-            }
         }
 
         progress.lock().unwrap().finish();
+        let elapsed = start.elapsed();
+        let sloc_per_sec = if elapsed.as_secs_f64() > 0.0 {
+            totl_sloc as f64 / elapsed.as_secs_f64()
+        } else {
+            totl_sloc as f64
+        };
         eprintln!(
-            "{} {} {}",
+            "{} {}{} {}",
             style(format!("Parsed {} files", inputs.len()))
                 .white()
                 .bold(),
@@ -227,10 +250,11 @@ pub fn cmd_run(
                 .green()
                 .bold(),
             if errcount > 0 {
-                style(format!("{} errors", errcount)).red().bold()
+                style(format!(" {} errors", errcount)).red().bold()
             } else {
                 style("".to_string()).white()
             },
+            style(format!("{:.0} sloc/s", sloc_per_sec)).white().dim(),
         );
         if errcount > 0 {
             return Err("Some files could not be parsed".into());
