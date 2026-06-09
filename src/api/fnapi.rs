@@ -151,7 +151,7 @@ pub fn parse_input_to_json_string(parser: &Grammar, text: &str, cfg: &CfgA) -> R
 
 /// Load the boot grammar.
 pub fn boot_grammar() -> Result<Grammar> {
-    Ok(crate::json::boot::boot_grammar()?)
+    Ok(crate::peg::boot::boot_grammar()?)
 }
 
 /// Alias for `boot_grammar`.

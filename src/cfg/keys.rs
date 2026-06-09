@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::cfg::heartbeat::HeartbeatRef;
-use crate::cfg::semantics::SemanticsRef;
+use crate::context::SemanticsRef;
 use std::sync::Arc;
 
 use super::ENV_PREFIX;

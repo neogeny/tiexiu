@@ -7,6 +7,8 @@ pub mod ctx;
 /// Context error types.
 pub mod error;
 pub(crate) mod memo;
+/// Semantics actions for post-rule transformation.
+pub mod semantics;
 pub(crate) mod state;
 /// String-backed parsing context.
 pub mod strctx;
@@ -22,6 +24,8 @@ use crate::{CfgA, Cursor};
 pub use ctx::*;
 /// Context operation failures.
 pub use error::Error;
+/// Semantics action types.
+pub use semantics::*;
 /// Reads parser state from a string cursor.
 pub use strctx::StrCtx;
 

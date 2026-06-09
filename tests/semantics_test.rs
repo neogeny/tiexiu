@@ -9,7 +9,8 @@
 extern crate json;
 use std::sync::Arc;
 use tiexiu::Str;
-use tiexiu::cfg::{CfgKey, Semantics, SemanticsRef};
+use tiexiu::cfg::CfgKey;
+use tiexiu::context::{Semantics, SemanticsRef};
 use tiexiu::peg::error::ParseResult;
 use tiexiu::trees::{Tree, TreeRef};
 use tiexiu::{Result, parse};

@@ -1,7 +1,5 @@
 /// JSON model for grammar and tree serialization.
 pub mod asjson;
-/// Bootstrap grammar embedded as JSON.
-pub mod boot;
 /// JSON conversion error types.
 pub mod error;
 /// Grammar-to-JSON serialization.

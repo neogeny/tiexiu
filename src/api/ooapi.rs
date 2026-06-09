@@ -219,7 +219,7 @@ impl TieXiu {
 
     /// Load the boot grammar.
     pub fn boot_grammar(&mut self) -> Result<Grammar> {
-        Ok(crate::json::boot::boot_grammar()?)
+        Ok(crate::peg::boot::boot_grammar()?)
     }
 
     /// Alias for `boot_grammar`.

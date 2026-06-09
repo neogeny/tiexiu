@@ -17,6 +17,7 @@ pub mod parser;
 pub mod rule;
 
 pub(crate) mod analysis;
+pub(crate) mod boot;
 pub(crate) mod fold;
 pub(crate) mod parsing;
 pub(crate) mod pretty;

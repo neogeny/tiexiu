@@ -5,7 +5,8 @@
 
 use super::memo::{KeyTrack, MemoCache};
 use super::trace::{NULL_TRACER, Tracer};
-use crate::cfg::{HeartbeatRef, SemanticsRef};
+use crate::cfg::HeartbeatRef;
+use crate::context::SemanticsRef;
 use crate::input::Cursor;
 use crate::parser::TokenStack;
 use crate::peg::error::DisasterReport;

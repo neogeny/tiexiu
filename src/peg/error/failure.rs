@@ -145,6 +145,9 @@ pub enum CompileError {
 
     #[error("Linker error: {0}")]
     Linker(String),
+
+    #[error("grammar bootstrap failed: {0}")]
+    Bootstrap(String),
 }
 
 impl From<ParseFailure> for CompileError {
