@@ -2834,6 +2834,13 @@
             "__class__": "Option",
             "exp": {
               "__class__": "Call",
+              "name": "meta"
+            }
+          },
+          {
+            "__class__": "Option",
+            "exp": {
+              "__class__": "Call",
               "name": "token"
             }
           },
@@ -4082,6 +4089,38 @@
         "token": "null"
       },
       "params": [],
+      "kwparams": {},
+      "decorators": [],
+      "base": null,
+      "is_name": false,
+      "is_tokn": false,
+      "no_memo": false,
+      "no_stak": false,
+      "is_memo": true,
+      "is_lrec": false
+    },
+    {
+      "__class__": "Rule",
+      "name": "meta",
+      "params": [
+        "Meta"
+      ],
+      "exp": {
+        "__class__": "Sequence",
+        "sequence": [
+          {
+            "__class__": "Token",
+            "token": "@"
+          },
+          {
+            "__class__": "Override",
+            "exp": {
+              "__class__": "Pattern",
+              "pattern": "(name|int|uint|float|bool)\\b"
+            }
+          }
+        ]
+      },
       "kwparams": {},
       "decorators": [],
       "base": null,
