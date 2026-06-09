@@ -21,6 +21,7 @@ pub(crate) mod boot;
 pub(crate) mod fold;
 pub(crate) mod parsing;
 pub(crate) mod pretty;
+pub(crate) mod semantics;
 
 /// Re-export of error types.
 pub use error::{CompileError, ParseFailure};

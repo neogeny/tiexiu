@@ -1,13 +1,16 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::cfg::CfgA;
-use crate::context::new_ctx;
+use crate::cfg::keys::Configurable;
+use crate::cfg::{CfgA, CfgKey};
+use crate::context::{new_ctx, SemanticsRef};
 use crate::input::{Cursor, StrCursor};
 use crate::peg::grammar::PrettyPrint;
+use crate::peg::semantics::GrammarSemantics;
 use crate::peg::*;
 use crate::trees::Tree;
 use crate::{Error, Result};
+use std::sync::Arc;
 
 use crate::api::ooapi::TieXiu;
 
@@ -40,6 +43,8 @@ where
 {
     let boot = boot_grammar()?;
     let mut ctx = new_ctx(cursor, cfg);
+    let sem: SemanticsRef = Arc::new(GrammarSemantics);
+    ctx.configure(&[CfgKey::Semantics(sem)].as_slice().into());
     boot.parse_tree(&mut ctx)
 }
 

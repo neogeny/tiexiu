@@ -141,15 +141,11 @@ impl Rule {
                     folded.into()
                 } else {
                     let typename = self.params[0].clone();
-                    if typename.as_ref() == "bool" {
-                        folded.into()
-                    } else {
-                        Tree::Node {
-                            typename,
-                            tree: folded.into(),
-                        }
-                        .into()
+                    Tree::Node {
+                        typename,
+                        tree: folded.into(),
                     }
+                    .into()
                 })
             }
         }

@@ -176,7 +176,6 @@ impl GrammarCompiler {
         let (typename, tree) = parse_node(tree)?;
         let typename = typename.to_string();
         let exp: Exp = match typename.as_str() {
-            "bool" => self.parse_exp(tree)?,
             "Alert" => {
                 let msgtree = map_get(tree, &typename, "message")?;
                 let msgexp = self.parse_exp(msgtree)?;
@@ -214,7 +213,6 @@ impl GrammarCompiler {
                 Exp::gather(self.parse_exp(exp)?, self.parse_exp(sep)?)
             }
             "Grammar" => Exp::nil(),
-            "GrammarSemantics" => Exp::nil(),
             "Group" => Exp::group(self.parse_exp(tree)?),
             "Join" => {
                 let exp = map_get(tree, &typename, "exp")?;
@@ -292,21 +290,7 @@ impl GrammarCompiler {
             "UIntMeta" => Exp::uint_meta(),
             "FloatMeta" => Exp::float_meta(),
             "BoolMeta" => Exp::bool_meta(),
-            "Meta" => {
-                let text = tree.value();
-                match text.as_ref() {
-                    "name" => Exp::name_meta(),
-                    "int" => Exp::int_meta(),
-                    "uint" => Exp::uint_meta(),
-                    "float" => Exp::float_meta(),
-                    "bool" => Exp::bool_meta(),
-                    _ => {
-                        return Err(CompileError::UnknownExpressionType(
-                            format!("Meta:{}", text).into(),
-                        ));
-                    }
-                }
-            }
+
             "Token" => Exp::token(&tree.value()),
             "Void" => Exp::void(),
             _ => return Err(CompileError::UnknownExpressionType(typename.into())),

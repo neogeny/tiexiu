@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::peg::error::CompileError;
 use crate::peg::Grammar;
+use crate::peg::error::CompileError;
 
 /// The embedded TatSu PEG grammar serialized as JSON.
 pub const TATSU_GRAMMAR_JSON: &str = include_str!("../../grammar/tatsu.json");
