@@ -13,19 +13,19 @@ use crate::types::{Ref, Str};
 /// into strongly-typed `NameMeta`/`IntMeta`/etc. variants, and unwraps legacy
 /// `"bool"` typename nodes that the old boot grammar produced directly.
 #[derive(Debug, Default)]
-pub struct GrammarSemantics;
+pub struct EBNFGrammarSemantics;
 
 pub fn new_grammar_sematics_ref() -> Ref<dyn Semantics> {
-    Ref::new(GrammarSemantics::new())
+    Ref::new(EBNFGrammarSemantics::new())
 }
 
-impl GrammarSemantics {
+impl EBNFGrammarSemantics {
     fn new() -> Self {
-        GrammarSemantics
+        EBNFGrammarSemantics
     }
 }
 
-impl Semantics for GrammarSemantics {
+impl Semantics for EBNFGrammarSemantics {
     fn apply(&self, node: TreeRef, _rule_name: &str, _params: &[Str]) -> ParseResult {
         match node.as_ref() {
             // Meta → typed variants (boot grammar @name/@int/@uint/@float/@bool)

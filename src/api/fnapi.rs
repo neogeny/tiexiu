@@ -9,8 +9,8 @@ use crate::peg::*;
 use crate::trees::Tree;
 use crate::{Error, Result, config};
 
+use crate::api::ebnf_semantics::new_grammar_sematics_ref;
 use crate::api::ooapi::TieXiu;
-use crate::api::semantics::new_grammar_sematics_ref;
 
 /// Create a default `TieXiu` instance with empty config.
 pub fn pegapi() -> TieXiu {

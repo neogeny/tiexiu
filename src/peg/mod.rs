@@ -18,10 +18,10 @@ pub mod rule;
 
 pub(crate) mod analysis;
 pub(crate) mod boot;
+pub(crate) mod ebnf_semantics;
 pub(crate) mod fold;
 pub(crate) mod parsing;
 pub(crate) mod pretty;
-pub(crate) mod semantics;
 
 /// Re-export of error types.
 pub use error::{CompileError, ParseFailure};
