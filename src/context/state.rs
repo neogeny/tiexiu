@@ -5,7 +5,7 @@
 
 use super::memo::{KeyTrack, MemoCache};
 use super::trace::{NULL_TRACER, Tracer};
-use crate::cfg::HeartbeatRef;
+use crate::cfg::{HeartbeatRef, SemanticsRef};
 use crate::input::Cursor;
 use crate::parser::TokenStack;
 use crate::peg::error::DisasterReport;
@@ -62,6 +62,8 @@ pub struct HeavyState<'t> {
     pub tracer: &'t dyn Tracer,
     /// Optional heartbeat callback for progress reporting.
     pub heartbeat: Option<HeartbeatRef>,
+    /// Optional semantics actions for post-rule transformation.
+    pub semantics: Option<SemanticsRef>,
     /// Total input length in bytes.
     pub input_len: usize,
     /// Timestamp of the last heartbeat tick.
@@ -88,6 +90,7 @@ impl<'t> HeavyState<'t> {
             furthest_failure: None,
             tracer: &NULL_TRACER,
             heartbeat: None,
+            semantics: None,
             input_len: 0,
             instant: Instant::now(),
             callstack: CallStack::new(),

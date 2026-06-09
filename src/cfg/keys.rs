@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::cfg::heartbeat::HeartbeatRef;
+use crate::cfg::semantics::SemanticsRef;
 use std::sync::Arc;
 
 use super::ENV_PREFIX;
@@ -63,6 +64,9 @@ pub enum CfgKey {
 
     /// Heartbeat callback for progress reporting
     Heartbeat(HeartbeatRef),
+
+    /// Semantics actions for post-rule transformation
+    Semantics(SemanticsRef),
 }
 
 /// Build a `Cfg` by merging defaults, environment, and the given overrides.
@@ -79,6 +83,7 @@ pub(crate) trait CfgBoxWrapper {
     #[allow(dead_code)]
     fn trace(&self) -> bool;
     fn heartbeat(&self) -> Option<&HeartbeatRef>;
+    fn semantics(&self) -> Option<&SemanticsRef>;
     fn start(&self) -> Option<&str>;
 }
 
@@ -90,6 +95,13 @@ impl CfgBoxWrapper for Cfg {
     fn heartbeat(&self) -> Option<&HeartbeatRef> {
         self.iter().find_map(|k| match k {
             CfgKey::Heartbeat(h) => Some(h),
+            _ => None,
+        })
+    }
+
+    fn semantics(&self) -> Option<&SemanticsRef> {
+        self.iter().find_map(|k| match k {
+            CfgKey::Semantics(s) => Some(s),
             _ => None,
         })
     }
@@ -123,6 +135,7 @@ impl PartialEq for CfgKey {
             (Self::NoMemoization, Self::NoMemoization) => true,
             (Self::Source(a), Self::Source(b)) => a == b,
             (Self::Heartbeat(a), Self::Heartbeat(b)) => Arc::ptr_eq(a, b),
+            (Self::Semantics(a), Self::Semantics(b)) => Arc::ptr_eq(a, b),
             _ => false,
         }
     }
@@ -145,6 +158,9 @@ impl std::hash::Hash for CfgKey {
             }
             CfgKey::Heartbeat(h) => {
                 std::ptr::hash(Arc::as_ptr(h), state);
+            }
+            CfgKey::Semantics(s) => {
+                std::ptr::hash(Arc::as_ptr(s), state);
             }
             _ => {}
         }
@@ -214,6 +230,7 @@ impl Cfg {
             CfgKey::NoMemoization => 14,
             CfgKey::Source(_) => 15,
             CfgKey::Heartbeat(_) => 16,
+            CfgKey::Semantics(_) => 17,
         }
     }
 }

@@ -7,7 +7,9 @@ use crate::context::state::CallStack;
 use crate::context::trace::Tracer;
 use crate::input::Cursor;
 use crate::peg::error::Nope;
+use crate::peg::error::ParseResult;
 use crate::peg::error::{DisasterReport, ParseFailure};
+use crate::trees::Tree;
 use crate::trees::TreeRef;
 use crate::types::Str;
 use crate::util::pyre::Pattern;
@@ -130,6 +132,19 @@ pub trait CtxSem: Ctx + Debug + Sized {
 
     fn heartbeat_tick(&mut self) {
         let _ = self;
+    }
+
+    /// Apply semantics to a parsed rule tree.
+    ///
+    /// Default implementation returns `Ok(Tree::Bottom)`, meaning "not handled"
+    /// — the caller should proceed with default param-based `Node` wrapping.
+    fn apply_semantics(
+        &mut self,
+        _node: TreeRef,
+        _rule_name: &str,
+        _params: &[Str],
+    ) -> ParseResult {
+        Ok(Tree::Bottom.into())
     }
 
     fn key(&mut self, name: &str, can_memo: bool) -> MemoKey;

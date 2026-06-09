@@ -128,6 +128,15 @@ impl Rule {
             Err(nope) => Err(nope),
             Ok(tree) => {
                 let folded = Arc::unwrap_or_clone(tree).fold();
+                match ctx.apply_semantics(folded.clone().into(), self.name.as_ref(), &self.params) {
+                    Ok(tree) if *tree != Tree::Bottom => {
+                        return Ok(tree);
+                    }
+                    Ok(_) => {}
+                    Err(nope) => {
+                        return Err(nope);
+                    }
+                }
                 Ok(if self.params.is_empty() {
                     folded.into()
                 } else {

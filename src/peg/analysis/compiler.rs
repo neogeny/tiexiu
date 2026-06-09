@@ -287,6 +287,11 @@ impl GrammarCompiler {
             "SkipGroup" => Exp::skip_group(self.parse_exp(tree)?),
             "SkipTo" => Exp::skip_to(self.parse_exp(tree)?),
             "Synth" => Exp::nil(),
+            "NameMeta" => Exp::name_meta(),
+            "IntMeta" => Exp::int_meta(),
+            "UIntMeta" => Exp::uint_meta(),
+            "FloatMeta" => Exp::float_meta(),
+            "BoolMeta" => Exp::bool_meta(),
             "Meta" => {
                 let text = tree.value();
                 match text.as_ref() {

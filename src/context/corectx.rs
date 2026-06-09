@@ -94,6 +94,10 @@ where
         if let Some(hb) = cfg.heartbeat() {
             self.heavy.heartbeat = Some(hb.clone());
         }
+
+        if let Some(sem) = cfg.semantics() {
+            self.heavy.semantics = Some(sem.clone());
+        }
     }
 }
 
@@ -164,6 +168,18 @@ where
             hb.tick(mark, total);
         }
         self.heavy.instant = Instant::now();
+    }
+
+    fn apply_semantics(
+        &mut self,
+        node: TreeRef,
+        rule_name: &str,
+        params: &[Str],
+    ) -> crate::peg::error::ParseResult {
+        match &self.heavy.semantics {
+            Some(sem) => sem.apply(node, rule_name, params),
+            None => Ok(crate::trees::Tree::Bottom.into()),
+        }
     }
 
     fn key(&mut self, name: &str, can_memo: bool) -> MemoKey {
