@@ -8,6 +8,18 @@ All notable changes to this project are documented in this file. The format is  
 
 ## [Unreleased]
 
+### Added
+
+* `@name`, `@int`, `@uint`, `@float`, `@bool` meta syntax for rule expressions.
+  These yield `NameMeta`, `IntMeta`, `UIntMeta`, `FloatMeta`, and `BoolMeta` AST
+  nodes respectively.
+
+### Changed
+
+* EBNF grammar semantics are now configured at the API layer rather than deep in
+  the parser internals, giving library users a clean hook to supply their own
+  semantics for grammar parsing.
+
 ## [v0.1.3] 2026-06-06 Parallel run command in the CLI
 
 ### Added
