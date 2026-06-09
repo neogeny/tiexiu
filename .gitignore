@@ -31,7 +31,7 @@ tmp
 Modelfile
 grammar/
 .aider*
-corpus/
+.corpus/
 
 # Sibling projects
 ogopego
