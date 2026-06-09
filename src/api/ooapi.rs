@@ -3,9 +3,7 @@
 
 //! Object-oriented API for TieXiu
 
-use crate::context::new_ctx;
 use crate::input::{Cursor, StrCursor};
-use crate::peg::grammar::PrettyPrint;
 use crate::peg::*;
 pub use crate::trees::Tree;
 use crate::{Error, Result};
@@ -82,19 +80,17 @@ impl TieXiu {
 
     /// Parse a grammar string into a parse tree.
     pub fn parse_grammar(&mut self, grammar: &str) -> Result<Tree> {
-        self.parse_grammar_with(StrCursor::new(grammar))
+        super::fnapi::parse_grammar(grammar, &self.cfg)
     }
 
     /// Parse a grammar and return the result as a JSON value.
     pub fn parse_grammar_to_json(&mut self, grammar: &str) -> Result<JsonValue> {
-        let tree = self.parse_grammar(grammar)?;
-        Ok(tree.to_json())
+        super::fnapi::parse_grammar_to_json(grammar, &self.cfg)
     }
 
     /// Parse a grammar and return the result as a JSON string.
     pub fn parse_grammar_to_json_string(&mut self, grammar: &str) -> Result<String> {
-        let tree = self.parse_grammar(grammar)?;
-        Ok(tree.to_json_string())
+        super::fnapi::parse_grammar_to_json_string(grammar, &self.cfg)
     }
 
     /// Parse grammar from a cursor source.
@@ -102,9 +98,7 @@ impl TieXiu {
     where
         U: Cursor + Clone,
     {
-        let boot = self.boot_grammar()?;
-        let mut ctx = new_ctx(cursor, &self.cfg);
-        boot.parse_tree(&mut ctx)
+        super::fnapi::parse_grammar_with(cursor, &self.cfg)
     }
 
     /// Parse grammar from cursor and return as JSON.
@@ -112,8 +106,7 @@ impl TieXiu {
     where
         U: Cursor + Clone,
     {
-        let tree = self.parse_grammar_with(cursor)?;
-        Ok(tree.to_json())
+        super::fnapi::parse_grammar_to_json_with(cursor, &self.cfg)
     }
 
     /// Compile a grammar string into a `Grammar`.
@@ -123,14 +116,12 @@ impl TieXiu {
 
     /// Compile grammar and return as JSON value.
     pub fn compile_to_json(&mut self, grammar: &str) -> Result<JsonValue> {
-        let grammar = self.compile(grammar)?;
-        Ok(grammar.to_json())
+        super::fnapi::compile_to_json(grammar, &self.cfg)
     }
 
     /// Compile grammar and return as JSON string.
     pub fn compile_to_json_string(&mut self, grammar: &str) -> Result<String> {
-        let grammar = self.compile(grammar)?;
-        grammar.to_json_string().map_err(Error::from)
+        super::fnapi::compile_to_json_string(grammar, &self.cfg)
     }
 
     /// Compile grammar from a cursor source.
@@ -138,7 +129,7 @@ impl TieXiu {
     where
         U: Cursor + Clone,
     {
-        self.compile(cursor.as_str())
+        super::fnapi::compile_with(cursor, &self.cfg)
     }
 
     /// Compile from cursor and return as JSON value.
@@ -146,102 +137,86 @@ impl TieXiu {
     where
         U: Cursor + Clone,
     {
-        let grammar = self.compile_with(cursor)?;
-        Ok(grammar.to_json())
+        super::fnapi::compile_to_json_with(cursor, &self.cfg)
     }
 
     /// Load a grammar from a JSON string.
     pub fn load(&mut self, json: &str) -> Result<Grammar> {
-        Ok(Grammar::from_json(json)?)
+        super::fnapi::load_grammar_from_json(json, &self.cfg)
     }
 
     /// Load grammar from JSON and re-serialize as JSON.
     pub fn load_to_json(&mut self, json: &str) -> Result<JsonValue> {
-        let grammar = self.load(json)?;
-        Ok(grammar.to_json())
+        super::fnapi::load_grammar_from_json_to_json(json, &self.cfg)
     }
 
     /// Load a parse tree from a JSON string.
     pub fn load_tree(&mut self, json: &str) -> Result<Tree> {
-        Tree::from_json_str(json).map_err(Error::from)
+        super::fnapi::load_tree_from_json(json, &self.cfg)
     }
 
     /// Load a tree from JSON and re-serialize as JSON.
     pub fn load_tree_to_json(&mut self, json: &str) -> Result<JsonValue> {
-        let tree = self.load_tree(json)?;
-        Ok(tree.to_json())
+        super::fnapi::load_tree_to_json(json, &self.cfg)
     }
 
     /// Pretty-print a grammar string.
     pub fn grammar_pretty(&mut self, grammar: &str) -> Result<String> {
-        let grammar = self.compile(grammar)?;
-        Ok(grammar.pretty_print())
+        super::fnapi::grammar_pretty(grammar, &self.cfg)
     }
 
     /// Parse input text against a grammar string.
     pub fn parse(&mut self, grammar: &str, text: &str) -> Result<Tree> {
-        let parser = self.compile(grammar)?;
-        let cursor = StrCursor::new(text);
-        let mut ctx = new_ctx(cursor, &self.cfg);
-        parser.parse_tree(&mut ctx)
+        super::fnapi::parse(grammar, text, &self.cfg)
     }
 
     /// Parse input text and return result as JSON value.
     pub fn parse_to_json(&mut self, grammar: &str, text: &str) -> Result<JsonValue> {
-        let tree = self.parse(grammar, text)?;
-        Ok(tree.to_json())
+        super::fnapi::parse_to_json(grammar, text, &self.cfg)
     }
 
     /// Parse input text and return result as JSON string.
     pub fn parse_to_json_string(&mut self, grammar: &str, text: &str) -> Result<String> {
-        let tree = self.parse(grammar, text)?;
-        Ok(tree.to_json_string())
+        super::fnapi::parse_to_json_string(grammar, text, &self.cfg)
     }
 
     /// Parse input text with a pre-compiled `Grammar`.
     pub fn parse_input(&mut self, parser: &Grammar, text: &str) -> Result<Tree> {
-        let cursor = StrCursor::new(text);
-        let mut ctx = new_ctx(cursor, &self.cfg);
-        parser.parse_tree(&mut ctx)
+        super::fnapi::parse_input(parser, text, &self.cfg)
     }
 
     /// Parse input with a pre-compiled grammar and return JSON value.
     pub fn parse_input_to_json(&mut self, parser: &Grammar, text: &str) -> Result<JsonValue> {
-        let tree = self.parse_input(parser, text)?;
-        Ok(tree.to_json())
+        super::fnapi::parse_input_to_json(parser, text, &self.cfg)
     }
 
     /// Parse input with a pre-compiled grammar and return JSON string.
     pub fn parse_input_to_json_string(&mut self, parser: &Grammar, text: &str) -> Result<String> {
-        let tree = self.parse_input(parser, text)?;
-        Ok(tree.to_json_string())
+        super::fnapi::parse_input_to_json_string(parser, text, &self.cfg)
     }
 
     /// Load the boot grammar.
     pub fn boot_grammar(&mut self) -> Result<Grammar> {
-        Ok(crate::peg::boot::boot_grammar()?)
+        super::fnapi::boot_grammar()
     }
 
     /// Alias for `boot_grammar`.
     pub fn load_boot(&mut self) -> Result<Grammar> {
-        self.boot_grammar()
+        super::fnapi::load_boot(&self.cfg)
     }
 
     /// Return the boot grammar as a JSON value.
     pub fn boot_grammar_to_json(&mut self) -> Result<JsonValue> {
-        let grammar = self.load_boot()?;
-        Ok(grammar.to_json())
+        super::fnapi::boot_grammar_to_json(&self.cfg)
     }
 
     /// Return the boot grammar as a JSON string.
     pub fn boot_grammar_to_json_string(&mut self) -> Result<String> {
-        let grammar = self.load_boot()?;
-        grammar.to_json_string().map_err(Error::from)
+        super::fnapi::boot_grammar_to_json_string(&self.cfg)
     }
 
     /// Pretty-print the boot grammar.
     pub fn boot_grammar_pretty(&mut self) -> Result<String> {
-        let boot = self.boot_grammar()?;
-        Ok(boot.pretty_print())
+        super::fnapi::boot_grammar_pretty(&self.cfg)
     }
 }

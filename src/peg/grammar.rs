@@ -279,7 +279,7 @@ mod tests {
     #[test]
     fn get_rule() {
         let exp = Exp::nil();
-        let rule = Rule::new("start", &[], exp.clone());
+        let rule = Rule::new("start", &[], exp);
         let grammar = Grammar::new("Test", &[rule.into()]);
         assert!(grammar.get_rule("start").is_ok());
     }

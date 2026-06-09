@@ -1,18 +1,16 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::cfg::keys::Configurable;
 use crate::cfg::{CfgA, CfgKey};
-use crate::context::{new_ctx, SemanticsRef};
+use crate::context::new_ctx;
 use crate::input::{Cursor, StrCursor};
 use crate::peg::grammar::PrettyPrint;
-use crate::peg::semantics::GrammarSemantics;
 use crate::peg::*;
 use crate::trees::Tree;
-use crate::{Error, Result};
-use std::sync::Arc;
+use crate::{Error, Result, config};
 
 use crate::api::ooapi::TieXiu;
+use crate::api::semantics::new_grammar_sematics_ref;
 
 /// Create a default `TieXiu` instance with empty config.
 pub fn pegapi() -> TieXiu {
@@ -37,14 +35,16 @@ pub fn parse_grammar_to_json_string(grammar: &str, cfg: &CfgA) -> Result<String>
 }
 
 /// Parse grammar from a generic cursor source.
-pub fn parse_grammar_with<U>(cursor: U, cfg: &CfgA) -> Result<Tree>
+pub fn parse_grammar_with<U>(cursor: U, cfga: &CfgA) -> Result<Tree>
 where
     U: Cursor + Clone,
 {
     let boot = boot_grammar()?;
-    let mut ctx = new_ctx(cursor, cfg);
-    let sem: SemanticsRef = Arc::new(GrammarSemantics);
-    ctx.configure(&[CfgKey::Semantics(sem)].as_slice().into());
+
+    let semkey = CfgKey::Semantics(new_grammar_sematics_ref());
+    let cfg = config(&[semkey]).merge(&config(cfga));
+
+    let mut ctx = new_ctx(cursor, &cfg);
     boot.parse_tree(&mut ctx)
 }
 
@@ -156,7 +156,7 @@ pub fn parse_input_to_json_string(parser: &Grammar, text: &str, cfg: &CfgA) -> R
 
 /// Load the boot grammar.
 pub fn boot_grammar() -> Result<Grammar> {
-    Ok(crate::peg::boot::boot_grammar()?)
+    Ok(boot::boot_grammar()?)
 }
 
 /// Alias for `boot_grammar`.

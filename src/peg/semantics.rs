@@ -5,15 +5,25 @@ use crate::context::Semantics;
 use crate::peg::error::ParseResult;
 use crate::trees::Tree::Bottom;
 use crate::trees::{Tree, TreeRef};
-use crate::types::Str;
+use crate::types::{Ref, Str};
 
 /// Default semantics for all Grammar parsing.
 ///
 /// Converts `Meta` nodes (produced by the boot grammar's `@name`/`@int`/etc.)
 /// into strongly-typed `NameMeta`/`IntMeta`/etc. variants, and unwraps legacy
 /// `"bool"` typename nodes that the old boot grammar produced directly.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct GrammarSemantics;
+
+pub fn new_grammar_sematics_ref() -> Ref<dyn Semantics> {
+    Ref::new(GrammarSemantics::new())
+}
+
+impl GrammarSemantics {
+    fn new() -> Self {
+        GrammarSemantics
+    }
+}
 
 impl Semantics for GrammarSemantics {
     fn apply(&self, node: TreeRef, _rule_name: &str, _params: &[Str]) -> ParseResult {
