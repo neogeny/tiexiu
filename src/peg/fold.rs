@@ -35,7 +35,12 @@ impl Exp {
             | ExpKind::Pattern(_)
             | ExpKind::Constant(_)
             | ExpKind::Alert(_, _)
-            | ExpKind::Call { .. } => vec![],
+            | ExpKind::Call { .. }
+            | ExpKind::NameMeta
+            | ExpKind::IntMeta
+            | ExpKind::UIntMeta
+            | ExpKind::FloatMeta
+            | ExpKind::BoolMeta => vec![],
 
             ExpKind::Named(_, e) => vec![e],
             ExpKind::NamedList(_, e) => vec![e],

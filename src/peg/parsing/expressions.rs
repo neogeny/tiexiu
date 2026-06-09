@@ -104,6 +104,42 @@ impl Exp {
                 }
             }
 
+            ExpKind::NameMeta => {
+                if let Some(name) = ctx.match_name() {
+                    Ok(Tree::Text(name).into())
+                } else {
+                    Err(ctx.failure(start, Fail))
+                }
+            }
+            ExpKind::IntMeta => {
+                if let Some(n) = ctx.match_int() {
+                    Ok(Tree::Text(n).into())
+                } else {
+                    Err(ctx.failure(start, Fail))
+                }
+            }
+            ExpKind::UIntMeta => {
+                if let Some(n) = ctx.match_uint() {
+                    Ok(Tree::Text(n).into())
+                } else {
+                    Err(ctx.failure(start, Fail))
+                }
+            }
+            ExpKind::FloatMeta => {
+                if let Some(f) = ctx.match_float() {
+                    Ok(Tree::Text(f).into())
+                } else {
+                    Err(ctx.failure(start, Fail))
+                }
+            }
+            ExpKind::BoolMeta => {
+                if let Some(b) = ctx.match_bool() {
+                    Ok(Tree::Text(b).into())
+                } else {
+                    Err(ctx.failure(start, Fail))
+                }
+            }
+
             ExpKind::Token(token) => {
                 if ctx.match_token(token) {
                     Ok(Tree::Text(token.clone()).into())

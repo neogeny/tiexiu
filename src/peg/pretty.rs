@@ -153,6 +153,12 @@ impl PrettyPrint for ExpKind {
             ExpKind::Eof => "$".into(),
             ExpKind::Eol => "$->".into(),
 
+            ExpKind::NameMeta => "@name".into(),
+            ExpKind::IntMeta => "@int".into(),
+            ExpKind::UIntMeta => "@uint".into(),
+            ExpKind::FloatMeta => "@float".into(),
+            ExpKind::BoolMeta => "@bool".into(),
+
             ExpKind::Call { name, .. } => name.to_string(),
 
             ExpKind::Token(token) => format!("\"{}\"", token),

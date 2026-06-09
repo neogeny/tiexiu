@@ -115,6 +115,16 @@ pub enum ExpKind {
     PositiveGather { exp: ERef, sep: ERef },
     /// Include rules from another grammar.
     RuleInclude { name: Str, exp: Option<ERef> },
+    /// Match a name/identifier (like `@name`).
+    NameMeta,
+    /// Match a signed integer (like `@int`).
+    IntMeta,
+    /// Match an unsigned integer (like `@uint`).
+    UIntMeta,
+    /// Match a floating-point literal (like `@float`).
+    FloatMeta,
+    /// Match a boolean literal (like `@bool`).
+    BoolMeta,
 }
 
 #[cfg(test)]

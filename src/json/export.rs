@@ -258,6 +258,21 @@ impl ExpKind {
             ExpKind::Cut => {
                 obj[&tag] = JsonValue::String("Cut".into());
             }
+            ExpKind::NameMeta => {
+                obj[&tag] = JsonValue::String("NameMeta".into());
+            }
+            ExpKind::IntMeta => {
+                obj[&tag] = JsonValue::String("IntMeta".into());
+            }
+            ExpKind::UIntMeta => {
+                obj[&tag] = JsonValue::String("UIntMeta".into());
+            }
+            ExpKind::FloatMeta => {
+                obj[&tag] = JsonValue::String("FloatMeta".into());
+            }
+            ExpKind::BoolMeta => {
+                obj[&tag] = JsonValue::String("BoolMeta".into());
+            }
         }
 
         obj

@@ -246,6 +246,11 @@ fn walk_exp(exp: &Exp) -> Rails {
         ExpKind::Dot => vec![make_rail(" ∀ ")],
         ExpKind::Eof => vec![make_rail(&format!("⇥{} ", SYM_ETX))],
         ExpKind::Eol => vec![make_rail(&format!("⇥{} ", SYM_EOL))],
+        ExpKind::NameMeta => vec![make_rail("@name")],
+        ExpKind::IntMeta => vec![make_rail("@int")],
+        ExpKind::UIntMeta => vec![make_rail("@uint")],
+        ExpKind::FloatMeta => vec![make_rail("@float")],
+        ExpKind::BoolMeta => vec![make_rail("@bool")],
 
         ExpKind::Token(t) => vec![make_rail(&format!("{:?}", t))],
         ExpKind::Pattern(p) => {

@@ -287,6 +287,21 @@ impl GrammarCompiler {
             "SkipGroup" => Exp::skip_group(self.parse_exp(tree)?),
             "SkipTo" => Exp::skip_to(self.parse_exp(tree)?),
             "Synth" => Exp::nil(),
+            "Meta" => {
+                let text = tree.value();
+                match text.as_ref() {
+                    "name" => Exp::name_meta(),
+                    "int" => Exp::int_meta(),
+                    "uint" => Exp::uint_meta(),
+                    "float" => Exp::float_meta(),
+                    "bool" => Exp::bool_meta(),
+                    _ => {
+                        return Err(CompileError::UnknownExpressionType(
+                            format!("Meta:{}", text).into(),
+                        ));
+                    }
+                }
+            }
             "Token" => Exp::token(&tree.value()),
             "Void" => Exp::void(),
             _ => return Err(CompileError::UnknownExpressionType(typename.into())),

@@ -66,4 +66,17 @@ pub trait Cursor: Debug + Configurable {
     }
 
     fn set_patterns(&mut self, patterns: &TokenizingPatterns);
+
+    // --- Meta expression matchers ---
+
+    /// Match a name/identifier (`@name`). Returns `None` on no match.
+    fn match_name(&mut self) -> Option<String>;
+    /// Match a signed integer (`@int`). Returns `None` on no match.
+    fn match_int(&mut self) -> Option<i64>;
+    /// Match an unsigned integer (`@uint`). Returns `None` on no match.
+    fn match_uint(&mut self) -> Option<u64>;
+    /// Match a floating-point literal (`@float`). Returns `None` on no match.
+    fn match_float(&mut self) -> Option<f64>;
+    /// Match a boolean literal (`@bool`). Returns `None` on no match.
+    fn match_bool(&mut self) -> Option<bool>;
 }

@@ -147,4 +147,70 @@ pub trait CtxSem: Ctx + Debug + Sized {
     fn set_keywords(&mut self, keywords: &[Str]) {
         let _ = keywords;
     }
+
+    // --- Meta expression matchers ---
+
+    fn match_name(&mut self) -> Option<Str> {
+        self.next_token();
+        let result = self.cursor_mut().match_name();
+        if let Some(ref name) = result {
+            self.tracer().trace_match(self, name, "@name");
+            Some(self.intern(name))
+        } else {
+            self.tracer().trace_no_match(self, "", "@name");
+            None
+        }
+    }
+
+    fn match_int(&mut self) -> Option<Str> {
+        self.next_token();
+        let result = self.cursor_mut().match_int();
+        if let Some(n) = result {
+            let s = self.intern(&n.to_string());
+            self.tracer().trace_match(self, &s, "@int");
+            Some(s)
+        } else {
+            self.tracer().trace_no_match(self, "", "@int");
+            None
+        }
+    }
+
+    fn match_uint(&mut self) -> Option<Str> {
+        self.next_token();
+        let result = self.cursor_mut().match_uint();
+        if let Some(n) = result {
+            let s = self.intern(&n.to_string());
+            self.tracer().trace_match(self, &s, "@uint");
+            Some(s)
+        } else {
+            self.tracer().trace_no_match(self, "", "@uint");
+            None
+        }
+    }
+
+    fn match_float(&mut self) -> Option<Str> {
+        self.next_token();
+        let result = self.cursor_mut().match_float();
+        if let Some(f) = result {
+            let s = self.intern(&f.to_string());
+            self.tracer().trace_match(self, &s, "@float");
+            Some(s)
+        } else {
+            self.tracer().trace_no_match(self, "", "@float");
+            None
+        }
+    }
+
+    fn match_bool(&mut self) -> Option<Str> {
+        self.next_token();
+        let result = self.cursor_mut().match_bool();
+        if let Some(b) = result {
+            let s = self.intern(&b.to_string());
+            self.tracer().trace_match(self, &s, "@bool");
+            Some(s)
+        } else {
+            self.tracer().trace_no_match(self, "", "@bool");
+            None
+        }
+    }
 }

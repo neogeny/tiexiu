@@ -250,4 +250,34 @@ impl Exp {
             sep: sep.into(),
         })
     }
+
+    /// Match a name/identifier (`@name`).
+    #[inline]
+    pub fn name_meta() -> Self {
+        Self::new(ExpKind::NameMeta)
+    }
+
+    /// Match a signed integer (`@int`).
+    #[inline]
+    pub fn int_meta() -> Self {
+        Self::new(ExpKind::IntMeta)
+    }
+
+    /// Match an unsigned integer (`@uint`).
+    #[inline]
+    pub fn uint_meta() -> Self {
+        Self::new(ExpKind::UIntMeta)
+    }
+
+    /// Match a floating-point literal (`@float`).
+    #[inline]
+    pub fn float_meta() -> Self {
+        Self::new(ExpKind::FloatMeta)
+    }
+
+    /// Match a boolean literal (`@bool`).
+    #[inline]
+    pub fn bool_meta() -> Self {
+        Self::new(ExpKind::BoolMeta)
+    }
 }

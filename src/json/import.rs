@@ -269,6 +269,11 @@ impl Exp {
             "EOF" => Ok(Exp::eof()),
             "EOL" => Ok(Exp::eol()),
             "EmptyClosure" => Ok(Exp::empty_closure()),
+            "NameMeta" => Ok(Exp::name_meta()),
+            "IntMeta" => Ok(Exp::int_meta()),
+            "UIntMeta" => Ok(Exp::uint_meta()),
+            "FloatMeta" => Ok(Exp::float_meta()),
+            "BoolMeta" => Ok(Exp::bool_meta()),
             _ => Err(path.error(&format!("Unsupported: {}", class))),
         }
     }

@@ -61,7 +61,12 @@ fn first_calls(grammar: &Grammar, exp: &Exp) -> Vec<usize> {
         | ExpKind::Token(_)
         | ExpKind::Pattern(_)
         | ExpKind::Constant(_)
-        | ExpKind::Alert(_, _) => Vec::new(),
+        | ExpKind::Alert(_, _)
+        | ExpKind::NameMeta
+        | ExpKind::IntMeta
+        | ExpKind::UIntMeta
+        | ExpKind::FloatMeta
+        | ExpKind::BoolMeta => Vec::new(),
     }
 }
 

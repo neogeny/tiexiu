@@ -43,7 +43,14 @@ impl ExpKind {
             | Self::Closure(_) => true,
 
             // Always consumes (or fails), never succeeds with zero width
-            Self::Fail | Self::Dot | Self::Token(_) => false,
+            Self::Fail
+            | Self::Dot
+            | Self::Token(_)
+            | Self::NameMeta
+            | Self::IntMeta
+            | Self::UIntMeta
+            | Self::FloatMeta
+            | Self::BoolMeta => false,
 
             Self::Pattern(pattern) => {
                 // true if it CAN match the empty string (is nullable)
@@ -102,7 +109,12 @@ impl ExpKind {
             | Self::Token(_)
             | Self::Pattern(_)
             | Self::Constant(_)
-            | Self::Alert(..) => vec![],
+            | Self::Alert(..)
+            | Self::NameMeta
+            | Self::IntMeta
+            | Self::UIntMeta
+            | Self::FloatMeta
+            | Self::BoolMeta => vec![],
 
             // NOTE: left recursion detection handles this by resolving by name
             Self::Call { .. } => vec![],
@@ -163,7 +175,12 @@ impl ExpKind {
             | Self::Token(_)
             | Self::Pattern(_)
             | Self::Constant(_)
-            | Self::Alert(..) => vec![],
+            | Self::Alert(..)
+            | Self::NameMeta
+            | Self::IntMeta
+            | Self::UIntMeta
+            | Self::FloatMeta
+            | Self::BoolMeta => vec![],
 
             // NOTE: left recursion detection handles this by resolving by name
             Self::Call { .. } => vec![],
