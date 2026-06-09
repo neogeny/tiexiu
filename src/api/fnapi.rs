@@ -9,7 +9,7 @@ use crate::peg::*;
 use crate::trees::Tree;
 use crate::{Error, Result, config};
 
-use crate::api::ebnf_semantics::new_grammar_sematics_ref;
+use crate::api::ebnf_semantics::new_ebnf_grammar_sematics;
 use crate::api::ooapi::TieXiu;
 
 /// Create a default `TieXiu` instance with empty config.
@@ -41,7 +41,7 @@ where
 {
     let boot = boot_grammar()?;
 
-    let semkey = CfgKey::Semantics(new_grammar_sematics_ref());
+    let semkey = CfgKey::Semantics(new_ebnf_grammar_sematics());
     let cfg = config(&[semkey]).merge(&config(cfga));
 
     let mut ctx = new_ctx(cursor, &cfg);
