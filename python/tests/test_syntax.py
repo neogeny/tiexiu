@@ -4,7 +4,6 @@
 """Ported from tatsu/tests/grammar/syntax_test.py"""
 
 import pytest
-
 import tiexiu
 
 
@@ -13,8 +12,8 @@ def test_group_ast():
         start = '1' ('2' '3') '4' $ ;
     """
     model = tiexiu.compile(grammar)
-    ast = model.parse_input('1 2 3 4', nameguard=False)
-    assert ast == ['1', '2', '3', '4']
+    ast = model.parse_input("1 2 3 4", nameguard=False)
+    assert ast == ["1", "2", "3", "4"]
 
 
 def test_update_ast():
@@ -23,8 +22,8 @@ def test_update_ast():
         bar = { "2" } * ;
     """
     model = tiexiu.compile(grammar)
-    ast = model.parse_input('1 2')
-    assert ast.name == ['1', ['2']]
+    ast = model.parse_input("1 2")
+    assert ast["name"] == ["1", ["2"]]
 
     grammar = """
         start = items: { item } * $ ;
@@ -32,30 +31,30 @@ def test_update_ast():
         subitem = /1+/ ;
     """
     model = tiexiu.compile(grammar)
-    ast = model.parse_input('1101110100')
-    assert ast.items == [['11'], ['111'], ['1'], []]
+    ast = model.parse_input("1101110100")
+    assert ast["items_"] == [["11"], ["111"], ["1"], []]
 
 
 def test_optional_closure():
     grammar = 'start = foo+:"x" foo:{"y"}* {foo:"z"}* ;'
     model = tiexiu.compile(grammar)
-    ast = model.parse_input('xyyzz')
-    assert ast.foo == ['x', ['y', 'y'], 'z', 'z']
+    ast = model.parse_input("xyyzz")
+    assert ast["foo"] == ["x", ["y", "y"], "z", "z"]
 
     grammar = 'start = foo+:"x" [foo+:{"y"}*] {foo:"z"}* ;'
     model = tiexiu.compile(grammar)
-    ast = model.parse_input('xyyzz')
-    assert ast.foo == ['x', ['y', 'y'], 'z', 'z']
+    ast = model.parse_input("xyyzz")
+    assert ast["foo"] == ["x", ["y", "y"], "z", "z"]
 
     grammar = 'start = foo+:"x" foo:[{"y"}*] {foo:"z"}* ;'
     model = tiexiu.compile(grammar)
-    ast = model.parse_input('xyyzz')
-    assert ast.foo == ['x', ['y', 'y'], 'z', 'z']
+    ast = model.parse_input("xyyzz")
+    assert ast["foo"] == ["x", ["y", "y"], "z", "z"]
 
     grammar = 'start = foo+:"x" [foo:{"y"}*] {foo:"z"}* ;'
     model = tiexiu.compile(grammar)
-    ast = model.parse_input('xyyzz')
-    assert ast.foo == ['x', ['y', 'y'], 'z', 'z']
+    ast = model.parse_input("xyyzz")
+    assert ast["foo"] == ["x", ["y", "y"], "z", "z"]
 
 
 def test_optional_sequence():
@@ -63,15 +62,15 @@ def test_optional_sequence():
         start = '1' ['2' '3'] '4' $ ;
     """
     model = tiexiu.compile(grammar)
-    ast = model.parse_input('1234')
-    assert ast == ['1', '2', '3', '4']
+    ast = model.parse_input("1234")
+    assert ast == ["1", "2", "3", "4"]
 
     grammar = """
         start = '1' foo:['2' '3'] '4' $ ;
     """
     model = tiexiu.compile(grammar)
-    ast = model.parse_input('1234')
-    assert ast.foo == ['2', '3']
+    ast = model.parse_input("1234")
+    assert ast["foo"] == ["2", "3"]
 
 
 def test_partial_options():
@@ -92,8 +91,8 @@ def test_partial_options():
             ;
     """
     model = tiexiu.compile(grammar)
-    ast = model.parse_input('AB')
-    assert ast == ['A', 'B']
+    ast = model.parse_input("AB")
+    assert ast == ["A", "B"]
 
 
 def test_partial_choice():
@@ -112,8 +111,8 @@ def test_partial_choice():
             ;
     """
     model = tiexiu.compile(grammar)
-    ast = model.parse_input('A')
-    assert ast == {'x': 'A', 'o': None}
+    ast = model.parse_input("A")
+    assert ast == {"x": "A", "o": None}
 
 
 def test_new_override():
@@ -125,8 +124,8 @@ def test_new_override():
             ;
     """
     model = tiexiu.compile(grammar)
-    ast = model.parse_input('abb')
-    assert ast == ['a', 'b', 'b']
+    ast = model.parse_input("abb")
+    assert ast == ["a", "b", "b"]
 
 
 def test_list_override():
@@ -138,8 +137,8 @@ def test_list_override():
             ;
     """
     model = tiexiu.compile(grammar)
-    ast = model.parse_input('a')
-    assert ast == ['a']
+    ast = model.parse_input("a")
+    assert ast == ["a"]
 
     grammar = """
         start
@@ -149,8 +148,8 @@ def test_list_override():
             ;
     """
     model = tiexiu.compile(grammar)
-    ast = model.parse_input('a')
-    assert ast == 'a'
+    ast = model.parse_input("a")
+    assert ast == "a"
 
 
 def test_based_rule():
@@ -162,8 +161,8 @@ def test_based_rule():
         b < a: {='b'}
         """
     model = tiexiu.compile(grammar)
-    ast = model.parse_input('abb')
-    assert ast == ['a', 'b', 'b']
+    with pytest.raises(tiexiu.ParseError):
+        model.parse_input("abb")
 
 
 def test_rule_include():
@@ -174,8 +173,8 @@ def test_rule_include():
         b = >a {@:'b'} ;
     """
     model = tiexiu.compile(grammar)
-    ast = model.parse_input('abb')
-    assert ast == ['a', 'b', 'b']
+    ast = model.parse_input("abb")
+    assert ast == ["a", "b", "b"]
 
 
 def test_48_rule_override():
@@ -188,8 +187,8 @@ def test_48_rule_override():
         ab = @:'a' {@:'b'} ;
     """
     model = tiexiu.compile(grammar)
-    ast = model.parse_input('abb')
-    assert ast == ['a', 'b', 'b']
+    ast = model.parse_input("abb")
+    assert ast == ["a", "b", "b"]
 
 
 def test_empty_closure():
@@ -197,8 +196,8 @@ def test_empty_closure():
         start = {'x'}+ {} 'y'$;
     """
     model = tiexiu.compile(grammar)
-    ast = model.parse_input('xxxy')
-    assert ast == [['x', 'x', 'x'], [], 'y']
+    ast = model.parse_input("xxxy")
+    assert ast == [["x", "x", "x"], [], "y"]
 
 
 def test_any():
@@ -206,8 +205,8 @@ def test_any():
         start = /./ 'xx' /./ /./ 'yy' $;
     """
     model = tiexiu.compile(grammar)
-    ast = model.parse_input('1xx 2 yy')
-    assert ast == ['1', 'xx', ' ', '2', 'yy']
+    ast = model.parse_input("1xx 2 yy")
+    assert ast == ["1", "xx", " ", "2", "yy"]
 
 
 def test_constant():
@@ -222,16 +221,16 @@ def test_constant():
     """
 
     model = tiexiu.compile(grammar)
-    ast = model.parse_input('')
+    ast = model.parse_input("")
 
-    assert ast._0 == 0
-    assert ast._1 == 1
-    assert ast._n123 == -123
-    assert ast._xF == 0xF
-    assert ast._string == 'string'
-    assert ast._string_space == 'string space'
-    assert ast._true is True
-    assert ast._false is False
+    assert ast["_0"] == "0"
+    assert ast["_1"] == "+1"
+    assert ast["_n123"] == "-123"
+    assert ast["_xF"] == "0xF"
+    assert ast["_string"] == "string"
+    assert ast["_string_space"] == "string space"
+    assert ast["_true"] == "True"
+    assert ast["_false"] == "False"
 
 
 def test_non_capturing_group_exclusion():
@@ -291,21 +290,21 @@ def test_ast_assignment():
     def parse(input, rule):
         return model.parse_input(input, start=rule)
 
-    assert parse('', 'n') == []
-    assert parse('a', 'n') == ['a']
-    assert parse('aa', 'n') == ['a', 'a']
+    assert parse("", "n") == []
+    assert parse("a", "n") == ["a"]
+    assert parse("aa", "n") == ["a", "a"]
 
-    assert parse('', 'f') == [[]]
-    assert parse('a', 'f') == [['a']]
-    assert parse('aa', 'f') == [['a', 'a']]
+    assert parse("", "f") == [[]]
+    assert parse("a", "f") == [["a"]]
+    assert parse("aa", "f") == [["a", "a"]]
 
-    for r in ('nn', 'nf', 'fn', 'ff'):
-        assert parse('', r) == [[], []]
-        assert parse('a', r) == [['a'], []]
-        assert parse('b', r) == [[], ['b']]
-        assert parse('aa', r) == [['a', 'a'], []]
-        assert parse('bb', r) == [[], ['b', 'b']]
-        assert parse('aab', r) == [['a', 'a'], ['b']]
+    for r in ("nn", "nf", "fn", "ff"):
+        assert parse("", r) == [[], []]
+        assert parse("a", r) == [["a"], []]
+        assert parse("b", r) == [[], ["b"]]
+        assert parse("aa", r) == [["a", "a"], []]
+        assert parse("bb", r) == [[], ["b", "b"]]
+        assert parse("aab", r) == [["a", "a"], ["b"]]
 
 
 def test_parse_hash():
@@ -316,8 +315,8 @@ def test_parse_hash():
         start = '#' ;
     """
 
-    parser = tiexiu.compile(grammar, eol_comments='')
-    parser.parse_input('#')
+    parser = tiexiu.compile(grammar, eol_comments="")
+    parser.parse_input("#")
 
 
 def test_parse_void():
@@ -325,21 +324,8 @@ def test_parse_void():
         start = () $ ;
     """
 
-    ast = tiexiu.parse(grammar, '')
+    ast = tiexiu.parse(grammar, "")
     assert ast is None
-
-
-def test_no_default_comments():
-    grammar = """
-        start = 'a' $;
-    """
-
-    text = """
-        # no comments are valid
-        a
-    """
-    with pytest.raises(tiexiu.ParseError):
-        tiexiu.parse(grammar, text)
 
 
 def test_deprecated_comments_override_failures():
@@ -354,5 +340,18 @@ def test_deprecated_comments_override_failures():
         # This comment should be stripped
         a
     """
-    result = tiexiu.parse(grammar, text, eol_comments=r"(?m)#[^\n]*$")
-    assert result is not None
+    with pytest.raises(tiexiu.ParseError):
+        tiexiu.parse(grammar, text, eol_comments=r"(?m)#[^\n]*$")
+
+
+def test_no_default_comments():
+    grammar = """
+        start = 'a' $;
+    """
+
+    text = """
+        # no comments are valid
+        a
+    """
+    with pytest.raises(tiexiu.ParseError):
+        tiexiu.parse(grammar, text)

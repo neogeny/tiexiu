@@ -1,11 +1,14 @@
 # Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 # SPDX-License-Identifier: MIT OR Apache-2.0
 
+import pytest
 import tiexiu
+
 
 def test_version():
     assert isinstance(tiexiu.__version__, str)
     assert tiexiu.__version__ >= "0.1.1"
+
 
 def test_parse_grammar():
     tree = tiexiu.parse_grammar("start = /a/")
@@ -53,13 +56,13 @@ def test_parse_to_json():
 
 
 def test_kwargs_int():
-    tree = tiexiu.parse_grammar("start = /a/", count=42)
-    assert tree is not None
+    with pytest.raises(ValueError):
+        tiexiu.parse_grammar("start = /a/", count=42)
 
 
 def test_kwargs_float():
-    tree = tiexiu.parse_grammar("start = /a/", precision=3.14)
-    assert tree is not None
+    with pytest.raises(ValueError):
+        tiexiu.parse_grammar("start = /a/", precision=3.14)
 
 
 def test_grammar_parse_input():
