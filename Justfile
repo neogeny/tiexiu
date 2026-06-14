@@ -60,20 +60,20 @@ run:
     {{shell}} --version
 
 
-pyo3: build
+py-build: build
     uv run maturin build --features pyo3
 
-pyo3-develop:
+py-develop:
     uv run maturin develop --features pyo3
 
-pytest: pyo3-develop
+py-test: py-develop
     uv run pytest -vv
 
-pyo3-release:
+py-release:
     uv run maturin build --release --features pyo3
 
-release: pyo3-release
+py-test-publish: py-release
     gh workflow run release.yml -f publish=false
 
-publish: pyo3-release
+py-publish: py-release
     gh workflow run release.yml -f publish=true
