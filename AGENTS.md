@@ -1,1 +1,1 @@
-/Users/apalala/aia/AGENTS.md
+../../aia/AGENTS.md
