@@ -7,7 +7,7 @@ use crate::cfg::*;
 use crate::peg::grammar::KeywordRef;
 use crate::peg::rule::{RuleMap, RuleRef};
 use crate::peg::{Exp, Grammar, Rule};
-use crate::trees::{Tree, TreeMap, TreeRef};
+use crate::trees::{Tree, TreeMapWrapper, TreeRef};
 use crate::types::Str;
 
 /// Compiles a parse tree (from the PEG grammar) into a compiled `Grammar`.
@@ -32,7 +32,7 @@ fn parse_node_check<'n>(node: &'n Tree, typename: &'static str) -> CompileResult
     Ok(tree)
 }
 
-fn _parse_map(node: &Tree) -> CompileResult<&TreeMap> {
+fn _parse_map(node: &Tree) -> CompileResult<&TreeMapWrapper> {
     let Tree::Map(map) = node else {
         return Err(CompileError::ExpectedMap(format!("{:?}", node)));
     };

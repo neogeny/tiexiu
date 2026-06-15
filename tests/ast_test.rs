@@ -3,8 +3,8 @@
 
 //! Tests for AST/Tree functionality
 
-use tiexiu::Result;
 use tiexiu::trees::Tree;
+use tiexiu::Result;
 
 #[test]
 fn test_ast_pickling() -> Result<()> {
@@ -17,9 +17,9 @@ fn test_ast_pickling() -> Result<()> {
 #[test]
 fn tree_basics() -> Result<()> {
     let test_ast = Tree::nil();
-    let _has_items = !matches!(test_ast, Tree::Nil);
+    let _has_items = !matches!(test_ast, Tree::Null);
     // Tree::Nil is the default empty tree
-    assert!(matches!(test_ast, Tree::Nil));
+    assert!(matches!(test_ast, Tree::Null));
     Ok(())
 }
 

@@ -1,12 +1,12 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::map::TreeMap;
 use super::tree::Tree;
+use crate::trees::cst::TreeMap;
 use crate::trees::KeyValue;
 
 /// The Nil tree constant.
-pub const NIL: Tree = Tree::Nil;
+pub const NIL: Tree = Tree::Null;
 /// The Bottom tree constant.
 pub const BOTTOM: Tree = Tree::Bottom;
 
@@ -27,11 +27,11 @@ pub fn l(items: &[Tree]) -> Tree {
 
 /// Shorthand for Tree::Map from key-value pairs.
 pub fn m(entries: &[(&str, Tree)]) -> Tree {
-    let mut map = TreeMap::new();
-    for (key, value) in entries {
-        map.insert(key, value.clone());
+    let mut map: TreeMap = TreeMap::default();
+    for (k, v) in entries.iter() {
+        map.insert((*k).into(), v.clone());
     }
-    Tree::Map(map.into())
+    Tree::Map(map)
 }
 
 /// Shorthand for Tree::Named.
@@ -71,7 +71,7 @@ pub fn bottom() -> Tree {
 
 /// Shorthand for Tree::Nil.
 pub fn nil() -> Tree {
-    Tree::Nil
+    Tree::Null
 }
 
 #[cfg(test)]

@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::map::TreeMap;
+use super::map::TreeMapWrapper;
 use super::tree::Tree;
 use crate::trees::{KeyValue, TreeRef};
 use crate::types::Str;
@@ -23,7 +23,7 @@ impl Tree {
     }
 
     /// Creates a Map tree node from a TreeMap.
-    pub fn map(entries: TreeMap) -> Tree {
+    pub fn map(entries: TreeMapWrapper) -> Tree {
         Self::Map(entries.into())
     }
 
@@ -61,7 +61,7 @@ impl Tree {
 
     /// Creates a Nil tree node (no input consumed).
     pub fn nil() -> Tree {
-        Self::Nil
+        Self::Null
     }
 }
 

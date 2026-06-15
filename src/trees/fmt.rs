@@ -1,23 +1,21 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::trees::{KeyValue, Tree, TreeMap, TreeRef};
+use super::cst::TreeMap;
+use crate::trees::{KeyValue, Tree, TreeRef};
 use std::fmt;
 use std::ops::Deref;
 
-impl fmt::Display for TreeMap {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let keys: Vec<&str> = self.iter().map(|(k, _)| k.deref()).collect();
+pub fn fmt_treemap(map: &mut TreeMap, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 
-        write!(f, "m(&[")?;
-        for (i, key) in keys.iter().enumerate() {
-            if i > 0 {
-                write!(f, ", ")?;
-            }
-            write!(f, "({:?}, {})", key, self.get(key).unwrap())?;
+    write!(f, "m(&[")?;
+    for (i, key) in map.keys().enumerate() {
+        if i > 0 {
+            write!(f, ", ")?;
         }
-        write!(f, "])")
+        write!(f, "({:?}, {})", key, map.get(key).unwrap())?;
     }
+    write!(f, "])")
 }
 
 impl fmt::Display for KeyValue {
@@ -43,7 +41,7 @@ impl fmt::Display for Tree {
             Self::Override(v) => write!(f, "o({})", v),
             Self::OverrideAsList(v) => write!(f, "ol({})", v),
             Self::Map(map) => write!(f, "m({})", map),
-            Self::Nil => write!(f, "NIL"),
+            Self::Null => write!(f, "NIL"),
             Self::Bottom => write!(f, "BOTTOM"),
             Self::Seq(items) => write!(f, "s(&[{}])", fmt_items(items)),
             Self::List(items) => write!(f, "c(&[{}])", fmt_items(items)),
@@ -65,13 +63,13 @@ mod tests {
         map.insert("key1".into(), Tree::Text("value1".into()));
         map.insert("key2".into(), Tree::Text("value2".into()));
         let entries: Vec<_> = map.into_iter().collect();
-        let map: TreeMap = entries.into();
+        let map: TreeMapWrapper = entries.into();
         assert_eq!(
             map.to_string(),
             "m(&[(\"key1\", t(\"value1\")), (\"key2\", t(\"value2\"))])"
         );
 
-        let empty_map = TreeMap::new();
+        let empty_map = TreeMapWrapper::new();
         assert_eq!(empty_map.to_string(), "m(&[])");
     }
 
@@ -111,13 +109,13 @@ mod tests {
         let mut map = IndexMap::new();
         map.insert("a".into(), Tree::Text("1".into()));
         let entries: Vec<_> = map.into_iter().collect();
-        let map: TreeMap = entries.into();
+        let map: TreeMapWrapper = entries.into();
         assert_eq!(
             Tree::Map(map.into()).to_string(),
             "m(m(&[(\"a\", t(\"1\"))]))"
         );
 
-        assert_eq!(Tree::Nil.to_string(), "NIL");
+        assert_eq!(Tree::Null.to_string(), "NIL");
 
         assert_eq!(Tree::Bottom.to_string(), "BOTTOM");
 

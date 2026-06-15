@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::trees::{KeyValue, Tree, TreeMap, TreeRef};
+use crate::trees::{KeyValue, Tree, TreeMapWrapper, TreeRef};
 use json::JsonValue;
 
 use crate::json::error::JsonError;
@@ -53,7 +53,7 @@ impl Tree {
     /// Converts this tree into a `JsonValue`.
     pub fn to_json(&self) -> JsonValue {
         match self {
-            Tree::Bottom | Tree::Nil => JsonValue::Null,
+            Tree::Bottom | Tree::Null => JsonValue::Null,
             Tree::Text(t) => JsonValue::String(t.to_string()),
             Tree::Seq(items) | Tree::List(items) => {
                 JsonValue::Array(items.iter().map(|t| t.to_json()).collect())
@@ -102,7 +102,7 @@ impl Tree {
     /// Converts a `JsonValue` back into a `Tree`.
     pub fn from_json(value: &JsonValue) -> Self {
         match value {
-            JsonValue::Null => Tree::Nil,
+            JsonValue::Null => Tree::Null,
             JsonValue::String(s) => Tree::Text(s.clone().into()),
             JsonValue::Short(s) => Tree::Text(s.to_string().into()),
             JsonValue::Array(arr) => {
@@ -120,7 +120,7 @@ impl Tree {
                         tree: tree.into(),
                     };
                 }
-                let mut m = TreeMap::new();
+                let mut m = TreeMapWrapper::new();
                 for (key, value) in obj.iter() {
                     let tree = Tree::from_json(value);
                     m.insert(key, tree);
@@ -140,7 +140,7 @@ mod tests {
     #[test]
     fn test_tree_json_roundtrip() {
         let cases: Vec<Tree> = vec![
-            Tree::Nil,
+            Tree::Null,
             Tree::Text("hello".into()),
             Tree::Seq(vec![Tree::Text("a".into()).into(), Tree::Text("b".into()).into()].into()),
         ];

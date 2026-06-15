@@ -64,7 +64,7 @@ impl Exp {
 
         match &exp.kind {
             ExpKind::EmptyClosure => Ok(Tree::from(Vec::<TreeRef>::new()).closed().into()),
-            ExpKind::Nil => Ok(Tree::Nil.into()),
+            ExpKind::Nil => Ok(Tree::Null.into()),
             ExpKind::RuleInclude { name, exp } => match exp {
                 None => Err(ctx.failure(start, RuleNotLinked(name.clone()))),
                 Some(exp) => exp.parse_at(ctx),
@@ -75,11 +75,11 @@ impl Exp {
             },
             ExpKind::Cut => {
                 ctx.cut();
-                Ok(Tree::Nil.into())
+                Ok(Tree::Null.into())
             }
             ExpKind::Void => {
                 ctx.match_void();
-                Ok(Tree::Nil.into())
+                Ok(Tree::Null.into())
             }
             ExpKind::Fail => Err(ctx.failure(start, Fail)),
             ExpKind::Dot => {
@@ -91,14 +91,14 @@ impl Exp {
             }
             ExpKind::Eol => {
                 if ctx.match_eol() {
-                    Ok(Tree::Nil.into())
+                    Ok(Tree::Null.into())
                 } else {
                     Err(ctx.failure(start, ExpectingEol))
                 }
             }
             ExpKind::Eof => {
                 if ctx.parse_eof() {
-                    Ok(Tree::Nil.into())
+                    Ok(Tree::Null.into())
                 } else {
                     Err(ctx.failure(start, ExpectingEof))
                 }
@@ -192,7 +192,7 @@ impl Exp {
             ExpKind::SkipGroup(exp) => {
                 let result = exp.parse_at(ctx);
                 match result {
-                    Ok(_) => Ok(Tree::Nil.into()),
+                    Ok(_) => Ok(Tree::Null.into()),
                     err => err,
                 }
             }
@@ -203,7 +203,7 @@ impl Exp {
                     Ok(_) => {
                         ctx.reset(branch);
                         ctx.leave_lookahead();
-                        Ok(Tree::Nil.into())
+                        Ok(Tree::Null.into())
                     }
                     Err(nope) => {
                         ctx.reset(branch);
@@ -224,7 +224,7 @@ impl Exp {
                     Err(_) => {
                         ctx.reset(branch);
                         ctx.leave_lookahead();
-                        Ok(Tree::Nil.into())
+                        Ok(Tree::Null.into())
                     }
                 }
             }
@@ -255,7 +255,7 @@ impl Exp {
                     }
                     match exp.parse_at(ctx) {
                         Ok(tree) => {
-                            if *tree == Tree::Nil {
+                            if *tree == Tree::Null {
                                 // note: minor optimization
                                 // note: the likes does not apply to closures
                                 continue;
@@ -269,7 +269,7 @@ impl Exp {
                     }
                 }
                 if results.is_empty() {
-                    Ok(Tree::Nil.into())
+                    Ok(Tree::Null.into())
                 } else if results.len() == 1 {
                     Ok(results[0].clone())
                 } else {

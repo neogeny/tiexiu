@@ -56,6 +56,6 @@ fn empty_input() -> Result<()> {
     // Test with optional matching empty
     let tree = parse_input(&grammar, "", &[])?;
     // Optional with no input should return Nil/None
-    assert!(tree.to_json().is_null() || matches!(tree, crate::trees::Tree::Nil));
+    assert!(tree.to_json().is_null() || matches!(tree, crate::trees::Tree::Null));
     Ok(())
 }
