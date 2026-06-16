@@ -7,7 +7,7 @@ use crate::trees::KeyValue;
 use crate::{Define, FastIndexMap, Str};
 
 /// A reference-counted slice of key-tree entries for TreeMap.
-pub type TreeMap = FastIndexMap<Str, Tree>;
+pub type TreeMap = FastIndexMap<Str, TreeRef>;
 pub type TreeMapRef = Ref<TreeMap>;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -163,22 +163,22 @@ impl Tree {
         let key: String = Self::safe_key(key);
 
         let new_item = if let Some(old_item) = map.get(key.as_str()) {
-            Self::append(old_item, item)
+            Self::append(old_item.as_ref(), item)
         } else {
             item.clone()
         };
-        map.insert(key, new_item);
+        map.insert(key, new_item.into());
     }
 
     pub fn insert_as_list(map: &mut TreeMap, key: &str, item: &Self) {
         let key: String = Self::safe_key(key);
 
         let new_item = if let Some(old_item) = map.get(key.as_str()) {
-            Self::append_as_list(old_item, item)
+            Self::append_as_list(old_item.as_ref(), item)
         } else {
             Self::Seq(vec![item.clone().into()])
         };
-        map.insert(key, new_item);
+        map.insert(key, new_item.into());
     }
 
     /// Ensures that the given definition keys exist in the map, inserting defaults if missing.

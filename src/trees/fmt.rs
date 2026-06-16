@@ -52,13 +52,13 @@ impl fmt::Display for Tree {
 
 #[cfg(test)]
 mod tests {
-    use crate::trees::{KeyValue, Tree, TreeMap};
+    use crate::trees::{KeyValue, Tree, TreeMap, TreeRef};
 
     #[test]
     fn test_treemap_display() {
         let mut map = TreeMap::default();
-        map.insert("key1".into(), Tree::Text("value1".into()));
-        map.insert("key2".into(), Tree::Text("value2".into()));
+        map.insert("key1".into(), TreeRef::from(Tree::Text("value1".into())));
+        map.insert("key2".into(), TreeRef::from(Tree::Text("value2".into())));
         assert_eq!(
             Tree::Map(map).to_string(),
             "m(&[(\"key1\", t(\"value1\")), (\"key2\", t(\"value2\"))])"
@@ -102,7 +102,7 @@ mod tests {
         );
 
         let mut map = TreeMap::default();
-        map.insert("a".into(), Tree::Text("1".into()));
+        map.insert("a".into(), TreeRef::from(Tree::Text("1".into())));
         assert_eq!(Tree::Map(map).to_string(), "m(&[(\"a\", t(\"1\"))])");
 
         assert_eq!(Tree::Null.to_string(), "NIL");

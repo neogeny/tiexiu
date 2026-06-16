@@ -6,6 +6,11 @@ use crate::trees::cst::*;
 use crate::types::Ref;
 use std::collections::LinkedList;
 
+/// The Null tree constant.
+pub const NULL: Tree = Tree::Null;
+/// The Bottom tree constant.
+pub const BOTTOM: Tree = Tree::Bottom;
+
 /// A reference-counted tree node.
 pub type TreeRef = Ref<Tree>;
 /// A linked list of tree references.
@@ -150,7 +155,7 @@ impl Tree {
     /// Looks up a key in the Map variant and returns the corresponding tree.
     pub fn get(&self, key: &str) -> Option<&Tree> {
         match self {
-            Tree::Map(map) => map.get(key),
+            Tree::Map(map) => map.get(key).map(|arc| arc.as_ref()),
             _ => None,
         }
     }

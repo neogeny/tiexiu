@@ -121,7 +121,7 @@ impl Tree {
                 let mut m = TreeMap::default();
                 for (key, value) in obj.iter() {
                     let tree = Tree::from_json(value);
-                    m.insert(key.into(), tree);
+                    m.insert(key.into(), tree.into());
                 }
                 Tree::Map(m)
             }

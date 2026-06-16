@@ -3,7 +3,7 @@
 
 use crate::cfg::MEMO_CACHE_CAPACITY;
 use crate::trees::TreeRef;
-use crate::trees::short::BOTTOM;
+use crate::trees::tree::BOTTOM;
 use crate::types::{FastIndexSet, Str};
 use ahash::RandomState;
 use quick_cache::unsync::Cache;

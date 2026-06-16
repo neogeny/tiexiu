@@ -5,11 +5,6 @@ use super::tree::Tree;
 use crate::trees::KeyValue;
 use crate::trees::cst::TreeMap;
 
-/// The Nil tree constant.
-pub const NIL: Tree = Tree::Null;
-/// The Bottom tree constant.
-pub const BOTTOM: Tree = Tree::Bottom;
-
 /// Shorthand for Tree::Text.
 pub fn t(value: &str) -> Tree {
     Tree::Text(value.into())
@@ -29,7 +24,7 @@ pub fn l(items: &[Tree]) -> Tree {
 pub fn m(entries: &[(&str, Tree)]) -> Tree {
     let mut map: TreeMap = TreeMap::default();
     for (k, v) in entries.iter() {
-        map.insert((*k).into(), v.clone());
+        map.insert((*k).into(), v.clone().into());
     }
     Tree::Map(map)
 }
@@ -77,6 +72,7 @@ pub fn nil() -> Tree {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::trees::tree::{BOTTOM, NULL};
 
     #[test]
     fn text_tree() {
@@ -98,7 +94,7 @@ mod tests {
 
     #[test]
     fn nil_tree() {
-        let t = NIL;
+        let t = NULL;
         assert_eq!(t.to_string(), "NIL");
     }
 
