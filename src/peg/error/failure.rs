@@ -37,11 +37,11 @@ pub enum ParseFailure {
     ExpectingEol,
 
     /// Corresponds to Self::Token
-    #[error("Expecting: '{0}'")]
+    #[error("expecting: '{0}'")]
     ExpectedToken(Str),
 
     /// Corresponds to Self::Pattern
-    #[error("Expecting: /{0}/")]
+    #[error("expecting: /{0}/")]
     ExpectedPattern(String),
 
     /// Corresponds to Self::NegativeLookahead
