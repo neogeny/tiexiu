@@ -14,7 +14,7 @@ fn test_parse() -> Result<()> {
     for rule in parser.rules() {
         match &rule.exp.kind {
             ExpKind::Pattern(p) => {
-                assert_eq!(p.as_ref(), "a");
+                assert_eq!(p, "a");
             }
             other => panic!("Unexpected: {:?}", other),
         }

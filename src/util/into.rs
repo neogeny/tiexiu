@@ -21,24 +21,13 @@ pub trait ToInternalStr {
 impl IntoStr for String {
     #[inline]
     fn into_str(self) -> Str {
-        self.into()
+        self
     }
 }
 
 impl IntoStr for &str {
     #[inline]
     fn into_str(self) -> Str {
-        self.into()
-    }
-}
-
-impl ToInternalStr for String {
-    #[inline]
-    fn to_internal(self) -> Str {
-        self.into()
-    }
-    #[inline]
-    fn to_ref(self) -> Str {
         self.into()
     }
 }
@@ -72,7 +61,7 @@ pub struct RuleName(pub Str);
 
 impl From<String> for RuleName {
     fn from(s: String) -> Self {
-        RuleName(s.into())
+        RuleName(s)
     }
 }
 

@@ -83,7 +83,7 @@ impl Grammar {
             .iter()
             .find(|k| matches!(k, CfgKey::Grammar(_)))
         {
-            self.name = name.clone().into();
+            self.name = name.clone();
         }
     }
 
@@ -99,7 +99,7 @@ impl Grammar {
     /// Returns true if the given name is a reserved keyword.
     pub fn is_keyword(&self, name: &str) -> bool {
         self.keywords
-            .binary_search_by(|k| k.as_ref().cmp(name))
+            .binary_search_by(|k| k.as_str().cmp(name))
             .is_ok()
     }
 
@@ -264,7 +264,7 @@ mod tests {
     #[test]
     fn new_grammar() {
         let grammar = Grammar::new("Test", &[]);
-        assert_eq!(grammar.name, "Test".into());
+        assert_eq!(grammar.name, "Test");
     }
 
     #[test]

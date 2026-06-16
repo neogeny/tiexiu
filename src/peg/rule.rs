@@ -114,9 +114,9 @@ impl Rule {
     ) -> Self {
         exp.cache_lookahead();
         Self {
-            name: name.into(),
-            params: params.into_iter().map(|p| p.into()).collect(),
-            decorators: decorators.into_iter().map(|d| d.into()).collect(),
+            name,
+            params: params.into_iter().collect(),
+            decorators: decorators.into_iter().collect(),
             flags: Self::make_flags(is_name, is_tokn, no_memo, no_stak, is_memo, is_lrec),
             exp,
         }
@@ -127,7 +127,7 @@ impl Rule {
         match self.exp.parse_at(ctx) {
             Err(nope) => Err(nope),
             Ok(tree) => {
-                let folded = Arc::unwrap_or_clone(tree).fold();
+                let folded = Tree::fold(Arc::unwrap_or_clone(tree));
                 match ctx.apply_semantics(folded.clone().into(), self.name.as_ref(), &self.params) {
                     Ok(tree) if *tree != Tree::Bottom => {
                         return Ok(tree);

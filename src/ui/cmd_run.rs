@@ -8,6 +8,7 @@ use tiexiu::Result;
 use tiexiu::api::parse_input;
 use tiexiu::cfg::Cfg;
 use tiexiu::cfg::CfgKey;
+use tiexiu::trees::Tree;
 
 use crate::ui::progress::ProgressUI;
 use tiexiu::util::strtools::linecount;
@@ -69,7 +70,7 @@ pub fn cmd_run(
                     let this_output = if model {
                         format!("{:#?}", tree).to_string()
                     } else if short {
-                        format!("{:#}", tree.fold()).to_string()
+                        format!("{:#}", Tree::fold(tree)).to_string()
                     } else {
                         tree.to_json_string_pretty()
                     };
@@ -173,7 +174,7 @@ pub fn cmd_run(
                             let this_output = if model {
                                 format!("{:#?}", tree).to_string()
                             } else if short {
-                                format!("{:#}", tree.fold()).to_string()
+                                format!("{:#}", Tree::fold(tree)).to_string()
                             } else {
                                 tree.to_json_string_pretty()
                             };

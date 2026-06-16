@@ -15,8 +15,7 @@ use crate::peg::rule::Rule;
 use json::JsonValue;
 
 impl Grammar {
-    /// Serializes the grammar to a `serde_json::Value` (requires `serde_json` feature).
-    #[cfg(feature = "serde_json")]
+    /// Serializes the grammar to a `serde_json::Value`.
     pub fn to_json_serde(&self) -> serde_json::Value {
         let json_str = self.to_json().dump();
         serde_json::from_str(&json_str).unwrap_or(serde_json::Value::Null)
@@ -142,33 +141,33 @@ impl ExpKind {
             }
             ExpKind::Call { name, .. } => {
                 obj[&tag] = JsonValue::String("Call".into());
-                obj["name"] = JsonValue::String(name.as_ref().to_string());
+                obj["name"] = JsonValue::String(name.to_string());
             }
             ExpKind::Token(s) => {
                 obj[&tag] = JsonValue::String("Token".into());
-                obj["token"] = JsonValue::String(s.as_ref().to_string());
+                obj["token"] = JsonValue::String(s.to_string());
             }
             ExpKind::Pattern(s) => {
                 obj[&tag] = JsonValue::String("Pattern".into());
-                obj["pattern"] = JsonValue::String(s.as_ref().to_string());
+                obj["pattern"] = JsonValue::String(s.to_string());
             }
             ExpKind::Constant(s) => {
                 obj[&tag] = JsonValue::String("Constant".into());
-                obj["literal"] = JsonValue::String(s.as_ref().to_string());
+                obj["literal"] = JsonValue::String(s.to_string());
             }
             ExpKind::Alert(s, level) => {
                 obj[&tag] = JsonValue::String("Alert".into());
-                obj["literal"] = JsonValue::String(s.as_ref().to_string());
+                obj["literal"] = JsonValue::String(s.to_string());
                 obj["level"] = JsonValue::Number((*level).into());
             }
             ExpKind::Named(name, inner) => {
                 obj[&tag] = JsonValue::String("Named".into());
-                obj["name"] = JsonValue::String(name.as_ref().to_string());
+                obj["name"] = JsonValue::String(name.to_string());
                 obj["exp"] = inner.to_json();
             }
             ExpKind::NamedList(name, inner) => {
                 obj[&tag] = JsonValue::String("NamedList".into());
-                obj["name"] = JsonValue::String(name.as_ref().to_string());
+                obj["name"] = JsonValue::String(name.to_string());
                 obj["exp"] = inner.to_json();
             }
             ExpKind::Override(inner) => {
@@ -247,7 +246,7 @@ impl ExpKind {
             }
             ExpKind::RuleInclude { name, exp: _ } => {
                 obj[&tag] = JsonValue::String("RuleInclude".into());
-                obj["name"] = JsonValue::String(name.as_ref().to_string());
+                obj["name"] = JsonValue::String(name.to_string());
             }
             ExpKind::Eof => {
                 obj[&tag] = JsonValue::String("EOF".into());

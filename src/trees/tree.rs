@@ -1,10 +1,9 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::cfg::types::{Define, Str};
+use crate::cfg::types::Str;
 use crate::trees::cst::*;
 use crate::types::Ref;
-use indexmap::*;
 use std::collections::LinkedList;
 
 /// A reference-counted tree node.
@@ -21,16 +20,20 @@ pub struct KeyValue(pub Str, pub TreeRef);
 pub enum Tree {
     /// A text/leaf node from tokens or patterns.
     Text(Str),
-    /// A sequence of values (mergeable).
-    Seq(Ref<[TreeRef]>),
     /// A non-mergeable list of values.
-    List(Ref<[TreeRef]>),
+    List(Vec<TreeRef>),
     /// A mapping of named elements.
     Map(TreeMap),
     /// The result of parsing a rule call.
     Node { typename: Str, tree: TreeRef },
     /// Parsing that didn't consume any input (internal).
     Null,
+
+    // NOTE these variants don't survive fold()
+    /// A sequence of values (mergeable).
+    Seq(Vec<TreeRef>),
+    /// Failure marker used in memoization (internal).
+    Bottom,
     /// A named element for tree merging (internal).
     Named(KeyValue),
     /// A named element forced into a list (internal).
@@ -39,8 +42,6 @@ pub enum Tree {
     Override(TreeRef),
     /// Override value forced into a list (internal).
     OverrideAsList(TreeRef),
-    /// Failure marker used in memoization (internal).
-    Bottom,
 }
 
 /// Creates a KeyValue pair from a name and a tree.
@@ -55,7 +56,7 @@ impl From<Vec<Tree>> for Tree {
             .filter(|item| *item != Tree::Null)
             .map(|t| t.into())
             .collect();
-        Tree::Seq(clean.into())
+        Tree::Seq(clean)
     }
 }
 
@@ -66,13 +67,13 @@ impl<const N: usize> From<[Tree; N]> for Tree {
             .filter(|item| *item != Tree::Null)
             .map(|t| t.into())
             .collect();
-        Tree::Seq(clean.into())
+        Tree::Seq(clean)
     }
 }
 
 impl From<Vec<TreeRef>> for Tree {
     fn from(v: Vec<TreeRef>) -> Self {
-        Tree::Seq(v.into())
+        Tree::Seq(v)
     }
 }
 
@@ -84,154 +85,23 @@ impl From<&[Tree]> for Tree {
             .cloned()
             .map(|t| t.into())
             .collect();
-        Tree::Seq(clean.into())
+        Tree::Seq(clean)
     }
 }
 
 impl From<&[TreeRef]> for Tree {
     fn from(slice: &[TreeRef]) -> Self {
-        Tree::Seq(slice.into())
+        Tree::Seq(slice.to_vec())
     }
 }
 
 impl From<TreeList> for Tree {
     fn from(list: TreeList) -> Self {
-        Tree::List(
-            list.into_iter()
-                .collect::<Vec<_>>()
-                .into_boxed_slice()
-                .into(),
-        )
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-struct TreeGather {
-    pub root: Tree,
-    pub map: TreeMap,
-}
-
-impl TreeGather {
-    /// Creates a new empty `TreeMerge`.
-    pub fn new() -> Self {
-        Self {
-            root: Tree::Null,
-            map: TreeMap::default(),
-        }
+        Tree::List(list.into_iter().collect())
     }
 }
 
 impl Tree {
-    /// Folds the tree by resolving Named/Override/Nil into merged Map/Seq form.
-    pub fn fold(self) -> Tree {
-        let mut gather = TreeGather::new();
-        let tree = self.clean_and_fold(&mut gather);
-
-        if gather.root != Tree::Null {
-            gather.root.closed()
-        } else if !gather.map.is_empty() {
-            Tree::Map(gather.map.into())
-        } else {
-            tree.closed()
-        }
-    }
-
-    pub(crate) fn define(&mut self, keys: &[Define]) {
-        if let Tree::Map(map) = self {
-            define(map, keys)
-        }
-    }
-
-    pub(crate) fn closed(self) -> Self {
-        match self {
-            Tree::Seq(items) => Tree::List(items),
-            _ => self,
-        }
-    }
-
-    pub(crate) fn append(self, node: &Self) -> Self {
-        append(&self, node)
-    }
-
-    pub(crate) fn append_as_list(self, node: Self) -> Self {
-        match (self, node) {
-            (Self::Null, n) => Self::Seq(vec![n.into()].into()),
-            (Self::Seq(list), Self::Null) => Self::Seq(list),
-            (Self::Seq(list), n) => {
-                let mut v: Vec<TreeRef> = list.to_vec();
-                v.push(n.into());
-                Self::Seq(v.into())
-            }
-            (s, n) => Self::Seq(vec![s.into(), n.into()].into()),
-        }
-    }
-
-    pub(crate) fn merge(self, node: Self) -> Self {
-        match (self, node) {
-            (Self::Null, n) => n,
-            (s, Self::Null) => s,
-            (Self::Seq(l1), Self::Seq(l2)) => {
-                let mut v: Vec<TreeRef> = l1.to_vec();
-                v.extend(l2.iter().cloned());
-                Self::Seq(v.into())
-            }
-            (s, Self::Seq(l2)) => {
-                let mut v: Vec<TreeRef> = vec![s.into()];
-                v.extend(l2.iter().cloned());
-                Self::Seq(v.into())
-            }
-            (Self::Seq(l1), n) => {
-                let mut v: Vec<TreeRef> = l1.to_vec();
-                v.push(n.into());
-                Self::Seq(v.into())
-            }
-            (s, n) => Self::Seq(vec![s.into(), n.into()].into()),
-        }
-    }
-
-    fn clean_and_fold(&self, gather: &mut TreeGather) -> Tree {
-        match self {
-            Tree::Seq(elements) => {
-                let mut out = Tree::Null;
-                for elem in elements.iter() {
-                    out = out.clone().merge(elem.as_ref().clean_and_fold(gather));
-                }
-                out
-            }
-            Tree::List(elements) => {
-                let clean: Vec<TreeRef> = elements
-                    .iter()
-                    .map(|s| s.as_ref().clean_and_fold(gather).into())
-                    .collect();
-                Tree::List(clean.into())
-            }
-            Tree::Named(keyval) => {
-                let KeyValue(name, val) = keyval;
-                let clean = val.as_ref().clone().clean_and_fold(gather);
-                insert(&mut gather.map,name, &clean);
-                clean
-            }
-            Tree::NamedAsList(keyval) => {
-                let KeyValue(name, val) = keyval;
-                let clean = val.as_ref().clone().clean_and_fold(gather);
-                insert_as_list(&mut gather.map, name, &clean);
-                clean
-            }
-            Tree::Override(val) => {
-                let clean = val.as_ref().clone().clean_and_fold(gather);
-                gather.root = append(&gather.root, &clean);
-                clean
-            }
-            Tree::OverrideAsList(val) => {
-                let clean = val.as_ref().clone().clean_and_fold(gather);
-                gather.root = append_as_list(&gather.root, &clean);
-                clean
-            }
-            Tree::Null => Tree::Null,
-            _ => self.clone(),
-        }
-    }
-
     /// Returns the total character width of text nodes in this tree.
     pub fn width(&self) -> usize {
         match self {
@@ -252,20 +122,20 @@ impl Tree {
     pub fn value(&self) -> Str {
         match self {
             Tree::Text(text) => text.clone(),
-            _ => format!("{:#?}", self).into(),
+            _ => format!("{:#?}", self),
         }
     }
 
-    /// Returns the child elements if this is a Seq or List, or an empty slice.
-    pub fn list_value(&self) -> Ref<[TreeRef]> {
+    /// Returns the child elements if this is a Seq or List, or an empty vec.
+    pub fn list_value(&self) -> Vec<TreeRef> {
         match self {
             Tree::Seq(items) | Tree::List(items) => items.clone(),
-            _ => [].into(),
+            _ => vec![],
         }
     }
 
-    /// Returns the child elements as text values, or an empty slice.
-    pub fn str_list_value(&self) -> Ref<[Str]> {
+    /// Returns the child elements as text values, or an empty vec.
+    pub fn str_list_value(&self) -> Vec<Str> {
         self.list_value().iter().map(|t| t.value()).collect()
     }
 
@@ -292,15 +162,13 @@ impl Tree {
             .unwrap_or_else(|| "".into())
     }
 
-    /// Looks up a key and returns its list children, or an empty slice.
-    pub fn get_list(&self, key: &str) -> Ref<[TreeRef]> {
-        self.get(key)
-            .map(|n| n.list_value().clone())
-            .unwrap_or_else(|| [].into())
+    /// Looks up a key and returns its list children, or an empty vec.
+    pub fn get_list(&self, key: &str) -> Vec<TreeRef> {
+        self.get(key).map(|n| n.list_value()).unwrap_or_default()
     }
 
     /// Looks up a key and returns its children as text values.
-    pub fn get_str_list(&self, key: &str) -> Ref<[Str]> {
+    pub fn get_str_list(&self, key: &str) -> Vec<Str> {
         self.get_list(key).iter().map(|t| t.value()).collect()
     }
 }
@@ -309,7 +177,7 @@ impl Tree {
 mod tests {
     use super::*;
 
-    const TARGET: usize = 32;
+    const TARGET: usize = 96;
 
     #[test]
     fn test_tree_size() {
@@ -325,15 +193,15 @@ mod tests {
     #[test]
     fn test_node_nil_removal() {
         let raw = Tree::from(vec![Tree::Null, Tree::Bottom, Tree::Null]);
-        let result = raw.fold();
+        let result = Tree::fold(raw);
 
-        assert_eq!(result, Tree::Bottom.fold());
+        assert_eq!(result, Tree::fold(Tree::Bottom));
     }
 
     #[test]
     fn test_node_nil_removal_to_bottom() {
         let raw = Tree::from(vec![Tree::Null, Tree::Bottom, Tree::Null]);
-        let result = raw.fold();
+        let result = Tree::fold(raw);
 
         assert_eq!(result, Tree::Bottom);
     }
@@ -341,7 +209,7 @@ mod tests {
     #[test]
     fn test_node_nil_removal_to_list() {
         let raw = Tree::from(vec![Tree::Bottom, Tree::Null, Tree::Bottom]);
-        let result = raw.fold();
+        let result = Tree::fold(raw);
 
         if let Tree::List(v) = result {
             assert_eq!(v.len(), 2);
@@ -355,7 +223,7 @@ mod tests {
     #[test]
     fn test_node_nil_purging_preserves_count() {
         let raw = Tree::from(vec![Tree::Null, Tree::Bottom, Tree::Null]);
-        let result = raw.fold();
+        let result = Tree::fold(raw);
 
         assert_eq!(result, Tree::Bottom);
     }
@@ -374,7 +242,7 @@ mod tests {
             .into(),
         );
 
-        let result = tree.fold();
+        let result = Tree::fold(tree);
 
         assert!(matches!(result, Tree::Map(_)));
         if let Tree::Map(m) = result {

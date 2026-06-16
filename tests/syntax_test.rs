@@ -47,7 +47,7 @@ fn test_update_ast() -> Result<()> {
                 for (i, e) in exps.iter().enumerate() {
                     match (i, &e.kind) {
                         (0, ExpKind::Token(tok)) => {
-                            assert_eq!(tok.as_ref(), "test");
+                            assert_eq!(tok, "test");
                         }
                         (1, ExpKind::Eof) => {
                             // EOF expression - just verify it exists

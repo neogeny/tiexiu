@@ -7,7 +7,7 @@ use crate::cfg::*;
 use crate::peg::grammar::KeywordRef;
 use crate::peg::rule::{RuleMap, RuleRef};
 use crate::peg::{Exp, Grammar, Rule};
-use crate::trees::{Tree, TreeMapWrapper, TreeRef};
+use crate::trees::{Tree, TreeMap, TreeRef};
 use crate::types::Str;
 
 /// Compiles a parse tree (from the PEG grammar) into a compiled `Grammar`.
@@ -32,7 +32,7 @@ fn parse_node_check<'n>(node: &'n Tree, typename: &'static str) -> CompileResult
     Ok(tree)
 }
 
-fn _parse_map(node: &Tree) -> CompileResult<&TreeMapWrapper> {
+fn _parse_map(node: &Tree) -> CompileResult<&TreeMap> {
     let Tree::Map(map) = node else {
         return Err(CompileError::ExpectedMap(format!("{:?}", node)));
     };
@@ -41,7 +41,7 @@ fn _parse_map(node: &Tree) -> CompileResult<&TreeMapWrapper> {
 
 fn _parse_list(node: &Tree) -> CompileResult<&[TreeRef]> {
     match node {
-        Tree::Seq(list) | Tree::List(list) => Ok(list),
+        Tree::Seq(list) | Tree::List(list) => Ok(list.as_slice()),
         _ => Err(CompileError::ExpectedList(format!("{:?}", node))),
     }
 }
@@ -116,9 +116,7 @@ impl GrammarCompiler {
                     for kw in inner_list.iter() {
                         let value: Str = match kw.as_ref() {
                             Tree::Text(t) => t.clone(),
-                            Tree::Node { typename, tree } if typename.as_ref() == "Word" => {
-                                tree.value()
-                            }
+                            Tree::Node { typename, tree } if typename == "Word" => tree.value(),
                             _ => continue,
                         };
                         keywords.push(value);
@@ -293,7 +291,7 @@ impl GrammarCompiler {
 
             "Token" => Exp::token(&tree.value()),
             "Void" => Exp::void(),
-            _ => return Err(CompileError::UnknownExpressionType(typename.into())),
+            _ => return Err(CompileError::UnknownExpressionType(typename)),
         };
         Ok(exp)
     }

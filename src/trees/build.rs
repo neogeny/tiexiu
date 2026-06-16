@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::map::TreeMapWrapper;
+use super::cst::TreeMap;
 use super::tree::Tree;
-use crate::trees::{KeyValue, TreeRef};
+use crate::trees::TreeRef;
 use crate::types::Str;
 
 impl Tree {
@@ -14,44 +14,17 @@ impl Tree {
 
     /// Creates a Seq tree node.
     pub fn seq(items: &[TreeRef]) -> Tree {
-        Self::Seq(items.into())
+        Self::Seq(items.to_vec())
     }
 
     /// Creates a List tree node (non-mergeable).
     pub fn list(items: &[TreeRef]) -> Tree {
-        Self::List(items.into())
+        Self::List(items.to_vec())
     }
 
     /// Creates a Map tree node from a TreeMap.
-    pub fn map(entries: TreeMapWrapper) -> Tree {
-        Self::Map(entries.into())
-    }
-
-    /// Creates a Named tree node for key-value merging.
-    pub fn named(key: Str, value: TreeRef) -> Tree {
-        let keyval = KeyValue(key, value);
-        Self::Named(keyval)
-    }
-
-    /// Creates a NamedAsList tree node forcing list merging.
-    pub fn named_as_list(key: Str, value: TreeRef) -> Tree {
-        let keyval = KeyValue(key, value);
-        Self::NamedAsList(keyval)
-    }
-
-    /// Creates an Override tree node for root merging.
-    pub fn override_with(tree: TreeRef) -> Tree {
-        Self::Override(tree)
-    }
-
-    /// Creates an OverrideAsList tree node for list root merging.
-    pub fn override_as_list(tree: TreeRef) -> Tree {
-        Self::OverrideAsList(tree)
-    }
-
-    /// Creates a Node tree node from a rule call result.
-    pub fn node(typename: Str, tree: TreeRef) -> Tree {
-        Self::Node { typename, tree }
+    pub fn map(entries: TreeMap) -> Tree {
+        Self::Map(entries)
     }
 
     /// Creates a Bottom tree node (memoization failure marker).

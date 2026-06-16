@@ -5,11 +5,11 @@
 //! Moved from `Ctx` trait to decouple parsing logic from context management.
 
 use crate::context::CtxSem;
+use crate::peg::Exp;
 use crate::peg::error::{Nope, ParseFailure, ParseResult};
 use crate::peg::rule::Rule;
-use crate::peg::Exp;
-use crate::trees::tree::Tree;
 use crate::trees::TreeRef;
+use crate::trees::tree::Tree;
 
 impl Exp {
     /// Core entry point for calling a rule.

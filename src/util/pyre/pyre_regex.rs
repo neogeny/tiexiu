@@ -24,7 +24,7 @@ pub struct Match<'a> {
 }
 
 pub fn escape(pattern: &str) -> Str {
-    regex::escape(pattern).into()
+    regex::escape(pattern)
 }
 
 pub fn compile(pattern: &str) -> Result<Pattern> {

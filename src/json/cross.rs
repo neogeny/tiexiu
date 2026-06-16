@@ -1,8 +1,6 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-#![cfg(feature = "serde_json")]
-
 //! Conversions between serde_json::Value and json::JsonValue
 use json::JsonValue;
 use serde_json::Value as SerdeValue;
@@ -73,7 +71,6 @@ pub fn json_to_serde(v: JsonValue) -> SerdeValue {
     }
 }
 
-#[cfg(feature = "serde_json")]
 #[cfg(test)]
 mod tests {
     use super::*;

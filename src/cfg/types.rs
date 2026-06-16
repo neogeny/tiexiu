@@ -7,7 +7,7 @@ use std::sync::Arc;
 /// Reference-counted pointer.
 pub type Ref<T> = Arc<T>;
 /// Reference-counted string slice.
-pub type Str = Ref<str>;
+pub type Str = String;
 /// A definition pair (name, is_flag).
 pub type Define = (Str, bool);
 

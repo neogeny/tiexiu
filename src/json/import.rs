@@ -59,7 +59,7 @@ impl Grammar {
         let keywords: Vec<Str> = if let Ok(obj) = path.get_obj() {
             if let Some(keywords_val) = obj.get("keywords") {
                 if let JsonValue::Array(arr) = keywords_val {
-                    arr.iter().map(|v| v.to_string().into()).collect()
+                    arr.iter().map(|v| v.to_string()).collect()
                 } else {
                     vec![]
                 }
@@ -452,7 +452,7 @@ mod tests {
         let json_str = std::fs::read_to_string("grammar/tatsu.json").expect("tatsu.json missing");
         let value = json::parse(&json_str).expect("Failed to parse JSON");
         let grammar = Grammar::from_json_value(&value).expect("Failed to convert");
-        assert_eq!(grammar.name, "TatSu".into());
+        assert_eq!(grammar.name, "TatSu");
         let rule_count = grammar.rules().count();
         assert!(rule_count > 0, "Expected rules, got {}", rule_count);
     }
@@ -462,7 +462,7 @@ mod tests {
         let json_str = std::fs::read_to_string("grammar/calc.json").expect("calc.json missing");
         let value = json::parse(&json_str).expect("Failed to parse JSON");
         let grammar = Grammar::from_json_value(&value).expect("Failed to convert");
-        assert_eq!(grammar.name, "CALC".into());
+        assert_eq!(grammar.name, "CALC");
         assert_eq!(grammar.rules().count(), 9);
         assert!(grammar.analyzed);
     }
@@ -478,7 +478,7 @@ mod tests {
         let json_str = std::fs::read_to_string("grammar/java.json").expect("java.json missing");
         let value = json::parse(&json_str).expect("Failed to parse JSON");
         let grammar = Grammar::from_json_value(&value).expect("Failed to convert");
-        assert_eq!(grammar.name, "Java".into());
+        assert_eq!(grammar.name, "Java");
 
         let rule_count = grammar.rules().count();
         assert!(

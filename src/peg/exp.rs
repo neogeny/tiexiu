@@ -132,7 +132,7 @@ mod tests {
     use crate::exp::*;
     use std::mem::size_of;
 
-    const TARGET: usize = 64;
+    const TARGET: usize = 80;
 
     #[test]
     fn test_exp_size() {

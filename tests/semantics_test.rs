@@ -27,7 +27,7 @@ struct MetaToNameMeta;
 impl Semantics for MetaToNameMeta {
     fn apply(&self, node: TreeRef, _rule_name: &str, _params: &[Str]) -> ParseResult {
         if let Tree::Node { typename, tree } = node.as_ref()
-            && typename.as_ref() == "Meta"
+            && typename == "Meta"
         {
             let text = tree.value();
             let new_typename: Str = match text.as_ref() {

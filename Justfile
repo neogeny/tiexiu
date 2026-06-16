@@ -7,6 +7,10 @@ set shell := ["xonsh", "-c"]
 
 default: check
 
+tools:
+    cargo install --locked cargo-nextest
+    rustup component add clippy-preview
+
 check: fix clippy fmt test
 
 push: pre-push

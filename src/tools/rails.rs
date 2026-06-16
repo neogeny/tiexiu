@@ -19,10 +19,7 @@ pub fn tracks(grammar: &Grammar) -> Rails {
 /// Generates railroad diagram text for a grammar.
 pub fn text(grammar: &Grammar) -> String {
     let tracks = walk_grammar(grammar);
-    let tracks: Vec<String> = tracks
-        .iter()
-        .map(|s| s.as_ref().trim_end().to_string())
-        .collect();
+    let tracks: Vec<String> = tracks.iter().map(|s| s.trim_end().to_string()).collect();
     tracks.join("\n")
 }
 
@@ -30,7 +27,7 @@ pub fn text(grammar: &Grammar) -> String {
 pub fn draw(grammar: &Grammar) {
     let tracks = walk_grammar(grammar);
     for line in tracks {
-        println!("{}", line.as_ref().trim_end());
+        println!("{}", line.trim_end());
     }
 }
 
@@ -49,10 +46,7 @@ impl ToRailroad for Grammar {
 impl ToRailroad for Rule {
     fn railroads(&self) -> String {
         let track = walk_rule(self);
-        let s: String = track
-            .iter()
-            .map(|t| t.as_ref().trim_end().to_string())
-            .collect();
+        let s: String = track.iter().map(|t| t.trim_end().to_string()).collect();
         s
     }
 }
@@ -60,10 +54,7 @@ impl ToRailroad for Rule {
 impl ToRailroad for Exp {
     fn railroads(&self) -> String {
         let track = walk_exp(self);
-        let s: String = track
-            .iter()
-            .map(|t| t.as_ref().trim_end().to_string())
-            .collect();
+        let s: String = track.iter().map(|t| t.trim_end().to_string()).collect();
         s
     }
 }
@@ -101,7 +92,7 @@ fn weld(a: &[Str], b: &[Str]) -> Rails {
     if b.is_empty() {
         return a.into();
     }
-    if a.iter().any(|s| s.as_ref().contains(SYM_ETX)) {
+    if a.iter().any(|s| s.contains(SYM_ETX)) {
         return a.into();
     }
 
@@ -113,11 +104,11 @@ fn weld(a: &[Str], b: &[Str]) -> Rails {
     let mut out: Vec<Str> = a.to_vec();
     for i in 0..height {
         if i < common {
-            out[i] = format!("{}{}", out[i].as_ref(), b[i].as_ref()).into();
+            out[i] = format!("{}{}", out[i], b[i]);
         } else if i < a.len() {
-            out[i] = format!("{}{:len_b$}", out[i].as_ref(), "").into();
+            out[i] = format!("{}{:len_b$}", out[i], "");
         } else {
-            out.push(format!("{:len_a$}{}", "", b[i].as_ref()).into());
+            out.push(format!("{:len_a$}{}", "", b[i]));
         }
     }
 
@@ -150,31 +141,31 @@ fn lay_out(tracks: &[Rails]) -> Rails {
         let joint = &track[0];
 
         if !is_last {
-            let first_line = if !joint.as_ref().contains(SYM_ETX) {
-                format!("  ├─{}─┤ ", railpad(joint.as_ref(), maxl))
+            let first_line = if !joint.contains(SYM_ETX) {
+                format!("  ├─{}─┤ ", railpad(joint, maxl))
             } else {
-                format!("  ├─{} │ ", blankpad(joint.as_ref(), maxl))
+                format!("  ├─{} │ ", blankpad(joint, maxl))
             };
-            out.push(first_line.into());
+            out.push(first_line);
 
             for rail in &track[1..] {
-                out.push(format!("  │ {} │ ", blankpad(rail.as_ref(), maxl)).into());
+                out.push(format!("  │ {} │ ", blankpad(rail, maxl)));
             }
         } else {
-            let is_etx = joint.as_ref().contains(SYM_ETX);
+            let is_etx = joint.contains(SYM_ETX);
             if !is_etx {
-                out.push(format!("  └─{}─┘ ", railpad(joint.as_ref(), maxl)).into());
+                out.push(format!("  └─{}─┘ ", railpad(joint, maxl)));
             } else {
                 if let Some(last) = out.last_mut() {
-                    let old = last.as_ref().to_string();
+                    let old = last.to_string();
                     let end = old.trim_end_matches("─┘ ");
-                    *last = format!("{}─┘ ", end).into();
+                    *last = format!("{}─┘ ", end);
                 }
-                out.push(format!("  └─{}   ", blankpad(joint.as_ref(), maxl)).into());
+                out.push(format!("  └─{}   ", blankpad(joint, maxl)));
             }
 
             for rail in &track[1..] {
-                out.push(format!("    {}   ", blankpad(rail.as_ref(), maxl)).into());
+                out.push(format!("    {}   ", blankpad(rail, maxl)));
             }
         }
     }
@@ -183,12 +174,12 @@ fn lay_out(tracks: &[Rails]) -> Rails {
         let first_track = &tracks[0];
         if !first_track.is_empty() {
             let joint = &first_track[0];
-            let first_line = if !joint.as_ref().contains(SYM_ETX) {
-                format!("──┬─{}─┬─", railpad(joint.as_ref(), maxl))
+            let first_line = if !joint.contains(SYM_ETX) {
+                format!("──┬─{}─┬─", railpad(joint, maxl))
             } else {
-                format!("──┬─{} ┬─", blankpad(joint.as_ref(), maxl))
+                format!("──┬─{} ┬─", blankpad(joint, maxl))
             };
-            out[0] = first_line.into();
+            out[0] = first_line;
         }
     }
 
@@ -203,13 +194,13 @@ fn loop_(rails: &Rails) -> Rails {
     let maxl = rails.iter().map(|s| ulen(s.as_ref())).max().unwrap_or(0);
     let first = &rails[0];
 
-    let mut out = vec![format!("──┬→{}─┬──", railpad("", maxl)).into()];
-    out.push(format!("  ├→{}─┤  ", railpad(first.as_ref(), maxl)).into());
+    let mut out = vec![format!("──┬→{}─┬──", railpad("", maxl))];
+    out.push(format!("  ├→{}─┤  ", railpad(first.as_ref(), maxl)));
 
     for rail in &rails[1..] {
-        out.push(format!("  │ {} │  ", blankpad(rail.as_ref(), maxl)).into());
+        out.push(format!("  │ {} │  ", blankpad(rail, maxl)));
     }
-    out.push(format!("  └─{}<┘  ", railpad("", maxl)).into());
+    out.push(format!("  └─{}<┘  ", railpad("", maxl)));
 
     assert_one_length(out)
 }
@@ -222,12 +213,12 @@ fn stopnloop(rails: &Rails) -> Rails {
     let maxl = rails.iter().map(|s| ulen(s.as_ref())).max().unwrap_or(0);
     let first = &rails[0];
 
-    let mut out = vec![format!("──┬─{}─┬──", railpad(first.as_ref(), maxl)).into()];
+    let mut out = vec![format!("──┬─{}─┬──", railpad(first.as_ref(), maxl))];
 
     for rail in &rails[1..] {
-        out.push(format!("  │ {} │  ", blankpad(rail.as_ref(), maxl)).into());
+        out.push(format!("  │ {} │  ", blankpad(rail, maxl)));
     }
-    out.push(format!("  └─{}<┘  ", railpad("", maxl)).into());
+    out.push(format!("  └─{}<┘  ", railpad("", maxl)));
 
     assert_one_length(out)
 }
@@ -370,13 +361,13 @@ fn walk_rule(rule: &Rule) -> Rails {
     out = weld(&out, &walk_exp(&rule.exp));
     out = weld(&out, &[make_rail("─■")]);
 
-    let len0 = ulen(out[0].as_ref());
+    let len0 = ulen(&out[0]);
     let padding = " ".repeat(len0);
     let mut out: Rails = out
         .into_iter()
-        .map(|s| format!("{}{}", s.as_ref(), padding).into())
+        .map(|s| format!("{}{}", s, padding))
         .collect();
-    out.push(" ".repeat(ulen(&out[0])).into());
+    out.push(" ".repeat(ulen(&out[0])));
 
     assert_one_length(out)
 }
@@ -394,7 +385,7 @@ mod tests {
     #[test]
     fn test_make_rail() {
         let rail = make_rail("foo");
-        assert_eq!(rail.as_ref(), "foo");
+        assert_eq!(rail, "foo");
     }
 
     #[test]
@@ -403,7 +394,7 @@ mod tests {
         let b = vec![make_rail("x")];
         let result = weld(&a, &b);
         assert_eq!(result.len(), 1);
-        assert_eq!(result[0].as_ref(), "x");
+        assert_eq!(result[0], "x");
     }
 
     #[test]
@@ -412,7 +403,7 @@ mod tests {
         let b: Rails = vec![];
         let result = weld(&a, &b);
         assert_eq!(result.len(), 1);
-        assert_eq!(result[0].as_ref(), "x");
+        assert_eq!(result[0], "x");
     }
 
     #[test]
@@ -421,7 +412,7 @@ mod tests {
         let b = vec![make_rail("b")];
         let result = weld(&a, &b);
         assert_eq!(result.len(), 1);
-        assert_eq!(result[0].as_ref(), "ab");
+        assert_eq!(result[0], "ab");
     }
 
     #[test]

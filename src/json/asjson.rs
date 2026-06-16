@@ -1,15 +1,13 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::trees::{KeyValue, Tree, TreeMapWrapper, TreeRef};
+use crate::trees::{KeyValue, Tree, TreeMap, TreeRef};
 use json::JsonValue;
 
 use crate::json::error::JsonError;
 
-#[cfg(feature = "serde_json")]
 use serde::Serialize;
 
-#[cfg(feature = "serde_json")]
 impl Serialize for Tree {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -103,11 +101,11 @@ impl Tree {
     pub fn from_json(value: &JsonValue) -> Self {
         match value {
             JsonValue::Null => Tree::Null,
-            JsonValue::String(s) => Tree::Text(s.clone().into()),
-            JsonValue::Short(s) => Tree::Text(s.to_string().into()),
+            JsonValue::String(s) => Tree::Text(s.clone()),
+            JsonValue::Short(s) => Tree::Text(s.to_string()),
             JsonValue::Array(arr) => {
                 let items: Vec<TreeRef> = arr.iter().map(|v| Tree::from_json(v).into()).collect();
-                Tree::Seq(items.into())
+                Tree::Seq(items)
             }
             JsonValue::Object(obj) => {
                 if obj.len() == 1
@@ -120,12 +118,12 @@ impl Tree {
                         tree: tree.into(),
                     };
                 }
-                let mut m = TreeMapWrapper::new();
+                let mut m = TreeMap::default();
                 for (key, value) in obj.iter() {
                     let tree = Tree::from_json(value);
-                    m.insert(key, tree);
+                    m.insert(key.into(), tree);
                 }
-                Tree::Map(m.into())
+                Tree::Map(m)
             }
             JsonValue::Boolean(yesno) => Tree::text(yesno.to_string().as_str().into()).clone(),
             JsonValue::Number(n) => Tree::text(n.to_string().as_str().into()),
@@ -142,7 +140,10 @@ mod tests {
         let cases: Vec<Tree> = vec![
             Tree::Null,
             Tree::Text("hello".into()),
-            Tree::Seq(vec![Tree::Text("a".into()).into(), Tree::Text("b".into()).into()].into()),
+            Tree::Seq(vec![
+                Tree::Text("a".into()).into(),
+                Tree::Text("b".into()).into(),
+            ]),
         ];
 
         for tree in cases {

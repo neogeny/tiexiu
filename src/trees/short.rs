@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::tree::Tree;
-use crate::trees::cst::TreeMap;
 use crate::trees::KeyValue;
+use crate::trees::cst::TreeMap;
 
 /// The Nil tree constant.
 pub const NIL: Tree = Tree::Null;

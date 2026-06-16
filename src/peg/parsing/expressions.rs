@@ -27,7 +27,6 @@ impl Exp {
             .as_ref()
             .map(|la| la.iter().map(|s| s.as_ref()).collect::<Vec<_>>().join(" "))
             .unwrap_or_default()
-            .into()
     }
 
     /// Parses at the current context position, applying defines after a successful match.
@@ -37,7 +36,9 @@ impl Exp {
             Ok(tree) => {
                 if let Some(df) = self.df.as_ref() {
                     let mut cloned = tree.as_ref().clone();
-                    cloned.define(df);
+                    if let Tree::Map(ref mut map) = cloned {
+                        Tree::define(map, df);
+                    }
                     Ok(cloned.into())
                 } else {
                     Ok(tree)
@@ -63,7 +64,7 @@ impl Exp {
         }
 
         match &exp.kind {
-            ExpKind::EmptyClosure => Ok(Tree::from(Vec::<TreeRef>::new()).closed().into()),
+            ExpKind::EmptyClosure => Ok(Tree::closed(Tree::from(Vec::<TreeRef>::new())).into()),
             ExpKind::Nil => Ok(Tree::Null.into()),
             ExpKind::RuleInclude { name, exp } => match exp {
                 None => Err(ctx.failure(start, RuleNotLinked(name.clone()))),
@@ -273,7 +274,7 @@ impl Exp {
                 } else if results.len() == 1 {
                     Ok(results[0].clone())
                 } else {
-                    Ok(Tree::Seq(results.into()).into())
+                    Ok(Tree::Seq(results).into())
                 }
             }
             ExpKind::Alt(_exp) => Err(ctx.failure(start, AltWithNoChoice)),

@@ -1,10 +1,15 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::trees::KeyValue;
 use crate::Tree;
+use crate::trees::KeyValue;
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList, PyString};
+
+fn set_item(dict: &Bound<'_, PyDict>, key: &str, val: Py<PyAny>) -> PyResult<()> {
+    dict.call_method1("__setitem__", (key, val))?;
+    Ok(())
+}
 
 fn to_python(tree: &Tree, py: Python<'_>) -> PyResult<Py<PyAny>> {
     match tree {
@@ -28,23 +33,23 @@ fn to_python(tree: &Tree, py: Python<'_>) -> PyResult<Py<PyAny>> {
         Tree::Map(m) => {
             let dict = PyDict::new(py);
             for (k, v) in m.iter() {
-                let key: &str = k;
-                dict.set_item(key, to_python(v, py)?)?;
+                let val = to_python(v, py)?;
+                set_item(&dict, k.as_str(), val)?;
             }
             Ok(dict.into())
         }
         Tree::Node { typename, tree } => {
             let name: &str = typename;
             let dict = PyDict::new(py);
-            dict.set_item("__class__", name)?;
+            set_item(&dict, "__class__", PyString::new(py, name).into())?;
             if let Tree::Map(m) = tree.as_ref() {
                 for (k, v) in m.iter() {
-                    let key: &str = k;
-                    dict.set_item(key, to_python(v, py)?)?
+                    let val = to_python(v, py)?;
+                    set_item(&dict, k.as_str(), val)?;
                 }
             } else {
                 let inner = to_python(tree, py)?;
-                dict.set_item("tree", inner)?;
+                set_item(&dict, "tree", inner)?;
             }
             Ok(dict.into())
         }
@@ -52,18 +57,21 @@ fn to_python(tree: &Tree, py: Python<'_>) -> PyResult<Py<PyAny>> {
         Tree::Named(kv) => {
             let KeyValue(name, tree) = kv;
             let dict = PyDict::new(py);
-            dict.set_item(name.as_ref(), to_python(tree, py)?)?;
+            let val = to_python(tree, py)?;
+            set_item(&dict, name.as_str(), val)?;
             Ok(dict.into())
         }
         Tree::NamedAsList(kv) => {
             let KeyValue(name, tree) = kv;
             let dict = PyDict::new(py);
-            dict.set_item(name.as_ref(), to_python(tree, py)?)?;
+            let val = to_python(tree, py)?;
+            set_item(&dict, name.as_str(), val)?;
             Ok(dict.into())
         }
         Tree::Override(t) | Tree::OverrideAsList(t) => {
             let dict = PyDict::new(py);
-            dict.set_item("@", to_python(t, py)?)?;
+            let val = to_python(t, py)?;
+            set_item(&dict, "@", val)?;
             Ok(dict.into())
         }
         Tree::Bottom => Ok(py.None()),

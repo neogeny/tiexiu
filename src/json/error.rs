@@ -11,12 +11,10 @@ pub type Result<T> = std::result::Result<T, JsonError>;
 #[derive(Debug, Error)]
 pub enum JsonError {
     /// Error encountered at a specific JSON path during import.
-    #[cfg(feature = "serde_json")]
     #[error("JSON Import error at {0}: {1}")]
     JsonPath(String, #[source] serde_json::Error),
 
     /// Wrapper for serde_json errors.
-    #[cfg(feature = "serde_json")]
     #[error("JSON error: {0}")]
     Json(#[from] serde_json::Error),
 

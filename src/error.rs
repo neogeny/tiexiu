@@ -70,7 +70,6 @@ pub enum Error {
     EscapedNope(#[from] Nope),
 
     /// JSON serialization error.
-    #[cfg(feature = "serde_json")]
     #[error("failed to serialize JSON output: {0}")]
     Json(#[from] serde_json::Error),
 

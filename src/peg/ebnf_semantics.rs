@@ -29,7 +29,7 @@ impl Semantics for EBNFGrammarSemantics {
     fn apply(&self, node: TreeRef, _rule_name: &str, _params: &[Str]) -> ParseResult {
         match node.as_ref() {
             // Meta → typed variants (boot grammar @name/@int/@uint/@float/@bool)
-            Tree::Node { typename, tree } if typename.as_ref() == "Meta" => {
+            Tree::Node { typename, tree } if typename == "Meta" => {
                 let text = tree.value();
                 let new_typename: Str = match text.as_ref() {
                     "name" => "NameMeta",
@@ -47,7 +47,7 @@ impl Semantics for EBNFGrammarSemantics {
                 .into())
             }
             // Legacy bare "bool" typename — unwrap transparently
-            Tree::Node { typename: t, tree } if t.as_ref() == "bool" => Ok(tree.clone()),
+            Tree::Node { typename: t, tree } if t == "bool" => Ok(tree.clone()),
             _ => Ok(Bottom.into()),
         }
     }
