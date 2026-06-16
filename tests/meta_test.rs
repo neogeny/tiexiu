@@ -102,8 +102,8 @@ fn test_meta_float() -> Result<()> {
         @@whitespace :: /[\t ]+/
         start = @float $ ;
     "#;
-    let tree = parse(grammar, "3.14", &[])?;
-    assert_eq!(tree.to_json(), json!(3.14));
+    let tree = parse(grammar, "7.53", &[])?;
+    assert_eq!(tree.to_json(), json!(7.53));
     Ok(())
 }
 

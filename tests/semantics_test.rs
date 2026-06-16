@@ -79,8 +79,8 @@ fn test_semantics_meta_to_float() -> Result<()> {
         @@whitespace :: /[\t ]+/
         start = @float $ ;
     "#;
-    let tree = parse(grammar, "3.14", &[CfgKey::Semantics(sem.clone())])?;
-    assert_eq!(tree.to_json(), json!(3.14));
+    let tree = parse(grammar, "7.532", &[CfgKey::Semantics(sem.clone())])?;
+    assert_eq!(tree.to_json(), json!(7.532));
     Ok(())
 }
 
