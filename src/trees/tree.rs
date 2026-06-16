@@ -38,7 +38,10 @@ pub enum Tree {
     /// Parsing that didn't consume any input (internal).
     Nil,
     /// The result of parsing a rule call.
-    Node { typename: Str, tree: TreeRef },
+    Node {
+        typename: Str,
+        tree: TreeRef,
+    },
     /// A sequence of values (mergeable).
     Seq(Vec<TreeRef>),
     /// Failure marker used in memoization (internal).

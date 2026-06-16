@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::tree::{Tree, TreeRef};
-use crate::trees::KeyValue;
 use crate::Ref;
+use crate::trees::KeyValue;
 use crate::{Define, FastIndexMap, Str};
 
 /// A reference-counted slice of key-tree entries for TreeMap.

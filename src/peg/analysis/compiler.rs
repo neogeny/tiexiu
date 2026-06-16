@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::ExpKind;
 use crate::api::error::{CompileError, CompileResult};
 use crate::cfg::*;
 use crate::peg::grammar::KeywordRef;
@@ -8,7 +9,6 @@ use crate::peg::rule::{RuleMap, RuleRef};
 use crate::peg::{Exp, Grammar, Rule};
 use crate::trees::{Tree, TreeMap, TreeRef};
 use crate::types::Str;
-use crate::ExpKind;
 
 /// Compiles a parse tree (from the PEG grammar) into a compiled `Grammar`.
 #[derive(Debug, Default)]

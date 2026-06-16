@@ -4,7 +4,7 @@
 use crate::api::error::nope::ParseResult;
 use crate::context::CtxSem;
 use crate::peg::{Exp, ExpKind, ParseFailure::*, Parser};
-use crate::trees::{Tree, TreeRef, NIL};
+use crate::trees::{NIL, Tree, TreeRef};
 use crate::types::Str;
 use crate::util::pyre;
 
