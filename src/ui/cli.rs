@@ -225,7 +225,10 @@ pub(crate) fn load_grammar_from_path(
     progress: &ProgressUI,
     cfga: &CfgA,
 ) -> Result<Grammar> {
-    let loader = progress.loading("loading grammar");
+    // let grammar_file_name = grammar.file_name()
+    //     .unwrap_or_default()
+    //     .to_string_lossy();
+    let loader = progress.loading("loading grammar...");
     let load_cfg = cfga
         .iter()
         .cloned()
@@ -235,6 +238,7 @@ pub(crate) fn load_grammar_from_path(
         .collect::<Cfg>();
 
     let grammar_text = std::fs::read_to_string(grammar)?;
+    loader.set_length(grammar_text.len());
     let parser = if grammar
         .extension()
         .and_then(|ext| ext.to_str())
