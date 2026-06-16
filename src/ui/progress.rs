@@ -58,8 +58,10 @@ impl FileProgress {
             indicatif::ProgressBar::new(0)
                 .with_style(
                     indicatif::ProgressStyle::with_template(
-                        &("  {prefix:>40.bold} {wide_bar:.green/black}".to_string()
-                            + " {percent:>4}% {duration_precise}  "),
+                        &(
+                            "  {prefix:>40.bold} {wide_bar:.green/black}".to_string() + ""
+                            // + " {percent:>4}% {duration_precise}"
+                        ),
                     )
                     .unwrap()
                     .progress_chars("━╸─"),

@@ -4,10 +4,10 @@
 use console::Style;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
+use tiexiu::Result;
 use tiexiu::api::parse_input;
 use tiexiu::cfg::Cfg;
 use tiexiu::cfg::CfgKey;
-use tiexiu::Result;
 
 use crate::ui::progress::ProgressUI;
 use tiexiu::util::strtools::linecount;
@@ -126,7 +126,13 @@ fn print_summary(s: &Summary) {
 
     if s.files_input > 0 {
         let pct = s.successes as f64 / s.files_input as f64 * 100.0;
-        row!(t, rate_style(pct), "success rate", pct, "%");
+        row!(
+            t,
+            rate_style(pct),
+            "success rate",
+            format!("{:.0}%", pct),
+            "%"
+        );
     }
 
     if s.wall_time.as_secs_f64() > 0.0 {
@@ -135,7 +141,7 @@ fn print_summary(s: &Summary) {
             t,
             rate_style(sls),
             "sloc/sec",
-            format!("{:0.0}",sls),
+            format!("{:0.0}", sls),
             "sl/s"
         );
     }
@@ -263,6 +269,7 @@ pub fn cmd_run(
         let parser = std::sync::Arc::new(parser);
         let cfg = std::sync::Arc::new(Cfg::clone(cfg));
 
+        const RUNTIME_STACK_SIZE: usize = 4 * 1024 * 1024;
         let mut handles = Vec::with_capacity(nworkers);
         for worker_id in 0..nworkers {
             let inputs = std::sync::Arc::clone(&inputs);
@@ -270,72 +277,87 @@ pub fn cmd_run(
             let cfg = std::sync::Arc::clone(&cfg);
             let progress = std::sync::Arc::clone(&progress);
             let tx = tx.clone();
-            handles.push(std::thread::spawn(move || {
-                for (file_idx, input) in inputs.iter().enumerate().skip(worker_id).step_by(nworkers)
-                {
-                    let text = match std::fs::read_to_string(input) {
-                        Err(error) => {
-                            tx.send(WorkerResult::Error(
-                                file_idx,
-                                error.to_string(),
-                                Duration::ZERO,
-                            ))
-                            .ok();
-                            continue;
-                        }
-                        Ok(text) => text,
-                    };
-
-                    // Create per-file bar lazily, only when a task actually runs.
-                    let (fp, heartbeat) = {
-                        let prog = progress.lock().unwrap();
-                        let name = input.file_name().unwrap_or_default().to_string_lossy();
-                        let fp = prog.add_file(&name);
-                        if let Ok(meta) = std::fs::metadata(input) {
-                            fp.set_length(meta.len() as usize);
-                        }
-                        let hb = fp.heartbeat().clone();
-                        (fp, hb)
-                    };
-
-                    let file_start = Instant::now();
-                    let file_cfg = cfg
-                        .add(CfgKey::Source(input.as_path().to_string_lossy().into()))
-                        .add(CfgKey::Heartbeat(heartbeat));
-
-                    match parse_input(&parser, &text, &file_cfg) {
-                        Ok(tree) => {
-                            let elapsed = file_start.elapsed();
-                            {
-                                let prog = progress.lock().unwrap();
-                                fp.success();
-                                prog.inc_files();
-                            }
-                            let sloc = linecount(&text);
-                            let this_output = if model {
-                                format!("{:#?}", tree).to_string()
-                            } else if short {
-                                format!("{:#}", tree.fold()).to_string()
-                            } else {
-                                tree.to_json_string_pretty()
+            handles.push(
+                std::thread::Builder::new()
+                    .stack_size(RUNTIME_STACK_SIZE)
+                    .spawn(move || {
+                        for (file_idx, input) in
+                            inputs.iter().enumerate().skip(worker_id).step_by(nworkers)
+                        {
+                            let text = match std::fs::read_to_string(input) {
+                                Err(error) => {
+                                    tx.send(WorkerResult::Error(
+                                        file_idx,
+                                        error.to_string(),
+                                        Duration::ZERO,
+                                    ))
+                                    .ok();
+                                    continue;
+                                }
+                                Ok(text) => text,
                             };
-                            tx.send(WorkerResult::Success(file_idx, this_output, elapsed, sloc))
-                                .ok();
-                        }
-                        Err(err) => {
-                            let elapsed = file_start.elapsed();
-                            {
+
+                            // Create per-file bar lazily, only when a task actually runs.
+                            let (fp, heartbeat) = {
                                 let prog = progress.lock().unwrap();
-                                // Drop the bar to remove it from MultiProgress.
-                                drop(fp);
-                                prog.inc_files();
+                                let name = input.file_name().unwrap_or_default().to_string_lossy();
+                                let fp = prog.add_file(&name);
+                                if let Ok(meta) = std::fs::metadata(input) {
+                                    fp.set_length(meta.len() as usize);
+                                }
+                                let hb = fp.heartbeat().clone();
+                                (fp, hb)
+                            };
+
+                            let file_start = Instant::now();
+                            let file_cfg = cfg
+                                .add(CfgKey::Source(input.as_path().to_string_lossy().into()))
+                                .add(CfgKey::Heartbeat(heartbeat));
+
+                            match parse_input(&parser, &text, &file_cfg) {
+                                Ok(tree) => {
+                                    let elapsed = file_start.elapsed();
+                                    {
+                                        let prog = progress.lock().unwrap();
+                                        fp.success();
+                                        prog.inc_files();
+                                    }
+                                    let sloc = linecount(&text);
+                                    let this_output = if model {
+                                        format!("{:#?}", tree).to_string()
+                                    } else if short {
+                                        format!("{:#}", tree.fold()).to_string()
+                                    } else {
+                                        tree.to_json_string_pretty()
+                                    };
+                                    tx.send(WorkerResult::Success(
+                                        file_idx,
+                                        this_output,
+                                        elapsed,
+                                        sloc,
+                                    ))
+                                    .ok();
+                                }
+                                Err(err) => {
+                                    let elapsed = file_start.elapsed();
+                                    {
+                                        let prog = progress.lock().unwrap();
+                                        // Drop the bar to remove it from MultiProgress.
+                                        drop(fp);
+                                        prog.inc_files();
+                                    }
+                                    tx.send(WorkerResult::Error(
+                                        file_idx,
+                                        err.to_string(),
+                                        elapsed,
+                                    ))
+                                    .ok();
+                                }
                             }
-                            tx.send(WorkerResult::Error(file_idx, err.to_string(), elapsed))
-                                .ok();
                         }
-                    }
-                }
-            }));
+                    })
+                    .expect("failed to spawn worker thread"),
+            );
         }
 
         drop(tx);
