@@ -10,7 +10,7 @@ use tiexiu::cfg::Cfg;
 use tiexiu::cfg::CfgKey;
 
 use crate::ui::progress::ProgressUI;
-use tiexiu::util::strtools::linecount;
+use tiexiu::util::strtools::{LineCount, countlines, linecount};
 
 struct RunUI {
     title: Style,
@@ -108,7 +108,7 @@ impl RunUI {
             &self.title,
             &self.value,
             "source lines input",
-            s.source_lines,
+            s.total_lines,
             "",
         );
         self.row(
@@ -146,7 +146,7 @@ impl RunUI {
         }
 
         if s.wall_time.as_secs_f64() > 0.0 {
-            let sls = s.success_lines as f64 / s.wall_time.as_secs_f64();
+            let sls = s.sloc as f64 / s.wall_time.as_secs_f64();
             self.row_str(
                 &self.title,
                 &self.rate_style(sls),
@@ -174,7 +174,8 @@ impl RunUI {
 
 struct Summary {
     files_input: usize,
-    source_lines: usize,
+    total_lines: usize,
+    sloc: usize,
     success_lines: usize,
     successes: usize,
     failures: usize,
@@ -186,7 +187,8 @@ impl Summary {
     fn new(files_input: usize) -> Self {
         Self {
             files_input,
-            source_lines: 0,
+            total_lines: 0,
+            sloc: 0,
             success_lines: 0,
             successes: 0,
             failures: 0,
@@ -197,8 +199,8 @@ impl Summary {
 }
 
 enum WorkerResult {
-    Success(usize, String, Duration, usize),
-    Error(usize, String, Duration),
+    Success(usize, String, Duration, LineCount),
+    Error(usize, String, Duration, LineCount),
 }
 
 /// Execute the `Run` subcommand — parse input files with a compiled grammar.
@@ -236,7 +238,7 @@ pub fn cmd_run(
                 Ok(text) => text,
             };
             let lines = linecount(&text);
-            summary.source_lines += lines;
+            summary.total_lines += lines;
             file_prog.set_length(text.len());
 
             let file_cfg = cfg
@@ -324,6 +326,7 @@ pub fn cmd_run(
                                         file_idx,
                                         error.to_string(),
                                         Duration::ZERO,
+                                        LineCount::default(),
                                     ))
                                     .ok();
                                     continue;
@@ -348,6 +351,7 @@ pub fn cmd_run(
                                 .add(CfgKey::Source(input.as_path().to_string_lossy().into()))
                                 .add(CfgKey::Heartbeat(heartbeat));
 
+                            let counts = countlines(&text);
                             match parse_input(&parser, &text, &file_cfg) {
                                 Ok(tree) => {
                                     let elapsed = file_start.elapsed();
@@ -356,7 +360,6 @@ pub fn cmd_run(
                                         fp.success();
                                         prog.inc_files();
                                     }
-                                    let sloc = linecount(&text);
                                     let this_output = if model {
                                         format!("{:#?}", tree).to_string()
                                     } else if short {
@@ -368,7 +371,7 @@ pub fn cmd_run(
                                         file_idx,
                                         this_output,
                                         elapsed,
-                                        sloc,
+                                        counts,
                                     ))
                                     .ok();
                                 }
@@ -384,6 +387,7 @@ pub fn cmd_run(
                                         file_idx,
                                         err.to_string(),
                                         elapsed,
+                                        counts,
                                     ))
                                     .ok();
                                 }
@@ -401,16 +405,19 @@ pub fn cmd_run(
         let mut done = 0;
         while let Ok(event) = rx.recv() {
             match event {
-                WorkerResult::Success(idx, out, elapsed, sloc) => {
+                WorkerResult::Success(idx, out, elapsed, counts) => {
                     summary.successes += 1;
-                    summary.success_lines += sloc;
-                    summary.source_lines += sloc;
+                    summary.success_lines += counts.totl;
+                    summary.total_lines += counts.totl;
+                    summary.sloc += counts.code;
                     summary.run_time += elapsed;
                     results.push((idx, Some(out), None, elapsed));
                 }
-                WorkerResult::Error(idx, err, elapsed) => {
+                WorkerResult::Error(idx, err, elapsed, counts) => {
                     summary.failures += 1;
                     summary.run_time += elapsed;
+                    summary.total_lines += counts.totl;
+                    summary.sloc += counts.code;
                     let name = inputs[idx]
                         .file_name()
                         .unwrap_or_default()
@@ -454,7 +461,7 @@ pub fn cmd_run(
         }
 
         summary.wall_time = wall_start.elapsed();
-        summary.source_lines = summary.success_lines; // multi-threaded: only track success lines
+        summary.total_lines = summary.success_lines; // multi-threaded: only track success lines
         progress.lock().unwrap().finish();
         for (name, duration, success) in &file_results {
             ui.print_file_result(name, *duration, *success);

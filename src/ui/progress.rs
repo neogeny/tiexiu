@@ -59,12 +59,12 @@ impl FileProgress {
                 .with_style(
                     indicatif::ProgressStyle::with_template(
                         &(
-                            "  {prefix:>40.bold} {wide_bar:.green/black}".to_string() + ""
+                            "  {prefix:>40.bold} {wide_bar:.green/black:40}".to_string() + ""
                             // + " {percent:>4}% {duration_precise}"
                         ),
                     )
                     .unwrap()
-                    .progress_chars("━╸─"),
+                    .progress_chars("━╸ "),
                 )
                 .with_prefix(name.to_string()),
         );
