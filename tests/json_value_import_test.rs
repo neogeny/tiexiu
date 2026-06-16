@@ -1,4 +1,4 @@
-use json::JsonValue;
+use serde_json::Value;
 use tiexiu::Result;
 use tiexiu::peg::grammar::Grammar;
 
@@ -18,8 +18,8 @@ fn test_grammar_from_json() -> Result<()> {
 
 #[test]
 fn test_grammar_from_serde_value() -> Result<()> {
-    let value: JsonValue =
-        json::parse(CALC_JSON).map_err(|e| tiexiu::Error::from(e.to_string()))?;
+    let value: Value =
+        serde_json::from_str(CALC_JSON).map_err(|e| tiexiu::Error::from(e.to_string()))?;
     let grammar = Grammar::from_json_value(&value)?;
     assert_eq!(grammar.name.to_string(), "CALC");
     Ok(())
@@ -27,8 +27,8 @@ fn test_grammar_from_serde_value() -> Result<()> {
 
 #[test]
 fn test_grammar_from_json_error_reporting() -> Result<()> {
-    let value: JsonValue =
-        json::parse(RULE_INCLUDE_NO_NAME_JSON).map_err(|e| tiexiu::Error::from(e.to_string()))?;
+    let value: Value = serde_json::from_str(RULE_INCLUDE_NO_NAME_JSON)
+        .map_err(|e| tiexiu::Error::from(e.to_string()))?;
     let result = Grammar::from_json_value(&value);
 
     match result {

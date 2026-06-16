@@ -40,7 +40,7 @@ fn debug_none<T>(_field: &T, f: &mut fmt::Formatter) -> fmt::Result {
 
 impl Exp {}
 
-/// The kind of a PEG expression, encoding all grammar operators.
+/// The kind of the PEG expression, encoding all grammar operators.
 #[derive(Derivative)]
 #[derivative(Clone, Debug, Default)]
 pub enum ExpKind {

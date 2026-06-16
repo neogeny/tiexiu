@@ -45,7 +45,7 @@ fn to_python(tree: &Tree, py: Python<'_>) -> PyResult<Py<PyAny>> {
             }
             Ok(dict.into())
         }
-        Tree::Null => Ok(py.None()),
+        Tree::Nil => Ok(py.None()),
         Tree::Named(kv) => {
             let KeyValue(name, tree) = kv;
             let dict = PyDict::new(py);

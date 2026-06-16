@@ -18,10 +18,6 @@ pub enum JsonError {
     #[error("JSON error: {0}")]
     Json(#[from] serde_json::Error),
 
-    /// Error parsing JSON text.
-    #[error("JSON parse error: {0}")]
-    JsonParse(#[from] json::Error),
-
     /// Error during JSON export/formatting.
     #[error("JSON Export error: {0}")]
     JsonExport(#[from] std::fmt::Error),

@@ -4,7 +4,7 @@
 use crate::context::CtxSem;
 use crate::peg::error::*;
 use crate::trees::TreeList;
-use crate::trees::tree::NULL;
+use crate::trees::tree::NIL;
 use crate::{Exp, Tree};
 
 impl Exp {
@@ -62,7 +62,7 @@ impl Exp {
                 if positive || cutseen {
                     return Err(nope);
                 }
-                return Ok(NULL.into());
+                return Ok(NIL.into());
             }
             Ok(tree) => {
                 res.push_back(tree);

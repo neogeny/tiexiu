@@ -3,8 +3,7 @@
 
 //! Tests for keyword - translated from TatSu's grammar/keyword_test.py
 
-#[macro_use]
-extern crate json;
+use serde_json::json;
 use tiexiu::Result;
 use tiexiu::api::compile;
 
@@ -16,6 +15,6 @@ fn test_keywords_in_rule_names() -> Result<()> {
     "#;
     let model = compile(grammar, &[])?;
     let ast = tiexiu::parse_input(&model, "x", &[])?;
-    assert_eq!(ast.to_json(), array!["x"]);
+    assert_eq!(ast.to_json(), json!(["x"]));
     Ok(())
 }

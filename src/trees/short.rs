@@ -66,13 +66,13 @@ pub fn bottom() -> Tree {
 
 /// Shorthand for Tree::Nil.
 pub fn nil() -> Tree {
-    Tree::Null
+    Tree::Nil
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::trees::tree::{BOTTOM, NULL};
+    use crate::trees::tree::{BOTTOM, NIL};
 
     #[test]
     fn text_tree() {
@@ -94,7 +94,7 @@ mod tests {
 
     #[test]
     fn nil_tree() {
-        let t = NULL;
+        let t = NIL;
         assert_eq!(t.to_string(), "NIL");
     }
 

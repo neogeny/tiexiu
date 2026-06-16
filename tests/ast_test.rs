@@ -17,9 +17,9 @@ fn test_ast_pickling() -> Result<()> {
 #[test]
 fn tree_basics() -> Result<()> {
     let test_ast = Tree::nil();
-    let _has_items = !matches!(test_ast, Tree::Null);
+    let _has_items = !matches!(test_ast, Tree::Nil);
     // Tree::Nil is the default empty tree
-    assert!(matches!(test_ast, Tree::Null));
+    assert!(matches!(test_ast, Tree::Nil));
     Ok(())
 }
 

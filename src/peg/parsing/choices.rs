@@ -59,7 +59,7 @@ impl Exp {
                 if cutseen {
                     return Err(nope);
                 }
-                Ok(Tree::Null.into())
+                Ok(Tree::Nil.into())
             }
         }
     }

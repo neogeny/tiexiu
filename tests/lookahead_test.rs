@@ -3,7 +3,7 @@
 
 //! Tests for lookahead - translated from TatSu's grammar/lookahead_test.py
 
-use json::value;
+use serde_json::json;
 use tiexiu::Result;
 use tiexiu::api::compile;
 
@@ -16,6 +16,6 @@ fn test_skip_to() -> Result<()> {
     let model = compile(grammar, &[])?;
     let tree = tiexiu::parse_input(&model, "x yb", &[])?;
     // Python: assert ast == ['x', 'b']
-    assert_eq!(tree.to_json(), value!(["x", "b"]));
+    assert_eq!(tree.to_json(), json!(["x", "b"]));
     Ok(())
 }

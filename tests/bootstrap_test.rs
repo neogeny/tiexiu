@@ -4,14 +4,12 @@
 //! Run with: cargo test --features bootstrap
 //!
 
-#[macro_use]
-extern crate json;
-
 // =============================================================================
 // Boot Grammar Parsing Tests - Grammar Syntax
 // =============================================================================
 
 mod parse_grammar {
+    use serde_json::json;
     use tiexiu::Result;
     use tiexiu::api::parse_grammar;
 
@@ -28,7 +26,7 @@ mod parse_grammar {
         let parser = tiexiu::compile(grammar, &[])?;
         let tree = tiexiu::parse_input(&parser, "hello", &[])?;
         let val = tree.to_json();
-        assert_eq!(val, value!("hello"));
+        assert_eq!(val, json!("hello"));
 
         let res = tiexiu::parse_input(&parser, "world", &[]);
         assert!(res.is_err());
@@ -259,6 +257,7 @@ mod parse_naming {
 // =============================================================================
 
 mod parse_special {
+    use serde_json::json;
     use tiexiu::*;
 
     #[test]
@@ -301,7 +300,7 @@ mod parse_special {
         "#;
         let tree = parse(grammar, "", &[])?;
         let json = tree.to_json();
-        assert_eq!(json, value!("a const"));
+        assert_eq!(json, json!("a const"));
         Ok(())
     }
 
@@ -349,7 +348,7 @@ mod parse_special {
         assert!(json.contains("Alert"));
         let tree = parse(grammar, "", &[])?;
         let json = tree.to_json();
-        assert_eq!(json, value!("danger"));
+        assert_eq!(json, json!("danger"));
         Ok(())
     }
 }

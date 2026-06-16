@@ -5,8 +5,7 @@
 //!
 //! Tests translated from TatSu's test_semantics.py
 
-#[macro_use]
-extern crate json;
+use serde_json::json;
 use tiexiu::parse_input;
 use tiexiu::*;
 
@@ -18,10 +17,10 @@ fn test_basic_eol() -> Result<()> {
     let model = tiexiu::compile(grammar, &[])?;
 
     let ast = parse_input(&model, "hello\nworld", &[])?;
-    assert_eq!(ast.to_json(), array!["hello", "world"]);
+    assert_eq!(ast.to_json(), json!(["hello", "world"]));
 
     let ast = parse_input(&model, "hello  \nworld", &[])?;
-    assert_eq!(ast.to_json(), array!["hello", "world"]);
+    assert_eq!(ast.to_json(), json!(["hello", "world"]));
 
     let res = parse_input(&model, "hello world", &[]);
     assert!(res.is_err(), "Should fail: no line break");
@@ -40,10 +39,10 @@ fn test_eol_at_end_of_text() -> Result<()> {
     let model = tiexiu::compile(grammar, &[])?;
 
     let ast = parse_input(&model, "hello\n", &[])?;
-    assert_eq!(ast.to_json(), value!("hello"));
+    assert_eq!(ast.to_json(), json!("hello"));
 
     let ast = parse_input(&model, "hello  \n", &[])?;
-    assert_eq!(ast.to_json(), value!("hello"));
+    assert_eq!(ast.to_json(), json!("hello"));
 
     let res = parse_input(&model, "hello world", &[]);
     assert!(res.is_err(), "Should fail: no line break at end");
@@ -59,10 +58,10 @@ fn test_multiple_eols() -> Result<()> {
     let model = tiexiu::compile(grammar, &[])?;
 
     let ast = parse_input(&model, "line1\nline2\nline3", &[])?;
-    assert_eq!(ast.to_json(), array!["line1", "line2", "line3"]);
+    assert_eq!(ast.to_json(), json!(["line1", "line2", "line3"]));
 
     let ast = parse_input(&model, "line1  \nline2\n  line3", &[])?;
-    assert_eq!(ast.to_json(), array!["line1", "line2", "line3"]);
+    assert_eq!(ast.to_json(), json!(["line1", "line2", "line3"]));
 
     Ok(())
 }
@@ -75,10 +74,10 @@ fn test_eol_with_indentation() -> Result<()> {
     let model = tiexiu::compile(grammar, &[])?;
 
     let ast = parse_input(&model, "start\n  indented\nend", &[])?;
-    assert_eq!(ast.to_json(), array!["start", "indented", "end"]);
+    assert_eq!(ast.to_json(), json!(["start", "indented", "end"]));
 
     let ast = parse_input(&model, "start\nindented\nend", &[])?;
-    assert_eq!(ast.to_json(), array!["start", "indented", "end"]);
+    assert_eq!(ast.to_json(), json!(["start", "indented", "end"]));
 
     Ok(())
 }
@@ -91,13 +90,13 @@ fn test_eol_in_closure() -> Result<()> {
     let model = tiexiu::compile(grammar, &[])?;
 
     let ast = parse_input(&model, "item\nitem\nend", &[])?;
-    assert_eq!(ast.to_json(), array![array!["item", "item"], "end"]);
+    assert_eq!(ast.to_json(), json!([json!(["item", "item"]), "end"]));
 
     let ast = parse_input(&model, "item  \nitem\nend", &[])?;
-    assert_eq!(ast.to_json(), array![array!["item", "item"], "end"]);
+    assert_eq!(ast.to_json(), json!([json!(["item", "item"]), "end"]));
 
     let ast = parse_input(&model, "end", &[])?;
-    assert_eq!(ast.to_json(), array![array![], "end"]);
+    assert_eq!(ast.to_json(), json!([json!([]), "end"]));
 
     Ok(())
 }
@@ -112,7 +111,7 @@ fn test_eol_with_comments() -> Result<()> {
     // Without comment support, comments are treated as content
     // This test verifies basic EOL behavior
     let ast = parse_input(&model, "hello\nworld", &[])?;
-    assert_eq!(ast.to_json(), array!["hello", "world"]);
+    assert_eq!(ast.to_json(), json!(["hello", "world"]));
 
     Ok(())
 }
@@ -125,13 +124,13 @@ fn test_eol_with_mixed_whitespace() -> Result<()> {
     let model = tiexiu::compile(grammar, &[])?;
 
     let ast = parse_input(&model, "start \t \nnext", &[])?;
-    assert_eq!(ast.to_json(), array!["start", "next"]);
+    assert_eq!(ast.to_json(), json!(["start", "next"]));
 
     let ast = parse_input(&model, "start   \nnext", &[])?;
-    assert_eq!(ast.to_json(), array!["start", "next"]);
+    assert_eq!(ast.to_json(), json!(["start", "next"]));
 
     let ast = parse_input(&model, "start\t\nnext", &[])?;
-    assert_eq!(ast.to_json(), array!["start", "next"]);
+    assert_eq!(ast.to_json(), json!(["start", "next"]));
 
     Ok(())
 }
@@ -144,7 +143,7 @@ fn test_eol_no_whitespace_before_linebreak() -> Result<()> {
     let model = tiexiu::compile(grammar, &[])?;
 
     let ast = parse_input(&model, "start\nnext", &[])?;
-    assert_eq!(ast.to_json(), array!["start", "next"]);
+    assert_eq!(ast.to_json(), json!(["start", "next"]));
 
     Ok(())
 }
@@ -185,11 +184,11 @@ fn test_eol_in_tatsu_ebnf_endrule() -> Result<()> {
 
     // Test with EOL
     let ast = parse_input(&model, "a\nb", &[])?;
-    assert_eq!(ast.to_json(), array!["a", "b"]);
+    assert_eq!(ast.to_json(), json!(["a", "b"]));
 
     // Test with semicolon
     let ast = parse_input(&model, "a;b", &[])?;
-    assert_eq!(ast.to_json(), array!["a", ";", "b"]);
+    assert_eq!(ast.to_json(), json!(["a", ";", "b"]));
 
     Ok(())
 }

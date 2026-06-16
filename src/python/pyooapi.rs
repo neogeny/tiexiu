@@ -5,9 +5,9 @@ use super::pythonize;
 use crate::ParseError;
 use crate::api::ooapi::TieXiu;
 use crate::cfg::*;
-use json::JsonValue;
 use pyo3::prelude::*;
 use pyo3::types::*;
+use serde_json::Value;
 
 fn pykwargs_to_cfg(kwargs: &Bound<'_, PyDict>) -> PyResult<Vec<CfgKey>> {
     let mut cfg: Vec<CfgKey> = Vec::new();
@@ -26,7 +26,7 @@ fn pykwargs_to_cfg(kwargs: &Bound<'_, PyDict>) -> PyResult<Vec<CfgKey>> {
     Ok(cfg)
 }
 
-fn pythonize_json_value(py: pyo3::Python<'_>, value: JsonValue) -> PyResult<Py<PyAny>> {
+fn pythonize_json_value(py: pyo3::Python<'_>, value: Value) -> PyResult<Py<PyAny>> {
     pythonize(py, &value)
 }
 

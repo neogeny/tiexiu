@@ -26,7 +26,7 @@ fn pykwargs_to_cfg(kwargs: &Bound<'_, PyDict>) -> PyResult<Vec<CfgKey>> {
     Ok(cfg)
 }
 
-fn pythonize_json_value(py: pyo3::Python<'_>, value: json::JsonValue) -> PyResult<Py<PyAny>> {
+fn pythonize_json_value(py: pyo3::Python<'_>, value: serde_json::Value) -> PyResult<Py<PyAny>> {
     pythonize(py, &value)
 }
 

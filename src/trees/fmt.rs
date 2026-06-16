@@ -39,7 +39,7 @@ impl fmt::Display for Tree {
             Self::Override(v) => write!(f, "o({})", v),
             Self::OverrideAsList(v) => write!(f, "ol({})", v),
             Self::Map(map) => fmt_treemap(map, f),
-            Self::Null => write!(f, "NIL"),
+            Self::Nil => write!(f, "NIL"),
             Self::Bottom => write!(f, "BOTTOM"),
             Self::Seq(items) => write!(f, "s(&[{}])", fmt_items(items)),
             Self::List(items) => write!(f, "c(&[{}])", fmt_items(items)),
@@ -105,7 +105,7 @@ mod tests {
         map.insert("a".into(), TreeRef::from(Tree::Text("1".into())));
         assert_eq!(Tree::Map(map).to_string(), "m(&[(\"a\", t(\"1\"))])");
 
-        assert_eq!(Tree::Null.to_string(), "NIL");
+        assert_eq!(Tree::Nil.to_string(), "NIL");
 
         assert_eq!(Tree::Bottom.to_string(), "BOTTOM");
 

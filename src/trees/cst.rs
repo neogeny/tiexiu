@@ -20,7 +20,7 @@ impl TreeGather {
     /// Creates a new empty `TreeMerge`.
     pub fn new() -> Self {
         Self {
-            root: Tree::Null,
+            root: Tree::Nil,
             map: TreeMap::default(),
         }
     }
@@ -32,7 +32,7 @@ impl Tree {
         let mut gather = TreeGather::new();
         let tree = Self::clean_and_fold(&tree, &mut gather);
 
-        if gather.root != Tree::Null {
+        if gather.root != Tree::Nil {
             Self::closed(gather.root)
         } else if !gather.map.is_empty() {
             Tree::Map(gather.map)
@@ -44,7 +44,7 @@ impl Tree {
     fn clean_and_fold(tree: &Self, gather: &mut TreeGather) -> Tree {
         match tree {
             Tree::Seq(elements) => {
-                let mut out = Tree::Null;
+                let mut out = Tree::Nil;
                 for elem in elements.iter() {
                     out = Self::merge(&out, &Self::clean_and_fold(elem, gather));
                 }
@@ -79,7 +79,7 @@ impl Tree {
                 gather.root = Self::append_as_list(&gather.root, &clean);
                 clean
             }
-            Tree::Null => Tree::Null,
+            Tree::Nil => Tree::Nil,
             _ => tree.clone(),
         }
     }
@@ -135,8 +135,8 @@ impl Tree {
 
     pub(crate) fn append(tree: &Self, node: &Self) -> Self {
         match (tree, node) {
-            (Self::Null, n) => n.clone(),
-            (s, Self::Null) => s.clone(),
+            (Self::Nil, n) => n.clone(),
+            (s, Self::Nil) => s.clone(),
             (Self::Seq(list), node) => {
                 let mut v: Vec<TreeRef> = list.to_vec();
                 v.push(node.clone().into());
@@ -148,8 +148,8 @@ impl Tree {
 
     pub(crate) fn append_as_list(tree: &Self, node: &Self) -> Self {
         match (tree, node) {
-            (Self::Null, n) => Self::Seq(vec![n.clone().into()]),
-            (Self::Seq(list), Self::Null) => Self::Seq(list.clone()),
+            (Self::Nil, n) => Self::Seq(vec![n.clone().into()]),
+            (Self::Seq(list), Self::Nil) => Self::Seq(list.clone()),
             (Self::Seq(list), n) => {
                 let mut v: Vec<TreeRef> = list.to_vec();
                 v.push(n.clone().into());
@@ -188,17 +188,17 @@ impl Tree {
                 continue;
             }
             if *aslist {
-                Self::insert_as_list(map, k, &Self::Null);
+                Self::insert_as_list(map, k, &Self::Nil);
             } else {
-                Self::insert(map, k, &Self::Null);
+                Self::insert(map, k, &Self::Nil);
             }
         }
     }
 
     pub(crate) fn merge(tree: &Self, node: &Self) -> Self {
         match (tree, node) {
-            (Self::Null, n) => n.clone(),
-            (s, Self::Null) => s.clone(),
+            (Self::Nil, n) => n.clone(),
+            (s, Self::Nil) => s.clone(),
             (Self::Seq(l1), Self::Seq(l2)) => {
                 let mut v: Vec<TreeRef> = l1.to_vec();
                 v.extend(l2.iter().cloned());

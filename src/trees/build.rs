@@ -34,7 +34,7 @@ impl Tree {
 
     /// Creates a Nil tree node (no input consumed).
     pub fn nil() -> Tree {
-        Self::Null
+        Self::Nil
     }
 }
 

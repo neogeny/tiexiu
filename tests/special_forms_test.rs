@@ -1,7 +1,6 @@
 //! Special Forms Tests (Group, Void, EOF, Dot, Constant)
 
-#[macro_use]
-extern crate json;
+use serde_json::json;
 use tiexiu::parse_input;
 use tiexiu::*;
 
@@ -13,7 +12,10 @@ fn test_group() -> Result<()> {
     let grammar = compile(grammar, &[])?;
     let tree = parse_input(&grammar, "abab", &[])?;
     // Group creates a list of the inner expressions
-    assert_eq!(tree.to_json(), array![array!["a", "b"], array!["a", "b"]]);
+    assert_eq!(
+        tree.to_json(),
+        json!([json!(["a", "b"]), json!(["a", "b"])])
+    );
     Ok(())
 }
 
@@ -26,7 +28,7 @@ fn test_skip_group() -> Result<()> {
     let grammar = compile(grammar, &[])?;
     let tree = parse_input(&grammar, "abab", &[])?;
     // Skip group doesn't capture the inner expressions
-    assert_eq!(tree.to_json(), value!([null, null]));
+    assert_eq!(tree.to_json(), json!([null, null]));
     Ok(())
 }
 
@@ -39,7 +41,7 @@ fn test_void() -> Result<()> {
     "#;
     let grammar = compile(grammar, &[])?;
     let tree = parse_input(&grammar, "a b", &[])?;
-    assert_eq!(tree.to_json(), array!["a", "b"]);
+    assert_eq!(tree.to_json(), json!(["a", "b"]));
     Ok(())
 }
 
@@ -50,7 +52,7 @@ fn test_eof() -> Result<()> {
     "#;
     let grammar = compile(grammar, &[])?;
     let tree = parse_input(&grammar, "a", &[])?;
-    assert_eq!(tree.to_json(), value!("a"));
+    assert_eq!(tree.to_json(), json!("a"));
     Ok(())
 }
 
@@ -62,7 +64,7 @@ fn test_dot() -> Result<()> {
     let grammar = compile(grammar, &[])?;
     let tree = parse_input(&grammar, "ab", &[])?;
     // Dot matches any character, but doesn't return it
-    assert_eq!(tree.to_json(), array!["a", "b"]);
+    assert_eq!(tree.to_json(), json!(["a", "b"]));
     Ok(())
 }
 
@@ -75,6 +77,6 @@ fn test_constant() -> Result<()> {
     let grammar = compile(grammar, &[])?;
     let tree = tiexiu::parse_input(&grammar, "", &[])?;
     // Constant should inject the constant value
-    assert_eq!(tree.to_json(), value!("constant"));
+    assert_eq!(tree.to_json(), json!("constant"));
     Ok(())
 }

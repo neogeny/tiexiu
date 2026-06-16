@@ -7,7 +7,7 @@ use crate::input::{Cursor, StrCursor};
 use crate::peg::*;
 pub use crate::trees::Tree;
 use crate::{Error, Result};
-use json::JsonValue;
+use serde_json::Value;
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use std::sync::RwLock;
@@ -84,7 +84,7 @@ impl TieXiu {
     }
 
     /// Parse a grammar and return the result as a JSON value.
-    pub fn parse_grammar_to_json(&mut self, grammar: &str) -> Result<JsonValue> {
+    pub fn parse_grammar_to_json(&mut self, grammar: &str) -> Result<Value> {
         super::fnapi::parse_grammar_to_json(grammar, &self.cfg)
     }
 
@@ -102,7 +102,7 @@ impl TieXiu {
     }
 
     /// Parse grammar from cursor and return as JSON.
-    pub fn parse_grammar_to_json_with<U>(&mut self, cursor: U) -> Result<JsonValue>
+    pub fn parse_grammar_to_json_with<U>(&mut self, cursor: U) -> Result<Value>
     where
         U: Cursor + Clone,
     {
@@ -115,7 +115,7 @@ impl TieXiu {
     }
 
     /// Compile grammar and return as JSON value.
-    pub fn compile_to_json(&mut self, grammar: &str) -> Result<JsonValue> {
+    pub fn compile_to_json(&mut self, grammar: &str) -> Result<Value> {
         super::fnapi::compile_to_json(grammar, &self.cfg)
     }
 
@@ -133,7 +133,7 @@ impl TieXiu {
     }
 
     /// Compile from cursor and return as JSON value.
-    pub fn compile_to_json_with<U>(&mut self, cursor: U) -> Result<JsonValue>
+    pub fn compile_to_json_with<U>(&mut self, cursor: U) -> Result<Value>
     where
         U: Cursor + Clone,
     {
@@ -146,7 +146,7 @@ impl TieXiu {
     }
 
     /// Load grammar from JSON and re-serialize as JSON.
-    pub fn load_to_json(&mut self, json: &str) -> Result<JsonValue> {
+    pub fn load_to_json(&mut self, json: &str) -> Result<Value> {
         super::fnapi::load_grammar_from_json_to_json(json, &self.cfg)
     }
 
@@ -156,7 +156,7 @@ impl TieXiu {
     }
 
     /// Load a tree from JSON and re-serialize as JSON.
-    pub fn load_tree_to_json(&mut self, json: &str) -> Result<JsonValue> {
+    pub fn load_tree_to_json(&mut self, json: &str) -> Result<Value> {
         super::fnapi::load_tree_to_json(json, &self.cfg)
     }
 
@@ -171,7 +171,7 @@ impl TieXiu {
     }
 
     /// Parse input text and return result as JSON value.
-    pub fn parse_to_json(&mut self, grammar: &str, text: &str) -> Result<JsonValue> {
+    pub fn parse_to_json(&mut self, grammar: &str, text: &str) -> Result<Value> {
         super::fnapi::parse_to_json(grammar, text, &self.cfg)
     }
 
@@ -186,7 +186,7 @@ impl TieXiu {
     }
 
     /// Parse input with a pre-compiled grammar and return JSON value.
-    pub fn parse_input_to_json(&mut self, parser: &Grammar, text: &str) -> Result<JsonValue> {
+    pub fn parse_input_to_json(&mut self, parser: &Grammar, text: &str) -> Result<Value> {
         super::fnapi::parse_input_to_json(parser, text, &self.cfg)
     }
 
@@ -206,7 +206,7 @@ impl TieXiu {
     }
 
     /// Return the boot grammar as a JSON value.
-    pub fn boot_grammar_to_json(&mut self) -> Result<JsonValue> {
+    pub fn boot_grammar_to_json(&mut self) -> Result<Value> {
         super::fnapi::boot_grammar_to_json(&self.cfg)
     }
 

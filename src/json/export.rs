@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-//! Exp - Grammar to json::JsonValue serializer
+//! Exp - Grammar to serde_json::Value serializer
 //!
-//! This module serializes Grammar to json::JsonValue,
+//! This module serializes Grammar to serde_json::Value,
 //! allowing easy tweaking of the output before final serialization.
 
 use crate::cfg::constants::*;
@@ -12,269 +12,288 @@ use crate::json::error::Result;
 use crate::peg::exp::{Exp, ExpKind};
 use crate::peg::grammar::Grammar;
 use crate::peg::rule::Rule;
-use json::JsonValue;
+use serde_json::{Map, Value};
 
 impl Grammar {
-    /// Serializes the grammar to a `serde_json::Value`.
-    pub fn to_json_serde(&self) -> serde_json::Value {
-        let json_str = self.to_json().dump();
-        serde_json::from_str(&json_str).unwrap_or(serde_json::Value::Null)
-    }
+    /// Serializes this grammar into a `Value`.
+    pub fn to_json(&self) -> Value {
+        let mut obj = Map::new();
 
-    /// Serializes this grammar into a `JsonValue`.
-    pub fn to_json(&self) -> JsonValue {
-        let mut obj = JsonValue::new_object();
-
-        obj["__class__"] = JsonValue::String("Grammar".into());
-        obj["name"] = JsonValue::String(self.name.to_string());
+        obj.insert("__class__".into(), Value::String("Grammar".into()));
+        obj.insert("name".into(), Value::String(self.name.to_string()));
 
         let dirs = self.get_directives();
-        let mut directives = JsonValue::new_object();
+        let mut directives = Map::new();
         for opt in dirs.iter() {
             match opt {
-                CfgKey::Grammar(name) => directives[STR_GRAMMAR_NAME] = name.to_string().into(),
-                CfgKey::Wsp(p) => directives[STR_WHITESPACE] = p.to_string().into(),
-                CfgKey::Cmt(p) => directives[STR_COMMENTS] = p.to_string().into(),
-                CfgKey::Eol(p) => directives[STR_EOL_COMMENTS] = p.to_string().into(),
-                CfgKey::NameChars(p) => directives[STR_NAMECHARS] = p.to_string().into(),
-                CfgKey::IgnoreCase => directives[STR_IGNORECASE] = true.into(),
-                CfgKey::NoIgnoreCase => directives[STR_IGNORECASE] = false.into(),
-                CfgKey::NameGuard(v) => directives[STR_NAMEGUARD] = (*v).into(),
-                CfgKey::NoLeftRecursion => directives[STR_LEFTREC] = false.into(),
-                CfgKey::NoParseInfo => directives[STR_PARSEINFO] = false.into(),
-                CfgKey::NoMemoization => directives[STR_MEMOIZATION] = false.into(),
+                CfgKey::Grammar(name) => {
+                    directives.insert(STR_GRAMMAR_NAME.into(), Value::String(name.to_string()));
+                }
+                CfgKey::Wsp(p) => {
+                    directives.insert(STR_WHITESPACE.into(), Value::String(p.to_string()));
+                }
+                CfgKey::Cmt(p) => {
+                    directives.insert(STR_COMMENTS.into(), Value::String(p.to_string()));
+                }
+                CfgKey::Eol(p) => {
+                    directives.insert(STR_EOL_COMMENTS.into(), Value::String(p.to_string()));
+                }
+                CfgKey::NameChars(p) => {
+                    directives.insert(STR_NAMECHARS.into(), Value::String(p.to_string()));
+                }
+                CfgKey::IgnoreCase => {
+                    directives.insert(STR_IGNORECASE.into(), Value::Bool(true));
+                }
+                CfgKey::NoIgnoreCase => {
+                    directives.insert(STR_IGNORECASE.into(), Value::Bool(false));
+                }
+                CfgKey::NameGuard(v) => {
+                    directives.insert(STR_NAMEGUARD.into(), Value::Bool(*v));
+                }
+                CfgKey::NoLeftRecursion => {
+                    directives.insert(STR_LEFTREC.into(), Value::Bool(false));
+                }
+                CfgKey::NoParseInfo => {
+                    directives.insert(STR_PARSEINFO.into(), Value::Bool(false));
+                }
+                CfgKey::NoMemoization => {
+                    directives.insert(STR_MEMOIZATION.into(), Value::Bool(false));
+                }
                 _ => {}
             };
         }
-        obj["directives"] = directives;
+        obj.insert("directives".into(), Value::Object(directives));
 
-        let keywords: Vec<JsonValue> = self
+        let keywords: Vec<Value> = self
             .keywords
             .iter()
-            .map(|k| JsonValue::String(k.to_string()))
+            .map(|k| Value::String(k.to_string()))
             .collect();
-        obj["keywords"] = JsonValue::Array(keywords);
+        obj.insert("keywords".into(), Value::Array(keywords));
 
-        let rules: Vec<JsonValue> = self.rules().map(|r| r.to_json()).collect();
-        obj["rules"] = JsonValue::Array(rules);
+        let rules: Vec<Value> = self.rules().map(|r| r.to_json()).collect();
+        obj.insert("rules".into(), Value::Array(rules));
 
-        obj
+        Value::Object(obj)
     }
 
     /// Serializes the grammar to a compact JSON string.
     pub fn to_json_str(&self) -> Result<Box<str>> {
-        Ok(self.to_json().dump().into())
+        Ok(serde_json::to_string(&self.to_json())?.into())
     }
 
     /// Serializes the grammar to a pretty-printed JSON string.
     pub fn to_json_string(&self) -> Result<String> {
-        let mut s = self.to_json().pretty(2);
+        let mut s = serde_json::to_string_pretty(&self.to_json())?;
         s.push('\n');
         Ok(s)
     }
 }
 
 impl Rule {
-    /// Serializes this rule into a `JsonValue`.
-    pub fn to_json(&self) -> JsonValue {
-        let mut obj = JsonValue::new_object();
+    /// Serializes this rule into a `Value`.
+    pub fn to_json(&self) -> Value {
+        let mut obj = Map::new();
 
-        obj["__class__"] = JsonValue::String("Rule".into());
-        obj["name"] = JsonValue::String(self.name.to_string());
+        obj.insert("__class__".into(), Value::String("Rule".into()));
+        obj.insert("name".into(), Value::String(self.name.to_string()));
 
-        obj["exp"] = self.exp.to_json();
+        obj.insert("exp".into(), self.exp.to_json());
 
-        let params: Vec<JsonValue> = self
+        let params: Vec<Value> = self
             .params
             .iter()
-            .map(|p| JsonValue::String(p.to_string()))
+            .map(|p| Value::String(p.to_string()))
             .collect();
-        obj["params"] = JsonValue::Array(params);
+        obj.insert("params".into(), Value::Array(params));
 
-        obj["kwparams"] = JsonValue::new_object();
-        obj["decorators"] = JsonValue::Array(
-            self.decorators
-                .iter()
-                .map(|d| JsonValue::String(d.to_string()))
-                .collect(),
+        obj.insert("kwparams".into(), Value::Object(Map::new()));
+        obj.insert(
+            "decorators".into(),
+            Value::Array(
+                self.decorators
+                    .iter()
+                    .map(|d| Value::String(d.to_string()))
+                    .collect(),
+            ),
         );
-        obj["base"] = JsonValue::Null;
+        obj.insert("base".into(), Value::Null);
 
-        obj["is_name"] = JsonValue::Boolean(self.is_name());
-        obj["is_tokn"] = JsonValue::Boolean(self.has_is_tokn_flag());
-        obj["no_memo"] = JsonValue::Boolean(self.has_no_memo_flag());
-        obj["no_stak"] = JsonValue::Boolean(self.has_no_stak_flag());
-        obj["is_memo"] = JsonValue::Boolean(self.has_is_memo_flag());
-        obj["is_lrec"] = JsonValue::Boolean(self.has_is_lrec_flag());
+        obj.insert("is_name".into(), Value::Bool(self.is_name()));
+        obj.insert("is_tokn".into(), Value::Bool(self.has_is_tokn_flag()));
+        obj.insert("no_memo".into(), Value::Bool(self.has_no_memo_flag()));
+        obj.insert("no_stak".into(), Value::Bool(self.has_no_stak_flag()));
+        obj.insert("is_memo".into(), Value::Bool(self.has_is_memo_flag()));
+        obj.insert("is_lrec".into(), Value::Bool(self.has_is_lrec_flag()));
 
-        obj
+        Value::Object(obj)
     }
 }
 
 impl Exp {
-    /// Serializes this expression into a `JsonValue`.
-    pub fn to_json(&self) -> JsonValue {
+    /// Serializes this expression into a `Value`.
+    pub fn to_json(&self) -> Value {
         self.kind.to_json_value()
     }
 }
 
 impl ExpKind {
-    /// Serializes this expression kind into a `JsonValue`.
-    pub fn to_json_value(&self) -> JsonValue {
-        let mut obj = JsonValue::new_object();
+    /// Serializes this expression kind into a `Value`.
+    pub fn to_json_value(&self) -> Value {
+        let mut obj = Map::new();
         let tag = TATSU_TYPE_TAG.to_string();
 
         match self {
             Self::EmptyClosure => {
-                obj[&tag] = JsonValue::String("EmptyClosure".into());
-                obj["ast"] = JsonValue::new_array();
+                obj.insert(tag, Value::String("EmptyClosure".into()));
+                obj.insert("ast".into(), Value::Array(vec![]));
             }
             ExpKind::Nil | ExpKind::Void => {
-                obj[&tag] = JsonValue::String("Void".into());
-                obj["ast"] = JsonValue::String("()".into());
+                obj.insert(tag, Value::String("Void".into()));
+                obj.insert("ast".into(), Value::String("()".into()));
             }
             ExpKind::Fail => {
-                obj[&tag] = JsonValue::String("Fail".into());
+                obj.insert(tag, Value::String("Fail".into()));
             }
             ExpKind::Dot => {
-                obj[&tag] = JsonValue::String("Dot".into());
+                obj.insert(tag, Value::String("Dot".into()));
             }
             ExpKind::Call { name, .. } => {
-                obj[&tag] = JsonValue::String("Call".into());
-                obj["name"] = JsonValue::String(name.to_string());
+                obj.insert(tag, Value::String("Call".into()));
+                obj.insert("name".into(), Value::String(name.to_string()));
             }
             ExpKind::Token(s) => {
-                obj[&tag] = JsonValue::String("Token".into());
-                obj["token"] = JsonValue::String(s.to_string());
+                obj.insert(tag, Value::String("Token".into()));
+                obj.insert("token".into(), Value::String(s.to_string()));
             }
             ExpKind::Pattern(s) => {
-                obj[&tag] = JsonValue::String("Pattern".into());
-                obj["pattern"] = JsonValue::String(s.to_string());
+                obj.insert(tag, Value::String("Pattern".into()));
+                obj.insert("pattern".into(), Value::String(s.to_string()));
             }
             ExpKind::Constant(s) => {
-                obj[&tag] = JsonValue::String("Constant".into());
-                obj["literal"] = JsonValue::String(s.to_string());
+                obj.insert(tag, Value::String("Constant".into()));
+                obj.insert("literal".into(), Value::String(s.to_string()));
             }
             ExpKind::Alert(s, level) => {
-                obj[&tag] = JsonValue::String("Alert".into());
-                obj["literal"] = JsonValue::String(s.to_string());
-                obj["level"] = JsonValue::Number((*level).into());
+                obj.insert(tag, Value::String("Alert".into()));
+                obj.insert("literal".into(), Value::String(s.to_string()));
+                obj.insert("level".into(), Value::Number((*level).into()));
             }
             ExpKind::Named(name, inner) => {
-                obj[&tag] = JsonValue::String("Named".into());
-                obj["name"] = JsonValue::String(name.to_string());
-                obj["exp"] = inner.to_json();
+                obj.insert(tag, Value::String("Named".into()));
+                obj.insert("name".into(), Value::String(name.to_string()));
+                obj.insert("exp".into(), inner.to_json());
             }
             ExpKind::NamedList(name, inner) => {
-                obj[&tag] = JsonValue::String("NamedList".into());
-                obj["name"] = JsonValue::String(name.to_string());
-                obj["exp"] = inner.to_json();
+                obj.insert(tag, Value::String("NamedList".into()));
+                obj.insert("name".into(), Value::String(name.to_string()));
+                obj.insert("exp".into(), inner.to_json());
             }
             ExpKind::Override(inner) => {
-                obj[&tag] = JsonValue::String("Override".into());
-                obj["exp"] = inner.to_json();
+                obj.insert(tag, Value::String("Override".into()));
+                obj.insert("exp".into(), inner.to_json());
             }
             ExpKind::OverrideList(inner) => {
-                obj[&tag] = JsonValue::String("OverrideList".into());
-                obj["exp"] = inner.to_json();
+                obj.insert(tag, Value::String("OverrideList".into()));
+                obj.insert("exp".into(), inner.to_json());
             }
             ExpKind::Group(inner) => {
-                obj[&tag] = JsonValue::String("Group".into());
-                obj["exp"] = inner.to_json();
+                obj.insert(tag, Value::String("Group".into()));
+                obj.insert("exp".into(), inner.to_json());
             }
             ExpKind::SkipGroup(inner) => {
-                obj[&tag] = JsonValue::String("SkipGroup".into());
-                obj["exp"] = inner.to_json();
+                obj.insert(tag, Value::String("SkipGroup".into()));
+                obj.insert("exp".into(), inner.to_json());
             }
             ExpKind::Lookahead(inner) => {
-                obj[&tag] = JsonValue::String("Lookahead".into());
-                obj["exp"] = inner.to_json();
+                obj.insert(tag, Value::String("Lookahead".into()));
+                obj.insert("exp".into(), inner.to_json());
             }
             ExpKind::NegativeLookahead(inner) => {
-                obj[&tag] = JsonValue::String("NegativeLookahead".into());
-                obj["exp"] = inner.to_json();
+                obj.insert(tag, Value::String("NegativeLookahead".into()));
+                obj.insert("exp".into(), inner.to_json());
             }
             ExpKind::SkipTo(inner) => {
-                obj[&tag] = JsonValue::String("SkipTo".into());
-                obj["exp"] = inner.to_json();
+                obj.insert(tag, Value::String("SkipTo".into()));
+                obj.insert("exp".into(), inner.to_json());
             }
             ExpKind::Sequence(arr) => {
-                obj[&tag] = JsonValue::String("Sequence".into());
-                let seq: Vec<JsonValue> = arr.iter().map(|e| e.to_json()).collect();
-                obj["sequence"] = JsonValue::Array(seq);
+                obj.insert(tag, Value::String("Sequence".into()));
+                let seq: Vec<Value> = arr.iter().map(|e| e.to_json()).collect();
+                obj.insert("sequence".into(), Value::Array(seq));
             }
             ExpKind::Choice(arr) => {
-                obj[&tag] = JsonValue::String("Choice".into());
-                let opts: Vec<JsonValue> = arr.iter().map(|e| e.to_json()).collect();
-                obj["options"] = JsonValue::Array(opts);
+                obj.insert(tag, Value::String("Choice".into()));
+                let opts: Vec<Value> = arr.iter().map(|e| e.to_json()).collect();
+                obj.insert("options".into(), Value::Array(opts));
             }
             ExpKind::Alt(inner) => {
-                obj[&tag] = JsonValue::String("Option".into());
-                obj["exp"] = inner.to_json();
+                obj.insert(tag, Value::String("Option".into()));
+                obj.insert("exp".into(), inner.to_json());
             }
             ExpKind::Optional(inner) => {
-                obj[&tag] = JsonValue::String("Optional".into());
-                obj["exp"] = inner.to_json();
+                obj.insert(tag, Value::String("Optional".into()));
+                obj.insert("exp".into(), inner.to_json());
             }
             ExpKind::Closure(inner) => {
-                obj[&tag] = JsonValue::String("Closure".into());
-                obj["exp"] = inner.to_json();
+                obj.insert(tag, Value::String("Closure".into()));
+                obj.insert("exp".into(), inner.to_json());
             }
             ExpKind::PositiveClosure(inner) => {
-                obj[&tag] = JsonValue::String("PositiveClosure".into());
-                obj["exp"] = inner.to_json();
+                obj.insert(tag, Value::String("PositiveClosure".into()));
+                obj.insert("exp".into(), inner.to_json());
             }
             ExpKind::Join { exp, sep } => {
-                obj[&tag] = JsonValue::String("Join".into());
-                obj["exp"] = exp.to_json();
-                obj["sep"] = sep.to_json();
+                obj.insert(tag, Value::String("Join".into()));
+                obj.insert("exp".into(), exp.to_json());
+                obj.insert("sep".into(), sep.to_json());
             }
             ExpKind::PositiveJoin { exp, sep } => {
-                obj[&tag] = JsonValue::String("PositiveJoin".into());
-                obj["exp"] = exp.to_json();
-                obj["sep"] = sep.to_json();
+                obj.insert(tag, Value::String("PositiveJoin".into()));
+                obj.insert("exp".into(), exp.to_json());
+                obj.insert("sep".into(), sep.to_json());
             }
             ExpKind::Gather { exp, sep } => {
-                obj[&tag] = JsonValue::String("Gather".into());
-                obj["exp"] = exp.to_json();
-                obj["sep"] = sep.to_json();
+                obj.insert(tag, Value::String("Gather".into()));
+                obj.insert("exp".into(), exp.to_json());
+                obj.insert("sep".into(), sep.to_json());
             }
             ExpKind::PositiveGather { exp, sep } => {
-                obj[&tag] = JsonValue::String("PositiveGather".into());
-                obj["exp"] = exp.to_json();
-                obj["sep"] = sep.to_json();
+                obj.insert(tag, Value::String("PositiveGather".into()));
+                obj.insert("exp".into(), exp.to_json());
+                obj.insert("sep".into(), sep.to_json());
             }
             ExpKind::RuleInclude { name, exp: _ } => {
-                obj[&tag] = JsonValue::String("RuleInclude".into());
-                obj["name"] = JsonValue::String(name.to_string());
+                obj.insert(tag, Value::String("RuleInclude".into()));
+                obj.insert("name".into(), Value::String(name.to_string()));
             }
             ExpKind::Eof => {
-                obj[&tag] = JsonValue::String("EOF".into());
+                obj.insert(tag, Value::String("EOF".into()));
             }
             ExpKind::Eol => {
-                obj[&tag] = JsonValue::String("EOL".into());
+                obj.insert(tag, Value::String("EOL".into()));
             }
             ExpKind::Cut => {
-                obj[&tag] = JsonValue::String("Cut".into());
+                obj.insert(tag, Value::String("Cut".into()));
             }
             ExpKind::NameMeta => {
-                obj[&tag] = JsonValue::String("NameMeta".into());
+                obj.insert(tag, Value::String("NameMeta".into()));
             }
             ExpKind::IntMeta => {
-                obj[&tag] = JsonValue::String("IntMeta".into());
+                obj.insert(tag, Value::String("IntMeta".into()));
             }
             ExpKind::UIntMeta => {
-                obj[&tag] = JsonValue::String("UIntMeta".into());
+                obj.insert(tag, Value::String("UIntMeta".into()));
             }
             ExpKind::FloatMeta => {
-                obj[&tag] = JsonValue::String("FloatMeta".into());
+                obj.insert(tag, Value::String("FloatMeta".into()));
             }
             ExpKind::BoolMeta => {
-                obj[&tag] = JsonValue::String("BoolMeta".into());
+                obj.insert(tag, Value::String("BoolMeta".into()));
             }
         }
 
-        obj
+        Value::Object(obj)
     }
 }
 
@@ -285,7 +304,8 @@ mod tests {
     #[test]
     fn test_grammar_to_json_value() {
         let json_str = include_str!("../../grammar/tatsu.json");
-        let value = json::parse(json_str).expect("Failed to parse JSON");
+        let value: serde_json::Value =
+            serde_json::from_str(json_str).expect("Failed to parse JSON");
         let grammar = Grammar::from_json_value(&value).expect("Failed to convert");
         let output = grammar.to_json();
 

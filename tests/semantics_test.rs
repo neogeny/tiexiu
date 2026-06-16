@@ -5,8 +5,7 @@
 //! by intercepting Meta nodes during boot-grammar parsing and converting
 //! them to strongly-typed NameMeta/IntMeta/etc. before the compiler sees them.
 
-#[macro_use]
-extern crate json;
+use serde_json::json;
 use std::sync::Arc;
 use tiexiu::Str;
 use tiexiu::cfg::CfgKey;
@@ -57,7 +56,7 @@ fn test_semantics_meta_to_name() -> Result<()> {
         start = @name $ ;
     "#;
     let tree = parse(grammar, "hello_world", &[CfgKey::Semantics(sem.clone())])?;
-    assert_eq!(tree.to_json(), value!("hello_world"));
+    assert_eq!(tree.to_json(), json!("hello_world"));
     Ok(())
 }
 
@@ -69,7 +68,7 @@ fn test_semantics_meta_to_int() -> Result<()> {
         start = @int $ ;
     "#;
     let tree = parse(grammar, "42", &[CfgKey::Semantics(sem.clone())])?;
-    assert_eq!(tree.to_json(), value!("42"));
+    assert_eq!(tree.to_json(), json!("42"));
     Ok(())
 }
 
@@ -81,7 +80,7 @@ fn test_semantics_meta_to_float() -> Result<()> {
         start = @float $ ;
     "#;
     let tree = parse(grammar, "3.14", &[CfgKey::Semantics(sem.clone())])?;
-    assert_eq!(tree.to_json(), value!("3.14"));
+    assert_eq!(tree.to_json(), json!("3.14"));
     Ok(())
 }
 
@@ -93,7 +92,7 @@ fn test_semantics_meta_to_bool() -> Result<()> {
         start = @bool $ ;
     "#;
     let tree = parse(grammar, "true", &[CfgKey::Semantics(sem.clone())])?;
-    assert_eq!(tree.to_json(), value!("true"));
+    assert_eq!(tree.to_json(), json!("true"));
     Ok(())
 }
 
@@ -105,7 +104,7 @@ fn test_semantics_meta_to_uint() -> Result<()> {
         start = @uint $ ;
     "#;
     let tree = parse(grammar, "007", &[CfgKey::Semantics(sem.clone())])?;
-    assert_eq!(tree.to_json(), value!("7"));
+    assert_eq!(tree.to_json(), json!("7"));
     Ok(())
 }
 
@@ -117,7 +116,7 @@ fn test_semantics_without_semantics_falls_through() -> Result<()> {
         start = @name $ ;
     "#;
     let tree = parse(grammar, "hello_world", &[])?;
-    assert_eq!(tree.to_json(), value!("hello_world"));
+    assert_eq!(tree.to_json(), json!("hello_world"));
     Ok(())
 }
 
@@ -131,6 +130,6 @@ fn test_semantics_passes_through_other_rules() -> Result<()> {
         word = /\w+/ ;
     "#;
     let tree = parse(grammar, "hello", &[CfgKey::Semantics(sem.clone())])?;
-    assert_eq!(tree.to_json(), value!("hello"));
+    assert_eq!(tree.to_json(), json!("hello"));
     Ok(())
 }

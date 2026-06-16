@@ -3,8 +3,7 @@
 
 //! Tests for join - translated from TatSu's grammar/join_test.py
 
-#[macro_use]
-extern crate json;
+use serde_json::json;
 use tiexiu::Result;
 use tiexiu::api::compile;
 
@@ -20,11 +19,11 @@ fn test_positive_join() -> Result<()> {
     let ast = tiexiu::parse_input(&model, "x y, x y", &[])?;
     assert_eq!(
         ast.to_json(),
-        array![array!["x", "y"], ",", array!["x", "y"]]
+        json!([json!(["x", "y"]), ",", json!(["x", "y"])])
     );
 
     let ast = tiexiu::parse_input(&model, "x y x y", &[])?;
-    assert_eq!(ast.to_json(), array![array!["x", "y"]]);
+    assert_eq!(ast.to_json(), json!([json!(["x", "y"])]));
 
     let result = tiexiu::parse_input(&model, "y x", &[]);
     assert!(result.is_err(), "Expected failure: closure not positive");

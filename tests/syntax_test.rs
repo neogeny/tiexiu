@@ -3,8 +3,7 @@
 
 //! Tests translated from TatSu's grammar/syntax_test.py
 
-#[macro_use]
-extern crate json;
+use serde_json::json;
 use tiexiu::api::{compile, parse, parse_grammar};
 use tiexiu::context;
 use tiexiu::input::StrCursor;
@@ -76,7 +75,7 @@ fn test_optional_closure() -> Result<()> {
     );
     assert_eq!(
         ast.to_json(),
-        object! {"foo": array!["x", array!["y", "y"], "z", "z"]}
+        json!({ "foo": json!(["x", json!(["y", "y"]), "z", "z"])})
     );
     Ok(())
 }
@@ -89,7 +88,7 @@ fn test_optional_sequence() -> Result<()> {
 
     let model = compile(grammar, &[])?;
     let ast = parse_input(&model, "1234", &[])?;
-    assert_eq!(ast.to_json(), value!(["1", "2", "3", "4"]));
+    assert_eq!(ast.to_json(), json!(["1", "2", "3", "4"]));
     assert_eq!(ast, l(&[t("1"), t("2"), t("3"), t("4")]));
 
     let grammar = r#"
@@ -98,7 +97,7 @@ fn test_optional_sequence() -> Result<()> {
 
     let model = compile(grammar, &[])?;
     let ast = parse_input(&model, "1234", &[])?;
-    assert_eq!(ast.to_json(), object! {"foo": ["2", "3"]});
+    assert_eq!(ast.to_json(), json!({ "foo": ["2", "3"]}));
 
     Ok(())
 }
@@ -111,7 +110,7 @@ fn test_group_ast() -> Result<()> {
 
     let model = compile(grammar, &[])?;
     let ast = parse_input(&model, "1234", &[])?;
-    assert_eq!(ast.to_json(), value!(["1", "2", "3", "4"]));
+    assert_eq!(ast.to_json(), json!(["1", "2", "3", "4"]));
     assert_eq!(ast, l(&[t("1"), t("2"), t("3"), t("4")]));
     Ok(())
 }
@@ -144,7 +143,7 @@ fn test_deprecated_comments_override() -> Result<()> {
 
     let text = "        # This comment should be stripped\n        a\n    ";
     let ast = parser.parse_input(text, &cfg)?;
-    assert_eq!(ast.to_json(), value!("a"));
+    assert_eq!(ast.to_json(), json!("a"));
 
     Ok(())
 }
@@ -161,7 +160,7 @@ fn test_new_override() -> Result<()> {
 
     let model = compile(grammar, &[CfgKey::Wsp("".to_string())])?;
     let ast = parse_input(&model, "abb", &[CfgKey::Wsp("".to_string())])?;
-    assert_eq!(ast.to_json(), value!(["a", "b", "b"]));
+    assert_eq!(ast.to_json(), json!(["a", "b", "b"]));
 
     Ok(())
 }
@@ -177,7 +176,7 @@ fn test_list_override() -> Result<()> {
 
     let model = compile(grammar, &[CfgKey::Wsp("".to_string())])?;
     let ast = parse_input(&model, "a", &[CfgKey::Wsp("".to_string())])?;
-    assert_eq!(ast.to_json(), value!([["a"]]));
+    assert_eq!(ast.to_json(), json!([["a"]]));
 
     let grammar = r#"
         start = @:'a' {@:'b'} $ ;
@@ -185,7 +184,7 @@ fn test_list_override() -> Result<()> {
 
     let model = compile(grammar, &[CfgKey::Wsp("".to_string())])?;
     let ast = parse_input(&model, "a", &[CfgKey::Wsp("".to_string())])?;
-    assert_eq!(ast.to_json(), value!("a"));
+    assert_eq!(ast.to_json(), json!("a"));
 
     Ok(())
 }
@@ -209,7 +208,7 @@ fn test_based_rule() -> Result<()> {
 
     let model = compile(grammar, &[CfgKey::Wsp("".to_string())])?;
     let ast = parse_input(&model, "abb", &[CfgKey::Wsp("".to_string())])?;
-    assert_eq!(ast.to_json(), value!(["a", "b", "b"]));
+    assert_eq!(ast.to_json(), json!(["a", "b", "b"]));
 
     Ok(())
 }
@@ -225,7 +224,7 @@ fn test_rule_include() -> Result<()> {
 
     let model = compile(grammar, &[CfgKey::Wsp("".to_string())])?;
     let ast = parse_input(&model, "abb", &[CfgKey::Wsp("".to_string())])?;
-    assert_eq!(ast.to_json(), value!(["a", "b", "b"]));
+    assert_eq!(ast.to_json(), json!(["a", "b", "b"]));
 
     Ok(())
 }
@@ -243,7 +242,7 @@ fn test_48_rule_override() -> Result<()> {
 
     let model = compile(grammar, &[CfgKey::Wsp("".to_string())])?;
     let ast = parse_input(&model, "abb", &[CfgKey::Wsp("".to_string())])?;
-    assert_eq!(ast.to_json(), value!(["a", "b", "b"]));
+    assert_eq!(ast.to_json(), json!(["a", "b", "b"]));
 
     Ok(())
 }
@@ -260,7 +259,7 @@ fn test_empty_closure() -> Result<()> {
 
     let model = compile(grammar, &[])?;
     let ast = parse_input(&model, "xxxy", &[CfgKey::Wsp("".to_string())])?;
-    assert_eq!(ast.to_json(), value!([["x", "x", "x"], [], "y"]));
+    assert_eq!(ast.to_json(), json!([["x", "x", "x"], [], "y"]));
 
     Ok(())
 }
@@ -274,7 +273,7 @@ fn test_any() -> Result<()> {
 
     let model = compile(grammar, &[])?;
     let ast = parse_input(&model, "1xx 2 yy", &[])?;
-    assert_eq!(ast.to_json(), value!(["1", "xx", " ", "2", "yy"]));
+    assert_eq!(ast.to_json(), json!(["1", "xx", " ", "2", "yy"]));
 
     Ok(())
 }
@@ -297,14 +296,14 @@ fn test_constant() -> Result<()> {
     let ast = parse_input(&model, "", &[])?;
     let json = ast.to_json();
 
-    assert_eq!(json["_0"], value!(0));
-    assert_eq!(json["_1"], value!(1));
-    assert_eq!(json["_n123"], value!(-123));
-    assert_eq!(json["_xF"], value!(0xF));
-    assert_eq!(json["_string"], value!("string"));
-    assert_eq!(json["_string_space"], value!("string space"));
-    assert_eq!(json["_true"], value!(true));
-    assert_eq!(json["_false"], value!(false));
+    assert_eq!(json["_0"], json!(0));
+    assert_eq!(json["_1"], json!(1));
+    assert_eq!(json["_n123"], json!(-123));
+    assert_eq!(json["_xF"], json!(0xF));
+    assert_eq!(json["_string"], json!("string"));
+    assert_eq!(json["_string_space"], json!("string space"));
+    assert_eq!(json["_true"], json!(true));
+    assert_eq!(json["_false"], json!(false));
 
     Ok(())
 }
@@ -328,7 +327,7 @@ fn test_non_capturing_group_exclusion() -> Result<()> {
     let parser = compile(grammar, &[])?;
     let ast = parser.parse_input("INFO---data", &[])?;
 
-    assert_eq!(ast.to_json(), value!(["INFO", "data"]));
+    assert_eq!(ast.to_json(), json!(["INFO", "data"]));
 
     Ok(())
 }
@@ -355,7 +354,7 @@ fn test_nested_non_capturing_groups() -> Result<()> {
     let parser = compile(grammar, &[CfgKey::Wsp("".to_string())])?;
     let ast = parser.parse_input("(content)", &[CfgKey::Wsp("".to_string())])?;
 
-    assert_eq!(ast.to_json(), value!(null));
+    assert_eq!(ast.to_json(), json!(null));
 
     Ok(())
 }
@@ -379,55 +378,52 @@ fn test_ast_assignment() -> Result<()> {
     let cfg = &[];
 
     // Rule 'n': @: override of {"a"}* (result is not forced to be a list)
-    assert_eq!(model.parse_input_from("", "n", cfg)?.to_json(), value!([]));
+    assert_eq!(model.parse_input_from("", "n", cfg)?.to_json(), json!([]));
     assert_eq!(
         model.parse_input_from("a", "n", cfg)?.to_json(),
-        value!(["a"])
+        json!(["a"])
     );
     assert_eq!(
         model.parse_input_from("aa", "n", cfg)?.to_json(),
-        value!(["a", "a"])
+        json!(["a", "a"])
     );
 
     // Rule 'f': @+: override of {"a"}* (result is forced to be a list)
-    assert_eq!(
-        model.parse_input_from("", "f", cfg)?.to_json(),
-        value!([[]])
-    );
+    assert_eq!(model.parse_input_from("", "f", cfg)?.to_json(), json!([[]]));
     assert_eq!(
         model.parse_input_from("a", "f", cfg)?.to_json(),
-        value!([["a"]])
+        json!([["a"]])
     );
     assert_eq!(
         model.parse_input_from("aa", "f", cfg)?.to_json(),
-        value!([["a", "a"]])
+        json!([["a", "a"]])
     );
 
     // Rules with multiple overrides: nn, nf, fn, ff
     for rule in &["nn", "nf", "fn", "ff"] {
         // Empty input: both closures match nothing
         let json = model.parse_input_from("", rule, cfg)?.to_json();
-        assert_eq!(json, value!([[], []]), "rule: {}", rule);
+        assert_eq!(json, json!([[], []]), "rule: {}", rule);
 
         // Only 'a's: first closure matches, second matches nothing
         let json = model.parse_input_from("a", rule, cfg)?.to_json();
-        assert_eq!(json, value!([["a"], []]), "rule: {}", rule);
+        assert_eq!(json, json!([["a"], []]), "rule: {}", rule);
 
         // Only 'b's: first closure matches nothing, second matches
         let json = model.parse_input_from("b", rule, cfg)?.to_json();
-        assert_eq!(json, value!([[], ["b"]]), "rule: {}", rule);
+        assert_eq!(json, json!([[], ["b"]]), "rule: {}", rule);
 
         // "aa": first closure gets ["a","a"], second matches nothing
         let json = model.parse_input_from("aa", rule, cfg)?.to_json();
-        assert_eq!(json, value!([["a", "a"], []]), "rule: {}", rule);
+        assert_eq!(json, json!([["a", "a"], []]), "rule: {}", rule);
 
         // "bb": first closure matches nothing, second gets ["b","b"]
         let json = model.parse_input_from("bb", rule, cfg)?.to_json();
-        assert_eq!(json, value!([[], ["b", "b"]]), "rule: {}", rule);
+        assert_eq!(json, json!([[], ["b", "b"]]), "rule: {}", rule);
 
         // "aab": first gets ["a","a"], second gets ["b"]
         let json = model.parse_input_from("aab", rule, cfg)?.to_json();
-        assert_eq!(json, value!([["a", "a"], ["b"]]), "rule: {}", rule);
+        assert_eq!(json, json!([["a", "a"], ["b"]]), "rule: {}", rule);
     }
 
     Ok(())
@@ -475,7 +471,7 @@ fn test_parse_void() -> Result<()> {
     "#;
 
     let ast = parse(grammar, "", &[])?;
-    assert_eq!(ast.to_json(), value!(null));
+    assert_eq!(ast.to_json(), json!(null));
 
     Ok(())
 }
@@ -489,7 +485,7 @@ fn test_partial_choice() -> Result<()> {
 
     let model = compile(grammar, &[CfgKey::Wsp("".to_string())])?;
     let ast = parse_input(&model, "A", &[CfgKey::Wsp("".to_string())])?;
-    assert_eq!(ast.to_json(), object! {"x": "A", "o": null});
+    assert_eq!(ast.to_json(), json!({ "x": "A", "o": null}));
 
     Ok(())
 }

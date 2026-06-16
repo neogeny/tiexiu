@@ -3,8 +3,7 @@
 
 //! Tests for patterns - translated from TatSu's grammar/pattern_test.py
 
-#[macro_use]
-extern crate json;
+use serde_json::json;
 use tiexiu::Result;
 use tiexiu::api::compile;
 
@@ -18,6 +17,6 @@ fn test_patterns_with_newlines() -> Result<()> {
     "#;
     let model = compile(grammar, &[])?;
     let ast = tiexiu::parse_input(&model, "\n\n", &[])?;
-    assert_eq!(ast.to_json(), array!["\n", "\n"]);
+    assert_eq!(ast.to_json(), json!(["\n", "\n"]));
     Ok(())
 }

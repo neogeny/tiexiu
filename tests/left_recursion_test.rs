@@ -3,8 +3,7 @@
 
 //! Tests for left recursion - translated from TatSu's grammar/left_recursion_test.py
 
-#[macro_use]
-extern crate json;
+use serde_json::json;
 use tiexiu::Result;
 use tiexiu::api::compile;
 
@@ -21,7 +20,7 @@ fn test_direct_left_recursion() -> Result<()> {
     let model = compile(grammar, &[])?;
 
     let ast = tiexiu::parse_input(&model, "10 - 20", &[])?;
-    assert_eq!(ast.to_json(), array!["10", "-", "20"]);
+    assert_eq!(ast.to_json(), json!(["10", "-", "20"]));
 
     Ok(())
 }
@@ -39,11 +38,11 @@ fn test_indirect_left_recursion() -> Result<()> {
 
     // Mutual left recursion: A → B → A via 'y'
     let ast = tiexiu::parse_input(&model, "y", &[])?;
-    assert!(ast.to_json() == value!("y"));
+    assert!(ast.to_json() == json!("y"));
 
     // Direct match: A → 'x'
     let ast = tiexiu::parse_input(&model, "x", &[])?;
-    assert!(ast.to_json() == value!("x"));
+    assert!(ast.to_json() == json!("x"));
 
     Ok(())
 }
@@ -80,7 +79,7 @@ fn test_lr_disabled_normal_grammar() -> Result<()> {
     let model = compile(grammar, &[])?;
 
     let ast = tiexiu::parse_input(&model, "((1))", &[])?;
-    assert_eq!(ast.to_json(), array!["(", array!("(", "1", ")"), ")"]);
+    assert_eq!(ast.to_json(), json!(["(", json!(["(", "1", ")"]), ")"]));
 
     Ok(())
 }

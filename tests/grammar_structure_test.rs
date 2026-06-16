@@ -1,7 +1,6 @@
 //! Grammar Structure Tests
 
-#[macro_use]
-extern crate json;
+use serde_json::json;
 use tiexiu::parse_input;
 use tiexiu::*;
 
@@ -26,7 +25,7 @@ fn first_rule_is_default() -> Result<()> {
     "#;
     let grammar = tiexiu::compile(grammar, &[])?;
     let tree = parse_input(&grammar, "a", &[])?;
-    assert_eq!(tree.to_json(), value!("a"));
+    assert_eq!(tree.to_json(), json!("a"));
     Ok(())
 }
 

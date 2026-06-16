@@ -1,7 +1,6 @@
 //! Basic Grammar Tests
 
-#[macro_use]
-extern crate json;
+use serde_json::json;
 use tiexiu::*;
 
 #[test]
@@ -12,7 +11,7 @@ fn simple_grammar() -> Result<()> {
     "#;
     let grammar = compile(grammar, &[])?;
     let tree = parse_input(&grammar, "hello", &[])?;
-    assert_eq!(tree.to_json(), value!("hello"));
+    assert_eq!(tree.to_json(), json!("hello"));
     Ok(())
 }
 
@@ -29,7 +28,7 @@ fn multiple_rules() -> Result<()> {
     "#;
     let grammar = compile(grammar, &[])?;
     let tree = parse_input(&grammar, "a", &[])?;
-    assert_eq!(tree.to_json(), value!("a"));
+    assert_eq!(tree.to_json(), json!("a"));
     Ok(())
 }
 
@@ -42,7 +41,7 @@ fn rule_references() -> Result<()> {
     "#;
     let grammar = compile(grammar, &[])?;
     let tree = parse_input(&grammar, "helloworld", &[])?;
-    assert_eq!(tree.to_json(), array!["hello", "world"]);
+    assert_eq!(tree.to_json(), json!(["hello", "world"]));
     Ok(())
 }
 
@@ -56,6 +55,6 @@ fn empty_input() -> Result<()> {
     // Test with optional matching empty
     let tree = parse_input(&grammar, "", &[])?;
     // Optional with no input should return Nil/None
-    assert!(tree.to_json().is_null() || matches!(tree, crate::trees::Tree::Null));
+    assert!(tree.to_json().is_null() || matches!(tree, crate::trees::Tree::Nil));
     Ok(())
 }

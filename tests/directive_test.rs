@@ -3,8 +3,7 @@
 
 //! Tests for directives - translated from TatSu's grammar/directive_test.py
 
-#[macro_use]
-extern crate json;
+use serde_json::json;
 use tiexiu::Result;
 use tiexiu::api::compile;
 
@@ -16,6 +15,6 @@ fn test_whitespace_directive() -> Result<()> {
     "#;
     let model = compile(grammar, &[])?;
     let ast = tiexiu::parse_input(&model, "test", &[])?;
-    assert_eq!(ast.to_json(), value!("test"));
+    assert_eq!(ast.to_json(), json!("test"));
     Ok(())
 }

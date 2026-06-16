@@ -6,8 +6,8 @@ use crate::trees::cst::*;
 use crate::types::Ref;
 use std::collections::LinkedList;
 
-/// The Null tree constant.
-pub const NULL: Tree = Tree::Null;
+/// The Nil tree constant.
+pub const NIL: Tree = Tree::Nil;
 /// The Bottom tree constant.
 pub const BOTTOM: Tree = Tree::Bottom;
 
@@ -23,8 +23,6 @@ pub struct KeyValue(pub Str, pub TreeRef);
 /// The abstract syntax tree representation for parsed input.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Tree {
-    /// Parsing that didn't consume any input (internal).
-    Null,
     /// A text/leaf node from tokens or patterns.
     Text(Str),
     /// A non-mergeable list of values.
@@ -33,6 +31,8 @@ pub enum Tree {
     Map(TreeMap),
 
     // NOTE these variants don't survive fold()
+    /// Parsing that didn't consume any input (internal).
+    Nil,
     /// The result of parsing a rule call.
     Node { typename: Str, tree: TreeRef },
     /// A sequence of values (mergeable).
@@ -58,7 +58,7 @@ impl From<Vec<Tree>> for Tree {
     fn from(v: Vec<Tree>) -> Self {
         let clean: Vec<TreeRef> = v
             .into_iter()
-            .filter(|item| *item != Tree::Null)
+            .filter(|item| *item != Tree::Nil)
             .map(|t| t.into())
             .collect();
         Tree::Seq(clean)
@@ -69,7 +69,7 @@ impl<const N: usize> From<[Tree; N]> for Tree {
     fn from(arr: [Tree; N]) -> Self {
         let clean: Vec<TreeRef> = arr
             .into_iter()
-            .filter(|item| *item != Tree::Null)
+            .filter(|item| *item != Tree::Nil)
             .map(|t| t.into())
             .collect();
         Tree::Seq(clean)
@@ -86,7 +86,7 @@ impl From<&[Tree]> for Tree {
     fn from(slice: &[Tree]) -> Self {
         let clean: Vec<TreeRef> = slice
             .iter()
-            .filter(|item| **item != Tree::Null)
+            .filter(|item| **item != Tree::Nil)
             .cloned()
             .map(|t| t.into())
             .collect();
@@ -112,7 +112,7 @@ impl Tree {
         match self {
             Tree::Text(text) => text.len(),
             Tree::Override(inner) | Tree::OverrideAsList(inner) => inner.width(),
-            Tree::Null | Tree::Bottom => 0,
+            Tree::Nil | Tree::Bottom => 0,
             Tree::Seq(items) | Tree::List(items) => items.iter().map(|item| item.width()).sum(),
             Tree::Map(map) => map.iter().map(|(_, node)| node.width()).sum(),
             Tree::Named(pair) | Tree::NamedAsList(pair) => {
@@ -197,7 +197,7 @@ mod tests {
 
     #[test]
     fn test_node_nil_removal() {
-        let raw = Tree::from(vec![Tree::Null, Tree::Bottom, Tree::Null]);
+        let raw = Tree::from(vec![Tree::Nil, Tree::Bottom, Tree::Nil]);
         let result = Tree::fold(raw);
 
         assert_eq!(result, Tree::fold(Tree::Bottom));
@@ -205,7 +205,7 @@ mod tests {
 
     #[test]
     fn test_node_nil_removal_to_bottom() {
-        let raw = Tree::from(vec![Tree::Null, Tree::Bottom, Tree::Null]);
+        let raw = Tree::from(vec![Tree::Nil, Tree::Bottom, Tree::Nil]);
         let result = Tree::fold(raw);
 
         assert_eq!(result, Tree::Bottom);
@@ -213,7 +213,7 @@ mod tests {
 
     #[test]
     fn test_node_nil_removal_to_list() {
-        let raw = Tree::from(vec![Tree::Bottom, Tree::Null, Tree::Bottom]);
+        let raw = Tree::from(vec![Tree::Bottom, Tree::Nil, Tree::Bottom]);
         let result = Tree::fold(raw);
 
         if let Tree::List(v) = result {
@@ -227,7 +227,7 @@ mod tests {
 
     #[test]
     fn test_node_nil_purging_preserves_count() {
-        let raw = Tree::from(vec![Tree::Null, Tree::Bottom, Tree::Null]);
+        let raw = Tree::from(vec![Tree::Nil, Tree::Bottom, Tree::Nil]);
         let result = Tree::fold(raw);
 
         assert_eq!(result, Tree::Bottom);

@@ -1,39 +1,33 @@
-use json::JsonValue;
-use pyo3::prelude::*;
-// These trait imports make methods like .append() and .set_item() visible
 use pyo3::IntoPyObjectExt;
+use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyDictMethods, PyList, PyListMethods};
+use serde_json::Value;
 
-/// Converts a `json::JsonValue` into the equivalent Python object.
-pub fn pythonize(py: Python<'_>, value: &JsonValue) -> PyResult<Py<PyAny>> {
+/// Converts a `serde_json::Value` into the equivalent Python object.
+pub fn pythonize(py: Python<'_>, value: &Value) -> PyResult<Py<PyAny>> {
     match value {
-        JsonValue::Null => Ok(py.None()),
-        JsonValue::Boolean(b) => {
-            // Converts bool -> Py<PyAny>
-            Ok(b.into_py_any(py)?)
-        }
-        JsonValue::Number(n) => {
-            if let Some(i) = n.as_fixed_point_i64(0) {
+        Value::Null => Ok(py.None()),
+        Value::Bool(b) => Ok(b.into_py_any(py)?),
+        Value::Number(n) => {
+            if let Some(i) = n.as_i64() {
                 Ok(i.into_py_any(py)?)
-            } else if let Some(u) = n.as_fixed_point_u64(0) {
+            } else if let Some(u) = n.as_u64() {
                 Ok(u.into_py_any(py)?)
             } else {
-                let f: f64 = (*n).into();
+                let f: f64 = n.as_f64().unwrap_or(0.0);
                 Ok(f.into_py_any(py)?)
             }
         }
-        JsonValue::String(s) => Ok(s.into_py_any(py)?),
-        JsonValue::Short(s) => Ok(s.as_str().into_py_any(py)?),
-        JsonValue::Array(arr) => {
+        Value::String(s) => Ok(s.into_py_any(py)?),
+        Value::Array(arr) => {
             let list = PyList::empty(py);
             for item in arr.iter() {
                 let py_item = pythonize(py, item)?;
                 list.append(py_item)?;
             }
-            // In 0.28, we cast to generic 'Any' then 'unbind' to return Py<PyAny>
             Ok(list.into_any().unbind())
         }
-        JsonValue::Object(obj) => {
+        Value::Object(obj) => {
             let dict = PyDict::new(py);
             for (key, val) in obj.iter() {
                 let py_val = pythonize(py, val)?;

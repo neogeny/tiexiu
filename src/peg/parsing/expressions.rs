@@ -4,7 +4,7 @@
 use crate::api::error::nope::ParseResult;
 use crate::context::CtxSem;
 use crate::peg::{Exp, ExpKind, ParseFailure::*, Parser};
-use crate::trees::{NULL, Tree, TreeRef};
+use crate::trees::{NIL, Tree, TreeRef};
 use crate::types::Str;
 use crate::util::pyre;
 
@@ -65,7 +65,7 @@ impl Exp {
 
         match &exp.kind {
             ExpKind::EmptyClosure => Ok(Tree::closed(Tree::from(Vec::<TreeRef>::new())).into()),
-            ExpKind::Nil => Ok(Tree::Null.into()),
+            ExpKind::Nil => Ok(Tree::Nil.into()),
             ExpKind::RuleInclude { name, exp } => match exp {
                 None => Err(ctx.failure(start, RuleNotLinked(name.clone()))),
                 Some(exp) => exp.parse_at(ctx),
@@ -76,11 +76,11 @@ impl Exp {
             },
             ExpKind::Cut => {
                 ctx.cut();
-                Ok(Tree::Null.into())
+                Ok(Tree::Nil.into())
             }
             ExpKind::Void => {
                 ctx.match_void();
-                Ok(Tree::Null.into())
+                Ok(Tree::Nil.into())
             }
             ExpKind::Fail => Err(ctx.failure(start, Fail)),
             ExpKind::Dot => {
@@ -92,14 +92,14 @@ impl Exp {
             }
             ExpKind::Eol => {
                 if ctx.match_eol() {
-                    Ok(Tree::Null.into())
+                    Ok(Tree::Nil.into())
                 } else {
                     Err(ctx.failure(start, ExpectingEol))
                 }
             }
             ExpKind::Eof => {
                 if ctx.parse_eof() {
-                    Ok(Tree::Null.into())
+                    Ok(Tree::Nil.into())
                 } else {
                     Err(ctx.failure(start, ExpectingEof))
                 }
@@ -193,7 +193,7 @@ impl Exp {
             ExpKind::SkipGroup(exp) => {
                 let result = exp.parse_at(ctx);
                 match result {
-                    Ok(_) => Ok(Tree::Null.into()),
+                    Ok(_) => Ok(Tree::Nil.into()),
                     err => err,
                 }
             }
@@ -204,7 +204,7 @@ impl Exp {
                     Ok(_) => {
                         ctx.reset(branch);
                         ctx.leave_lookahead();
-                        Ok(Tree::Null.into())
+                        Ok(Tree::Nil.into())
                     }
                     Err(nope) => {
                         ctx.reset(branch);
@@ -225,7 +225,7 @@ impl Exp {
                     Err(_) => {
                         ctx.reset(branch);
                         ctx.leave_lookahead();
-                        Ok(Tree::Null.into())
+                        Ok(Tree::Nil.into())
                     }
                 }
             }
@@ -245,7 +245,7 @@ impl Exp {
             ExpKind::Sequence(sequence) => {
                 let seq_start = ctx.mark();
 
-                let mut out = NULL;
+                let mut out = NIL;
                 for exp in &**sequence {
                     if let ExpKind::Cut = exp.kind {
                         ctx.cut();
@@ -253,7 +253,7 @@ impl Exp {
                     }
                     match exp.parse_at(ctx) {
                         Ok(tree) => {
-                            if *tree == NULL {
+                            if *tree == NIL {
                                 continue;
                             }
                             out = Tree::merge(&out, &tree)

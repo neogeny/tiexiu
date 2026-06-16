@@ -2,28 +2,14 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::trees::{KeyValue, Tree, TreeMap, TreeRef};
-use json::JsonValue;
+use serde_json::{Map, Value};
 
 use crate::json::error::JsonError;
-
-use serde::Serialize;
-
-impl Serialize for Tree {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let json_value = self.to_json();
-        let json_str = json_value.dump();
-        let serde_value: serde_json::Value = serde_json::from_str(&json_str).unwrap();
-        serde_value.serialize(serializer)
-    }
-}
 
 impl Tree {
     /// Parses a JSON string into a `Tree`.
     pub fn from_json_str(json: &str) -> Result<Self, JsonError> {
-        let value = json::parse(json)?;
+        let value: Value = serde_json::from_str(json)?;
         let tree = Self::from_json(&value);
         Ok(tree)
     }
@@ -35,79 +21,77 @@ impl Tree {
 
     /// Serializes the tree to a compact JSON string.
     pub fn to_json_string(&self) -> String {
-        self.to_json().dump()
+        serde_json::to_string(&self.to_json()).unwrap()
     }
 
     /// Serializes the tree to a pretty-printed JSON string.
     pub fn to_json_string_pretty(&self) -> String {
-        self.to_json().pretty(2)
+        serde_json::to_string_pretty(&self.to_json()).unwrap()
     }
 
-    /// Returns the tree as a `JsonValue`.
-    pub fn to_value(&self) -> JsonValue {
+    /// Returns the tree as a `Value`.
+    pub fn to_value(&self) -> Value {
         self.to_json()
     }
 
-    /// Converts this tree into a `JsonValue`.
-    pub fn to_json(&self) -> JsonValue {
+    /// Converts this tree into a `Value`.
+    pub fn to_json(&self) -> Value {
         match self {
-            Tree::Bottom | Tree::Null => JsonValue::Null,
-            Tree::Text(t) => JsonValue::String(t.to_string()),
+            Tree::Bottom | Tree::Nil => Value::Null,
+            Tree::Text(t) => Value::String(t.to_string()),
             Tree::Seq(items) | Tree::List(items) => {
-                JsonValue::Array(items.iter().map(|t| t.to_json()).collect())
+                Value::Array(items.iter().map(|t| t.to_json()).collect())
             }
             Tree::Map(m) => {
-                let mut obj = JsonValue::new_object();
+                let mut obj = Map::new();
                 for (k, v) in m.iter() {
-                    obj[&**k] = v.to_json();
+                    obj.insert(k.clone(), v.to_json());
                 }
-                obj
+                Value::Object(obj)
             }
             Tree::Node { typename, tree } => {
                 let json_tree = tree.to_json();
-                if let JsonValue::Object(child_map) = json_tree {
-                    let has_class = child_map.iter().any(|(k, _)| k == "__class__");
+                if let Value::Object(child_map) = json_tree {
+                    let has_class = child_map.contains_key("__class__");
                     if !has_class {
-                        let mut new_map = JsonValue::new_object();
-                        new_map["__class__"] = JsonValue::String(typename.to_string());
+                        let mut new_map = Map::new();
+                        new_map.insert("__class__".into(), Value::String(typename.to_string()));
                         for (k, v) in child_map.iter() {
-                            new_map[k] = v.clone();
+                            new_map.insert(k.clone(), v.clone());
                         }
-                        new_map["__class__"] = JsonValue::String(typename.to_string());
-                        return new_map;
+                        return Value::Object(new_map);
                     }
                 }
-                let mut obj = JsonValue::new_object();
-                obj["__class__"] = JsonValue::String(typename.to_string());
-                obj["ast"] = tree.to_json();
-                obj
+                let mut obj = Map::new();
+                obj.insert("__class__".into(), Value::String(typename.to_string()));
+                obj.insert("ast".into(), tree.to_json());
+                Value::Object(obj)
             }
 
             Tree::Named(KeyValue(name, tree)) => {
-                let mut obj = JsonValue::new_object();
-                obj[name.to_string()] = tree.to_json();
-                obj
+                let mut obj = Map::new();
+                obj.insert(name.to_string(), tree.to_json());
+                Value::Object(obj)
             }
             Tree::NamedAsList(KeyValue(name, tree)) => {
-                let mut obj = JsonValue::new_object();
-                obj[name.to_string()] = tree.to_json();
-                obj
+                let mut obj = Map::new();
+                obj.insert(name.to_string(), tree.to_json());
+                Value::Object(obj)
             }
             Tree::Override(tree) | Tree::OverrideAsList(tree) => tree.to_json(),
         }
     }
 
-    /// Converts a `JsonValue` back into a `Tree`.
-    pub fn from_json(value: &JsonValue) -> Self {
+    /// Converts a `Value` back into a `Tree`.
+    pub fn from_json(value: &Value) -> Self {
         match value {
-            JsonValue::Null => Tree::Null,
-            JsonValue::String(s) => Tree::Text(s.clone()),
-            JsonValue::Short(s) => Tree::Text(s.to_string()),
-            JsonValue::Array(arr) => {
+            Value::Null => Tree::Nil,
+            Value::String(s) => Tree::Text(s.clone()),
+            Value::Array(arr) => {
                 let items: Vec<TreeRef> = arr.iter().map(|v| Tree::from_json(v).into()).collect();
                 Tree::Seq(items)
             }
-            JsonValue::Object(obj) => {
+            Value::Object(obj) => {
                 if obj.len() == 1
                     && let Some((key, value)) = obj.iter().next()
                     && key == "typename"
@@ -121,12 +105,12 @@ impl Tree {
                 let mut m = TreeMap::default();
                 for (key, value) in obj.iter() {
                     let tree = Tree::from_json(value);
-                    m.insert(key.into(), tree.into());
+                    m.insert(key.clone(), tree.into());
                 }
                 Tree::Map(m)
             }
-            JsonValue::Boolean(yesno) => Tree::text(yesno.to_string().as_str().into()).clone(),
-            JsonValue::Number(n) => Tree::text(n.to_string().as_str().into()),
+            Value::Bool(b) => Tree::text(b.to_string().as_str().into()).clone(),
+            Value::Number(n) => Tree::text(n.to_string().as_str().into()),
         }
     }
 }
@@ -138,7 +122,7 @@ mod tests {
     #[test]
     fn test_tree_json_roundtrip() {
         let cases: Vec<Tree> = vec![
-            Tree::Null,
+            Tree::Nil,
             Tree::Text("hello".into()),
             Tree::Seq(vec![
                 Tree::Text("a".into()).into(),

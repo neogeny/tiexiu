@@ -100,7 +100,7 @@ impl Exp {
             return Err(ctx.failure(start, ParseFailure::FailedParse(rule.name.clone())));
         }
         let mut lastmark = start;
-        let mut lasttree: TreeRef = Tree::Null.into();
+        let mut lasttree: TreeRef = Tree::Nil.into();
         let mut lastnope: Option<Nope> = None;
 
         ctx.memoize(key, &Tree::Bottom.into(), start);

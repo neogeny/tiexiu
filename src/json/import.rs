@@ -3,7 +3,7 @@
 
 //! Imp - Direct Value to Grammar translator
 //!
-//! This module translates json::JsonValue directly to Grammar,
+//! This module translates serde_json::Value directly to Grammar,
 //! bypassing the TatSuModel deserializer which fails on modified JSON.
 
 use crate::cfg::*;
@@ -12,28 +12,27 @@ use crate::peg::exp::Exp;
 use crate::peg::grammar::{Grammar, GrammarDirectives};
 use crate::peg::rule::Rule;
 use crate::types::Str;
-use json::JsonValue;
+use serde_json::{Map, Value};
 
 /// Helper for traversing JSON values during deserialization, tracking the path
 /// for error reporting.
 #[derive(Clone)]
 pub struct JsonSerializationHelper {
     /// The current JSON value being processed.
-    value: JsonValue,
+    value: Value,
     /// The path to the current value (for error messages).
     path: Vec<String>,
 }
 
 impl Grammar {
     /// Parses a JSON string and deserializes it into a `Grammar`.
-    /// Parses a JSON string and deserializes it into a `Grammar`.
     pub fn from_json(json: &str) -> Result<Self, JsonError> {
-        let value = json::parse(json)?;
+        let value: Value = serde_json::from_str(json)?;
         Self::from_json_value(&value)
     }
 
-    /// Deserializes a `JsonValue` into a `Grammar`.
-    pub fn from_json_value(value: &JsonValue) -> Result<Self, JsonError> {
+    /// Deserializes a `Value` into a `Grammar`.
+    pub fn from_json_value(value: &Value) -> Result<Self, JsonError> {
         let path = JsonSerializationHelper::new(value.clone());
         let class = path.get_class()?;
 
@@ -58,8 +57,11 @@ impl Grammar {
             Self::parse_directives(path.get_obj().ok().and_then(|o| o.get("directives")))?;
         let keywords: Vec<Str> = if let Ok(obj) = path.get_obj() {
             if let Some(keywords_val) = obj.get("keywords") {
-                if let JsonValue::Array(arr) = keywords_val {
-                    arr.iter().map(|v| v.to_string()).collect()
+                if let Value::Array(arr) = keywords_val {
+                    arr.iter()
+                        .filter_map(|v| v.as_str())
+                        .map(|s| s.to_string())
+                        .collect()
                 } else {
                     vec![]
                 }
@@ -84,15 +86,15 @@ impl Grammar {
         Ok(grammar)
     }
 
-    fn parse_directives(directives: Option<&JsonValue>) -> Result<GrammarDirectives, JsonError> {
-        if let Some(JsonValue::Object(obj)) = directives {
+    fn parse_directives(directives: Option<&Value>) -> Result<GrammarDirectives, JsonError> {
+        if let Some(Value::Object(obj)) = directives {
             let res: GrammarDirectives = obj
                 .iter()
                 .filter_map(|(k, v)| {
                     let val_str = match v {
-                        JsonValue::String(s) => s.to_string(),
-                        JsonValue::Boolean(b) => b.to_string(),
-                        JsonValue::Number(n) => n.to_string(),
+                        Value::String(s) => s.to_string(),
+                        Value::Bool(b) => b.to_string(),
+                        Value::Number(n) => n.to_string(),
                         _ => v.to_string(),
                     };
                     Cfg::map(k, val_str.as_str())
@@ -105,8 +107,8 @@ impl Grammar {
 }
 
 impl Rule {
-    /// Deserializes a `JsonValue` into a `Rule`.
-    pub fn from_json_value(value: &JsonValue) -> Result<Self, JsonError> {
+    /// Deserializes a `Value` into a `Rule`.
+    pub fn from_json_value(value: &Value) -> Result<Self, JsonError> {
         let path = JsonSerializationHelper::new(value.clone());
         Self::from_json_with_path(path)
     }
@@ -124,7 +126,7 @@ impl Rule {
 
         let params: Vec<String> = if let Ok(obj) = path.get_obj() {
             if let Some(params_val) = obj.get("params") {
-                if let JsonValue::Array(arr) = params_val {
+                if let Value::Array(arr) = params_val {
                     arr.iter()
                         .filter_map(|v| v.as_str())
                         .map(String::from)
@@ -141,7 +143,7 @@ impl Rule {
 
         let decorators: Vec<String> = if let Ok(obj) = path.get_obj() {
             if let Some(params_val) = obj.get("decorators") {
-                if let JsonValue::Array(arr) = params_val {
+                if let Value::Array(arr) = params_val {
                     arr.iter()
                         .filter_map(|v| v.as_str())
                         .map(String::from)
@@ -170,8 +172,8 @@ impl Rule {
 }
 
 impl Exp {
-    /// Deserializes a `JsonValue` into an `Exp`.
-    pub fn from_json_value(value: &JsonValue) -> Result<Self, JsonError> {
+    /// Deserializes a `Value` into an `Exp`.
+    pub fn from_json_value(value: &Value) -> Result<Self, JsonError> {
         let path = JsonSerializationHelper::new(value.clone());
         Self::from_json_with_path(path)
     }
@@ -280,7 +282,7 @@ impl Exp {
 }
 
 impl JsonSerializationHelper {
-    fn new(value: JsonValue) -> Self {
+    fn new(value: Value) -> Self {
         Self {
             value,
             path: Vec::new(),
@@ -296,9 +298,9 @@ impl JsonSerializationHelper {
         }
     }
 
-    fn get_obj(&self) -> Result<&json::object::Object, JsonError> {
+    fn get_obj(&self) -> Result<&Map<String, Value>, JsonError> {
         match &self.value {
-            JsonValue::Object(obj) => Ok(obj),
+            Value::Object(obj) => Ok(obj),
             _ => Err(self.error("Expected object")),
         }
     }
@@ -315,11 +317,10 @@ impl JsonSerializationHelper {
     fn get_class(&self) -> Result<String, JsonError> {
         if let Ok(obj) = self.get_obj() {
             if let Some(class_val) = obj.get("__class__") {
-                match class_val {
-                    JsonValue::String(s) => return Ok(s.clone()),
-                    JsonValue::Short(s) => return Ok(s.to_string()),
-                    _ => {}
+                if let Value::String(s) = class_val {
+                    return Ok(s.clone());
                 }
+                return Err(self.error("__class__ must be a string"));
             }
             Err(self.error("Missing __class__"))
         } else {
@@ -331,8 +332,7 @@ impl JsonSerializationHelper {
         if let Ok(obj) = self.get_obj() {
             if let Some(val) = obj.get(field) {
                 return match val {
-                    JsonValue::String(s) => Ok(s.clone()),
-                    JsonValue::Short(s) => Ok(s.to_string()),
+                    Value::String(s) => Ok(s.clone()),
                     _ => Err(self.error(&format!("Missing field: {}", field))),
                 };
             }
@@ -349,12 +349,12 @@ impl JsonSerializationHelper {
             .ok_or_else(|| self.error(&format!("Missing field: {}", field)))?
             .clone();
 
-        let nested_path = if let JsonValue::Object(child_obj) = &value {
+        let nested_path = if let Value::Object(child_obj) = &value {
             if let Some(class_val) = child_obj.get("__class__") {
-                match class_val {
-                    JsonValue::String(s) => format!("{}:{}", field, s),
-                    JsonValue::Short(s) => format!("{}:{}", field, s),
-                    _ => field.to_string(),
+                if let Value::String(s) = class_val {
+                    format!("{}:{}", field, s)
+                } else {
+                    field.to_string()
                 }
             } else {
                 field.to_string()
@@ -366,7 +366,7 @@ impl JsonSerializationHelper {
         Ok(self.push(&nested_path).with_value(value))
     }
 
-    fn with_value(&self, value: JsonValue) -> Self {
+    fn with_value(&self, value: Value) -> Self {
         Self {
             value,
             path: self.path.clone(),
@@ -376,14 +376,14 @@ impl JsonSerializationHelper {
     fn get_array(&self, field: &str) -> Result<Vec<JsonSerializationHelper>, JsonError> {
         if let Ok(obj) = self.get_obj() {
             if let Some(arr_val) = obj.get(field) {
-                if let JsonValue::Array(arr) = arr_val {
+                if let Value::Array(arr) = arr_val {
                     return Ok(arr
                         .iter()
                         .enumerate()
                         .map(|(i, v)| {
-                            let label = if let JsonValue::Object(child_obj) = v {
+                            let label = if let Value::Object(child_obj) = v {
                                 if let Some(class_val) = child_obj.get("__class__") {
-                                    if let JsonValue::String(class) = class_val {
+                                    if let Value::String(class) = class_val {
                                         format!("{}[{}]:{}", field, i, class)
                                     } else {
                                         format!("{}[{}]", field, i)
@@ -406,7 +406,7 @@ impl JsonSerializationHelper {
     fn opt_str(&self, field: &str) -> Option<&str> {
         if let Ok(obj) = self.get_obj() {
             if let Some(val) = obj.get(field) {
-                if let JsonValue::String(s) = val {
+                if let Value::String(s) = val {
                     return Some(s);
                 }
             }
@@ -419,7 +419,7 @@ impl JsonSerializationHelper {
     fn opt_bool(&self, field: &str, default: bool) -> bool {
         if let Ok(obj) = self.get_obj() {
             if let Some(val) = obj.get(field) {
-                if let JsonValue::Boolean(b) = val {
+                if let Value::Bool(b) = val {
                     return *b;
                 }
             }
@@ -432,8 +432,8 @@ impl JsonSerializationHelper {
     fn opt_u64(&self, field: &str) -> Option<u64> {
         if let Ok(obj) = self.get_obj() {
             if let Some(val) = obj.get(field) {
-                if let JsonValue::Number(n) = val {
-                    return u64::try_from(*n).ok();
+                if let Value::Number(n) = val {
+                    return n.as_u64();
                 }
             }
             None
@@ -450,7 +450,7 @@ mod tests {
     #[test]
     fn test_grammar_from_json_value_tatsu() {
         let json_str = std::fs::read_to_string("grammar/tatsu.json").expect("tatsu.json missing");
-        let value = json::parse(&json_str).expect("Failed to parse JSON");
+        let value: Value = serde_json::from_str(&json_str).expect("Failed to parse JSON");
         let grammar = Grammar::from_json_value(&value).expect("Failed to convert");
         assert_eq!(grammar.name, "TatSu");
         let rule_count = grammar.rules().count();
@@ -460,7 +460,7 @@ mod tests {
     #[test]
     fn test_grammar_from_json_value_calc_imported() {
         let json_str = std::fs::read_to_string("grammar/calc.json").expect("calc.json missing");
-        let value = json::parse(&json_str).expect("Failed to parse JSON");
+        let value: Value = serde_json::from_str(&json_str).expect("Failed to parse JSON");
         let grammar = Grammar::from_json_value(&value).expect("Failed to convert");
         assert_eq!(grammar.name, "CALC");
         assert_eq!(grammar.rules().count(), 9);
@@ -476,7 +476,7 @@ mod tests {
             return;
         }
         let json_str = std::fs::read_to_string("grammar/java.json").expect("java.json missing");
-        let value = json::parse(&json_str).expect("Failed to parse JSON");
+        let value: Value = serde_json::from_str(&json_str).expect("Failed to parse JSON");
         let grammar = Grammar::from_json_value(&value).expect("Failed to convert");
         assert_eq!(grammar.name, "Java");
 

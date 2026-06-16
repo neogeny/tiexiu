@@ -1,7 +1,6 @@
 //! Directive Tests
 
-#[macro_use]
-extern crate json;
+use serde_json::json;
 use tiexiu::parse_input;
 use tiexiu::*;
 
@@ -24,7 +23,7 @@ fn whitespace_directive() -> Result<()> {
     "#;
     let grammar = tiexiu::compile(grammar, &[])?;
     let tree = parse_input(&grammar, "a b", &[])?;
-    assert_eq!(tree.to_json(), array!["a", "b"]);
+    assert_eq!(tree.to_json(), json!(["a", "b"]));
     Ok(())
 }
 
@@ -43,7 +42,7 @@ fn whitespace_none_directive() -> Result<()> {
     "#;
     let grammar = tiexiu::compile(grammar, &[])?;
     let tree = parse_input(&grammar, "ab", &[])?;
-    assert_eq!(tree.to_json(), array!["a", "b"]);
+    assert_eq!(tree.to_json(), json!(["a", "b"]));
     Ok(())
 }
 
@@ -57,7 +56,7 @@ fn default_whitespace() -> Result<()> {
     "#;
     let grammar = tiexiu::compile(grammar, &[])?;
     let tree = parse_input(&grammar, "a b", &[])?;
-    assert_eq!(tree.to_json(), array!["a", "b"]);
+    assert_eq!(tree.to_json(), json!(["a", "b"]));
     Ok(())
 }
 
@@ -69,7 +68,7 @@ fn left_recursion_directive() -> Result<()> {
     "#;
     let grammar = tiexiu::compile(grammar, &[])?;
     let tree = parse_input(&grammar, "test", &[])?;
-    assert_eq!(tree.to_json(), value!("test"));
+    assert_eq!(tree.to_json(), json!("test"));
     Ok(())
 }
 
@@ -82,7 +81,7 @@ fn parseinfo_directive() -> Result<()> {
     let grammar = tiexiu::compile(grammar, &[])?;
     let tree = parse_input(&grammar, "test", &[])?;
     // parseinfo may add metadata, just check we got text
-    assert_eq!(tree.to_json(), value!("test"));
+    assert_eq!(tree.to_json(), json!("test"));
     Ok(())
 }
 
@@ -94,7 +93,7 @@ fn nameguard_directive() -> Result<()> {
     "#;
     let grammar = tiexiu::compile(grammar, &[])?;
     let tree = parse_input(&grammar, "ab", &[])?;
-    assert_eq!(tree.to_json(), value!("ab"));
+    assert_eq!(tree.to_json(), json!("ab"));
     Ok(())
 }
 
@@ -106,6 +105,6 @@ fn comments_directive() -> Result<()> {
     "#;
     let grammar = tiexiu::compile(grammar, &[])?;
     let tree = parse_input(&grammar, "a", &[])?;
-    assert_eq!(tree.to_json(), value!("a"));
+    assert_eq!(tree.to_json(), json!("a"));
     Ok(())
 }

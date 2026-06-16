@@ -23,7 +23,7 @@ pub fn parse_grammar(grammar: &str, cfg: &CfgA) -> Result<Tree> {
 }
 
 /// Parse a grammar string into a JSON value.
-pub fn parse_grammar_to_json(grammar: &str, cfg: &CfgA) -> Result<json::JsonValue> {
+pub fn parse_grammar_to_json(grammar: &str, cfg: &CfgA) -> Result<serde_json::Value> {
     let tree = parse_grammar(grammar, cfg)?;
     Ok(tree.to_json())
 }
@@ -49,7 +49,7 @@ where
 }
 
 /// Parse grammar from cursor and return as JSON value.
-pub fn parse_grammar_to_json_with<U>(cursor: U, cfg: &CfgA) -> Result<json::JsonValue>
+pub fn parse_grammar_to_json_with<U>(cursor: U, cfg: &CfgA) -> Result<serde_json::Value>
 where
     U: Cursor + Clone,
 {
@@ -63,7 +63,7 @@ pub fn compile(grammar: &str, cfg: &CfgA) -> Result<Grammar> {
 }
 
 /// Compile grammar and return as JSON value.
-pub fn compile_to_json(grammar: &str, cfg: &CfgA) -> Result<json::JsonValue> {
+pub fn compile_to_json(grammar: &str, cfg: &CfgA) -> Result<serde_json::Value> {
     let compiled = compile(grammar, cfg)?;
     Ok(compiled.to_json())
 }
@@ -84,7 +84,7 @@ where
 }
 
 /// Compile from cursor and return as JSON value.
-pub fn compile_to_json_with<U>(cursor: U, cfg: &CfgA) -> Result<json::JsonValue>
+pub fn compile_to_json_with<U>(cursor: U, cfg: &CfgA) -> Result<serde_json::Value>
 where
     U: Cursor + Clone,
 {
@@ -98,7 +98,7 @@ pub fn load_grammar_from_json(json: &str, _cfg: &CfgA) -> Result<Grammar> {
 }
 
 /// Load grammar from JSON and re-serialize as JSON value.
-pub fn load_grammar_from_json_to_json(json: &str, cfg: &CfgA) -> Result<json::JsonValue> {
+pub fn load_grammar_from_json_to_json(json: &str, cfg: &CfgA) -> Result<serde_json::Value> {
     let grammar = load_grammar_from_json(json, cfg)?;
     Ok(grammar.to_json())
 }
@@ -109,7 +109,7 @@ pub fn load_tree_from_json(json: &str, _cfg: &CfgA) -> Result<Tree> {
 }
 
 /// Load a tree from JSON and re-serialize as JSON value.
-pub fn load_tree_to_json(json: &str, cfg: &CfgA) -> Result<json::JsonValue> {
+pub fn load_tree_to_json(json: &str, cfg: &CfgA) -> Result<serde_json::Value> {
     let tree = load_tree_from_json(json, cfg)?;
     Ok(tree.to_json())
 }
@@ -127,7 +127,7 @@ pub fn parse(grammar: &str, text: &str, cfg: &CfgA) -> Result<Tree> {
 }
 
 /// Parse input text and return result as JSON value.
-pub fn parse_to_json(grammar: &str, text: &str, cfg: &CfgA) -> Result<json::JsonValue> {
+pub fn parse_to_json(grammar: &str, text: &str, cfg: &CfgA) -> Result<serde_json::Value> {
     let parser = compile(grammar, cfg)?;
     parse_input_to_json(&parser, text, cfg)
 }
@@ -143,7 +143,7 @@ pub fn parse_input(parser: &Grammar, text: &str, cfg: &CfgA) -> Result<Tree> {
 }
 
 /// Parse input with pre-compiled grammar and return JSON value.
-pub fn parse_input_to_json(parser: &Grammar, text: &str, cfg: &CfgA) -> Result<json::JsonValue> {
+pub fn parse_input_to_json(parser: &Grammar, text: &str, cfg: &CfgA) -> Result<serde_json::Value> {
     let tree = parse_input(parser, text, cfg)?;
     Ok(tree.to_json())
 }
@@ -165,7 +165,7 @@ pub fn load_boot(_cfg: &CfgA) -> Result<Grammar> {
 }
 
 /// Return the boot grammar as a JSON value.
-pub fn boot_grammar_to_json(cfg: &CfgA) -> Result<json::JsonValue> {
+pub fn boot_grammar_to_json(cfg: &CfgA) -> Result<serde_json::Value> {
     let grammar = load_boot(cfg)?;
     Ok(grammar.to_json())
 }
