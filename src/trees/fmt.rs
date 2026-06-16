@@ -38,11 +38,13 @@ impl fmt::Display for Tree {
             Self::NamedAsList(kv) => write!(f, "kl({})", kv),
             Self::Override(v) => write!(f, "o({})", v),
             Self::OverrideAsList(v) => write!(f, "ol({})", v),
-            Self::Map(map) => fmt_treemap(map, f),
+            Self::Object(map) => fmt_treemap(map, f),
             Self::Nil => write!(f, "NIL"),
             Self::Bottom => write!(f, "BOTTOM"),
             Self::Seq(items) => write!(f, "s(&[{}])", fmt_items(items)),
-            Self::List(items) => write!(f, "c(&[{}])", fmt_items(items)),
+            Self::Array(items) => write!(f, "c(&[{}])", fmt_items(items)),
+            Self::Bool(b) => write!(f, "z({})", b),
+            Self::Number(n) => write!(f, "v({})", n),
             Self::Node { typename, tree } => {
                 write!(f, "n({}, {})", typename, tree)
             }
@@ -60,12 +62,12 @@ mod tests {
         map.insert("key1".into(), TreeRef::from(Tree::Text("value1".into())));
         map.insert("key2".into(), TreeRef::from(Tree::Text("value2".into())));
         assert_eq!(
-            Tree::Map(map).to_string(),
+            Tree::Object(map).to_string(),
             "m(&[(\"key1\", t(\"value1\")), (\"key2\", t(\"value2\"))])"
         );
 
         let empty_map = TreeMap::default();
-        assert_eq!(Tree::Map(empty_map).to_string(), "m(&[])");
+        assert_eq!(Tree::Object(empty_map).to_string(), "m(&[])");
     }
 
     #[test]
@@ -103,7 +105,7 @@ mod tests {
 
         let mut map = TreeMap::default();
         map.insert("a".into(), TreeRef::from(Tree::Text("1".into())));
-        assert_eq!(Tree::Map(map).to_string(), "m(&[(\"a\", t(\"1\"))])");
+        assert_eq!(Tree::Object(map).to_string(), "m(&[(\"a\", t(\"1\"))])");
 
         assert_eq!(Tree::Nil.to_string(), "NIL");
 

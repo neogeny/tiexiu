@@ -68,7 +68,7 @@ fn test_semantics_meta_to_int() -> Result<()> {
         start = @int $ ;
     "#;
     let tree = parse(grammar, "42", &[CfgKey::Semantics(sem.clone())])?;
-    assert_eq!(tree.to_json(), json!("42"));
+    assert_eq!(tree.to_json(), json!(42.0));
     Ok(())
 }
 
@@ -80,7 +80,7 @@ fn test_semantics_meta_to_float() -> Result<()> {
         start = @float $ ;
     "#;
     let tree = parse(grammar, "3.14", &[CfgKey::Semantics(sem.clone())])?;
-    assert_eq!(tree.to_json(), json!("3.14"));
+    assert_eq!(tree.to_json(), json!(3.14));
     Ok(())
 }
 
@@ -92,7 +92,7 @@ fn test_semantics_meta_to_bool() -> Result<()> {
         start = @bool $ ;
     "#;
     let tree = parse(grammar, "true", &[CfgKey::Semantics(sem.clone())])?;
-    assert_eq!(tree.to_json(), json!("true"));
+    assert_eq!(tree.to_json(), json!(true));
     Ok(())
 }
 
@@ -104,7 +104,7 @@ fn test_semantics_meta_to_uint() -> Result<()> {
         start = @uint $ ;
     "#;
     let tree = parse(grammar, "007", &[CfgKey::Semantics(sem.clone())])?;
-    assert_eq!(tree.to_json(), json!("7"));
+    assert_eq!(tree.to_json(), json!(7.0));
     Ok(())
 }
 

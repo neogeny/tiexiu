@@ -26,9 +26,13 @@ pub enum Tree {
     /// A text/leaf node from tokens or patterns.
     Text(Str),
     /// A non-mergeable list of values.
-    List(Vec<TreeRef>),
+    Array(Vec<TreeRef>),
     /// A mapping of named elements.
-    Map(TreeMap),
+    Object(TreeMap),
+
+    // Use tod support True, False, Number
+    Bool(bool),
+    Number(f64),
 
     // NOTE these variants don't survive fold()
     /// Parsing that didn't consume any input (internal).
@@ -102,27 +106,11 @@ impl From<&[TreeRef]> for Tree {
 
 impl From<TreeList> for Tree {
     fn from(list: TreeList) -> Self {
-        Tree::List(list.into_iter().collect())
+        Tree::Array(list.into_iter().collect())
     }
 }
 
 impl Tree {
-    /// Returns the total character width of text nodes in this tree.
-    pub fn width(&self) -> usize {
-        match self {
-            Tree::Text(text) => text.len(),
-            Tree::Override(inner) | Tree::OverrideAsList(inner) => inner.width(),
-            Tree::Nil | Tree::Bottom => 0,
-            Tree::Seq(items) | Tree::List(items) => items.iter().map(|item| item.width()).sum(),
-            Tree::Map(map) => map.iter().map(|(_, node)| node.width()).sum(),
-            Tree::Named(pair) | Tree::NamedAsList(pair) => {
-                let KeyValue(_, val) = pair;
-                val.width()
-            }
-            Tree::Node { typename: _, tree } => tree.width(),
-        }
-    }
-
     /// Returns the text value of this tree or a debug representation.
     pub fn value(&self) -> Str {
         match self {
@@ -134,7 +122,7 @@ impl Tree {
     /// Returns the child elements if this is a Seq or List, or an empty vec.
     pub fn list_value(&self) -> Vec<TreeRef> {
         match self {
-            Tree::Seq(items) | Tree::List(items) => items.clone(),
+            Tree::Seq(items) | Tree::Array(items) => items.clone(),
             _ => vec![],
         }
     }
@@ -147,7 +135,7 @@ impl Tree {
     /// Returns the inner TreeMap if this is a Map variant.
     pub fn map_value(&self) -> Option<&TreeMap> {
         match self {
-            Tree::Map(map) => Some(map),
+            Tree::Object(map) => Some(map),
             _ => None,
         }
     }
@@ -155,7 +143,7 @@ impl Tree {
     /// Looks up a key in the Map variant and returns the corresponding tree.
     pub fn get(&self, key: &str) -> Option<&Tree> {
         match self {
-            Tree::Map(map) => map.get(key).map(|arc| arc.as_ref()),
+            Tree::Object(map) => map.get(key).map(|arc| arc.as_ref()),
             _ => None,
         }
     }
@@ -216,7 +204,7 @@ mod tests {
         let raw = Tree::from(vec![Tree::Bottom, Tree::Nil, Tree::Bottom]);
         let result = Tree::fold(raw);
 
-        if let Tree::List(v) = result {
+        if let Tree::Array(v) = result {
             assert_eq!(v.len(), 2);
             assert_eq!(*v[0], Tree::Bottom);
             assert_eq!(*v[1], Tree::Bottom);
@@ -249,8 +237,8 @@ mod tests {
 
         let result = Tree::fold(tree);
 
-        assert!(matches!(result, Tree::Map(_)));
-        if let Tree::Map(m) = result {
+        assert!(matches!(result, Tree::Object(_)));
+        if let Tree::Object(m) = result {
             assert!(m.get("x").is_some(), "key 'x' should be present");
             assert!(m.get("a").is_some(), "key 'a' should be present");
             assert!(m.get("b").is_some(), "key 'b' should be present");

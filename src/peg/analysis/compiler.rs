@@ -1,7 +1,6 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::ExpKind;
 use crate::api::error::{CompileError, CompileResult};
 use crate::cfg::*;
 use crate::peg::grammar::KeywordRef;
@@ -9,6 +8,7 @@ use crate::peg::rule::{RuleMap, RuleRef};
 use crate::peg::{Exp, Grammar, Rule};
 use crate::trees::{Tree, TreeMap, TreeRef};
 use crate::types::Str;
+use crate::ExpKind;
 
 /// Compiles a parse tree (from the PEG grammar) into a compiled `Grammar`.
 #[derive(Debug, Default)]
@@ -33,7 +33,7 @@ fn parse_node_check<'n>(node: &'n Tree, typename: &'static str) -> CompileResult
 }
 
 fn _parse_map(node: &Tree) -> CompileResult<&TreeMap> {
-    let Tree::Map(map) = node else {
+    let Tree::Object(map) = node else {
         return Err(CompileError::ExpectedMap(format!("{:?}", node)));
     };
     Ok(map)
@@ -41,7 +41,7 @@ fn _parse_map(node: &Tree) -> CompileResult<&TreeMap> {
 
 fn _parse_list(node: &Tree) -> CompileResult<&[TreeRef]> {
     match node {
-        Tree::Seq(list) | Tree::List(list) => Ok(list.as_slice()),
+        Tree::Seq(list) | Tree::Array(list) => Ok(list.as_slice()),
         _ => Err(CompileError::ExpectedList(format!("{:?}", node))),
     }
 }

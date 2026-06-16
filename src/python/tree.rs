@@ -1,13 +1,17 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::Tree;
 use crate::trees::KeyValue;
+use crate::Tree;
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList, PyString};
+use pyo3::BoundObject;
+use pyo3::IntoPyObject;
 
 fn to_python(tree: &Tree, py: Python<'_>) -> PyResult<Py<PyAny>> {
     match tree {
+        Tree::Bool(b) => Ok((*b).into_pyobject(py)?.into_any().unbind()),
+        Tree::Number(n) => Ok((*n).into_pyobject(py)?.into_any().unbind()),
         Tree::Text(s) => Ok(PyString::new(py, s).into()),
         Tree::Seq(items) => {
             let py_items: Vec<Py<PyAny>> = items
@@ -17,7 +21,7 @@ fn to_python(tree: &Tree, py: Python<'_>) -> PyResult<Py<PyAny>> {
             let py_list = PyList::new(py, py_items)?;
             Ok(py_list.into())
         }
-        Tree::List(items) => {
+        Tree::Array(items) => {
             let py_items: Vec<Py<PyAny>> = items
                 .iter()
                 .map(|item| to_python(item, py))
@@ -25,7 +29,7 @@ fn to_python(tree: &Tree, py: Python<'_>) -> PyResult<Py<PyAny>> {
             let py_seq = PyList::new(py, py_items)?;
             Ok(py_seq.into())
         }
-        Tree::Map(m) => {
+        Tree::Object(m) => {
             let dict = PyDict::new(py);
             for (k, v) in m.iter() {
                 dict.set_item(k.as_str(), to_python(v, py)?)?;
@@ -36,7 +40,7 @@ fn to_python(tree: &Tree, py: Python<'_>) -> PyResult<Py<PyAny>> {
             let name: &str = typename;
             let dict = PyDict::new(py);
             dict.set_item("__class__", PyString::new(py, name))?;
-            if let Tree::Map(m) = tree.as_ref() {
+            if let Tree::Object(m) = tree.as_ref() {
                 for (k, v) in m.iter() {
                     dict.set_item(k.as_str(), to_python(v, py)?)?;
                 }

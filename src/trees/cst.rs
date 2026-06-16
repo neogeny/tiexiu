@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::tree::{Tree, TreeRef};
-use crate::Ref;
 use crate::trees::KeyValue;
+use crate::Ref;
 use crate::{Define, FastIndexMap, Str};
 
 /// A reference-counted slice of key-tree entries for TreeMap.
@@ -35,7 +35,7 @@ impl Tree {
         if gather.root != Tree::Nil {
             Self::closed(gather.root)
         } else if !gather.map.is_empty() {
-            Tree::Map(gather.map)
+            Tree::Object(gather.map)
         } else {
             Self::closed(tree)
         }
@@ -50,12 +50,12 @@ impl Tree {
                 }
                 out
             }
-            Tree::List(elements) => {
+            Tree::Array(elements) => {
                 let clean: Vec<TreeRef> = elements
                     .iter()
                     .map(|s| Self::clean_and_fold(s, gather).into())
                     .collect();
-                Tree::List(clean)
+                Tree::Array(clean)
             }
             Tree::Named(keyval) => {
                 let KeyValue(name, val) = keyval;
@@ -86,7 +86,7 @@ impl Tree {
 
     pub(crate) fn closed(tree: Self) -> Self {
         match tree {
-            Tree::Seq(items) => Tree::List(items),
+            Tree::Seq(items) => Tree::Array(items),
             _ => tree,
         }
     }

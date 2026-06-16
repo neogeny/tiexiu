@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::tree::Tree;
-use crate::trees::KeyValue;
 use crate::trees::cst::TreeMap;
+use crate::trees::KeyValue;
 
 /// Shorthand for Tree::Text.
 pub fn t(value: &str) -> Tree {
@@ -17,7 +17,7 @@ pub fn s(items: &[Tree]) -> Tree {
 
 /// Shorthand for Tree::List.
 pub fn l(items: &[Tree]) -> Tree {
-    Tree::List(items.iter().cloned().map(|t| t.into()).collect())
+    Tree::Array(items.iter().cloned().map(|t| t.into()).collect())
 }
 
 /// Shorthand for Tree::Map from key-value pairs.
@@ -26,7 +26,7 @@ pub fn m(entries: &[(&str, Tree)]) -> Tree {
     for (k, v) in entries.iter() {
         map.insert((*k).into(), v.clone().into());
     }
-    Tree::Map(map)
+    Tree::Object(map)
 }
 
 /// Shorthand for Tree::Named.

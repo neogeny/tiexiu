@@ -45,7 +45,7 @@ fn test_meta_int() -> Result<()> {
         start = @int $ ;
     "#;
     let tree = parse(grammar, "42", &[])?;
-    assert_eq!(tree.to_json(), json!("42"));
+    assert_eq!(tree.to_json(), json!(42.0));
     Ok(())
 }
 
@@ -56,7 +56,7 @@ fn test_meta_int_negative() -> Result<()> {
         start = @int $ ;
     "#;
     let tree = parse(grammar, "-17", &[])?;
-    assert_eq!(tree.to_json(), json!("-17"));
+    assert_eq!(tree.to_json(), json!(-17.0));
     Ok(())
 }
 
@@ -78,7 +78,7 @@ fn test_meta_uint() -> Result<()> {
         start = @uint $ ;
     "#;
     let tree = parse(grammar, "007", &[])?;
-    assert_eq!(tree.to_json(), json!("7"));
+    assert_eq!(tree.to_json(), json!(7.0));
     Ok(())
 }
 
@@ -103,7 +103,7 @@ fn test_meta_float() -> Result<()> {
         start = @float $ ;
     "#;
     let tree = parse(grammar, "3.14", &[])?;
-    assert_eq!(tree.to_json(), json!("3.14"));
+    assert_eq!(tree.to_json(), json!(3.14));
     Ok(())
 }
 
@@ -114,7 +114,7 @@ fn test_meta_float_exponent() -> Result<()> {
         start = @float $ ;
     "#;
     let tree = parse(grammar, "1.5e-2", &[])?;
-    assert_eq!(tree.to_json(), json!("0.015"));
+    assert_eq!(tree.to_json(), json!(0.015));
     Ok(())
 }
 
@@ -136,7 +136,7 @@ fn test_meta_bool_true() -> Result<()> {
         start = @bool $ ;
     "#;
     let tree = parse(grammar, "true", &[])?;
-    assert_eq!(tree.to_json(), json!("true"));
+    assert_eq!(tree.to_json(), json!(true));
     Ok(())
 }
 
@@ -147,7 +147,7 @@ fn test_meta_bool_false() -> Result<()> {
         start = @bool $ ;
     "#;
     let tree = parse(grammar, "false", &[])?;
-    assert_eq!(tree.to_json(), json!("false"));
+    assert_eq!(tree.to_json(), json!(false));
     Ok(())
 }
 

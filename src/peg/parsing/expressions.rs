@@ -4,7 +4,7 @@
 use crate::api::error::nope::ParseResult;
 use crate::context::CtxSem;
 use crate::peg::{Exp, ExpKind, ParseFailure::*, Parser};
-use crate::trees::{NIL, Tree, TreeRef};
+use crate::trees::{Tree, TreeRef, NIL};
 use crate::types::Str;
 use crate::util::pyre;
 
@@ -36,7 +36,7 @@ impl Exp {
             Ok(tree) => {
                 if let Some(df) = self.df.as_ref() {
                     let mut cloned = tree.as_ref().clone();
-                    if let Tree::Map(ref mut map) = cloned {
+                    if let Tree::Object(ref mut map) = cloned {
                         Tree::define(map, df);
                     }
                     Ok(cloned.into())
@@ -107,35 +107,35 @@ impl Exp {
 
             ExpKind::NameMeta => {
                 if let Some(name) = ctx.match_name() {
-                    Ok(Tree::Text(name).into())
+                    Ok(Tree::text(name).into())
                 } else {
                     Err(ctx.failure(start, Fail))
                 }
             }
             ExpKind::IntMeta => {
                 if let Some(n) = ctx.match_int() {
-                    Ok(Tree::Text(n).into())
+                    Ok(Tree::number(n).into())
                 } else {
                     Err(ctx.failure(start, Fail))
                 }
             }
             ExpKind::UIntMeta => {
                 if let Some(n) = ctx.match_uint() {
-                    Ok(Tree::Text(n).into())
+                    Ok(Tree::number(n).into())
                 } else {
                     Err(ctx.failure(start, Fail))
                 }
             }
             ExpKind::FloatMeta => {
                 if let Some(f) = ctx.match_float() {
-                    Ok(Tree::Text(f).into())
+                    Ok(Tree::number(f).into())
                 } else {
                     Err(ctx.failure(start, Fail))
                 }
             }
             ExpKind::BoolMeta => {
                 if let Some(b) = ctx.match_bool() {
-                    Ok(Tree::Text(b).into())
+                    Ok(Tree::bool(b).into())
                 } else {
                     Err(ctx.failure(start, Fail))
                 }

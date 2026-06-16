@@ -19,12 +19,12 @@ impl Tree {
 
     /// Creates a List tree node (non-mergeable).
     pub fn list(items: &[TreeRef]) -> Tree {
-        Self::List(items.to_vec())
+        Self::Array(items.to_vec())
     }
 
     /// Creates a Map tree node from a TreeMap.
     pub fn map(entries: TreeMap) -> Tree {
-        Self::Map(entries)
+        Self::Object(entries)
     }
 
     /// Creates a Bottom tree node (memoization failure marker).
@@ -35,6 +35,16 @@ impl Tree {
     /// Creates a Nil tree node (no input consumed).
     pub fn nil() -> Tree {
         Self::Nil
+    }
+
+    /// Creates a Bool tree node from a string.
+    pub fn bool(value: Str) -> Tree {
+        Self::Bool(value.parse::<bool>().unwrap_or(false))
+    }
+
+    /// Creates a Number tree node from a string.
+    pub fn number(value: Str) -> Tree {
+        Self::Number(value.parse::<f64>().unwrap_or(0.0))
     }
 }
 

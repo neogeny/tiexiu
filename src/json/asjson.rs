@@ -39,10 +39,10 @@ impl Tree {
         match self {
             Tree::Bottom | Tree::Nil => Value::Null,
             Tree::Text(t) => Value::String(t.to_string()),
-            Tree::Seq(items) | Tree::List(items) => {
+            Tree::Seq(items) | Tree::Array(items) => {
                 Value::Array(items.iter().map(|t| t.to_json()).collect())
             }
-            Tree::Map(m) => {
+            Tree::Object(m) => {
                 let mut obj = Map::new();
                 for (k, v) in m.iter() {
                     obj.insert(k.clone(), v.to_json());
@@ -78,6 +78,10 @@ impl Tree {
                 obj.insert(name.to_string(), tree.to_json());
                 Value::Object(obj)
             }
+            Tree::Bool(b) => Value::Bool(*b),
+            Tree::Number(n) => Value::Number(
+                serde_json::Number::from_f64(*n).unwrap_or(serde_json::Number::from(0)),
+            ),
             Tree::Override(tree) | Tree::OverrideAsList(tree) => tree.to_json(),
         }
     }
@@ -107,10 +111,10 @@ impl Tree {
                     let tree = Tree::from_json(value);
                     m.insert(key.clone(), tree.into());
                 }
-                Tree::Map(m)
+                Tree::Object(m)
             }
-            Value::Bool(b) => Tree::text(b.to_string().as_str().into()).clone(),
-            Value::Number(n) => Tree::text(n.to_string().as_str().into()),
+            Value::Bool(b) => Tree::Bool(*b),
+            Value::Number(n) => Tree::Number(n.as_f64().unwrap_or(0.0)),
         }
     }
 }
