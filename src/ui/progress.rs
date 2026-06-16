@@ -59,12 +59,12 @@ impl FileProgress {
                 .with_style(
                     indicatif::ProgressStyle::with_template(
                         &(
-                            "  {prefix:>40.bold} {wide_bar:.green/black:40}".to_string() + ""
+                            "  {prefix:>40.bold} {bar:.green/gray/black:80}".to_string() + ""
                             // + " {percent:>4}% {duration_precise}"
                         ),
                     )
                     .unwrap()
-                    .progress_chars("━╸ "),
+                    .progress_chars("━━."),
                 )
                 .with_prefix(name.to_string()),
         );
@@ -102,8 +102,8 @@ impl Drop for FileProgress {
 
 /// Top-level progress UI with a multi-progress bar for batch processing.
 pub struct ProgressUI {
-    mp: indicatif::MultiProgress,
-    files: indicatif::ProgressBar,
+    pub mp: indicatif::MultiProgress,
+    pub files: indicatif::ProgressBar,
 }
 
 impl ProgressUI {

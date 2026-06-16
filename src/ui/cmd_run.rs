@@ -1,15 +1,15 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use console::Style;
+use crate::ui::progress::ProgressUI;
+use console::{Style, Term};
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 use tiexiu::Result;
 use tiexiu::api::parse_input;
 use tiexiu::cfg::Cfg;
 use tiexiu::cfg::CfgKey;
-
-use crate::ui::progress::ProgressUI;
+use tiexiu::util::finally;
 use tiexiu::util::strtools::{LineCount, countlines, linecount};
 
 struct RunUI {
@@ -82,14 +82,19 @@ impl RunUI {
         }
     }
 
-    fn print_file_result(&self, name: &str, duration: Duration, success: bool) {
-        let mark = if success { "✓" } else { "✗" };
-        eprintln!(
+    fn print_file_result(&self, pb: &ProgressUI, name: &str, duration: Duration, success: bool) {
+        let s = Style::new();
+        let mark = if success {
+            s.green().apply_to("✓")
+        } else {
+            s.red().apply_to("✗")
+        };
+        pb.files.println(format!(
             "{} {:<48} {:>5}",
             mark,
             name,
             format!("{:.1}s", duration.as_secs_f64())
-        );
+        ));
     }
 
     fn print_summary(&self, s: &Summary) {
@@ -199,8 +204,8 @@ impl Summary {
 }
 
 enum WorkerResult {
-    Success(usize, String, Duration, LineCount),
-    Error(usize, String, Duration, LineCount),
+    Success(usize, String, String, Duration, LineCount),
+    Error(usize, String, String, Duration, LineCount),
 }
 
 /// Execute the `Run` subcommand — parse input files with a compiled grammar.
@@ -253,6 +258,7 @@ pub fn cmd_run(
                     summary.successes += 1;
                     summary.success_lines += lines;
                     file_prog.success();
+                    ui.print_file_result(&progress, &name, elapsed, true);
                     file_results.push((name, elapsed, true, None));
                     let this_output = if model {
                         format!("{:#?}", tree).to_string()
@@ -267,6 +273,7 @@ pub fn cmd_run(
                 Err(err) => {
                     let elapsed = file_start.elapsed();
                     summary.failures += 1;
+                    ui.print_file_result(&progress, &name, elapsed, false);
                     file_results.push((name, elapsed, false, Some(err.to_string())));
                 }
             }
@@ -275,7 +282,7 @@ pub fn cmd_run(
         summary.wall_time = wall_start.elapsed();
         progress.finish();
         for (name, duration, success, _) in &file_results {
-            ui.print_file_result(name, *duration, *success);
+            ui.print_file_result(&progress, name, *duration, *success);
         }
         if summary.failures > 0 {
             eprintln!();
@@ -305,6 +312,10 @@ pub fn cmd_run(
         let parser = std::sync::Arc::new(parser);
         let cfg = std::sync::Arc::new(Cfg::clone(cfg));
 
+        let term = Term::stderr();
+        term.hide_cursor()?;
+        eprintln!();
+
         let mut handles = Vec::with_capacity(nworkers);
         for worker_id in 0..nworkers {
             let inputs = std::sync::Arc::clone(&inputs);
@@ -324,6 +335,7 @@ pub fn cmd_run(
                                 Err(error) => {
                                     tx.send(WorkerResult::Error(
                                         file_idx,
+                                        "".to_string(),
                                         error.to_string(),
                                         Duration::ZERO,
                                         LineCount::default(),
@@ -335,9 +347,9 @@ pub fn cmd_run(
                             };
 
                             // Create per-file bar lazily, only when a task actually runs.
+                            let name = input.file_name().unwrap_or_default().to_string_lossy();
                             let (fp, heartbeat) = {
                                 let prog = progress.lock().unwrap();
-                                let name = input.file_name().unwrap_or_default().to_string_lossy();
                                 let fp = prog.add_file(&name);
                                 if let Ok(meta) = std::fs::metadata(input) {
                                     fp.set_length(meta.len() as usize);
@@ -369,6 +381,7 @@ pub fn cmd_run(
                                     };
                                     tx.send(WorkerResult::Success(
                                         file_idx,
+                                        name.to_string(),
                                         this_output,
                                         elapsed,
                                         counts,
@@ -385,6 +398,7 @@ pub fn cmd_run(
                                     }
                                     tx.send(WorkerResult::Error(
                                         file_idx,
+                                        name.to_string(),
                                         err.to_string(),
                                         elapsed,
                                         counts,
@@ -405,24 +419,28 @@ pub fn cmd_run(
         let mut done = 0;
         while let Ok(event) = rx.recv() {
             match event {
-                WorkerResult::Success(idx, out, elapsed, counts) => {
+                WorkerResult::Success(idx, name, out, elapsed, counts) => {
                     summary.successes += 1;
                     summary.success_lines += counts.totl;
                     summary.total_lines += counts.totl;
                     summary.sloc += counts.code;
                     summary.run_time += elapsed;
+
+                    let pb_locked = progress.lock().unwrap();
+                    ui.print_file_result(&pb_locked, &name, elapsed, true);
+
                     results.push((idx, Some(out), None, elapsed));
                 }
-                WorkerResult::Error(idx, err, elapsed, counts) => {
+                WorkerResult::Error(idx, name, err, elapsed, counts) => {
                     summary.failures += 1;
                     summary.run_time += elapsed;
                     summary.total_lines += counts.totl;
                     summary.sloc += counts.code;
-                    let name = inputs[idx]
-                        .file_name()
-                        .unwrap_or_default()
-                        .to_string_lossy()
-                        .to_string();
+
+                    let pb_locked = progress.lock().unwrap();
+                    ui.print_file_result(&pb_locked, &name, elapsed, true);
+                    pb_locked.files.tick();
+
                     results.push((idx, None, Some(err.clone()), elapsed));
                     errors.push((name, err));
                 }
@@ -436,42 +454,30 @@ pub fn cmd_run(
         for handle in handles {
             let _ = handle.join();
         }
-
-        results.sort_by_key(|(id, _, _, _)| *id);
+        summary.wall_time = wall_start.elapsed();
+        eprintln!();
+        let pb_locked = progress.lock().unwrap();
+        pb_locked.finish();
 
         let mut file_results: Vec<(String, Duration, bool)> = Vec::with_capacity(results.len());
-        for (idx, out, _, elapsed) in &results {
+        let mut output = String::new();
+        for (idx, out, err, elapsed) in &results {
             let name = inputs[*idx]
                 .file_name()
                 .unwrap_or_default()
                 .to_string_lossy()
                 .to_string();
             file_results.push((name, *elapsed, out.is_some()));
-        }
 
-        let mut output = String::new();
-        for (_id, out, err, _) in &results {
-            if err.is_some() {
-                continue;
-            }
-            if let Some(out) = out {
+            if let Some(error) = err {
+                eprintln!("{}", error);
+            } else if let Some(out) = out {
                 output.push_str(out);
                 output.push('\n');
             }
         }
-
-        summary.wall_time = wall_start.elapsed();
         summary.total_lines = summary.success_lines; // multi-threaded: only track success lines
-        progress.lock().unwrap().finish();
-        for (name, duration, success) in &file_results {
-            ui.print_file_result(name, *duration, *success);
-        }
-        if !errors.is_empty() {
-            eprintln!();
-            for (_, err) in &errors {
-                eprintln!("{}", err);
-            }
-        }
+        finally(|| term.show_cursor().unwrap());
         ui.print_summary(&summary);
         Ok((output, ui.out_lang))
     }

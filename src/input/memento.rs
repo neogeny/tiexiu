@@ -52,8 +52,6 @@ impl Memento {
         let msg = self.msg.to_string();
         let err_msg = format!("{} {}", err_label, style(&msg).bold());
 
-        writeln!(f)?;
-        writeln!(f)?;
         writeln!(f, "{}", err_msg)?;
         writeln!(
             f,
@@ -96,8 +94,6 @@ impl Memento {
                 writeln!(f, " {} {}", style("→").red(), style(call).black().bright(),)?;
             }
         }
-        writeln!(f)?;
-        writeln!(f)?;
         Ok(())
     }
 
