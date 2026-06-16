@@ -12,38 +12,163 @@ use tiexiu::cfg::CfgKey;
 use crate::ui::progress::ProgressUI;
 use tiexiu::util::strtools::linecount;
 
-// --- Summary display customization ---------------------------------
-// Change these to customize the colors of the end-of-run summary.
-// Each row has its own (title_style, value_style) pair.
-
-fn title_style() -> Style {
-    Style::new().cyan().dim()
-}
-fn value_style() -> Style {
-    Style::new().white().bright()
-}
-
-fn success_title_style() -> Style {
-    Style::new().green().dim()
-}
-fn success_value_style() -> Style {
-    Style::new().green().bright()
+struct RunUI {
+    title: Style,
+    value: Style,
+    success_title: Style,
+    success_value: Style,
+    failure_title: Style,
+    failure_value: Style,
+    bright_red: Style,
+    out_lang: &'static str,
+    stack_size: usize,
 }
 
-fn failure_title_style() -> Style {
-    Style::new().red().dim()
-}
-fn failure_value_style() -> Style {
-    Style::new().red().bright()
-}
+impl RunUI {
+    fn new(model: bool, short: bool) -> Self {
+        Self {
+            title: Style::new().cyan().dim(),
+            value: Style::new().white().bright(),
+            success_title: Style::new().green().dim(),
+            success_value: Style::new().green().bright(),
+            failure_title: Style::new().red().dim(),
+            failure_value: Style::new().red().bright(),
+            bright_red: Style::new().red().bright(),
+            out_lang: if model {
+                "rs"
+            } else if short {
+                "rust"
+            } else {
+                "json"
+            },
+            stack_size: 4 * 1024 * 1024,
+        }
+    }
 
-fn rate_style(pct: f64) -> Style {
-    if pct >= 100.0 {
-        Style::new().green()
-    } else if pct > 0.0 {
-        Style::new().yellow()
-    } else {
-        Style::new().red()
+    fn rate_style(&self, pct: f64) -> Style {
+        if pct >= 100.0 {
+            Style::new().green()
+        } else if pct > 0.0 {
+            Style::new().yellow()
+        } else {
+            Style::new().red()
+        }
+    }
+
+    fn row(&self, ts: &Style, vs: &Style, name: &str, val: usize, suf: &str) {
+        eprintln!(
+            "{:>19} {:>13} {}",
+            ts.apply_to(name),
+            vs.apply_to(val),
+            vs.apply_to(suf)
+        )
+    }
+
+    fn row_str(&self, ts: &Style, vs: &Style, name: &str, val: &str, suf: &str) {
+        eprintln!(
+            "{:>19} {:>13} {}",
+            ts.apply_to(name),
+            vs.apply_to(val),
+            vs.apply_to(suf)
+        )
+    }
+
+    fn format_duration(&self, d: Duration) -> String {
+        let secs = d.as_secs();
+        if secs >= 3600 {
+            format!("{}:{:02}:{:02}", secs / 3600, (secs % 3600) / 60, secs % 60)
+        } else {
+            format!("{}:{:02}", secs / 60, secs % 60)
+        }
+    }
+
+    fn print_file_result(&self, name: &str, duration: Duration, success: bool) {
+        let mark = if success { "✓" } else { "✗" };
+        eprintln!(
+            "{} {:<48} {:>5}",
+            mark,
+            name,
+            format!("{:.1}s", duration.as_secs_f64())
+        );
+    }
+
+    fn print_summary(&self, s: &Summary) {
+        eprintln!();
+        if s.failures > 0 {
+            eprintln!(
+                "{}",
+                self.bright_red
+                    .apply_to(format!("FAILURES: {}", s.failures))
+            );
+        }
+        eprintln!();
+
+        self.row(&self.title, &self.value, "files input", s.files_input, "");
+        self.row(
+            &self.title,
+            &self.value,
+            "source lines input",
+            s.source_lines,
+            "",
+        );
+        self.row(
+            &self.title,
+            &self.value,
+            "success lines",
+            s.success_lines,
+            "",
+        );
+        self.row(&self.title, &self.value, "sloc", s.success_lines, "");
+        self.row(
+            &self.success_title,
+            &self.success_value,
+            "successes",
+            s.successes,
+            "",
+        );
+        self.row(
+            &self.failure_title,
+            &self.failure_value,
+            "failures",
+            s.failures,
+            "",
+        );
+
+        if s.files_input > 0 {
+            let pct = s.successes as f64 / s.files_input as f64 * 100.0;
+            self.row_str(
+                &self.title,
+                &self.rate_style(pct),
+                "success rate",
+                &format!("{:.0}", pct),
+                "%",
+            );
+        }
+
+        if s.wall_time.as_secs_f64() > 0.0 {
+            let sls = s.success_lines as f64 / s.wall_time.as_secs_f64();
+            self.row_str(
+                &self.title,
+                &self.rate_style(sls),
+                "sloc/sec",
+                &format!("{:0.0}", sls),
+                "sl/s",
+            );
+        }
+        self.row_str(
+            &self.title,
+            &self.value,
+            "run time",
+            &self.format_duration(s.run_time),
+            "",
+        );
+        self.row_str(
+            &self.title,
+            &self.value,
+            "wall time",
+            &self.format_duration(s.wall_time),
+            "",
+        );
     }
 }
 
@@ -71,84 +196,6 @@ impl Summary {
     }
 }
 
-fn format_duration(d: Duration) -> String {
-    let secs = d.as_secs();
-    if secs >= 3600 {
-        format!("{}:{:02}:{:02}", secs / 3600, (secs % 3600) / 60, secs % 60)
-    } else {
-        format!("{}:{:02}", secs / 60, secs % 60)
-    }
-}
-
-fn print_summary(s: &Summary) {
-    let t = title_style();
-    let v = value_style();
-
-    macro_rules! row {
-        ($ts:expr, $vs:expr, $name:expr, $val:expr, $suf:expr) => {
-            eprintln!(
-                "{:>19} {:>13} {}",
-                $ts.apply_to($name),
-                $vs.apply_to($val),
-                $vs.apply_to($suf)
-            )
-        };
-    }
-
-    let bright_red = Style::new().red().bright();
-    eprintln!();
-    if s.failures > 0 {
-        eprintln!(
-            "{}",
-            bright_red.apply_to(format!("FAILURES: {}", s.failures))
-        );
-    }
-    eprintln!();
-
-    row!(t, v, "files input", s.files_input, "");
-    row!(t, v, "source lines input", s.source_lines, "");
-    row!(t, v, "success lines", s.success_lines, "");
-    row!(t, v, "sloc", s.success_lines, "");
-    row!(
-        success_title_style(),
-        success_value_style(),
-        "successes",
-        s.successes,
-        ""
-    );
-    row!(
-        failure_title_style(),
-        failure_value_style(),
-        "failures",
-        s.failures,
-        ""
-    );
-
-    if s.files_input > 0 {
-        let pct = s.successes as f64 / s.files_input as f64 * 100.0;
-        row!(
-            t,
-            rate_style(pct),
-            "success rate",
-            format!("{:.0}%", pct),
-            "%"
-        );
-    }
-
-    if s.wall_time.as_secs_f64() > 0.0 {
-        let sls = s.success_lines as f64 / s.wall_time.as_secs_f64();
-        row!(
-            t,
-            rate_style(sls),
-            "sloc/sec",
-            format!("{:0.0}", sls),
-            "sl/s"
-        );
-    }
-    row!(t, v, "run time", format_duration(s.run_time), "");
-    row!(t, v, "wall time", format_duration(s.wall_time), "");
-}
-
 enum WorkerResult {
     Success(usize, String, Duration, usize),
     Error(usize, String, Duration),
@@ -165,14 +212,7 @@ pub fn cmd_run(
 ) -> Result<(String, &'static str)> {
     let progress = ProgressUI::new(inputs.len() as u64);
     let parser = crate::ui::cli::load_grammar_from_path(&grammar, &progress, cfg)?;
-
-    let out_lang = if model {
-        "rs"
-    } else if short {
-        "rust"
-    } else {
-        "json"
-    };
+    let ui = RunUI::new(model, short);
 
     let wall_start = Instant::now();
     let mut summary = Summary::new(inputs.len());
@@ -233,13 +273,7 @@ pub fn cmd_run(
         summary.wall_time = wall_start.elapsed();
         progress.finish();
         for (name, duration, success, _) in &file_results {
-            let mark = if *success { "✓" } else { "✗" };
-            eprintln!(
-                "{} {:<48} {:>5}",
-                mark,
-                name,
-                format!("{:.1}s", duration.as_secs_f64())
-            );
+            ui.print_file_result(name, *duration, *success);
         }
         if summary.failures > 0 {
             eprintln!();
@@ -249,8 +283,8 @@ pub fn cmd_run(
                 }
             }
         }
-        print_summary(&summary);
-        Ok((output, out_lang))
+        ui.print_summary(&summary);
+        Ok((output, ui.out_lang))
     } else {
         let max_workers = nproc.unwrap_or_else(|| {
             std::thread::available_parallelism()
@@ -269,7 +303,6 @@ pub fn cmd_run(
         let parser = std::sync::Arc::new(parser);
         let cfg = std::sync::Arc::new(Cfg::clone(cfg));
 
-        const RUNTIME_STACK_SIZE: usize = 4 * 1024 * 1024;
         let mut handles = Vec::with_capacity(nworkers);
         for worker_id in 0..nworkers {
             let inputs = std::sync::Arc::clone(&inputs);
@@ -277,9 +310,10 @@ pub fn cmd_run(
             let cfg = std::sync::Arc::clone(&cfg);
             let progress = std::sync::Arc::clone(&progress);
             let tx = tx.clone();
+            let stack_size = ui.stack_size;
             handles.push(
                 std::thread::Builder::new()
-                    .stack_size(RUNTIME_STACK_SIZE)
+                    .stack_size(stack_size)
                     .spawn(move || {
                         for (file_idx, input) in
                             inputs.iter().enumerate().skip(worker_id).step_by(nworkers)
@@ -423,13 +457,7 @@ pub fn cmd_run(
         summary.source_lines = summary.success_lines; // multi-threaded: only track success lines
         progress.lock().unwrap().finish();
         for (name, duration, success) in &file_results {
-            let mark = if *success { "✓" } else { "✗" };
-            eprintln!(
-                "{} {:<48} {:>5}",
-                mark,
-                name,
-                format!("{:.1}s", duration.as_secs_f64())
-            );
+            ui.print_file_result(name, *duration, *success);
         }
         if !errors.is_empty() {
             eprintln!();
@@ -437,7 +465,7 @@ pub fn cmd_run(
                 eprintln!("{}", err);
             }
         }
-        print_summary(&summary);
-        Ok((output, out_lang))
+        ui.print_summary(&summary);
+        Ok((output, ui.out_lang))
     }
 }
