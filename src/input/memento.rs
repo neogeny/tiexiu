@@ -82,12 +82,11 @@ impl Memento {
         let padding = " ".repeat(col_num.saturating_sub(1));
         writeln!(
             f,
-            "{:>4} {} {}{} {}",
+            "{:>4} {} {}{}",
             "",
             blue_pipe,
             padding,
-            style("⌃").red().bold(),
-            err_msg
+            style(format!("⌃ {}", msg)).red().bold(),
         )?;
 
         // #[cfg(debug_assertions)]
