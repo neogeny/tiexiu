@@ -23,18 +23,18 @@ pub struct KeyValue(pub Str, pub TreeRef);
 /// The abstract syntax tree representation for parsed input.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Tree {
+    /// Parsing that didn't consume any input (internal).
+    Null,
     /// A text/leaf node from tokens or patterns.
     Text(Str),
     /// A non-mergeable list of values.
     List(Vec<TreeRef>),
     /// A mapping of named elements.
     Map(TreeMap),
-    /// The result of parsing a rule call.
-    Node { typename: Str, tree: TreeRef },
-    /// Parsing that didn't consume any input (internal).
-    Null,
 
     // NOTE these variants don't survive fold()
+    /// The result of parsing a rule call.
+    Node { typename: Str, tree: TreeRef },
     /// A sequence of values (mergeable).
     Seq(Vec<TreeRef>),
     /// Failure marker used in memoization (internal).

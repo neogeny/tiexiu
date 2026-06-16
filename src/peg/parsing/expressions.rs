@@ -4,7 +4,7 @@
 use crate::api::error::nope::ParseResult;
 use crate::context::CtxSem;
 use crate::peg::{Exp, ExpKind, ParseFailure::*, Parser};
-use crate::trees::{Tree, TreeRef};
+use crate::trees::{NULL, Tree, TreeRef};
 use crate::types::Str;
 use crate::util::pyre;
 
@@ -244,24 +244,19 @@ impl Exp {
 
             ExpKind::Sequence(sequence) => {
                 let seq_start = ctx.mark();
-                let mut results: Vec<TreeRef> = Vec::with_capacity(sequence.len());
+
+                let mut out = NULL;
                 for exp in &**sequence {
                     if let ExpKind::Cut = exp.kind {
-                        // NOTE
-                        //   this is a minor optimization because
-                        //      parse_at(Exp::ExpKind::Cut)
-                        //   will just return Tree::Nil
                         ctx.cut();
                         continue;
                     }
                     match exp.parse_at(ctx) {
                         Ok(tree) => {
-                            if *tree == Tree::Null {
-                                // note: minor optimization
-                                // note: the likes does not apply to closures
+                            if *tree == NULL {
                                 continue;
                             }
-                            results.push(tree);
+                            out = Tree::merge(&out, &tree)
                         }
                         Err(nope) => {
                             ctx.reset(seq_start);
@@ -269,13 +264,7 @@ impl Exp {
                         }
                     }
                 }
-                if results.is_empty() {
-                    Ok(Tree::Null.into())
-                } else if results.len() == 1 {
-                    Ok(results[0].clone())
-                } else {
-                    Ok(Tree::Seq(results).into())
-                }
+                Ok(out.into())
             }
             ExpKind::Alt(_exp) => Err(ctx.failure(start, AltWithNoChoice)),
             ExpKind::Choice(options) => self.parse_choice(ctx, options),
