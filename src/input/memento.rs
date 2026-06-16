@@ -45,14 +45,16 @@ impl Memento {
     fn render(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let (line_num, col_num) = Self::pos_at(&self.text, self.mark);
 
-        let err_label = style("error").red().bold();
-        let blue_pipe = style("|").blue().bold();
-        let arrow = style("-->").blue().bold();
+        let err_label = style("error:").red().bold();
+        let blue_pipe = style("│").blue().bold();
+        let arrow = style("─→").blue().bold();
 
         let msg = self.msg.to_string();
+        let err_msg = format!("{} {}", err_label, style(&msg).bold());
 
         writeln!(f)?;
-        writeln!(f, "{}: {}", err_label, style(&msg).bold())?;
+        writeln!(f)?;
+        writeln!(f, "{}", err_msg)?;
         writeln!(
             f,
             "  {} {}:{}:{}",
@@ -75,21 +77,18 @@ impl Memento {
                     blue_pipe,
                     content
                 )?;
-
-                if current_line_num == line_num {
-                    let padding = " ".repeat(col_num.saturating_sub(1));
-                    writeln!(
-                        f,
-                        "{:>4} {} {}{} {}",
-                        "",
-                        blue_pipe,
-                        padding,
-                        style("^").red().bold(),
-                        style(&msg).red()
-                    )?;
-                }
             }
         }
+        let padding = " ".repeat(col_num.saturating_sub(1));
+        writeln!(
+            f,
+            "{:>4} {} {}{} {}",
+            "",
+            blue_pipe,
+            padding,
+            style("⌃").red().bold(),
+            err_msg
+        )?;
 
         // #[cfg(debug_assertions)]
         {
@@ -98,6 +97,8 @@ impl Memento {
                 writeln!(f, " {} {}", style("→").red(), style(call).black().bright(),)?;
             }
         }
+        writeln!(f)?;
+        writeln!(f)?;
         Ok(())
     }
 

@@ -127,6 +127,6 @@ impl ProgressUI {
 
     /// Marks all processing as finished.
     pub fn finish(&self) {
-        self.files.finish_with_message("done");
+        self.files.finish_and_clear();
     }
 }
