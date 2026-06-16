@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::peg::error::ParseResult;
-use crate::trees::Tree::Bottom;
-use crate::trees::TreeRef;
+use crate::trees::BOTTOM;
+use crate::trees::Tree;
 use crate::types::Str;
 use std::fmt::Debug;
 use std::sync::Arc;
@@ -22,12 +22,12 @@ pub struct NullSemantics;
 /// - `Ok(tree)` — semantics has transformed the result; use as-is.
 /// - `Err(nope)` — semantics failure; abort the parse.
 pub trait Semantics: Debug + Send + Sync {
-    fn apply(&self, node: TreeRef, rule_name: &str, params: &[Str]) -> ParseResult;
+    fn apply(&self, node: Tree, rule_name: &str, params: &[Str]) -> ParseResult;
 }
 
 impl Semantics for NullSemantics {
-    fn apply(&self, _node: TreeRef, _rule_name: &str, _params: &[Str]) -> ParseResult {
-        Ok(Bottom.into())
+    fn apply(&self, _node: Tree, _rule_name: &str, _params: &[Str]) -> ParseResult {
+        Ok(BOTTOM)
     }
 }
 

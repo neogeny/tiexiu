@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::cst::TreeMap;
-use crate::trees::{KeyValue, Tree, TreeRef};
+use super::fold::TreeMap;
+use crate::trees::{KeyValue, Tree, Tree};
 use std::fmt;
 
 pub fn fmt_treemap(map: &TreeMap, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -22,7 +22,7 @@ impl fmt::Display for KeyValue {
     }
 }
 
-fn fmt_items(items: &[TreeRef]) -> String {
+fn fmt_items(items: &[Tree]) -> String {
     items
         .iter()
         .map(|item| item.to_string())
@@ -33,6 +33,7 @@ fn fmt_items(items: &[TreeRef]) -> String {
 impl fmt::Display for Tree {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::Value(value) => write!(f, "v({:?})", value),
             Self::Text(s) => write!(f, "t({:?})", s),
             Self::Named(kv) => write!(f, "k({})", kv),
             Self::NamedAsList(kv) => write!(f, "kl({})", kv),
@@ -54,13 +55,13 @@ impl fmt::Display for Tree {
 
 #[cfg(test)]
 mod tests {
-    use crate::trees::{KeyValue, Tree, TreeMap, TreeRef};
+    use crate::trees::{KeyValue, Tree, Tree, TreeMap};
 
     #[test]
     fn test_treemap_display() {
         let mut map = TreeMap::default();
-        map.insert("key1".into(), TreeRef::from(Tree::Text("value1".into())));
-        map.insert("key2".into(), TreeRef::from(Tree::Text("value2".into())));
+        map.insert("key1".into(), Tree::from(Tree::Text("value1".into())));
+        map.insert("key2".into(), Tree::from(Tree::Text("value2".into())));
         assert_eq!(
             Tree::Object(map).to_string(),
             "m(&[(\"key1\", t(\"value1\")), (\"key2\", t(\"value2\"))])"
@@ -104,7 +105,7 @@ mod tests {
         );
 
         let mut map = TreeMap::default();
-        map.insert("a".into(), TreeRef::from(Tree::Text("1".into())));
+        map.insert("a".into(), Tree::from(Tree::Text("1".into())));
         assert_eq!(Tree::Object(map).to_string(), "m(&[(\"a\", t(\"1\"))])");
 
         assert_eq!(Tree::Nil.to_string(), "NIL");

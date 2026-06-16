@@ -95,7 +95,7 @@ pub fn safe_name(name: &str, plug: &str) -> Result<String, String> {
     Ok(result)
 }
 
-fn is_valid_identifier(s: &str) -> bool {
+pub fn is_valid_identifier(s: &str) -> bool {
     if s.is_empty() {
         return false;
     }

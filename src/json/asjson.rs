@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::trees::{KeyValue, Tree, TreeMap, TreeRef};
+use crate::trees::{KeyValue, Tree, Tree, TreeMap};
 use serde_json::{Map, Value};
 
 use crate::json::error::JsonError;
@@ -37,6 +37,7 @@ impl Tree {
     /// Converts this tree into a `Value`.
     pub fn to_json(&self) -> Value {
         match self {
+            Tree::Value(value) => value.clone(),
             Tree::Bottom | Tree::Nil => Value::Null,
             Tree::Text(t) => Value::String(t.to_string()),
             Tree::Seq(items) | Tree::Array(items) => {
@@ -92,7 +93,7 @@ impl Tree {
             Value::Null => Tree::Nil,
             Value::String(s) => Tree::Text(s.clone()),
             Value::Array(arr) => {
-                let items: Vec<TreeRef> = arr.iter().map(|v| Tree::from_json(v).into()).collect();
+                let items: Vec<Tree> = arr.iter().map(|v| Tree::from_json(v).into()).collect();
                 Tree::Seq(items)
             }
             Value::Object(obj) => {

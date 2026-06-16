@@ -1,22 +1,26 @@
-/// Tree builder helper methods.
-pub mod build;
-pub mod cst;
-/// Tree error types.
-pub mod error;
 /// Display formatting for Tree types.
 pub mod fmt;
-/// Folds trait for tree transformation.
-pub mod fold;
 /// TreeMap type for named key-value tree storage.
 /// Shortcut constructor functions for trees.
 pub mod short;
-/// Tree translation trait.
+
 /// Core Tree enum and supporting types.
 pub mod tree;
-
-/// Re-export of TreeMap types.
-pub use cst::*;
-/// Re-export of Tree errors.
-pub use error::Error;
-/// Re-export of Tree and supporting types.
 pub use tree::*;
+
+/// Tree builder helper methods.
+pub mod build;
+pub use build::*;
+
+pub mod named;
+pub use named::*;
+
+/// Folds trait for tree transformation.
+pub mod fold;
+pub use fold::*;
+
+/// Tree error types.
+pub mod error;
+pub mod path;
+
+pub use error::Error;

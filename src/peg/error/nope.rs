@@ -4,13 +4,13 @@
 use super::failure::ParseFailure;
 use crate::context::Ctx;
 use crate::input::memento::Memento;
-use crate::trees::TreeRef;
+use crate::trees::Tree;
 use crate::types::Ref;
 use std::fmt::Debug;
 use std::panic::Location;
 
 /// Result of a PEG parse attempt
-pub type ParseResult = Result<TreeRef, Nope>;
+pub type ParseResult = Result<Tree, Nope>;
 
 /// A parse failure carrying a disaster report.
 #[derive(thiserror::Error, Debug, Clone)]

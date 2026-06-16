@@ -5,11 +5,11 @@
 //! Moved from `Ctx` trait to decouple parsing logic from context management.
 
 use crate::context::CtxSem;
-use crate::peg::Exp;
 use crate::peg::error::{Nope, ParseFailure, ParseResult};
 use crate::peg::rule::Rule;
-use crate::trees::TreeRef;
+use crate::peg::Exp;
 use crate::trees::tree::Tree;
+use crate::trees::Tree;
 
 impl Exp {
     /// Core entry point for calling a rule.
@@ -100,7 +100,7 @@ impl Exp {
             return Err(ctx.failure(start, ParseFailure::FailedParse(rule.name.clone())));
         }
         let mut lastmark = start;
-        let mut lasttree: TreeRef = Tree::Nil.into();
+        let mut lasttree: Tree = Tree::Nil.into();
         let mut lastnope: Option<Nope> = None;
 
         ctx.memoize(key, &Tree::Bottom.into(), start);

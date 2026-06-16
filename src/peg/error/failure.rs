@@ -1,10 +1,10 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::Tree;
-use crate::trees::TreeRef;
+use crate::trees::Tree;
 use crate::types::Str;
 use crate::util::ensure::Ensure;
+use crate::Tree;
 use thiserror::Error;
 
 /// A result type for grammar compilation.
@@ -62,7 +62,7 @@ pub enum ParseFailure {
 
     /// Corresponds memos that are Tree::Bottom
     #[error("Failed parsing '{0}' start {1} end {2}")]
-    FailedRecursion(Str, usize, usize, TreeRef),
+    FailedRecursion(Str, usize, usize, Tree),
 
     /// Corresponds memos that are Tree::Bottom
     #[error("UNBOUND LEFT RECURSION OF {0} AT {1}@{2}")]

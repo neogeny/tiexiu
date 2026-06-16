@@ -1,12 +1,12 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::trees::KeyValue;
 use crate::Tree;
-use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyList, PyString};
+use crate::trees::KeyValue;
 use pyo3::BoundObject;
 use pyo3::IntoPyObject;
+use pyo3::prelude::*;
+use pyo3::types::{PyDict, PyList, PyString};
 
 fn to_python(tree: &Tree, py: Python<'_>) -> PyResult<Py<PyAny>> {
     match tree {

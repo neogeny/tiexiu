@@ -4,11 +4,11 @@
 pub use super::ctx::{Ctx, CtxSem};
 use super::memo::{Memo, MemoKey};
 use super::state::{CallStack, HeavyState, ParseState};
-use super::trace::{CONSOLE_TRACER, NULL_TRACER, Tracer};
+use super::trace::{Tracer, CONSOLE_TRACER, NULL_TRACER};
 use crate::cfg::*;
 use crate::input::Cursor;
 use crate::peg::error::DisasterReport;
-use crate::trees::TreeRef;
+use crate::trees::Tree;
 use crate::types::Str;
 use crate::util::pyre::Pattern;
 use std::time::Instant;
@@ -172,7 +172,7 @@ where
 
     fn apply_semantics(
         &mut self,
-        node: TreeRef,
+        node: Tree,
         rule_name: &str,
         params: &[Str],
     ) -> crate::peg::error::ParseResult {
@@ -190,7 +190,7 @@ where
         self.heavy.memos.memo(key)
     }
 
-    fn memoize(&mut self, key: &MemoKey, tree: &TreeRef, lastmark: usize) {
+    fn memoize(&mut self, key: &MemoKey, tree: &Tree, lastmark: usize) {
         self.heavy.memos.memoize(key, tree, lastmark);
     }
 

@@ -10,7 +10,7 @@ use crate::peg::error::Nope;
 use crate::peg::error::ParseResult;
 use crate::peg::error::{DisasterReport, ParseFailure};
 use crate::trees::Tree;
-use crate::trees::TreeRef;
+use crate::trees::Tree;
 use crate::types::Str;
 use crate::util::pyre::Pattern;
 use crate::{MAX_RECURSION_DEPTH, SYM_ETX};
@@ -140,7 +140,7 @@ pub trait CtxSem: Ctx + Debug + Sized {
     /// — the caller should proceed with default param-based `Node` wrapping.
     fn apply_semantics(
         &mut self,
-        _node: TreeRef,
+        _node: Tree,
         _rule_name: &str,
         _params: &[Str],
     ) -> ParseResult {
@@ -149,7 +149,7 @@ pub trait CtxSem: Ctx + Debug + Sized {
 
     fn key(&mut self, name: &str, can_memo: bool) -> MemoKey;
     fn memo(&mut self, key: &MemoKey) -> Option<Memo>;
-    fn memoize(&mut self, key: &MemoKey, tree: &TreeRef, lastmark: usize);
+    fn memoize(&mut self, key: &MemoKey, tree: &Tree, lastmark: usize);
 
     fn cut(&mut self);
     fn push_cut(&mut self);

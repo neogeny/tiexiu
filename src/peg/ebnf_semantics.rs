@@ -4,7 +4,7 @@
 use crate::context::Semantics;
 use crate::peg::error::ParseResult;
 use crate::trees::Tree::Bottom;
-use crate::trees::{Tree, TreeRef};
+use crate::trees::{Tree, Tree};
 use crate::types::{Ref, Str};
 
 /// Default semantics for all Grammar parsing.
@@ -26,7 +26,7 @@ impl EBNFGrammarSemantics {
 }
 
 impl Semantics for EBNFGrammarSemantics {
-    fn apply(&self, node: TreeRef, _rule_name: &str, _params: &[Str]) -> ParseResult {
+    fn apply(&self, node: Tree, _rule_name: &str, _params: &[Str]) -> ParseResult {
         match node.as_ref() {
             // Meta → typed variants (boot grammar @name/@int/@uint/@float/@bool)
             Tree::Node { typename, tree } if typename == "Meta" => {

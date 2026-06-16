@@ -2,8 +2,12 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::tree::Tree;
-use crate::trees::cst::TreeMap;
+use crate::trees::fold::TreeMap;
 use crate::trees::KeyValue;
+
+pub fn v(value: serde_json::Value) -> Tree {
+    Tree::Value(value)
+}
 
 /// Shorthand for Tree::Text.
 pub fn t(value: &str) -> Tree {
@@ -66,7 +70,7 @@ pub fn bottom() -> Tree {
 
 /// Shorthand for Tree::Nil.
 pub fn nil() -> Tree {
-    Tree::Nil
+    Tree::nil()
 }
 
 #[cfg(test)]

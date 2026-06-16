@@ -7,12 +7,12 @@
 
 use serde_json::json;
 use std::sync::Arc;
-use tiexiu::Str;
 use tiexiu::cfg::CfgKey;
 use tiexiu::context::{Semantics, SemanticsRef};
 use tiexiu::peg::error::ParseResult;
-use tiexiu::trees::{Tree, TreeRef};
-use tiexiu::{Result, parse};
+use tiexiu::trees::{Tree, Tree};
+use tiexiu::Str;
+use tiexiu::{parse, Result};
 
 /// A Semantics implementation that converts generic `Meta` nodes
 /// (produced by the @name/@int/@uint/@float/@bool boot-grammar rules)
@@ -24,7 +24,7 @@ use tiexiu::{Result, parse};
 struct MetaToNameMeta;
 
 impl Semantics for MetaToNameMeta {
-    fn apply(&self, node: TreeRef, _rule_name: &str, _params: &[Str]) -> ParseResult {
+    fn apply(&self, node: Tree, _rule_name: &str, _params: &[Str]) -> ParseResult {
         if let Tree::Node { typename, tree } = node.as_ref()
             && typename == "Meta"
         {
@@ -79,8 +79,8 @@ fn test_semantics_meta_to_float() -> Result<()> {
         @@whitespace :: /[\t ]+/
         start = @float $ ;
     "#;
-    let tree = parse(grammar, "3.14", &[CfgKey::Semantics(sem.clone())])?;
-    assert_eq!(tree.to_json(), json!(3.14));
+    let tree = parse(grammar, "7.53", &[CfgKey::Semantics(sem.clone())])?;
+    assert_eq!(tree.to_json(), json!(7.53));
     Ok(())
 }
 

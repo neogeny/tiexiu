@@ -6,7 +6,7 @@ use crate::cfg::*;
 use crate::peg::grammar::KeywordRef;
 use crate::peg::rule::{RuleMap, RuleRef};
 use crate::peg::{Exp, Grammar, Rule};
-use crate::trees::{Tree, TreeMap, TreeRef};
+use crate::trees::{Tree, Tree, TreeMap};
 use crate::types::Str;
 use crate::ExpKind;
 
@@ -39,7 +39,7 @@ fn _parse_map(node: &Tree) -> CompileResult<&TreeMap> {
     Ok(map)
 }
 
-fn _parse_list(node: &Tree) -> CompileResult<&[TreeRef]> {
+fn _parse_list(node: &Tree) -> CompileResult<&[Tree]> {
     match node {
         Tree::Seq(list) | Tree::Array(list) => Ok(list.as_slice()),
         _ => Err(CompileError::ExpectedList(format!("{:?}", node))),
