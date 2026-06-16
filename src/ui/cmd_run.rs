@@ -4,10 +4,10 @@
 use console::Style;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
-use tiexiu::Result;
 use tiexiu::api::parse_input;
 use tiexiu::cfg::Cfg;
 use tiexiu::cfg::CfgKey;
+use tiexiu::Result;
 
 use crate::ui::progress::ProgressUI;
 use tiexiu::util::strtools::linecount;
@@ -135,7 +135,7 @@ fn print_summary(s: &Summary) {
             t,
             rate_style(sls),
             "sloc/sec",
-            format!("{:0.0}", sls),
+            format!("{:0.0}",sls),
             "sl/s"
         );
     }
