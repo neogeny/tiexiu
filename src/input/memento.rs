@@ -52,8 +52,6 @@ impl Memento {
         let msg = self.msg.to_string();
         let err_msg = format!("{} {}", err_label, style(&msg).bold());
 
-        writeln!(f)?;
-        writeln!(f)?;
         writeln!(f, "{}", err_msg)?;
         writeln!(
             f,
@@ -82,12 +80,11 @@ impl Memento {
         let padding = " ".repeat(col_num.saturating_sub(1));
         writeln!(
             f,
-            "{:>4} {} {}{} {}",
+            "{:>4} {} {}{}",
             "",
             blue_pipe,
             padding,
-            style("⌃").red().bold(),
-            err_msg
+            style(format!("⌃ {}", msg)).red().bold(),
         )?;
 
         // #[cfg(debug_assertions)]
@@ -97,8 +94,6 @@ impl Memento {
                 writeln!(f, " {} {}", style("→").red(), style(call).black().bright(),)?;
             }
         }
-        writeln!(f)?;
-        writeln!(f)?;
         Ok(())
     }
 

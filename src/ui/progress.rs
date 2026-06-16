@@ -4,30 +4,40 @@
 use super::heartbeat::CliHeartbeat;
 use tiexiu::HeartbeatRef;
 
-/// Progress bar for loading global resources (spinner style).
+/// Progress bar for loading global resources (bar style).
 pub struct LoadProgress {
     pb: indicatif::ProgressBar,
     hb: HeartbeatRef,
 }
 
 impl LoadProgress {
-    /// Creates a new spinner progress bar with the given message.
+    /// Creates a new progress bar for loading, tracking progress via heartbeat.
     pub fn new(mp: &indicatif::MultiProgress, msg: &'static str) -> Self {
         let pb = mp.add(
-            indicatif::ProgressBar::new_spinner().with_style(
-                indicatif::ProgressStyle::with_template("{spinner:.cyan} {wide_msg}")
+            indicatif::ProgressBar::new(0)
+                .with_style(
+                    indicatif::ProgressStyle::with_template(
+                        // "  {prefix:>12} {wide_bar:.cyan/blue} {msg}",
+                        " {msg} {wide_bar:.cyan/blue}",
+                    )
                     .unwrap()
-                    .tick_chars("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"),
-            ),
+                    .progress_chars("━╸─"),
+                )
+                .with_prefix("grammar"),
         );
-        let hb = std::sync::Arc::new(CliHeartbeat::new(pb.clone()));
         pb.set_message(msg);
+        let hb = std::sync::Arc::new(CliHeartbeat::new(pb.clone()));
         Self { pb, hb }
     }
 
     /// Returns a reference to the underlying heartbeat callback.
     pub fn heartbeat(&self) -> &HeartbeatRef {
         &self.hb
+    }
+
+    /// Sets the expected total number of bytes (from file size).
+    pub fn set_length(&self, len: usize) {
+        self.pb.set_length(len as u64);
     }
 
     /// Marks the loading as finished.
@@ -48,11 +58,13 @@ impl FileProgress {
             indicatif::ProgressBar::new(0)
                 .with_style(
                     indicatif::ProgressStyle::with_template(
-                        &("  {prefix:>40.bold} {wide_bar:.green/black}".to_string()
-                            + " {percent:>4}% {duration_precise}  "),
+                        &(
+                            "  {prefix:>40.bold} {bar:.green/gray/black:80}".to_string() + ""
+                            // + " {percent:>4}% {duration_precise}"
+                        ),
                     )
                     .unwrap()
-                    .progress_chars("━╸─"),
+                    .progress_chars("━━."),
                 )
                 .with_prefix(name.to_string()),
         );
@@ -90,23 +102,21 @@ impl Drop for FileProgress {
 
 /// Top-level progress UI with a multi-progress bar for batch processing.
 pub struct ProgressUI {
-    mp: indicatif::MultiProgress,
-    files: indicatif::ProgressBar,
+    pub mp: indicatif::MultiProgress,
+    pub files: indicatif::ProgressBar,
 }
 
 impl ProgressUI {
     /// Creates a new progress UI for processing `total` files.
     pub fn new(total: u64) -> Self {
         let mp = indicatif::MultiProgress::new();
-        let files = mp.add(indicatif::ProgressBar::new(total)
-            .with_style(
-                indicatif::ProgressStyle::with_template(
-                    "{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {pos}/{len} files",
-                )
-                .unwrap()
-                .progress_chars("⠇⠋ "),
-                // .progress_chars("░>-"),
-        ));
+        let files = mp.add(
+            indicatif::ProgressBar::new(total).with_style(
+                indicatif::ProgressStyle::with_template("{wide_bar:.yellow}")
+                    .unwrap()
+                    .progress_chars("━ "),
+            ),
+        );
         Self { mp, files }
     }
 
