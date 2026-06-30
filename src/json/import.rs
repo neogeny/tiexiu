@@ -452,7 +452,7 @@ mod tests {
         let json_str = std::fs::read_to_string("grammar/tatsu.json").expect("tatsu.json missing");
         let value = json::parse(&json_str).expect("Failed to parse JSON");
         let grammar = Grammar::from_json_value(&value).expect("Failed to convert");
-        assert_eq!(grammar.name, "TatSuBootstrap".into());
+        assert_eq!(grammar.name, "TatSu".into());
         let rule_count = grammar.rules().count();
         assert!(rule_count > 0, "Expected rules, got {}", rule_count);
     }
