@@ -23,24 +23,24 @@ impl Exp {
         let start = ctx.mark();
 
         for option in options.iter() {
+            let mut inner = option;
+            // WARNING: TatSu >=v5.22 may optimize out Alt
             if let ExpKind::Alt(exp) = &option.kind {
-                ctx.push_cut();
-                let result = exp.parse_at(ctx);
-                let cutseen = ctx.take_cut();
-                match result {
-                    Ok(tree) => {
-                        return Ok(tree);
-                    }
-                    Err(nope) => {
-                        ctx.reset(start);
-                        if cutseen {
-                            return Err(nope);
-                        }
+                inner = exp
+            }
+            ctx.push_cut();
+            let result = inner.parse_at(ctx);
+            let cutseen = ctx.take_cut();
+            match result {
+                Ok(tree) => {
+                    return Ok(tree);
+                }
+                Err(nope) => {
+                    ctx.reset(start);
+                    if cutseen {
+                        return Err(nope);
                     }
                 }
-            } else {
-                ctx.reset(start);
-                return Err(ctx.failure(start, ChoiceOptionWithNoAlt));
             }
         }
         Err(ctx.failure(start, NoViableOption(self.lookahead_str())))
