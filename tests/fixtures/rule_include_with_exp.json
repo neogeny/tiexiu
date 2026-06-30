@@ -2,7 +2,7 @@
   "__class__": "Grammar",
   "analyzed": true,
   "directives": {
-    "grammar": "TatSu",
+    "grammar": "TatSuBootstrap",
     "whitespace": "(?m)\\s+",
     "comments": "(?ms)[(][*]\\s*((?:.|\\n)*?)\\s*[*][)]|[\\/][*]\\s*((?:.|\\n)*?)\\s*[*][\\/]",
     "eol_comments": "(?ms)(?:[#]|[\\/][\\/])(.*?)$",
@@ -37,9 +37,7 @@
       "name": "grammar",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "Grammar"
-      ],
+      "params": ["Grammar"],
       "exp": {
         "__class__": "Sequence",
         "sequence": [
@@ -954,9 +952,7 @@
       "name": "rule",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "Rule"
-      ],
+      "params": ["Rule"],
       "exp": {
         "__class__": "Sequence",
         "sequence": [
@@ -1471,9 +1467,7 @@
       "name": "choice",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "Choice"
-      ],
+      "params": ["Choice"],
       "exp": {
         "__class__": "Sequence",
         "sequence": [
@@ -1534,9 +1528,7 @@
       "name": "option",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "Option"
-      ],
+      "params": ["Option"],
       "exp": {
         "__class__": "Call",
         "name": "sequence"
@@ -1552,9 +1544,7 @@
       "name": "sequence",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "Sequence"
-      ],
+      "params": ["Sequence"],
       "exp": {
         "__class__": "Choice",
         "options": [
@@ -1676,9 +1666,7 @@
       "name": "rule_include",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "RuleInclude"
-      ],
+      "params": ["RuleInclude"],
       "exp": {
         "__class__": "Sequence",
         "sequence": [
@@ -1740,9 +1728,7 @@
       "name": "named_list",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "NamedList"
-      ],
+      "params": ["NamedList"],
       "exp": {
         "__class__": "Sequence",
         "sequence": [
@@ -1782,9 +1768,7 @@
       "name": "named_single",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "Named"
-      ],
+      "params": ["Named"],
       "exp": {
         "__class__": "Sequence",
         "sequence": [
@@ -1862,9 +1846,7 @@
       "name": "override_list",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "OverrideList"
-      ],
+      "params": ["OverrideList"],
       "exp": {
         "__class__": "Sequence",
         "sequence": [
@@ -1895,9 +1877,7 @@
       "name": "override_single",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "Override"
-      ],
+      "params": ["Override"],
       "exp": {
         "__class__": "Sequence",
         "sequence": [
@@ -1928,9 +1908,7 @@
       "name": "override_single_deprecated",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "Override"
-      ],
+      "params": ["Override"],
       "exp": {
         "__class__": "Sequence",
         "sequence": [
@@ -2083,9 +2061,7 @@
       "name": "group",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "Group"
-      ],
+      "params": ["Group"],
       "exp": {
         "__class__": "Sequence",
         "sequence": [
@@ -2130,9 +2106,7 @@
       "name": "skip",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "SkipGroup"
-      ],
+      "params": ["SkipGroup"],
       "exp": {
         "__class__": "Sequence",
         "sequence": [
@@ -2231,9 +2205,7 @@
       "name": "positive_gather",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "PositiveGather"
-      ],
+      "params": ["PositiveGather"],
       "exp": {
         "__class__": "Sequence",
         "sequence": [
@@ -2281,9 +2253,7 @@
       "name": "normal_gather",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "Gather"
-      ],
+      "params": ["Gather"],
       "exp": {
         "__class__": "Sequence",
         "sequence": [
@@ -2406,9 +2376,7 @@
       "name": "positive_join",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "PositiveJoin"
-      ],
+      "params": ["PositiveJoin"],
       "exp": {
         "__class__": "Sequence",
         "sequence": [
@@ -2456,9 +2424,7 @@
       "name": "normal_join",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "Join"
-      ],
+      "params": ["Join"],
       "exp": {
         "__class__": "Sequence",
         "sequence": [
@@ -2520,9 +2486,7 @@
       "name": "left_join",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "LeftJoin"
-      ],
+      "params": ["LeftJoin"],
       "exp": {
         "__class__": "Sequence",
         "sequence": [
@@ -2573,9 +2537,7 @@
       "name": "right_join",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "RightJoin"
-      ],
+      "params": ["RightJoin"],
       "exp": {
         "__class__": "Sequence",
         "sequence": [
@@ -2626,9 +2588,7 @@
       "name": "positive_closure",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "PositiveClosure"
-      ],
+      "params": ["PositiveClosure"],
       "exp": {
         "__class__": "Choice",
         "options": [
@@ -2697,9 +2657,7 @@
       "name": "closure",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "Closure"
-      ],
+      "params": ["Closure"],
       "exp": {
         "__class__": "Choice",
         "options": [
@@ -2771,9 +2729,7 @@
       "name": "empty_closure",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "EmptyClosure"
-      ],
+      "params": ["EmptyClosure"],
       "exp": {
         "__class__": "Sequence",
         "sequence": [
@@ -2804,9 +2760,7 @@
       "name": "optional",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "Optional"
-      ],
+      "params": ["Optional"],
       "exp": {
         "__class__": "Choice",
         "options": [
@@ -2906,9 +2860,7 @@
       "name": "lookahead",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "Lookahead"
-      ],
+      "params": ["Lookahead"],
       "exp": {
         "__class__": "Sequence",
         "sequence": [
@@ -2939,9 +2891,7 @@
       "name": "negative_lookahead",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "NegativeLookahead"
-      ],
+      "params": ["NegativeLookahead"],
       "exp": {
         "__class__": "Sequence",
         "sequence": [
@@ -2972,9 +2922,7 @@
       "name": "skip_to",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "SkipTo"
-      ],
+      "params": ["SkipTo"],
       "exp": {
         "__class__": "Sequence",
         "sequence": [
@@ -3085,9 +3033,7 @@
       "name": "call",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "Call"
-      ],
+      "params": ["Call"],
       "exp": {
         "__class__": "Call",
         "name": "word"
@@ -3103,9 +3049,7 @@
       "name": "void",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "Void"
-      ],
+      "params": ["Void"],
       "exp": {
         "__class__": "Sequence",
         "sequence": [
@@ -3129,9 +3073,7 @@
       "name": "fail",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "Fail"
-      ],
+      "params": ["Fail"],
       "exp": {
         "__class__": "Sequence",
         "sequence": [
@@ -3155,9 +3097,7 @@
       "name": "cut",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "Cut"
-      ],
+      "params": ["Cut"],
       "exp": {
         "__class__": "Sequence",
         "sequence": [
@@ -3181,9 +3121,7 @@
       "name": "cut_deprecated",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "Cut"
-      ],
+      "params": ["Cut"],
       "exp": {
         "__class__": "Sequence",
         "sequence": [
@@ -3247,9 +3185,7 @@
       "name": "constant",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "Constant"
-      ],
+      "params": ["Constant"],
       "exp": {
         "__class__": "Sequence",
         "sequence": [
@@ -3318,9 +3254,7 @@
       "name": "alert",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "Alert"
-      ],
+      "params": ["Alert"],
       "exp": {
         "__class__": "Sequence",
         "sequence": [
@@ -3353,9 +3287,7 @@
       "name": "token",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "Token"
-      ],
+      "params": ["Token"],
       "exp": {
         "__class__": "Choice",
         "options": [
@@ -3763,9 +3695,7 @@
       "name": "dot",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "Dot"
-      ],
+      "params": ["Dot"],
       "exp": {
         "__class__": "Token",
         "token": "/./"
@@ -3781,9 +3711,7 @@
       "name": "pattern",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "Pattern"
-      ],
+      "params": ["Pattern"],
       "exp": {
         "__class__": "Call",
         "name": "regex"
@@ -3905,9 +3833,7 @@
       "name": "boolean",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "bool"
-      ],
+      "params": ["bool"],
       "exp": {
         "__class__": "Choice",
         "options": [
@@ -3954,9 +3880,7 @@
       "name": "eof",
       "base": null,
       "is_tokn": false,
-      "params": [
-        "EOF"
-      ],
+      "params": ["EOF"],
       "exp": {
         "__class__": "Sequence",
         "sequence": [

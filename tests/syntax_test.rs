@@ -159,7 +159,7 @@ fn test_new_override() -> Result<()> {
         start = @:'a' {@:'b'} $ ;
     "#;
 
-    let model = compile(grammar, &[CfgKey::Wsp("".to_string())])?;
+    let model = compile(grammar, &[])?;
     let ast = parse_input(&model, "abb", &[CfgKey::Wsp("".to_string())])?;
     assert_eq!(ast.to_json(), value!(["a", "b", "b"]));
 
@@ -223,7 +223,7 @@ fn test_rule_include() -> Result<()> {
         b = >a {@:'b'} ;
     "#;
 
-    let model = compile(grammar, &[CfgKey::Wsp("".to_string())])?;
+    let model = compile(grammar, &[])?;
     let ast = parse_input(&model, "abb", &[CfgKey::Wsp("".to_string())])?;
     assert_eq!(ast.to_json(), value!(["a", "b", "b"]));
 
@@ -241,7 +241,7 @@ fn test_48_rule_override() -> Result<()> {
         ab = @:'a' {@:'b'} ;
     "#;
 
-    let model = compile(grammar, &[CfgKey::Wsp("".to_string())])?;
+    let model = compile(grammar, &[])?;
     let ast = parse_input(&model, "abb", &[CfgKey::Wsp("".to_string())])?;
     assert_eq!(ast.to_json(), value!(["a", "b", "b"]));
 
@@ -336,7 +336,7 @@ fn test_non_capturing_group_exclusion() -> Result<()> {
 #[test]
 fn test_non_capturing_group_failure() -> Result<()> {
     let grammar = r"start = (?: 'FIX' ) value ; value = /\d+/";
-    let parser = compile(grammar, &[CfgKey::Wsp("".to_string())])?;
+    let parser = compile(grammar, &[])?;
 
     let result = parser.parse_input("BUG123", &[CfgKey::Wsp("".to_string())]);
     assert!(result.is_err());
@@ -352,7 +352,7 @@ fn test_nested_non_capturing_groups() -> Result<()> {
         inner: 'content'
     "#;
 
-    let parser = compile(grammar, &[CfgKey::Wsp("".to_string())])?;
+    let parser = compile(grammar, &[])?;
     let ast = parser.parse_input("(content)", &[CfgKey::Wsp("".to_string())])?;
 
     assert_eq!(ast.to_json(), value!(null));
@@ -487,7 +487,7 @@ fn test_partial_choice() -> Result<()> {
         o = 'A' a:'A' | 'A' b:'B' ;
     "#;
 
-    let model = compile(grammar, &[CfgKey::Wsp("".to_string())])?;
+    let model = compile(grammar, &[])?;
     let ast = parse_input(&model, "A", &[CfgKey::Wsp("".to_string())])?;
     assert_eq!(ast.to_json(), object! {"x": "A", "o": null});
 

@@ -6,7 +6,7 @@ fn test_json_crate_parse_grammar() {
     let parsed = json::parse(GRAMMAR_JSON).unwrap();
 
     // Verify name field
-    assert_eq!(parsed["name"].as_str(), Some("TatSu"));
+    assert_eq!(parsed["name"].as_str(), Some("TatSuBootstrap"));
 
     // Check rules exists
     assert!(parsed["rules"].is_array());
@@ -39,6 +39,6 @@ fn test_json_crate_serialize_then_parse() {
 
     // Parse the modified JSON
     let reparsed = json::parse(&modified).unwrap();
-    assert_eq!(reparsed["name"].as_str(), Some("TatSu"));
+    assert_eq!(reparsed["name"].as_str(), Some("TatSuBootstrap"));
     assert_eq!(reparsed["analyzed"].as_bool(), Some(true));
 }
