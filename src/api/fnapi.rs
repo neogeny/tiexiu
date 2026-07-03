@@ -6,7 +6,7 @@ use crate::context::new_ctx;
 use crate::input::{Cursor, StrCursor};
 use crate::peg::grammar::PrettyPrint;
 use crate::peg::*;
-use crate::trees::Tree;
+use crate::trees::{Tree, TreeRef};
 use crate::{Error, Result, config};
 
 use crate::api::ebnf_semantics::new_ebnf_grammar_sematics;
@@ -80,6 +80,7 @@ where
     U: Cursor + Clone,
 {
     let tree = parse_grammar_with(cursor, cfg)?;
+    let tree: TreeRef = tree.into();
     Ok(Grammar::compile(&tree, cfg)?)
 }
 

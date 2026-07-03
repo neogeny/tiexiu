@@ -127,8 +127,8 @@ impl Rule {
         match self.exp.parse_at(ctx) {
             Err(nope) => Err(nope),
             Ok(tree) => {
-                let folded = Arc::unwrap_or_clone(tree).fold();
-                match ctx.apply_semantics(folded.clone().into(), self.name.as_ref(), &self.params) {
+                let folded = Tree::fold(Arc::unwrap_or_clone(tree).into());
+                match ctx.apply_semantics(folded.clone(), self.name.as_ref(), &self.params) {
                     Ok(tree) if *tree != Tree::Bottom => {
                         return Ok(tree);
                     }
@@ -138,12 +138,12 @@ impl Rule {
                     }
                 }
                 Ok(if self.params.is_empty() {
-                    folded.into()
+                    folded
                 } else {
                     let typename = self.params[0].clone();
                     Tree::Node {
                         typename,
-                        tree: folded.into(),
+                        tree: folded,
                     }
                     .into()
                 })

@@ -1,7 +1,6 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::Tree;
 use crate::trees::TreeRef;
 use crate::types::Str;
 use crate::util::ensure::Ensure;
@@ -125,7 +124,7 @@ pub enum CompileError {
     MissingKey {
         context: String,
         key: &'static str,
-        tree: Box<Tree>,
+        tree: TreeRef,
     },
 
     #[error("expected {0}")]

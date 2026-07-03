@@ -63,7 +63,7 @@ impl Exp {
         }
 
         match &exp.kind {
-            ExpKind::EmptyClosure => Ok(Tree::from(Vec::<TreeRef>::new()).closed().into()),
+            ExpKind::EmptyClosure => Ok(Tree::closed(Tree::from(Vec::<TreeRef>::new()).into())),
             ExpKind::Nil => Ok(Tree::Nil.into()),
             ExpKind::RuleInclude { name, exp } => match exp {
                 None => Err(ctx.failure(start, RuleNotLinked(name.clone()))),

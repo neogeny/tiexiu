@@ -29,7 +29,7 @@ pub fn l(items: &[Tree]) -> Tree {
 pub fn m(entries: &[(&str, Tree)]) -> Tree {
     let mut map = TreeMap::new();
     for (key, value) in entries {
-        map.insert(key, value.clone());
+        map.insert(key, value.clone().into());
     }
     Tree::Map(map.into())
 }

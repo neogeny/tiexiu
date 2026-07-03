@@ -5,7 +5,7 @@
 
 use crate::input::{Cursor, StrCursor};
 use crate::peg::*;
-pub use crate::trees::Tree;
+pub use crate::trees::{Tree, TreeRef};
 use crate::{Error, Result};
 use json::JsonValue;
 use std::collections::HashMap;
@@ -67,7 +67,7 @@ impl TieXiu {
             }
         }
 
-        let tree = self.parse_grammar_with(StrCursor::new(grammar))?;
+        let tree: TreeRef = self.parse_grammar_with(StrCursor::new(grammar))?.into();
         let compiled_grammar = Grammar::compile(&tree, &self.cfg)?;
 
         let mut cache = self

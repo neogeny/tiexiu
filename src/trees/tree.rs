@@ -106,7 +106,7 @@ impl From<TreeList> for Tree {
 
 #[derive(Debug, Clone, PartialEq)]
 struct TreeMerge {
-    pub root: Tree,
+    pub root: TreeRef,
     pub map: TreeMap,
 }
 
@@ -114,7 +114,7 @@ impl TreeMerge {
     /// Creates a new empty `TreeMerge`.
     pub fn new() -> Self {
         Self {
-            root: Tree::Nil,
+            root: Tree::Nil.into(),
             map: TreeMap::new(),
         }
     }
@@ -122,16 +122,16 @@ impl TreeMerge {
 
 impl Tree {
     /// Folds the tree by resolving Named/Override/Nil into merged Map/Seq form.
-    pub fn fold(self) -> Tree {
+    pub fn fold(tree: TreeRef) -> TreeRef {
         let mut gather = TreeMerge::new();
-        let tree = self.clean_and_fold(&mut gather);
+        let tree = Self::clean_and_fold(&tree, &mut gather);
 
-        if gather.root != Tree::Nil {
-            gather.root.closed()
+        if gather.root.as_ref() != &Tree::Nil {
+            Self::closed(gather.root)
         } else if !gather.map.is_empty() {
-            Tree::Map(gather.map.into())
+            Tree::Map(gather.map.into()).into()
         } else {
-            tree.closed()
+            Self::closed(tree)
         }
     }
 
@@ -143,102 +143,102 @@ impl Tree {
         }
     }
 
-    pub(crate) fn closed(self) -> Self {
-        match self {
-            Tree::Seq(items) => Tree::List(items),
-            _ => self,
+    pub(crate) fn closed(tree: TreeRef) -> TreeRef {
+        match tree.as_ref() {
+            Tree::Seq(items) => Tree::List(items.clone()).into(),
+            _ => tree,
         }
     }
 
-    pub(crate) fn append(self, node: Self) -> Self {
-        match (self, node) {
-            (Self::Nil, n) => n,
-            (s, Self::Nil) => s,
-            (Self::Seq(list), node) => {
+    pub(crate) fn append(tree: &TreeRef, node: &TreeRef) -> TreeRef {
+        match (tree.as_ref(), node.as_ref()) {
+            (Self::Nil, _) => node.clone(),
+            (_, Self::Nil) => tree.clone(),
+            (Self::Seq(list), _) => {
                 let mut v: Vec<TreeRef> = list.to_vec();
-                v.push(node.into());
-                Self::Seq(v.into())
+                v.push(node.clone());
+                Self::Seq(v.into()).into()
             }
-            (s, n) => Self::Seq(vec![s.into(), n.into()].into()),
+            (_, _) => Self::Seq(vec![tree.clone(), node.clone()].into()).into(),
         }
     }
 
-    pub(crate) fn append_as_list(self, node: Self) -> Self {
-        match (self, node) {
-            (Self::Nil, n) => Self::Seq(vec![n.into()].into()),
-            (Self::Seq(list), Self::Nil) => Self::Seq(list),
-            (Self::Seq(list), n) => {
+    pub(crate) fn append_as_list(cst: &TreeRef, node: &TreeRef) -> TreeRef {
+        match (cst.as_ref(), node.as_ref()) {
+            (Self::Nil, _) => Self::Seq(vec![node.clone()].into()).into(),
+            (Self::Seq(_), Self::Nil) => cst.clone(),
+            (Self::Seq(list), _) => {
                 let mut v: Vec<TreeRef> = list.to_vec();
-                v.push(n.into());
-                Self::Seq(v.into())
+                v.push(node.clone());
+                Self::Seq(v.into()).into()
             }
-            (s, n) => Self::Seq(vec![s.into(), n.into()].into()),
+            (_s, _n) => Self::Seq(vec![cst.clone(), node.clone()].into()).into(),
         }
     }
 
-    pub(crate) fn merge(self, node: Self) -> Self {
-        match (self, node) {
-            (Self::Nil, n) => n,
-            (s, Self::Nil) => s,
+    pub(crate) fn merge(tree: TreeRef, node: TreeRef) -> TreeRef {
+        match (tree.as_ref(), node.as_ref()) {
+            (Self::Nil, _) => node,
+            (_, Self::Nil) => tree,
             (Self::Seq(l1), Self::Seq(l2)) => {
                 let mut v: Vec<TreeRef> = l1.to_vec();
                 v.extend(l2.iter().cloned());
-                Self::Seq(v.into())
+                Self::Seq(v.into()).into()
             }
-            (s, Self::Seq(l2)) => {
-                let mut v: Vec<TreeRef> = vec![s.into()];
-                v.extend(l2.iter().cloned());
-                Self::Seq(v.into())
+            (_, Self::Seq(l2)) => {
+                let mut v: Vec<TreeRef> = vec![tree];
+                v.extend(l2.to_vec());
+                Self::Seq(v.into()).into()
             }
-            (Self::Seq(l1), n) => {
+            (Self::Seq(l1), _) => {
                 let mut v: Vec<TreeRef> = l1.to_vec();
-                v.push(n.into());
-                Self::Seq(v.into())
+                v.push(node);
+                Self::Seq(v.into()).into()
             }
-            (s, n) => Self::Seq(vec![s.into(), n.into()].into()),
+            (_, _) => Self::Seq(vec![tree, node].into()).into(),
         }
     }
 
-    fn clean_and_fold(&self, gather: &mut TreeMerge) -> Tree {
-        match self {
+    fn clean_and_fold(tree: &TreeRef, gather: &mut TreeMerge) -> TreeRef {
+        match tree.as_ref() {
             Tree::Seq(elements) => {
-                let mut out = Tree::Nil;
+                let mut out: TreeRef = Tree::Nil.into();
                 for elem in elements.iter() {
-                    out = out.clone().merge(elem.as_ref().clean_and_fold(gather));
+                    out = Self::merge(out, Self::clean_and_fold(elem, gather));
                 }
                 out
             }
             Tree::List(elements) => {
                 let clean: Vec<TreeRef> = elements
                     .iter()
-                    .map(|s| s.as_ref().clean_and_fold(gather).into())
+                    .map(|s| Self::clean_and_fold(s, gather))
                     .collect();
-                Tree::List(clean.into())
+                Tree::List(clean.into()).into()
             }
             Tree::Named(keyval) => {
                 let KeyValue(name, val) = keyval;
-                let clean = val.as_ref().clone().clean_and_fold(gather);
+                let clean = Self::clean_and_fold(val, gather);
                 gather.map.insert(name, clean.clone());
                 clean
             }
             Tree::NamedAsList(keyval) => {
                 let KeyValue(name, val) = keyval;
-                let clean = val.as_ref().clone().clean_and_fold(gather);
+                let clean = Self::clean_and_fold(val, gather);
                 gather.map.insert_as_list(name, clean.clone());
                 clean
             }
             Tree::Override(val) => {
-                let clean = val.as_ref().clone().clean_and_fold(gather);
-                gather.root = gather.root.clone().append(clean.clone());
+                let clean = Self::clean_and_fold(val, gather);
+                gather.root = Self::append(&gather.root, &clean);
                 clean
             }
             Tree::OverrideAsList(val) => {
-                let clean = val.as_ref().clone().clean_and_fold(gather);
-                gather.root = gather.root.clone().append_as_list(clean.clone());
+                let clean = Self::clean_and_fold(val, gather);
+                gather.root = Self::append_as_list(&gather.root, &clean);
                 clean
             }
-            Tree::Nil => Tree::Nil,
-            _ => self.clone(),
+            Tree::Nil => tree.clone(),
+            _ => tree.clone(),
         }
     }
 
@@ -288,7 +288,7 @@ impl Tree {
     }
 
     /// Looks up a key in the Map variant and returns the corresponding tree.
-    pub fn get(&self, key: &str) -> Option<&Tree> {
+    pub fn get(&self, key: &str) -> Option<TreeRef> {
         match self {
             Tree::Map(map) => map.get(key),
             _ => None,
@@ -305,7 +305,7 @@ impl Tree {
     /// Looks up a key and returns its list children, or an empty slice.
     pub fn get_list(&self, key: &str) -> Ref<[TreeRef]> {
         self.get(key)
-            .map(|n| n.list_value().clone())
+            .map(|n| n.list_value())
             .unwrap_or_else(|| [].into())
     }
 
@@ -335,25 +335,25 @@ mod tests {
     #[test]
     fn test_node_nil_removal() {
         let raw = Tree::from(vec![Tree::Nil, Tree::Bottom, Tree::Nil]);
-        let result = raw.fold();
+        let result = Tree::fold(raw.into());
 
-        assert_eq!(result, Tree::Bottom.fold());
+        assert_eq!(result.as_ref(), &Tree::Bottom);
     }
 
     #[test]
     fn test_node_nil_removal_to_bottom() {
         let raw = Tree::from(vec![Tree::Nil, Tree::Bottom, Tree::Nil]);
-        let result = raw.fold();
+        let result = Tree::fold(raw.into());
 
-        assert_eq!(result, Tree::Bottom);
+        assert_eq!(*result, Tree::Bottom);
     }
 
     #[test]
     fn test_node_nil_removal_to_list() {
         let raw = Tree::from(vec![Tree::Bottom, Tree::Nil, Tree::Bottom]);
-        let result = raw.fold();
+        let result = Tree::fold(raw.into());
 
-        if let Tree::List(v) = result {
+        if let Tree::List(v) = result.as_ref() {
             assert_eq!(v.len(), 2);
             assert_eq!(*v[0], Tree::Bottom);
             assert_eq!(*v[1], Tree::Bottom);
@@ -365,14 +365,14 @@ mod tests {
     #[test]
     fn test_node_nil_purging_preserves_count() {
         let raw = Tree::from(vec![Tree::Nil, Tree::Bottom, Tree::Nil]);
-        let result = raw.fold();
+        let result = Tree::fold(raw.into());
 
-        assert_eq!(result, Tree::Bottom);
+        assert_eq!(*result, Tree::Bottom);
     }
 
     #[test]
     fn test_named_group_with_inner_names() {
-        let tree = Tree::named(
+        let tree: TreeRef = Tree::named(
             "x".into(),
             Tree::Seq(
                 [
@@ -382,12 +382,13 @@ mod tests {
                 .into(),
             )
             .into(),
-        );
+        )
+        .into();
 
-        let result = tree.fold();
+        let result = Tree::fold(tree);
 
-        assert!(matches!(result, Tree::Map(_)));
-        if let Tree::Map(m) = result {
+        assert!(matches!(result.as_ref(), Tree::Map(_)));
+        if let Tree::Map(m) = result.as_ref() {
             assert!(m.get("x").is_some(), "key 'x' should be present");
             assert!(m.get("a").is_some(), "key 'a' should be present");
             assert!(m.get("b").is_some(), "key 'b' should be present");

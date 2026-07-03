@@ -14,14 +14,14 @@ use crate::types::Str;
 #[derive(Debug, Default)]
 pub(crate) struct GrammarCompiler {}
 
-fn parse_node(node: &Tree) -> CompileResult<(Str, &Tree)> {
-    let Tree::Node { typename, tree } = node else {
+fn parse_node(node: &TreeRef) -> CompileResult<(Str, TreeRef)> {
+    let Tree::Node { typename, tree } = node.as_ref() else {
         return Err(CompileError::ExpectedNode(format!("{:?}", node)));
     };
-    Ok((typename.clone(), tree))
+    Ok((typename.clone(), tree.clone()))
 }
 
-fn parse_node_check<'n>(node: &'n Tree, typename: &'static str) -> CompileResult<&'n Tree> {
+fn parse_node_check(node: &TreeRef, typename: &'static str) -> CompileResult<TreeRef> {
     let (name, tree) = parse_node(node)?;
     if *name != *typename {
         return Err(CompileError::UnexpectedNodeName {
@@ -39,20 +39,20 @@ fn _parse_map(node: &Tree) -> CompileResult<&TreeMap> {
     Ok(map)
 }
 
-fn _parse_list(node: &Tree) -> CompileResult<&[TreeRef]> {
-    match node {
+fn _parse_list(node: &TreeRef) -> CompileResult<&[TreeRef]> {
+    match node.as_ref() {
         Tree::Seq(list) | Tree::List(list) => Ok(list),
         _ => Err(CompileError::ExpectedList(format!("{:?}", node))),
     }
 }
 
-fn map_get<'m>(map: &'m Tree, context: &'m str, key: &'static str) -> CompileResult<&'m Tree> {
+fn map_get<'m>(map: &'m TreeRef, context: &'m str, key: &'static str) -> CompileResult<TreeRef> {
     match map.get(key) {
         Some(node) => Ok(node),
         None => Err(CompileError::MissingKey {
             context: context.into(),
             key,
-            tree: map.clone().into(),
+            tree: map.clone(),
         }),
     }
 }
@@ -66,7 +66,7 @@ fn map_get_default(map: &Tree, key: &'static str, default: &'static str) -> Str 
 
 impl Grammar {
     /// Compiles a parse tree into a `Grammar`, running analysis and initialization.
-    pub fn compile(tree: &Tree, cfga: &CfgA) -> CompileResult<Self> {
+    pub fn compile(tree: &TreeRef, cfga: &CfgA) -> CompileResult<Self> {
         let mut compiler = GrammarCompiler::new();
         compiler.compile_grammar(tree, cfga)
     }
@@ -79,24 +79,24 @@ impl GrammarCompiler {
     }
 
     /// Compiles a grammar parse tree into a `Grammar`, running full initialization.
-    pub fn compile_grammar(&mut self, tree: &Tree, cfga: &CfgA) -> CompileResult<Grammar> {
+    pub fn compile_grammar(&mut self, tree: &TreeRef, cfga: &CfgA) -> CompileResult<Grammar> {
         let cfg = config(cfga);
         let _debug = cfg.contains(&CfgKey::Debug);
         let map = parse_node_check(tree, "Grammar")?;
 
         let mut rulemap: RuleMap = RuleMap::new();
-        let rule_trees = map_get(map, "Grammar", "rules")?.list_value();
+        let rule_trees = map_get(&map, "Grammar", "rules")?.list_value();
         for rtree in rule_trees.iter() {
             let rule = self.compile_rule(rtree)?;
             rulemap.insert(rule.name.clone(), rule.into());
         }
 
         let rules: Vec<RuleRef> = rulemap.into_iter().map(|(_, r)| r).collect();
-        let name = map_get_default(map, "name", "__COMPILED__");
+        let name = map_get_default(&map, "name", "__COMPILED__");
 
         let mut directives = Cfg::default();
-        if let Ok(directives_tree) = map_get(map, "Grammar", "directives") {
-            let directives_list = _parse_list(directives_tree)?;
+        if let Ok(directives_tree) = map_get(&map, "Grammar", "directives") {
+            let directives_list = _parse_list(&directives_tree)?;
             let str_directives = directives_list.iter().map(|d| {
                 let dm = _parse_map(d).expect("directive should be a Map");
                 let name = dm.get("name").expect("name key").value();
@@ -108,8 +108,8 @@ impl GrammarCompiler {
                 .collect();
         }
         let keywords: Vec<KeywordRef> =
-            if let Ok(keywords_tree) = map_get(map, "Grammar", "keywords") {
-                let keywords_nested = _parse_list(keywords_tree)?;
+            if let Ok(keywords_tree) = map_get(&map, "Grammar", "keywords") {
+                let keywords_nested = _parse_list(&keywords_tree)?;
                 let mut keywords = Vec::new();
                 for nested_list in keywords_nested.iter() {
                     let inner_list = _parse_list(nested_list)?;
@@ -137,17 +137,17 @@ impl GrammarCompiler {
     }
 
     /// Compiles a single rule from its parse tree representation.
-    pub fn compile_rule(&self, tree: &Tree) -> CompileResult<Rule> {
+    pub fn compile_rule(&self, tree: &TreeRef) -> CompileResult<Rule> {
         let ctx = "Rule";
         let map = parse_node_check(tree, ctx)?;
-        let name = map_get(map, ctx, "name")?.value().to_string();
+        let name = map_get(&map, ctx, "name")?.value().to_string();
 
-        let exp = self.parse_exp(map_get(map, ctx, "exp")?)?;
-        let params: Vec<String> = match map_get(map, ctx, "params") {
+        let exp = self.parse_exp(&map_get(&map, ctx, "exp")?)?;
+        let params: Vec<String> = match map_get(&map, ctx, "params") {
             Err(_) => Vec::new(),
             Ok(p) => p.str_list_value().iter().map(|s| s.to_string()).collect(),
         };
-        let decorators: Vec<String> = match map_get(map, ctx, "decorators") {
+        let decorators: Vec<String> = match map_get(&map, ctx, "decorators") {
             Err(_) => Vec::new(),
             Ok(d) => d.str_list_value().iter().map(|s| s.to_string()).collect(),
         };
@@ -172,13 +172,13 @@ impl GrammarCompiler {
     }
 
     /// Recursively compiles an expression from its parse tree node.
-    pub fn parse_exp(&self, tree: &Tree) -> CompileResult<Exp> {
+    pub fn parse_exp(&self, tree: &TreeRef) -> CompileResult<Exp> {
         let (typename, tree) = parse_node(tree)?;
         let typename = typename.to_string();
         let exp: Exp = match typename.as_str() {
             "Alert" => {
-                let msgtree = map_get(tree, &typename, "message")?;
-                let msgexp = self.parse_exp(msgtree)?;
+                let msgtree = map_get(&tree, &typename, "message")?;
+                let msgexp = self.parse_exp(&msgtree)?;
                 if let ExpKind::Constant(m) = msgexp.kind {
                     Exp::alert(&m, 0)
                 } else {
@@ -196,8 +196,8 @@ impl GrammarCompiler {
                     .collect::<CompileResult<_>>()?;
                 Exp::choice(exps)
             }
-            "Option" => Exp::alt(self.parse_exp(tree)?),
-            "Closure" => Exp::closure(self.parse_exp(tree)?),
+            "Option" => Exp::alt(self.parse_exp(&tree)?),
+            "Closure" => Exp::closure(self.parse_exp(&tree)?),
             "Comment" => Exp::nil(),
             "Constant" => Exp::constant(&tree.value()),
             "Cut" => Exp::cut(),
@@ -208,36 +208,36 @@ impl GrammarCompiler {
             "EmptyClosure" => Exp::empty_closure(),
             "Fail" => Exp::fail(),
             "Gather" => {
-                let exp = map_get(tree, &typename, "exp")?;
-                let sep = map_get(tree, &typename, "sep")?;
-                Exp::gather(self.parse_exp(exp)?, self.parse_exp(sep)?)
+                let exp = map_get(&tree, &typename, "exp")?;
+                let sep = map_get(&tree, &typename, "sep")?;
+                Exp::gather(self.parse_exp(&exp)?, self.parse_exp(&sep)?)
             }
             "Grammar" => Exp::nil(),
-            "Group" => Exp::group(self.parse_exp(tree)?),
+            "Group" => Exp::group(self.parse_exp(&tree)?),
             "Join" => {
-                let exp = map_get(tree, &typename, "exp")?;
-                let sep = map_get(tree, &typename, "sep")?;
-                Exp::join(self.parse_exp(exp)?, self.parse_exp(sep)?)
+                let exp = map_get(&tree, &typename, "exp")?;
+                let sep = map_get(&tree, &typename, "sep")?;
+                Exp::join(self.parse_exp(&exp)?, self.parse_exp(&sep)?)
             }
-            "Lookahead" => Exp::lookahead(self.parse_exp(tree)?),
+            "Lookahead" => Exp::lookahead(self.parse_exp(&tree)?),
             "Model" => Exp::nil(),
             "ModelContext" => Exp::nil(),
             "NULL" => Exp::nil(),
             "Named" => {
-                let name = map_get(tree, &typename, "name")?.value();
-                let inner = map_get(tree, &typename, "exp")?;
-                Exp::named(&name, self.parse_exp(inner)?)
+                let name = map_get(&tree, &typename, "name")?.value();
+                let inner = map_get(&tree, &typename, "exp")?;
+                Exp::named(&name, self.parse_exp(&inner)?)
             }
             "NamedBox" => Exp::nil(),
             "NamedList" => {
-                let name = map_get(tree, &typename, "name")?.value();
-                let inner = map_get(tree, &typename, "exp")?;
-                Exp::named_list(&name, self.parse_exp(inner)?)
+                let name = map_get(&tree, &typename, "name")?.value();
+                let inner = map_get(&tree, &typename, "exp")?;
+                Exp::named_list(&name, self.parse_exp(&inner)?)
             }
-            "NegativeLookahead" => Exp::negative_lookahead(self.parse_exp(tree)?),
-            "Optional" => Exp::optional(self.parse_exp(tree)?),
-            "Override" => Exp::override_node(self.parse_exp(tree)?),
-            "OverrideList" => Exp::override_list(self.parse_exp(tree)?),
+            "NegativeLookahead" => Exp::negative_lookahead(self.parse_exp(&tree)?),
+            "Optional" => Exp::optional(self.parse_exp(&tree)?),
+            "Override" => Exp::override_node(self.parse_exp(&tree)?),
+            "OverrideList" => Exp::override_list(self.parse_exp(&tree)?),
             "Pattern" => Exp::pattern(&tree.value()),
             "Patterns" => {
                 let items = tree.get_list("tree");
@@ -251,16 +251,16 @@ impl GrammarCompiler {
                     Exp::choice(exps)
                 }
             }
-            "PositiveClosure" => Exp::positive_closure(self.parse_exp(tree)?),
+            "PositiveClosure" => Exp::positive_closure(self.parse_exp(&tree)?),
             "PositiveGather" => {
-                let exp = map_get(tree, &typename, "exp")?;
-                let sep = map_get(tree, &typename, "sep")?;
-                Exp::positive_gather(self.parse_exp(exp)?, self.parse_exp(sep)?)
+                let exp = map_get(&tree, &typename, "exp")?;
+                let sep = map_get(&tree, &typename, "sep")?;
+                Exp::positive_gather(self.parse_exp(&exp)?, self.parse_exp(&sep)?)
             }
             "PositiveJoin" | "RightJoin" | "LeftJoin" => {
-                let exp = map_get(tree, &typename, "exp")?;
-                let sep = map_get(tree, &typename, "sep")?;
-                Exp::positive_join(self.parse_exp(exp)?, self.parse_exp(sep)?)
+                let exp = map_get(&tree, &typename, "exp")?;
+                let sep = map_get(&tree, &typename, "sep")?;
+                Exp::positive_join(self.parse_exp(&exp)?, self.parse_exp(&sep)?)
             }
             "Rule" => Exp::nil(),
             "RuleInclude" => {
@@ -282,8 +282,8 @@ impl GrammarCompiler {
                     Exp::sequence(exps)
                 }
             }
-            "SkipGroup" => Exp::skip_group(self.parse_exp(tree)?),
-            "SkipTo" => Exp::skip_to(self.parse_exp(tree)?),
+            "SkipGroup" => Exp::skip_group(self.parse_exp(&tree)?),
+            "SkipTo" => Exp::skip_to(self.parse_exp(&tree)?),
             "Synth" => Exp::nil(),
             "NameMeta" => Exp::name_meta(),
             "IntMeta" => Exp::int_meta(),

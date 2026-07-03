@@ -6,6 +6,7 @@ use console::{Style, Term};
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 use tiexiu::Result;
+use tiexiu::Tree;
 use tiexiu::api::parse_input;
 use tiexiu::cfg::Cfg;
 use tiexiu::cfg::CfgKey;
@@ -263,7 +264,7 @@ pub fn cmd_run(
                     let this_output = if model {
                         format!("{:#?}", tree).to_string()
                     } else if short {
-                        format!("{:#}", tree.fold()).to_string()
+                        format!("{:#}", Tree::fold(tree.into())).to_string()
                     } else {
                         tree.to_json_string_pretty()
                     };
@@ -375,7 +376,7 @@ pub fn cmd_run(
                                     let this_output = if model {
                                         format!("{:#?}", tree).to_string()
                                     } else if short {
-                                        format!("{:#}", tree.fold()).to_string()
+                                        format!("{:#}", Tree::fold(tree.into())).to_string()
                                     } else {
                                         tree.to_json_string_pretty()
                                     };
