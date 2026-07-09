@@ -15,12 +15,8 @@ impl Exp {
             ctx.push_cut();
             let result = exp.parse_at(ctx);
             ctx.take_cut();
-            match result {
-                Err(nope) => return Err(nope),
-                Ok(tree) => {
-                    res.push_back(tree);
-                }
-            }
+            let tree = result?;
+            res.push_back(tree);
         }
 
         loop {
