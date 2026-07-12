@@ -15,7 +15,7 @@ outputs _memoizing_ (_Packrat_) _PEG_ parsers as a Rust model. The classic
 variations of EBNF (Tomassetti, EasyExtend, Wirth) and _ISO EBNF_ are
 supported as input grammar formats.
 
-The [TatSu Documentation][] provides a vision of where the **TieXiu** project is heading. A copy of the grammar syntax can be accessed locally in the [SYNTAX](.okf/grammar/syntax.md) document.
+The [TatSu Documentation][] provides a vision of where the **TieXiu** project is heading. A copy of the grammar syntax can be accessed locally in the [SYNTAX](SYNTAX.md) document.
 
 [TatSu Documentation]: https://tatsu.readthedocs.io/
 
