@@ -12,6 +12,7 @@ timestamp: 2026-07-12T00:00:00Z
 * **Creation**: Established `.okf/` knowledge bundle with root index and plan.
 * **Update**: Rewrote README for current project state — performance reframed as Mechanical Sympathy.
 * **Update**: Marked all 11 ROADMAP clusters as completed/dropped.
+* **Transform**: Moved RULES.md, AGENTS.md, DESIGN.md, SYNTAX.md, ROADMAP.md, CHANGELOG.md, PYO3_BOUNDARY.md into `.okf/` bundle.
 
 ## 2026-07-10
 

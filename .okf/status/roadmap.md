@@ -1,14 +1,21 @@
 ---
 type: Status
 title: Roadmap
-description: All improvement clusters completed.
+description: Improvement clusters for TieXiu.
 tags: [roadmap, clusters, completed]
 timestamp: 2026-07-12T00:00:00Z
 ---
 
 # Roadmap
 
-All 11 improvement clusters have been completed or intentionally dropped.
+A high-performance port of TatSu to Rust.
+
+## Conventions
+
+- **Verify** means: run `just test` (which runs `cargo fix`, `cargo fmt`, `cargo clippy`, and `cargo nextest run --lib --all-features`).
+- Each cluster is self-contained and must pass `just test` before proceeding.
+- When a cluster references a prior cluster's changes, that cluster is a prerequisite.
+- Do not skip clusters. Reorder only with User approval.
 
 ## Cluster Summary
 
@@ -30,39 +37,51 @@ All 11 improvement clusters have been completed or intentionally dropped.
 ## Cluster Details
 
 ### Cluster 0: Safe Cleanup
-Removed dead code, fixed documentation typos, eliminated stale artifacts. No behavioral changes.
+
+Remove dead code, fix documentation typos, eliminate stale artifacts. No behavioral changes. Lowest risk.
 
 ### Cluster 1: Safety Fixes
-Eliminated unsafe code and panicking paths in production code.
+
+Eliminate unsafe code and panicking paths in production code.
 
 ### Cluster 2: NullTracer Hot-Path Fix
-Eliminated String allocations on every token match when tracing is off.
+
+Eliminate the single largest performance waste: String allocations on every token match when tracing is off.
 
 ### Cluster 3: FlagMap to bitflags
-Replaced hash-map-based flag storage with zero-allocation bitfield.
+
+Replace hash-map-based flag storage with a zero-allocation bitfield. Simplifies `Rule` and eliminates 6 hash lookups per flag access.
 
 ### Cluster 4: TreeMap Optimization
-Eliminated O(n^2) mutation pattern in TreeMap.
+
+Eliminate O(n^2) mutation pattern in `TreeMap`. Each `insert` previously cloned the entire slice, did linear scans, and re-wrapped in `Arc`.
 
 ### Cluster 5: ExpKind Visitor / Trait Simplification
-Reduced ~35-variant match duplication across 9+ files.
+
+Reduce the ~35-variant match duplication across 9+ files. When a new `ExpKind` variant is added, only one place needs updating instead of 9.
 
 ### Cluster 6: API Surface Simplification
-Reduced public API from ~24 functions to ~10.
+
+Reduce the public API from ~24 functions to ~10. Eliminate the `_to_json` / `_to_json_string` combinatorial explosion.
 
 ### Cluster 7: Tree merge/append Performance
-Eliminated quadratic allocation in tree construction.
+
+Eliminate quadratic allocation in tree construction.
 
 ### Cluster 8: Memoization and Context Optimization
-Reduced Arc clone overhead in parsing hot path.
+
+Reduce Arc clone overhead in the parsing hot path.
 
 ### Cluster 9: Test Coverage
-Filled critical test gaps.
+
+Fill critical test gaps so future clusters have a safety net.
 
 ### Cluster 10: Benchmark Improvements
-Added meaningful benchmarks for regression detection.
+
+Add meaningful benchmarks for regression detection.
 
 ### Cluster 11: Documentation and Housekeeping
+
 Dropped. The `fragments/` directory and `trees/fold.rs` lack documentation and tests, making this cluster inadvisable without first addressing those gaps.
 
 ## Execution Order

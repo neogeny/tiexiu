@@ -15,9 +15,8 @@ TieXiu takes grammars in extended EBNF as input and outputs memoizing (Packrat) 
 
 ## Bundle Contents
 
-- [Architecture](/architecture/) — Internal design: cursor, tree, context, performance
-- [API Reference](/api/) — Rust and Python APIs
-- [CLI](/cli/) — Command-line interface
+- [Agent Rules](/agents.md) — Operational rules for agents
+- [Architecture](/architecture/) — Internal design: cursor, tree, context, performance, design, PyO3 boundary
 - [Grammar](/grammar/) — Grammar syntax and compatibility
 - [Status](/status/) — Roadmap and changelog
 
