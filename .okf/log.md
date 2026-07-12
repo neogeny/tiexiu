@@ -13,6 +13,9 @@ timestamp: 2026-07-12T00:00:00Z
 * **Update**: Rewrote README for current project state — performance reframed as Mechanical Sympathy.
 * **Update**: Marked all 11 ROADMAP clusters as completed/dropped.
 * **Transform**: Moved RULES.md, AGENTS.md, DESIGN.md, SYNTAX.md, ROADMAP.md, CHANGELOG.md, PYO3_BOUNDARY.md into `.okf/` bundle.
+* **Concepts**: Wrote 8 concept files (cursor, tree, context, pyo3, api-rust, api-python, cli, grammar).
+* **Restore**: Restored CHANGELOG.md for human consumption.
+* **Restore**: Restored SYNTAX.md and README.md link for human consumption.
 
 ## 2026-07-10
 
