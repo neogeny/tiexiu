@@ -4,12 +4,11 @@
 use super::map::{TreeMap, TreeMapBuilder};
 use crate::cfg::types::{Define, Str};
 use crate::types::Ref;
-use std::collections::LinkedList;
 
 /// A reference-counted tree node.
 pub type TreeRef = Ref<Tree>;
-/// A linked list of tree references.
-pub type TreeList = LinkedList<TreeRef>;
+/// A list of tree references.
+pub type TreeList = Vec<TreeRef>;
 
 /// A key-value pair for named elements in a tree.
 #[derive(Debug, Clone, PartialEq)]
@@ -93,17 +92,6 @@ impl From<&[TreeRef]> for Tree {
     }
 }
 
-impl From<TreeList> for Tree {
-    fn from(list: TreeList) -> Self {
-        Tree::List(
-            list.into_iter()
-                .collect::<Vec<_>>()
-                .into_boxed_slice()
-                .into(),
-        )
-    }
-}
-
 struct TreeMerge {
     pub root: TreeRef,
     pub map: TreeMapBuilder,
@@ -178,37 +166,19 @@ impl Tree {
         }
     }
 
-    pub(crate) fn merge(tree: TreeRef, node: TreeRef) -> TreeRef {
-        match (tree.as_ref(), node.as_ref()) {
-            (Self::Nil, _) => node,
-            (_, Self::Nil) => tree,
-            (Self::Seq(l1), Self::Seq(l2)) => {
-                let mut v: Vec<TreeRef> = l1.to_vec();
-                v.extend(l2.iter().cloned());
-                Self::Seq(v.into()).into()
-            }
-            (_, Self::Seq(l2)) => {
-                let mut v: Vec<TreeRef> = vec![tree];
-                v.extend(l2.to_vec());
-                Self::Seq(v.into()).into()
-            }
-            (Self::Seq(l1), _) => {
-                let mut v: Vec<TreeRef> = l1.to_vec();
-                v.push(node);
-                Self::Seq(v.into()).into()
-            }
-            (_, _) => Self::Seq(vec![tree, node].into()).into(),
-        }
-    }
-
     fn clean_and_fold(tree: &TreeRef, gather: &mut TreeMerge) -> TreeRef {
         match tree.as_ref() {
             Tree::Seq(elements) => {
-                let mut out: TreeRef = Tree::Nil.into();
+                let mut acc: Vec<TreeRef> = Vec::with_capacity(elements.len());
                 for elem in elements.iter() {
-                    out = Self::merge(out, Self::clean_and_fold(elem, gather));
+                    let folded = Self::clean_and_fold(elem, gather);
+                    Self::push_merge(&mut acc, folded);
                 }
-                out
+                match acc.len() {
+                    0 => Tree::Nil.into(),
+                    1 => acc.into_iter().next().unwrap(),
+                    _ => Tree::Seq(acc.into()).into(),
+                }
             }
             Tree::List(elements) => {
                 let clean: Vec<TreeRef> = elements
@@ -241,6 +211,15 @@ impl Tree {
             }
             Tree::Nil => tree.clone(),
             _ => tree.clone(),
+        }
+    }
+
+    /// Append a folded node into an accumulator, flattening Seq.
+    fn push_merge(acc: &mut Vec<TreeRef>, node: TreeRef) {
+        match node.as_ref() {
+            Tree::Seq(items) => acc.extend(items.iter().cloned()),
+            Tree::Nil => {}
+            _ => acc.push(node),
         }
     }
 

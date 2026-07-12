@@ -16,7 +16,7 @@ impl Exp {
             let result = exp.parse_at(ctx);
             ctx.take_cut();
             let tree = result?;
-            res.push_back(tree);
+            res.push(tree);
         }
 
         loop {
@@ -29,13 +29,13 @@ impl Exp {
                     if ctx.mark() == mark {
                         return Err(ctx.failure(mark, ParseFailure::ClosureMatchedVoid()));
                     }
-                    res.push_back(tree);
+                    res.push(tree);
                 }
                 Err(nope) => {
                     if cutseen {
                         return Err(nope);
                     }
-                    return Ok(Tree::from(res).into());
+                    return Ok(Tree::List(res.into()).into());
                 }
             }
         }
@@ -61,7 +61,7 @@ impl Exp {
                 return Ok(NIL.into());
             }
             Ok(tree) => {
-                res.push_back(tree);
+                res.push(tree);
             }
         }
         loop {
@@ -74,7 +74,7 @@ impl Exp {
                     if cutseen {
                         return Err(nope);
                     }
-                    return Ok(Tree::from(res).into());
+                    return Ok(Tree::List(res.into()).into());
                 }
                 Ok(pre_tree) => {
                     if ctx.mark() == mark {
@@ -86,9 +86,9 @@ impl Exp {
                     match result {
                         Ok(tree) => {
                             if keep_sep {
-                                res.push_back(pre_tree);
+                                res.push(pre_tree);
                             }
-                            res.push_back(tree);
+                            res.push(tree);
                         }
                         Err(nope) => {
                             // NOTE: must see exp after pre
