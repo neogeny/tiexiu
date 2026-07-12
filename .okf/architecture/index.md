@@ -23,3 +23,4 @@ Internal design decisions and implementation details for the TieXiu PEG parser e
 - [API Rust](/architecture/api-rust.md) — Functional and OO Rust API
 - [API Python](/architecture/api-python.md) — Python API with JSON return types
 - [CLI](/architecture/cli.md) — clap CLI with Boot/Run/Grammar subcommands
+- [Project Layout](/architecture/project-layout.md) — Directory structure and toolchain
