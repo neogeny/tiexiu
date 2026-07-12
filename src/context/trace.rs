@@ -16,7 +16,15 @@ pub(crate) struct NullTracer {}
 #[derive(Debug, Default, Clone)]
 pub(crate) struct ConsoleTracer {}
 
-impl Tracer for NullTracer {}
+impl Tracer for NullTracer {
+    fn trace_match(&self, _ctx: &dyn Ctx, _token: &str, _name: &str) -> bool {
+        true
+    }
+    fn trace_no_match(&self, _ctx: &dyn Ctx, _token: &str, _name: &str) -> bool {
+        false
+    }
+    fn trace_event(&self, _ctx: &dyn Ctx, _event: Event, _msg: &str) {}
+}
 
 impl Tracer for ConsoleTracer {
     fn trace(&self, ctx: &dyn Ctx, msg: &str) {
