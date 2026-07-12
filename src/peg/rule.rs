@@ -3,7 +3,6 @@
 
 use super::Parser;
 use super::exp::Exp;
-use crate::cfg::types::FlagMap;
 use crate::context::CtxSem;
 use crate::peg::error::ParseResult;
 use crate::trees::Tree;
@@ -11,18 +10,13 @@ use crate::types::Str;
 use indexmap::IndexMap;
 use std::sync::Arc;
 
-/// Flag indicating no memoization.
-pub const FLAG_NO_MEMO: &str = "no_memo";
-/// Flag indicating stack/trace should be disabled.
-pub const FLAG_NO_STAK: &str = "no_stak";
-/// Flag indicating this rule is a name rule.
-pub const FLAG_IS_NAME: &str = "is_name";
-/// Flag indicating this rule is a token rule.
-pub const FLAG_IS_TOKN: &str = "is_tokn";
-/// Flag indicating this rule is memoizable.
-pub const FLAG_IS_MEMO: &str = "is_memo";
-/// Flag indicating this rule is left-recursive.
-pub const FLAG_IS_LREC: &str = "is_lrec";
+/// Bitmask constants for rule flags.
+pub(crate) const FLAG_IS_NAME: u8 = 0b0000_0001;
+pub(crate) const FLAG_IS_TOKN: u8 = 0b0000_0010;
+pub(crate) const FLAG_IS_MEMO: u8 = 0b0000_0100;
+pub(crate) const FLAG_IS_LREC: u8 = 0b0000_1000;
+pub(crate) const FLAG_NO_MEMO: u8 = 0b0001_0000;
+pub(crate) const FLAG_NO_STAK: u8 = 0b0010_0000;
 
 /// A rule name string.
 pub type RuleName = Str;
@@ -45,7 +39,7 @@ pub struct Rule {
     /// Decorator keywords from the EBNF grammar (@name, @nomemo, etc.).
     pub decorators: Box<[Str]>,
     /// Rule flags (is_token, is_memo, is_lrec, etc.).
-    pub flags: FlagMap,
+    pub flags: u8,
     /// The parsing expression for this rule.
     pub exp: Exp,
 }
@@ -67,23 +61,39 @@ impl Rule {
         no_stak: bool,
         is_memo: bool,
         is_lrec: bool,
-    ) -> FlagMap {
-        let mut flags = FlagMap::new();
-        flags.insert(FLAG_IS_NAME.into(), is_name);
-        flags.insert(FLAG_IS_TOKN.into(), is_tokn);
-        flags.insert(FLAG_IS_MEMO.into(), is_memo && !no_memo);
-        flags.insert(FLAG_IS_LREC.into(), is_lrec);
-        flags.insert(FLAG_NO_MEMO.into(), no_memo);
-        flags.insert(FLAG_NO_STAK.into(), no_stak);
+    ) -> u8 {
+        let mut flags = 0u8;
+        if is_name {
+            flags |= FLAG_IS_NAME;
+        }
+        if is_tokn {
+            flags |= FLAG_IS_TOKN;
+        }
+        if is_memo && !no_memo {
+            flags |= FLAG_IS_MEMO;
+        }
+        if is_lrec {
+            flags |= FLAG_IS_LREC;
+        }
+        if no_memo {
+            flags |= FLAG_NO_MEMO;
+        }
+        if no_stak {
+            flags |= FLAG_NO_STAK;
+        }
         flags
     }
 
-    fn flag(&self, key: &str) -> bool {
-        self.flags.get(key).copied().unwrap_or(false)
+    fn flag(&self, key: u8) -> bool {
+        self.flags & key != 0
     }
 
-    fn set_flag(&mut self, key: &'static str, value: bool) {
-        self.flags.insert(key.into(), value);
+    fn set_flag(&mut self, key: u8, value: bool) {
+        if value {
+            self.flags |= key;
+        } else {
+            self.flags &= !key;
+        }
     }
 
     /// Creates a new Rule with the given name, params, and expression.
