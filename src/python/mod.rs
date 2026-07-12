@@ -4,7 +4,6 @@ mod pyfnapi;
 mod pymodule;
 mod pyooapi;
 mod tree;
-mod util;
+pub(crate) mod util;
 
 use grammar::GrammarPy;
-use util::pythonize;

@@ -501,7 +501,7 @@ mod tests {
     fn test_calc_json() {
         use crate::api::load_grammar_from_json;
         let grammar_src = std::fs::read_to_string(PATH_CALC_GRAMMAR_JSON).expect("read file");
-        let grammar = load_grammar_from_json(&grammar_src, &[]).expect("load failed");
+        let grammar = load_grammar_from_json(&grammar_src).expect("load failed");
         let result = grammar.railroads();
         eprintln!("calc.json railroads:\n{}", result);
     }

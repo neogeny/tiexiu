@@ -1,34 +1,13 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::pythonize;
 use crate::ParseError;
-use crate::cfg::*;
 use crate::python::GrammarPy;
 use crate::python::pyooapi::TieXiuPy;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
-fn pykwargs_to_cfg(kwargs: &Bound<'_, PyDict>) -> PyResult<Vec<CfgKey>> {
-    let mut cfg: Vec<CfgKey> = Vec::new();
-    for (key, value) in kwargs.iter() {
-        let key_str: String = key.extract().unwrap_or_default();
-        let value_str = value.str().map(|s| s.to_string()).unwrap_or_default();
-        if let Some(opt) = CfgKey::map(&key_str, &value_str) {
-            cfg.push(opt);
-        } else {
-            return Err(pyo3::exceptions::PyValueError::new_err(format!(
-                "unknown configuration option: {}",
-                key_str
-            )));
-        }
-    }
-    Ok(cfg)
-}
-
-fn pythonize_json_value(py: pyo3::Python<'_>, value: json::JsonValue) -> PyResult<Py<PyAny>> {
-    pythonize(py, &value)
-}
+use super::util::{pykwargs_to_cfg, pythonize_json_value};
 
 #[pyfunction]
 pub(crate) fn pegapi(py: Python<'_>) -> PyResult<Py<PyAny>> {
@@ -68,9 +47,9 @@ pub(crate) fn parse_grammar_to_json(
     } else {
         Vec::new()
     };
-    let value = crate::api::parse_grammar_to_json(grammar, &cfg)
-        .map_err(|e| ParseError::new_err(e.to_string()))?;
-    pythonize_json_value(py, value)
+    let tree =
+        crate::api::parse_grammar(grammar, &cfg).map_err(|e| ParseError::new_err(e.to_string()))?;
+    pythonize_json_value(py, tree.to_json())
 }
 
 #[pyfunction]
@@ -85,9 +64,9 @@ pub(crate) fn compile_to_json(
     } else {
         Vec::new()
     };
-    let value = crate::api::compile_to_json(grammar, &cfg)
-        .map_err(|e| ParseError::new_err(e.to_string()))?;
-    pythonize_json_value(py, value)
+    let grammar =
+        crate::api::compile(grammar, &cfg).map_err(|e| ParseError::new_err(e.to_string()))?;
+    pythonize_json_value(py, grammar.to_json())
 }
 
 #[pyfunction]
@@ -122,14 +101,9 @@ pub(crate) fn load_boot_as_json(
     py: Python<'_>,
     kwargs: Option<&Bound<'_, PyDict>>,
 ) -> PyResult<Py<PyAny>> {
-    let cfg = if let Some(k) = kwargs {
-        pykwargs_to_cfg(k)?
-    } else {
-        Vec::new()
-    };
-    let value =
-        crate::api::boot_grammar_to_json(&cfg).map_err(|e| ParseError::new_err(e.to_string()))?;
-    pythonize_json_value(py, value)
+    let _ = kwargs;
+    let grammar = crate::api::boot_grammar().map_err(|e| ParseError::new_err(e.to_string()))?;
+    pythonize_json_value(py, grammar.to_json())
 }
 
 #[pyfunction]
@@ -138,26 +112,17 @@ pub(crate) fn boot_grammar_to_json(
     py: Python<'_>,
     kwargs: Option<&Bound<'_, PyDict>>,
 ) -> PyResult<Py<PyAny>> {
-    let cfg = if let Some(k) = kwargs {
-        pykwargs_to_cfg(k)?
-    } else {
-        Vec::new()
-    };
-    let value =
-        crate::api::boot_grammar_to_json(&cfg).map_err(|e| ParseError::new_err(e.to_string()))?;
-    pythonize_json_value(py, value)
+    let _ = kwargs;
+    let grammar = crate::api::boot_grammar().map_err(|e| ParseError::new_err(e.to_string()))?;
+    pythonize_json_value(py, grammar.to_json())
 }
 
 #[pyfunction]
 #[pyo3(signature = (**kwargs))]
 pub(crate) fn boot_grammar_pretty(kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<String> {
-    let cfg = if let Some(k) = kwargs {
-        pykwargs_to_cfg(k)?
-    } else {
-        Vec::new()
-    };
+    let _ = kwargs;
     let result =
-        crate::api::boot_grammar_pretty(&cfg).map_err(|e| ParseError::new_err(e.to_string()))?;
+        crate::api::boot_grammar_pretty().map_err(|e| ParseError::new_err(e.to_string()))?;
     Ok(result)
 }
 
@@ -192,9 +157,9 @@ pub(crate) fn parse_to_json(
     } else {
         Vec::new()
     };
-    let value = crate::api::parse_to_json(grammar, text, &cfg)
-        .map_err(|e| ParseError::new_err(e.to_string()))?;
-    pythonize_json_value(py, value)
+    let tree =
+        crate::api::parse(grammar, text, &cfg).map_err(|e| ParseError::new_err(e.to_string()))?;
+    pythonize_json_value(py, tree.to_json())
 }
 
 #[pyfunction]
@@ -208,9 +173,9 @@ pub(crate) fn parse_grammar_to_json_string(
     } else {
         Vec::new()
     };
-    let value = crate::api::parse_grammar_to_json_string(grammar, &cfg)
-        .map_err(|e| ParseError::new_err(e.to_string()))?;
-    Ok(value)
+    let tree =
+        crate::api::parse_grammar(grammar, &cfg).map_err(|e| ParseError::new_err(e.to_string()))?;
+    Ok(tree.to_json_string())
 }
 
 #[pyfunction]
@@ -224,9 +189,11 @@ pub(crate) fn compile_to_json_string(
     } else {
         Vec::new()
     };
-    let value = crate::api::compile_to_json_string(grammar, &cfg)
-        .map_err(|e| ParseError::new_err(e.to_string()))?;
-    Ok(value)
+    let grammar =
+        crate::api::compile(grammar, &cfg).map_err(|e| ParseError::new_err(e.to_string()))?;
+    grammar
+        .to_json_string()
+        .map_err(|e| ParseError::new_err(e.to_string()))
 }
 
 #[pyfunction]
@@ -241,22 +208,19 @@ pub(crate) fn parse_to_json_string(
     } else {
         Vec::new()
     };
-    let value = crate::api::parse_to_json_string(grammar, text, &cfg)
-        .map_err(|e| ParseError::new_err(e.to_string()))?;
-    Ok(value)
+    let tree =
+        crate::api::parse(grammar, text, &cfg).map_err(|e| ParseError::new_err(e.to_string()))?;
+    Ok(tree.to_json_string())
 }
 
 #[pyfunction]
 #[pyo3(signature = (**kwargs))]
 pub(crate) fn boot_grammar_to_json_string(kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<String> {
-    let cfg = if let Some(k) = kwargs {
-        pykwargs_to_cfg(k)?
-    } else {
-        Vec::new()
-    };
-    let value = crate::api::boot_grammar_to_json_string(&cfg)
-        .map_err(|e| ParseError::new_err(e.to_string()))?;
-    Ok(value)
+    let _ = kwargs;
+    let grammar = crate::api::boot_grammar().map_err(|e| ParseError::new_err(e.to_string()))?;
+    grammar
+        .to_json_string()
+        .map_err(|e| ParseError::new_err(e.to_string()))
 }
 
 #[pyfunction]
@@ -314,9 +278,9 @@ pub(crate) fn parse_input_to_json(
     } else {
         Vec::new()
     };
-    let value = crate::api::parse_input_to_json(parser.grammar(), text, &cfg)
+    let tree = crate::api::parse_input(parser.grammar(), text, &cfg)
         .map_err(|e| ParseError::new_err(e.to_string()))?;
-    pythonize_json_value(py, value)
+    pythonize_json_value(py, tree.to_json())
 }
 
 #[pyfunction]
@@ -331,7 +295,7 @@ pub(crate) fn parse_input_to_json_string(
     } else {
         Vec::new()
     };
-    let value = crate::api::parse_input_to_json_string(parser.grammar(), text, &cfg)
+    let tree = crate::api::parse_input(parser.grammar(), text, &cfg)
         .map_err(|e| ParseError::new_err(e.to_string()))?;
-    Ok(value)
+    Ok(tree.to_json_string())
 }

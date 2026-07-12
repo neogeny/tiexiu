@@ -9,9 +9,7 @@ use clap::{Parser, Subcommand};
 use std::fmt::Write;
 use std::path::PathBuf;
 use tiexiu::PrettyPrint;
-use tiexiu::api::{
-    boot_grammar_pretty, boot_grammar_to_json_string, compile, load_grammar_from_json,
-};
+use tiexiu::api::{boot_grammar_pretty, compile, load_grammar_from_json};
 use tiexiu::cfg::{Cfg, CfgA};
 use tiexiu::tools::rails::*;
 use tiexiu::{CfgKey, Grammar, Result, boot_grammar, config};
@@ -152,7 +150,7 @@ pub fn cli(out: &mut std::io::StdoutLock) -> Result<()> {
     if cli.trace {
         cfg = cfg.add(CfgKey::Trace);
     }
-    let cfga: &CfgA = &cfg;
+    let _cfga: &CfgA = &cfg;
 
     let (content, lang) = match cli.command {
         Commands::Boot {
@@ -162,13 +160,13 @@ pub fn cli(out: &mut std::io::StdoutLock) -> Result<()> {
             ..
         } => {
             if pretty {
-                (boot_grammar_pretty(cfga)?, "ebnf")
+                (boot_grammar_pretty()?, "ebnf")
             } else if model {
                 (format!("{:#?}", boot_grammar()?), "rs")
             } else if railroads {
                 (boot_grammar()?.railroads(), "apl")
             } else {
-                (boot_grammar_to_json_string(cfga)?, "json")
+                (boot_grammar()?.to_json_string()?, "json")
             }
         }
         Commands::Run {
@@ -192,7 +190,7 @@ pub fn cli(out: &mut std::io::StdoutLock) -> Result<()> {
                 .and_then(|ext| ext.to_str())
                 .is_some_and(|ext| ext.eq_ignore_ascii_case("json"))
             {
-                load_grammar_from_json(&grammar_text, &cfg)?
+                load_grammar_from_json(&grammar_text)?
             } else {
                 compile(&grammar_text, &cfg)?
             };
@@ -244,7 +242,7 @@ pub(crate) fn load_grammar_from_path(
         .and_then(|ext| ext.to_str())
         .is_some_and(|ext| ext.eq_ignore_ascii_case("json"))
     {
-        load_grammar_from_json(&grammar_text, &load_cfg)?
+        load_grammar_from_json(&grammar_text)?
     } else {
         compile(&grammar_text, &load_cfg)?
     };
