@@ -13,56 +13,16 @@ impl Exp {
 
     fn _defines(&self, names: &mut DefineSet) {
         match &self.kind {
-            ExpKind::Named(name, exp) => {
+            ExpKind::Named(name, _) => {
                 names.insert((name.clone(), false));
-                exp._defines(names);
             }
-            ExpKind::NamedList(name, exp) => {
+            ExpKind::NamedList(name, _) => {
                 names.insert((name.clone(), true));
-                exp._defines(names);
-            }
-            ExpKind::Override(exp) | ExpKind::OverrideList(exp) => {
-                exp._defines(names);
-            }
-            ExpKind::Sequence(arr) => {
-                for exp in &**arr {
-                    exp._defines(names);
-                }
-            }
-            ExpKind::Choice(arr) => {
-                for exp in &**arr {
-                    exp._defines(names);
-                }
-            }
-            ExpKind::Alt(exp)
-            | ExpKind::Optional(exp)
-            | ExpKind::Closure(exp)
-            | ExpKind::PositiveClosure(exp)
-            | ExpKind::SkipGroup(exp)
-            | ExpKind::SkipTo(exp)
-            | ExpKind::Lookahead(exp)
-            | ExpKind::NegativeLookahead(exp) => {
-                exp._defines(names);
-            }
-            ExpKind::Join { exp, .. } => {
-                exp._defines(names);
-            }
-            ExpKind::PositiveJoin { exp, .. } => {
-                exp._defines(names);
-            }
-            ExpKind::Gather { exp, .. } => {
-                exp._defines(names);
-            }
-            ExpKind::PositiveGather { exp, .. } => {
-                exp._defines(names);
-            }
-            ExpKind::RuleInclude { exp: Some(exp), .. } => {
-                exp._defines(names);
-            }
-            ExpKind::Group(exp) => {
-                exp._defines(names);
             }
             _ => {}
+        }
+        for child in self.kind.children() {
+            child._defines(names);
         }
     }
 }

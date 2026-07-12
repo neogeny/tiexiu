@@ -29,41 +29,20 @@ impl Grammar {
                 let res = grammar.get_rule_ref(name)?;
                 *rule = Some(res);
             }
-
             ExpKind::RuleInclude { name, exp } => {
                 if let Ok(rule) = grammar.get_rule(name) {
                     *exp = Some(rule.exp.clone().into());
                 }
             }
-
-            ExpKind::Named(_, exp)
-            | ExpKind::NamedList(_, exp)
-            | ExpKind::Override(exp)
-            | ExpKind::OverrideList(exp)
-            | ExpKind::Group(exp)
-            | ExpKind::SkipGroup(exp)
-            | ExpKind::Lookahead(exp)
-            | ExpKind::NegativeLookahead(exp)
-            | ExpKind::SkipTo(exp)
-            | ExpKind::Alt(exp)
-            | ExpKind::Optional(exp)
-            | ExpKind::Closure(exp)
-            | ExpKind::PositiveClosure(exp) => Self::link_exp(exp, grammar)?,
-
-            ExpKind::Sequence(items) | ExpKind::Choice(items) => {
-                for item in items.iter_mut() {
-                    Self::link_exp(item, grammar)?;
+            _ => {
+                if let Some(inner) = exp.kind.single_child_mut() {
+                    Self::link_exp(inner, grammar)?;
+                } else {
+                    for child in exp.kind.children_mut() {
+                        Self::link_exp(child, grammar)?;
+                    }
                 }
             }
-
-            ExpKind::Join { exp, sep }
-            | ExpKind::PositiveJoin { exp, sep }
-            | ExpKind::Gather { exp, sep }
-            | ExpKind::PositiveGather { exp, sep } => {
-                Self::link_exp(exp, grammar)?;
-                Self::link_exp(sep, grammar)?;
-            }
-            _ => {}
         }
         Ok(())
     }
@@ -112,41 +91,6 @@ mod tests {
                     Err(_) => println!("    AND '{}' does NOT exist in grammar", name),
                 }
             }
-            ExpKind::Sequence(items) => {
-                for (i, item) in items.iter().enumerate() {
-                    check_exp_for_unlinked(item, &format!("{}[{}]", path, i), grammar);
-                }
-            }
-            ExpKind::Choice(options) => {
-                for (i, opt) in options.iter().enumerate() {
-                    check_exp_for_unlinked(opt, &format!("{}[{}]", path, i), grammar);
-                }
-            }
-            ExpKind::Alt(inner) => {
-                check_exp_for_unlinked(inner, &format!("{}:alt", path), grammar);
-            }
-            ExpKind::Named(_, inner) | ExpKind::NamedList(_, inner) => {
-                check_exp_for_unlinked(inner, path, grammar);
-            }
-            ExpKind::Optional(inner)
-            | ExpKind::Group(inner)
-            | ExpKind::Lookahead(inner)
-            | ExpKind::NegativeLookahead(inner)
-            | ExpKind::SkipTo(inner)
-            | ExpKind::Closure(inner)
-            | ExpKind::PositiveClosure(inner)
-            | ExpKind::SkipGroup(inner)
-            | ExpKind::Override(inner)
-            | ExpKind::OverrideList(inner) => {
-                check_exp_for_unlinked(inner, path, grammar);
-            }
-            ExpKind::Join { exp: e1, sep }
-            | ExpKind::PositiveJoin { exp: e1, sep }
-            | ExpKind::Gather { exp: e1, sep }
-            | ExpKind::PositiveGather { exp: e1, sep } => {
-                check_exp_for_unlinked(e1, &format!("{}.exp", path), grammar);
-                check_exp_for_unlinked(sep, &format!("{}.sep", path), grammar);
-            }
             ExpKind::RuleInclude {
                 name: ri_name,
                 exp: None,
@@ -157,7 +101,11 @@ mod tests {
                     Err(_) => println!("    AND '{}' does NOT exist in grammar", ri_name),
                 }
             }
-            _ => {}
+            _ => {
+                for (i, child) in exp.kind.children().into_iter().enumerate() {
+                    check_exp_for_unlinked(child, &format!("{}[{}]", path, i), grammar);
+                }
+            }
         }
     }
 }

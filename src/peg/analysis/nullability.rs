@@ -28,7 +28,6 @@ impl ExpKind {
             Self::Nil => true,
             Self::RuleInclude { exp, .. } => exp.as_ref().is_some_and(|e| e.is_nullable()),
 
-            // Consumes nothing, always succeeds (or affects state only)
             Self::Eof => false,
             Self::Eol => true,
 
@@ -42,7 +41,6 @@ impl ExpKind {
             | Self::Alert(..)
             | Self::Closure(_) => true,
 
-            // Always consumes (or fails), never succeeds with zero width
             Self::Fail
             | Self::Dot
             | Self::Token(_)
@@ -52,53 +50,34 @@ impl ExpKind {
             | Self::FloatMeta
             | Self::BoolMeta => false,
 
-            Self::Pattern(pattern) => {
-                // true if it CAN match the empty string (is nullable)
-                pyre::compile(pattern)
-                    .ok()
-                    .and_then(|re| re.match_(""))
-                    .is_some()
-            }
+            Self::Pattern(pattern) => pyre::compile(pattern)
+                .ok()
+                .and_then(|re| re.match_(""))
+                .is_some(),
 
-            // Transparent wrappers
-            Self::Group(m)
-            | Self::SkipGroup(m)
-            | Self::Override(m)
-            | Self::Named(_, m)
-            | Self::OverrideList(m)
-            | Self::NamedList(_, m) => m.is_nullable(),
-
-            // Logic-based variants
-            Self::Alt(m) => m.is_nullable(),
             Self::Choice(models) => models.iter().any(|m| m.is_nullable()),
             Self::Sequence(models) => models.iter().all(|m| m.is_nullable()),
             Self::PositiveClosure(m) => m.is_nullable(),
 
-            // Join/Gather variants
-            Self::Join { .. } | Self::Gather { .. } => true, // These can match zero times
+            Self::Join { .. } | Self::Gather { .. } => true,
             Self::PositiveJoin { exp, .. } | Self::PositiveGather { exp, .. } => exp.is_nullable(),
 
-            // Special cases
-            Self::SkipTo(_) => false, // SkipTo must find a match to succeed
+            Self::SkipTo(_) => false,
 
-            Self::Call { .. } => {
-                // In a stateless walker, you cannot determine this without
-                // looking up the definition of _name in the grammar.
-                false
-            }
+            Self::Call { .. } => false,
+
+            _ => self.single_child().is_some_and(|m| m.is_nullable()),
         }
     }
-    /// Returns the child expressions reachable from this expression kind.
-    //noinspection DuplicatedCode
-    pub fn callable_from(&self) -> Vec<&Exp> {
-        match &self {
-            Self::Nil => vec![],
-            Self::RuleInclude { exp, .. } => match exp {
-                Some(e) => vec![e],
-                _ => vec![],
-            },
 
-            // These don't lead to further rules
+    /// Returns the child expressions reachable from this expression kind.
+    pub fn callable_from(&self) -> Vec<&Exp> {
+        match self {
+            Self::Nil | Self::Call { .. } => vec![],
+            Self::RuleInclude { exp, .. } => {
+                exp.as_ref().map_or_else(Vec::new, |e| vec![e.as_ref()])
+            }
+
             Self::EmptyClosure
             | Self::Cut
             | Self::Void
@@ -116,28 +95,8 @@ impl ExpKind {
             | Self::FloatMeta
             | Self::BoolMeta => vec![],
 
-            // NOTE: left recursion detection handles this by resolving by name
-            Self::Call { .. } => vec![],
-
-            // Transparent wrappers: return the inner expression
-            Self::Group(m)
-            | Self::SkipGroup(m)
-            | Self::Override(m)
-            | Self::Named(_, m)
-            | Self::OverrideList(m)
-            | Self::NamedList(_, m)
-            | Self::Lookahead(m)
-            | Self::NegativeLookahead(m)
-            | Self::Optional(m)
-            | Self::Closure(m)
-            | Self::PositiveClosure(m)
-            | Self::Alt(m)
-            | Self::SkipTo(m) => vec![m.as_ref()],
-
-            // Choice: Any option is a potential "next" step
             Self::Choice(models) => models.iter().collect(),
 
-            // Sequence: Collect all leading nullable elements plus the first non-nullable one
             Self::Sequence(models) => {
                 let mut result = Vec::new();
                 for m in models {
@@ -149,22 +108,26 @@ impl ExpKind {
                 result
             }
 
-            // Join/Gather variants: the expression is always reachable
             Self::Join { exp, .. }
             | Self::PositiveJoin { exp, .. }
             | Self::Gather { exp, .. }
             | Self::PositiveGather { exp, .. } => vec![exp.as_ref()],
+
+            _ => match self.single_child() {
+                Some(inner) => vec![inner],
+                None => vec![],
+            },
         }
     }
 
     /// Returns mutable references to child expressions reachable from this expression kind.
-    //noinspection DuplicatedCode
     pub fn callable_from_mut(&mut self) -> Vec<&mut Exp> {
         match self {
-            Self::Nil => vec![],
-            Self::RuleInclude { .. } => vec![],
+            Self::Nil | Self::Call { .. } => vec![],
+            Self::RuleInclude { exp, .. } => {
+                exp.as_mut().map_or_else(Vec::new, |e| vec![e.as_mut()])
+            }
 
-            // These don't lead to further rules
             Self::EmptyClosure
             | Self::Cut
             | Self::Void
@@ -182,28 +145,8 @@ impl ExpKind {
             | Self::FloatMeta
             | Self::BoolMeta => vec![],
 
-            // NOTE: left recursion detection handles this by resolving by name
-            Self::Call { .. } => vec![],
-
-            // Transparent wrappers: return the inner expression
-            Self::Group(m)
-            | Self::SkipGroup(m)
-            | Self::Override(m)
-            | Self::Named(_, m)
-            | Self::OverrideList(m)
-            | Self::NamedList(_, m)
-            | Self::Lookahead(m)
-            | Self::NegativeLookahead(m)
-            | Self::Optional(m)
-            | Self::Closure(m)
-            | Self::PositiveClosure(m)
-            | Self::Alt(m)
-            | Self::SkipTo(m) => vec![m.as_mut()],
-
-            // Choice: Any option is a potential "next" step
             Self::Choice(models) => models.iter_mut().collect(),
 
-            // Sequence: Collect all leading nullable elements plus the first non-nullable one
             Self::Sequence(models) => {
                 let mut result = Vec::new();
                 for m in models {
@@ -216,11 +159,15 @@ impl ExpKind {
                 result
             }
 
-            // Join/Gather variants: the expression is always reachable
             Self::Join { exp, .. }
             | Self::PositiveJoin { exp, .. }
             | Self::Gather { exp, .. }
             | Self::PositiveGather { exp, .. } => vec![exp.as_mut()],
+
+            _ => match self.single_child_mut() {
+                Some(inner) => vec![inner],
+                None => vec![],
+            },
         }
     }
 }

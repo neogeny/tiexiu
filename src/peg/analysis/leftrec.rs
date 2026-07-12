@@ -15,20 +15,6 @@ fn first_calls(grammar: &Grammar, exp: &Exp) -> Vec<usize> {
             .map(|e| first_calls(grammar, e))
             .unwrap_or_default(),
 
-        ExpKind::Named(_, inner)
-        | ExpKind::NamedList(_, inner)
-        | ExpKind::Override(inner)
-        | ExpKind::OverrideList(inner)
-        | ExpKind::Group(inner)
-        | ExpKind::SkipGroup(inner)
-        | ExpKind::Lookahead(inner)
-        | ExpKind::NegativeLookahead(inner)
-        | ExpKind::SkipTo(inner)
-        | ExpKind::Alt(inner)
-        | ExpKind::Optional(inner)
-        | ExpKind::Closure(inner)
-        | ExpKind::PositiveClosure(inner) => first_calls(grammar, inner),
-
         ExpKind::Choice(items) => items
             .iter()
             .flat_map(|item| first_calls(grammar, item))
@@ -45,28 +31,10 @@ fn first_calls(grammar: &Grammar, exp: &Exp) -> Vec<usize> {
             calls
         }
 
-        ExpKind::Join { exp, .. }
-        | ExpKind::PositiveJoin { exp, .. }
-        | ExpKind::Gather { exp, .. }
-        | ExpKind::PositiveGather { exp, .. } => first_calls(grammar, exp),
-
-        ExpKind::Nil
-        | ExpKind::EmptyClosure
-        | ExpKind::Cut
-        | ExpKind::Void
-        | ExpKind::Fail
-        | ExpKind::Dot
-        | ExpKind::Eof
-        | ExpKind::Eol
-        | ExpKind::Token(_)
-        | ExpKind::Pattern(_)
-        | ExpKind::Constant(_)
-        | ExpKind::Alert(_, _)
-        | ExpKind::NameMeta
-        | ExpKind::IntMeta
-        | ExpKind::UIntMeta
-        | ExpKind::FloatMeta
-        | ExpKind::BoolMeta => Vec::new(),
+        _ => match exp.kind.single_child() {
+            Some(inner) => first_calls(grammar, inner),
+            None => Vec::new(),
+        },
     }
 }
 

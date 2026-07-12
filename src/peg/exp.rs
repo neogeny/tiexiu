@@ -127,6 +127,137 @@ pub enum ExpKind {
     BoolMeta,
 }
 
+impl ExpKind {
+    /// Returns `true` if this expression has no children.
+    pub fn is_leaf(&self) -> bool {
+        matches!(
+            self,
+            Self::Nil
+                | Self::Cut
+                | Self::Void
+                | Self::Fail
+                | Self::Dot
+                | Self::Eof
+                | Self::Eol
+                | Self::EmptyClosure
+                | Self::Token(_)
+                | Self::Pattern(_)
+                | Self::Constant(_)
+                | Self::Alert(..)
+                | Self::Call { .. }
+                | Self::NameMeta
+                | Self::IntMeta
+                | Self::UIntMeta
+                | Self::FloatMeta
+                | Self::BoolMeta
+        )
+    }
+
+    /// Returns the single child for wrapper nodes, or `None`.
+    pub fn single_child(&self) -> Option<&Exp> {
+        match self {
+            Self::Named(_, e)
+            | Self::NamedList(_, e)
+            | Self::Override(e)
+            | Self::OverrideList(e)
+            | Self::Group(e)
+            | Self::SkipGroup(e)
+            | Self::Lookahead(e)
+            | Self::NegativeLookahead(e)
+            | Self::SkipTo(e)
+            | Self::Alt(e)
+            | Self::Optional(e)
+            | Self::Closure(e)
+            | Self::PositiveClosure(e) => Some(e),
+            _ => None,
+        }
+    }
+
+    /// Returns a mutable reference to the single child for wrapper nodes, or `None`.
+    pub fn single_child_mut(&mut self) -> Option<&mut Exp> {
+        match self {
+            Self::Named(_, e)
+            | Self::NamedList(_, e)
+            | Self::Override(e)
+            | Self::OverrideList(e)
+            | Self::Group(e)
+            | Self::SkipGroup(e)
+            | Self::Lookahead(e)
+            | Self::NegativeLookahead(e)
+            | Self::SkipTo(e)
+            | Self::Alt(e)
+            | Self::Optional(e)
+            | Self::Closure(e)
+            | Self::PositiveClosure(e) => Some(e),
+            _ => None,
+        }
+    }
+
+    /// Returns references to all immediate child expressions.
+    pub fn children(&self) -> Vec<&Exp> {
+        match self {
+            Self::Named(_, e)
+            | Self::NamedList(_, e)
+            | Self::Override(e)
+            | Self::OverrideList(e)
+            | Self::Group(e)
+            | Self::SkipGroup(e)
+            | Self::Lookahead(e)
+            | Self::NegativeLookahead(e)
+            | Self::SkipTo(e)
+            | Self::Alt(e)
+            | Self::Optional(e)
+            | Self::Closure(e)
+            | Self::PositiveClosure(e) => vec![e],
+
+            Self::Sequence(arr) | Self::Choice(arr) => arr.iter().collect(),
+
+            Self::Join { exp, sep }
+            | Self::PositiveJoin { exp, sep }
+            | Self::Gather { exp, sep }
+            | Self::PositiveGather { exp, sep } => vec![exp, sep],
+
+            Self::RuleInclude { exp, .. } => {
+                exp.as_ref().map_or_else(Vec::new, |e| vec![e.as_ref()])
+            }
+
+            _ => vec![],
+        }
+    }
+
+    /// Returns mutable references to all immediate child expressions.
+    pub fn children_mut(&mut self) -> Vec<&mut Exp> {
+        match self {
+            Self::Named(_, e)
+            | Self::NamedList(_, e)
+            | Self::Override(e)
+            | Self::OverrideList(e)
+            | Self::Group(e)
+            | Self::SkipGroup(e)
+            | Self::Lookahead(e)
+            | Self::NegativeLookahead(e)
+            | Self::SkipTo(e)
+            | Self::Alt(e)
+            | Self::Optional(e)
+            | Self::Closure(e)
+            | Self::PositiveClosure(e) => vec![e],
+
+            Self::Sequence(arr) | Self::Choice(arr) => arr.iter_mut().collect(),
+
+            Self::Join { exp, sep }
+            | Self::PositiveJoin { exp, sep }
+            | Self::Gather { exp, sep }
+            | Self::PositiveGather { exp, sep } => vec![exp, sep],
+
+            Self::RuleInclude { exp, .. } => {
+                exp.as_mut().map_or_else(Vec::new, |e| vec![e.as_mut()])
+            }
+
+            _ => vec![],
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::exp::*;
