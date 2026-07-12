@@ -43,7 +43,7 @@ impl std::fmt::Debug for Error {
 #[derive(thiserror::Error)]
 pub enum Error {
     /// Regex compilation error.
-    #[error("JSON import/export failed: {0}")]
+    #[error("regex compilation failed: {0}")]
     Regex(#[from] crate::util::pyre::Error),
 
     /// JSON model conversion error.

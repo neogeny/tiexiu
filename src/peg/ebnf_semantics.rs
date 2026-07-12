@@ -15,7 +15,7 @@ use crate::types::{Ref, Str};
 #[derive(Debug, Default)]
 pub struct EBNFGrammarSemantics;
 
-pub fn new_ebnf_grammar_sematics() -> Ref<dyn Semantics> {
+pub fn new_ebnf_grammar_semantics() -> Ref<dyn Semantics> {
     Ref::new(EBNFGrammarSemantics::new())
 }
 

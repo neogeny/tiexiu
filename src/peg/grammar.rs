@@ -175,20 +175,13 @@ impl Grammar {
         let cursor = StrCursor::new(text);
         let mut ctx = new_ctx(cursor, cfga);
         if let Some(start) = config(cfga).start() {
-            match self.parse_tree_from(&mut ctx, start) {
-                Ok(tree) => Ok(tree),
-                Err(failure) => Err(failure),
-            }
+            self.parse_tree_from(&mut ctx, start)
         } else {
-            match self.parse_tree(&mut ctx) {
-                Ok(tree) => Ok(tree),
-                Err(failure) => Err(failure),
-            }
+            self.parse_tree(&mut ctx)
         }
     }
 
     /// Parses a string input from a specific start rule.
-    #[allow(dead_code)]
     pub fn parse_input_from(
         &self,
         text: &str,
@@ -197,10 +190,7 @@ impl Grammar {
     ) -> crate::error::Result<Tree> {
         let cursor = StrCursor::new(text);
         let mut ctx = new_ctx(cursor, cfga);
-        match self.parse_tree_from(&mut ctx, start) {
-            Ok(tree) => Ok(tree),
-            Err(failure) => Err(failure),
-        }
+        self.parse_tree_from(&mut ctx, start)
     }
 
     /// Returns a reference to the rule with the given name.
@@ -237,7 +227,6 @@ impl Grammar {
     }
 
     /// Returns a mutable reference to the rule with the given name.
-    #[allow(dead_code)]
     pub fn get_rule_mut(&mut self, name: &str) -> Result<&mut Rule, ParseFailure> {
         self.rules
             .get_mut(name)

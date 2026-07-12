@@ -15,10 +15,6 @@ pub mod strctx;
 /// Tracing infrastructure for parse debugging.
 pub mod trace;
 
-// #[allow(dead_code)]
-// pub mod stackctx;
-// pub mod ctxproxy;
-
 use crate::{CfgA, Cursor};
 /// Traits for reading parser state (Ctx, CtxI).
 pub use ctx::*;

@@ -6,8 +6,6 @@ pub mod error;
 pub mod export;
 /// JSON-to-Grammar deserialization.
 pub mod import;
-/// TryFrom conversions for JSON types.
-pub mod tryfrom;
 
 #[cfg(feature = "serde_json")]
 /// Bridge between `json::JsonValue` and `serde_json::Value`.

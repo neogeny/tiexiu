@@ -1,22 +1,20 @@
-# 铁修 TieXiu Desgin
+# 铁修 TieXiu Design
 
 This document described the design criteria used and implementation choices made for the current implementation of the project. Some decisions were arguably not the best for a contexts with the Rust semantics or runtime behavior, but they remain for now.
 
 
 ## Lean Parsing Context
 
-**TieXiu** uses the runtime stack as the parsing state stack. A state change has a 16-byte stack footprint consisting of two  pointers: one for the *Volatile State* (Input Cursor) and one for the *Heavy Stated* (Grammar + Memoization Cache). This allows for deep recursive descent with minimal stack pressure and $O(1)$ branching costs. The `Cursor` implementation for parsing text (`StrCursor`) uses 16 bytes (`&str` + `usize`) and has copy-on-write semantics during a parse (grammar elements that don't advance over the input share the same cursor).
+**TieXiu** uses the runtime stack as the parsing state stack. The parsing context (`CoreCtx`) owns both the mutable cursor position and the shared heavyweight state (grammar, memoization cache, tracer) directly, avoiding heap indirection. This allows for deep recursive descent with minimal stack pressure. The `Cursor` implementation for parsing text (`StrCursor`) uses 24 bytes (`Arc<str>` + `usize` offset + `Arc<CursorHeavy>`) and has copy-on-write semantics during a parse (grammar elements that don't advance over the input share the same cursor).
 
 
-## Copy-on-Write State Transitios
+## Mutable Context with Reset
 
-Backtracking in **TieXiu** is *lazy*. Cloning a context/state only increments reference counts. The engine leverages the Rust runtime stack to handle state changes. Branching at choice points is a *16-byte* clone of the state, with a *16-byte* (for text) allocation only when the state is mutated. Failed parses restore the cursor position and register the furthest failure position for error reporting. The state returned occupies the same space as the original state.
-
-On the latest implementation the return values for parse functions consists of the `Tree` plus the new position `mark`. This implementation begs for not cloning context headers any more and instead use a mutable context with mark/reset semantics.
+Backtracking in **TieXiu** uses mutable context semantics (`&mut CtxSem`). The context is created once and passed by mutable reference through the parse. Branching at choice points saves the cursor mark and restores it on failure. Failed parses restore the cursor position and register the furthest failure position for error reporting.
 
 ## Trees
 
-A CST/Tree may use *64-bytes* per atomic node plus space proportional to the input matched, but CST are only kept for the currently successful path on the parse, and are dropped as soon as an option fails. CST are compacted on the boundary of the successful parse of a grammar rule node.
+A CST/Tree uses *32 bytes* per node plus space proportional to the input matched, but CST are only kept for the currently successful path on the parse, and are dropped as soon as an option fails. CST are compacted on the boundary of the successful parse of a grammar rule node.
 
 
 ## Failures
@@ -49,8 +47,9 @@ All branches in a parse use a shared *Memoization Cache* to achieve the `O(N) ` 
 
 ## Features
 
-* [x] **16-byte Handle Size**: Optimized for L1 cache and deep recursion.
-* [x] **32-byte State Changes**: Efficient CoW allocation on the Rust runtime stack.
+* [x] **24-byte Cursor**: Optimized for L1 cache and deep recursion.
+* [x] **32-byte Tree Nodes**: Compact AST representation with niche optimization.
+* [x] **Mutable Context**: Efficient `&mut CtxSem` semantics with mark/reset for backtracking.
 * [x] **Complete Parsing Engine**: Core PEG execution logic is fully implemented.
 * [x] **Left Recursion**: Both analysis and runtime support are complete.
 * [x] **Complete Grammar Model**: Rules and Models are fully defined and owned.

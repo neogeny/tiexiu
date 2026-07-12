@@ -6,7 +6,8 @@ use crate::util;
 use crate::util::fold::Folds;
 
 /// Folder trait for recursive traversal of PEG expressions.
-#[allow(dead_code)]
+/// Public API for user-defined tree transformations.
+#[allow(dead_code)] // Public API -- used by downstream consumers, not within this crate.
 pub trait Folder<O>: util::fold::Folder<Exp, O> {
     /// Folds an expression node with its already-folded children.
     fn fold(&mut self, item: &Exp, children: &[O]) -> O;

@@ -3,7 +3,7 @@
 
 //! Railroad diagram generation for grammars
 
-#![allow(dead_code)]
+#![allow(dead_code)] // Public visualization API -- not all functions are called within the crate.
 
 use crate::cfg::constants::{SYM_EOL, SYM_ETX};
 use crate::peg::{Exp, ExpKind, Grammar, Rule};

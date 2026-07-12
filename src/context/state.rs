@@ -24,16 +24,6 @@ pub type PatternCache = HashMap<String, Pattern>;
 /// The parser's call stack, implemented as a cons-list of rule names.
 pub type CallStack = TokenStack;
 
-/// A parser alert with severity level and message.
-#[derive(Debug, Clone)]
-#[allow(dead_code)]
-pub struct Alert {
-    /// Alert severity level.
-    level: usize,
-    /// Alert message text.
-    message: Str,
-}
-
 /// Mutable parse state: cursor position and recursion tracking.
 #[derive(Debug)]
 pub struct ParseState<U: Cursor> {
