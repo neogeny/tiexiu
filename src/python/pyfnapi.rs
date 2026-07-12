@@ -42,6 +42,7 @@ pub(crate) fn pegapi(py: Python<'_>) -> PyResult<Py<PyAny>> {
 #[pyfunction]
 #[pyo3(signature = (grammar, **kwargs))]
 pub(crate) fn parse_grammar(
+    py: Python<'_>,
     grammar: &str,
     kwargs: Option<&Bound<'_, PyDict>>,
 ) -> PyResult<Py<PyAny>> {
@@ -52,12 +53,13 @@ pub(crate) fn parse_grammar(
     };
     let tree =
         crate::api::parse_grammar(grammar, &cfg).map_err(|e| ParseError::new_err(e.to_string()))?;
-    super::tree::tree_to_py(tree)
+    super::tree::tree_to_py(py, tree)
 }
 
 #[pyfunction]
 #[pyo3(signature = (grammar, **kwargs))]
 pub(crate) fn parse_grammar_to_json(
+    py: Python<'_>,
     grammar: &str,
     kwargs: Option<&Bound<'_, PyDict>>,
 ) -> PyResult<Py<PyAny>> {
@@ -68,13 +70,13 @@ pub(crate) fn parse_grammar_to_json(
     };
     let value = crate::api::parse_grammar_to_json(grammar, &cfg)
         .map_err(|e| ParseError::new_err(e.to_string()))?;
-    let py = unsafe { pyo3::Python::assume_attached() };
     pythonize_json_value(py, value)
 }
 
 #[pyfunction]
 #[pyo3(signature = (grammar, **kwargs))]
 pub(crate) fn compile_to_json(
+    py: Python<'_>,
     grammar: &str,
     kwargs: Option<&Bound<'_, PyDict>>,
 ) -> PyResult<Py<PyAny>> {
@@ -85,7 +87,6 @@ pub(crate) fn compile_to_json(
     };
     let value = crate::api::compile_to_json(grammar, &cfg)
         .map_err(|e| ParseError::new_err(e.to_string()))?;
-    let py = unsafe { pyo3::Python::assume_attached() };
     pythonize_json_value(py, value)
 }
 
@@ -117,7 +118,10 @@ pub(crate) fn pretty(grammar: &str, kwargs: Option<&Bound<'_, PyDict>>) -> PyRes
 
 #[pyfunction]
 #[pyo3(signature = (**kwargs))]
-pub(crate) fn load_boot_as_json(kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<Py<PyAny>> {
+pub(crate) fn load_boot_as_json(
+    py: Python<'_>,
+    kwargs: Option<&Bound<'_, PyDict>>,
+) -> PyResult<Py<PyAny>> {
     let cfg = if let Some(k) = kwargs {
         pykwargs_to_cfg(k)?
     } else {
@@ -125,13 +129,15 @@ pub(crate) fn load_boot_as_json(kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<
     };
     let value =
         crate::api::boot_grammar_to_json(&cfg).map_err(|e| ParseError::new_err(e.to_string()))?;
-    let py = unsafe { pyo3::Python::assume_attached() };
     pythonize_json_value(py, value)
 }
 
 #[pyfunction]
 #[pyo3(signature = (**kwargs))]
-pub(crate) fn boot_grammar_to_json(kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<Py<PyAny>> {
+pub(crate) fn boot_grammar_to_json(
+    py: Python<'_>,
+    kwargs: Option<&Bound<'_, PyDict>>,
+) -> PyResult<Py<PyAny>> {
     let cfg = if let Some(k) = kwargs {
         pykwargs_to_cfg(k)?
     } else {
@@ -139,7 +145,6 @@ pub(crate) fn boot_grammar_to_json(kwargs: Option<&Bound<'_, PyDict>>) -> PyResu
     };
     let value =
         crate::api::boot_grammar_to_json(&cfg).map_err(|e| ParseError::new_err(e.to_string()))?;
-    let py = unsafe { pyo3::Python::assume_attached() };
     pythonize_json_value(py, value)
 }
 
@@ -159,6 +164,7 @@ pub(crate) fn boot_grammar_pretty(kwargs: Option<&Bound<'_, PyDict>>) -> PyResul
 #[pyfunction]
 #[pyo3(signature = (grammar, text, **kwargs))]
 pub(crate) fn parse(
+    py: Python<'_>,
     grammar: &str,
     text: &str,
     kwargs: Option<&Bound<'_, PyDict>>,
@@ -170,12 +176,13 @@ pub(crate) fn parse(
     };
     let tree =
         crate::api::parse(grammar, text, &cfg).map_err(|e| ParseError::new_err(e.to_string()))?;
-    super::tree::tree_to_py(tree)
+    super::tree::tree_to_py(py, tree)
 }
 
 #[pyfunction]
 #[pyo3(signature = (grammar, text, **kwargs))]
 pub(crate) fn parse_to_json(
+    py: Python<'_>,
     grammar: &str,
     text: &str,
     kwargs: Option<&Bound<'_, PyDict>>,
@@ -187,7 +194,6 @@ pub(crate) fn parse_to_json(
     };
     let value = crate::api::parse_to_json(grammar, text, &cfg)
         .map_err(|e| ParseError::new_err(e.to_string()))?;
-    let py = unsafe { pyo3::Python::assume_attached() };
     pythonize_json_value(py, value)
 }
 
@@ -280,6 +286,7 @@ pub(crate) fn boot_grammar(kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<Gramm
 #[pyfunction]
 #[pyo3(signature = (parser, text, **kwargs))]
 pub(crate) fn parse_input(
+    py: Python<'_>,
     parser: &GrammarPy,
     text: &str,
     kwargs: Option<&Bound<'_, PyDict>>,
@@ -291,12 +298,13 @@ pub(crate) fn parse_input(
     };
     let tree = crate::api::parse_input(parser.grammar(), text, &cfg)
         .map_err(|e| ParseError::new_err(e.to_string()))?;
-    super::tree::tree_to_py(tree)
+    super::tree::tree_to_py(py, tree)
 }
 
 #[pyfunction]
 #[pyo3(signature = (parser, text, **kwargs))]
 pub(crate) fn parse_input_to_json(
+    py: Python<'_>,
     parser: &GrammarPy,
     text: &str,
     kwargs: Option<&Bound<'_, PyDict>>,
@@ -308,7 +316,6 @@ pub(crate) fn parse_input_to_json(
     };
     let value = crate::api::parse_input_to_json(parser.grammar(), text, &cfg)
         .map_err(|e| ParseError::new_err(e.to_string()))?;
-    let py = unsafe { pyo3::Python::assume_attached() };
     pythonize_json_value(py, value)
 }
 

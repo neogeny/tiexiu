@@ -208,7 +208,7 @@ impl Exp {
             )),
             "Call" => Ok(Exp::call(&path.get_string("name")?)),
             "Token" => Ok(Exp::token(&path.get_string("token")?)),
-            "Pattern" => Ok(Exp::pattern(&path.get_string("pattern")?)),
+            "Pattern" => Ok(Exp::pattern(&path.get_string("pattern")?)?),
             "Constant" => Ok(Exp::constant(path.opt_str("literal").unwrap_or(""))),
             "Alert" => Ok(Exp::alert(
                 path.opt_str("literal").unwrap_or(""),

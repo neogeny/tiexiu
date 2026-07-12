@@ -273,13 +273,13 @@ mod tests {
 
     #[test]
     fn pattern_nullable() {
-        let exp = Exp::pattern(r"a*");
+        let exp = Exp::pattern(r"a*").unwrap();
         assert!(exp.is_nullable());
     }
 
     #[test]
     fn pattern_not_nullable() {
-        let exp = Exp::pattern(r"a+");
+        let exp = Exp::pattern(r"a+").unwrap();
         assert!(!exp.is_nullable());
     }
 

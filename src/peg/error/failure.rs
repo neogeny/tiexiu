@@ -97,6 +97,10 @@ pub enum ParseFailure {
     /// Left recursion is disabled but the grammar has left-recursive rules.
     #[error("left recursion is disabled but the grammar has left-recursive rules")]
     LeftRecursionDisabled,
+
+    /// Recursion depth exceeded
+    #[error("recursion depth exceeded")]
+    RecursionDepthExceeded,
 }
 
 /// Errors that can occur during grammar compilation/linking.
@@ -141,6 +145,9 @@ pub enum CompileError {
 
     #[error("Unknown expression type '{0}'")]
     UnknownExpressionType(Str),
+
+    #[error("Invalid regex pattern: {0}")]
+    InvalidRegex(String),
 
     #[error("Linker error: {0}")]
     Linker(String),

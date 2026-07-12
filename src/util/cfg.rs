@@ -16,9 +16,6 @@ pub struct Cfg<K: Clone + Default + Send + Sync> {
     cfga: Box<[K]>,
 }
 
-unsafe impl<K: Clone + Default + Send + Sync> Send for Cfg<K> {}
-unsafe impl<K: Clone + Default + Send + Sync> Sync for Cfg<K> {}
-
 impl<'a, K: Clone + Default + Send + Sync + PartialEq, const N: usize> From<&'a [K; N]> for Cfg<K> {
     fn from(options: &'a [K; N]) -> Self {
         Self::new(options.as_slice())

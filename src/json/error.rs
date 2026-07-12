@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::peg::error::ParseFailure;
+use crate::peg::error::{CompileError, ParseFailure};
 use thiserror::Error;
 
 /// Result type alias for JSON import/export operations.
@@ -52,5 +52,11 @@ pub enum JsonError {
 impl From<String> for JsonError {
     fn from(s: String) -> Self {
         JsonError::Other(s)
+    }
+}
+
+impl From<CompileError> for JsonError {
+    fn from(e: CompileError) -> Self {
+        JsonError::Other(e.to_string())
     }
 }

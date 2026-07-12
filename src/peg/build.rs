@@ -1,6 +1,7 @@
 // copyright (c) 2026 juancarlo añez (apalala@gmail.com)
 // spdx-license-identifier: mit or apache-2.0
 
+use super::error::{CompileError, CompileResult};
 use super::exp::{Exp, ExpKind};
 
 /// Constructor methods for PEG expression types.
@@ -23,9 +24,10 @@ impl Exp {
 
     /// Matches a regex pattern at the current position.
     #[inline]
-    pub fn pattern(pattern: &str) -> Self {
-        crate::util::pyre::compile(pattern).expect("Invalid regex pattern");
-        Self::new(ExpKind::Pattern(pattern.into()))
+    pub fn pattern(pattern: &str) -> CompileResult<Self> {
+        crate::util::pyre::compile(pattern)
+            .map_err(|_| CompileError::InvalidRegex(pattern.to_string()))?;
+        Ok(Self::new(ExpKind::Pattern(pattern.into())))
     }
 
     /// A no-op expression that always succeeds without consuming input.

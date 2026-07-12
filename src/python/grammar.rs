@@ -31,12 +31,22 @@ impl GrammarPy {
     }
 
     #[pyo3(signature = (text, **kwargs))]
-    fn parse(&self, text: &str, kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<Py<PyAny>> {
-        self.parse_input(text, kwargs)
+    fn parse(
+        &self,
+        py: Python<'_>,
+        text: &str,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<Py<PyAny>> {
+        self.parse_input(py, text, kwargs)
     }
 
     #[pyo3(signature = (text, **kwargs))]
-    fn parse_input(&self, text: &str, kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<Py<PyAny>> {
+    fn parse_input(
+        &self,
+        py: Python<'_>,
+        text: &str,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<Py<PyAny>> {
         let cfg: Vec<CfgKey> = if let Some(k) = kwargs {
             let mut cfg: Vec<CfgKey> = Vec::new();
             for (key, value) in k.iter() {
@@ -57,6 +67,6 @@ impl GrammarPy {
         };
         let tree = crate::api::parse_input(&self.0, text, &cfg)
             .map_err(|e| ParseError::new_err(e.to_string()))?;
-        crate::python::tree::tree_to_py(tree)
+        crate::python::tree::tree_to_py(py, tree)
     }
 }

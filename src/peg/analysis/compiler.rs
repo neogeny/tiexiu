@@ -97,14 +97,30 @@ impl GrammarCompiler {
         let mut directives = Cfg::default();
         if let Ok(directives_tree) = map_get(&map, "Grammar", "directives") {
             let directives_list = _parse_list(&directives_tree)?;
-            let str_directives = directives_list.iter().map(|d| {
-                let dm = _parse_map(d).expect("directive should be a Map");
-                let name = dm.get("name").expect("name key").value();
-                let value = dm.get("value").expect("value key").value();
-                (name.to_string(), value.to_string())
-            });
+            let mut str_directives = Vec::new();
+            for d in directives_list.iter() {
+                let dm = _parse_map(d)?;
+                let name = dm
+                    .get("name")
+                    .ok_or_else(|| CompileError::MissingKey {
+                        context: "Directive".into(),
+                        key: "name",
+                        tree: d.clone(),
+                    })?
+                    .value();
+                let value = dm
+                    .get("value")
+                    .ok_or_else(|| CompileError::MissingKey {
+                        context: "Directive".into(),
+                        key: "value",
+                        tree: d.clone(),
+                    })?
+                    .value();
+                str_directives.push((name.to_string(), value.to_string()));
+            }
             directives = str_directives
-                .filter_map(|(k, v)| Cfg::map(&k, &v))
+                .iter()
+                .filter_map(|(k, v)| Cfg::map(k, v))
                 .collect();
         }
         let keywords: Vec<KeywordRef> =
@@ -238,7 +254,7 @@ impl GrammarCompiler {
             "Optional" => Exp::optional(self.parse_exp(&tree)?),
             "Override" => Exp::override_node(self.parse_exp(&tree)?),
             "OverrideList" => Exp::override_list(self.parse_exp(&tree)?),
-            "Pattern" => Exp::pattern(&tree.value()),
+            "Pattern" => Exp::pattern(&tree.value())?,
             "Patterns" => {
                 let items = tree.get_list("tree");
                 let exps: Vec<Exp> = items

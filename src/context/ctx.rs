@@ -42,7 +42,7 @@ pub trait CtxSem: Ctx + Debug + Sized {
     fn track_recursion_depth(&mut self, key: &MemoKey) -> Result<(), Nope> {
         let depth = self.track(key);
         if depth > MAX_RECURSION_DEPTH {
-            panic!("Recursion depth exceeded")
+            Err(self.failure(self.mark(), ParseFailure::RecursionDepthExceeded))
         } else {
             Ok(())
         }

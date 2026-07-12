@@ -70,6 +70,7 @@ impl TieXiuPy {
     #[pyo3(signature = (grammar, **kwargs))]
     fn parse_grammar(
         &mut self,
+        py: Python<'_>,
         grammar: &str,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
@@ -78,13 +79,13 @@ impl TieXiuPy {
             .0
             .parse_grammar_to_json(grammar)
             .map_err(|e| ParseError::new_err(e.to_string()))?;
-        let py = unsafe { pyo3::Python::assume_attached() };
         pythonize_json_value(py, value).map_err(|e| ParseError::new_err(e.to_string()))
     }
 
     #[pyo3(signature = (grammar, **kwargs))]
     fn parse_grammar_to_json(
         &mut self,
+        py: Python<'_>,
         grammar: &str,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
@@ -93,13 +94,13 @@ impl TieXiuPy {
             .0
             .parse_grammar_to_json(grammar)
             .map_err(|e| ParseError::new_err(e.to_string()))?;
-        let py = unsafe { pyo3::Python::assume_attached() };
         pythonize_json_value(py, value).map_err(|e| ParseError::new_err(e.to_string()))
     }
 
     #[pyo3(signature = (grammar, **kwargs))]
     fn compile(
         &mut self,
+        py: Python<'_>,
         grammar: &str,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
@@ -108,13 +109,13 @@ impl TieXiuPy {
             .0
             .compile_to_json(grammar)
             .map_err(|e| ParseError::new_err(e.to_string()))?;
-        let py = unsafe { pyo3::Python::assume_attached() };
         pythonize_json_value(py, value).map_err(|e| ParseError::new_err(e.to_string()))
     }
 
     #[pyo3(signature = (grammar, **kwargs))]
     fn compile_to_json(
         &mut self,
+        py: Python<'_>,
         grammar: &str,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
@@ -123,41 +124,52 @@ impl TieXiuPy {
             .0
             .compile_to_json(grammar)
             .map_err(|e| ParseError::new_err(e.to_string()))?;
-        let py = unsafe { pyo3::Python::assume_attached() };
         pythonize_json_value(py, value).map_err(|e| ParseError::new_err(e.to_string()))
     }
 
     #[pyo3(signature = (json, **kwargs))]
-    fn load(&mut self, json: &str, kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<Py<PyAny>> {
+    fn load(
+        &mut self,
+        py: Python<'_>,
+        json: &str,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<Py<PyAny>> {
         update_cfg_from_kwargs(&mut self.0, kwargs)?;
         let grammar = self
             .0
             .load(json)
             .map_err(|e| ParseError::new_err(e.to_string()))?;
         let value = grammar.to_json();
-        let py = unsafe { pyo3::Python::assume_attached() };
         pythonize(py, &value).map_err(|e| ParseError::new_err(e.to_string()))
     }
 
     #[pyo3(signature = (json, **kwargs))]
-    fn load_tree(&mut self, json: &str, kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<Py<PyAny>> {
+    fn load_tree(
+        &mut self,
+        py: Python<'_>,
+        json: &str,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<Py<PyAny>> {
         update_cfg_from_kwargs(&mut self.0, kwargs)?;
         let tree = self
             .0
             .load_tree(json)
             .map_err(|e| ParseError::new_err(e.to_string()))?;
-        super::tree::tree_to_py(tree)
+        super::tree::tree_to_py(py, tree)
     }
 
     #[pyo3(signature = (**kwargs))]
-    fn boot_grammar(&mut self, kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<Py<PyAny>> {
+    fn boot_grammar(
+        &mut self,
+        py: Python<'_>,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<Py<PyAny>> {
         update_cfg_from_kwargs(&mut self.0, kwargs)?;
         let grammar = self
             .0
             .boot_grammar()
             .map_err(|e| ParseError::new_err(e.to_string()))?;
         let value = grammar.to_json();
-        let py = unsafe { pyo3::Python::assume_attached() };
         pythonize_json_value(py, value).map_err(|e| ParseError::new_err(e.to_string()))
     }
 
@@ -170,36 +182,45 @@ impl TieXiuPy {
     }
 
     #[pyo3(signature = (**kwargs))]
-    fn boot_grammar_to_json(&mut self, kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<Py<PyAny>> {
+    fn boot_grammar_to_json(
+        &mut self,
+        py: Python<'_>,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<Py<PyAny>> {
         update_cfg_from_kwargs(&mut self.0, kwargs)?;
         let value = self
             .0
             .boot_grammar_to_json()
             .map_err(|e| ParseError::new_err(e.to_string()))?;
-        let py = unsafe { pyo3::Python::assume_attached() };
         pythonize_json_value(py, value).map_err(|e| ParseError::new_err(e.to_string()))
     }
 
     #[pyo3(signature = (**kwargs))]
-    fn load_boot(&mut self, kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<Py<PyAny>> {
+    fn load_boot(
+        &mut self,
+        py: Python<'_>,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<Py<PyAny>> {
         update_cfg_from_kwargs(&mut self.0, kwargs)?;
         let grammar = self
             .0
             .load_boot()
             .map_err(|e| ParseError::new_err(e.to_string()))?;
         let value = grammar.to_json();
-        let py = unsafe { pyo3::Python::assume_attached() };
         pythonize_json_value(py, value).map_err(|e| ParseError::new_err(e.to_string()))
     }
 
     #[pyo3(signature = (**kwargs))]
-    fn load_boot_as_json(&mut self, kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<Py<PyAny>> {
+    fn load_boot_as_json(
+        &mut self,
+        py: Python<'_>,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<Py<PyAny>> {
         update_cfg_from_kwargs(&mut self.0, kwargs)?;
         let value = self
             .0
             .boot_grammar_to_json()
             .map_err(|e| ParseError::new_err(e.to_string()))?;
-        let py = unsafe { pyo3::Python::assume_attached() };
         pythonize_json_value(py, value).map_err(|e| ParseError::new_err(e.to_string()))
     }
 
@@ -216,6 +237,7 @@ impl TieXiuPy {
     #[pyo3(signature = (grammar, text, **kwargs))]
     fn parse(
         &mut self,
+        py: Python<'_>,
         grammar: &str,
         text: &str,
         kwargs: Option<&Bound<'_, PyDict>>,
@@ -225,12 +247,13 @@ impl TieXiuPy {
             .0
             .parse(grammar, text)
             .map_err(|e| ParseError::new_err(e.to_string()))?;
-        super::tree::tree_to_py(tree)
+        super::tree::tree_to_py(py, tree)
     }
 
     #[pyo3(signature = (grammar, text, **kwargs))]
     fn parse_to_json(
         &mut self,
+        py: Python<'_>,
         grammar: &str,
         text: &str,
         kwargs: Option<&Bound<'_, PyDict>>,
@@ -240,13 +263,13 @@ impl TieXiuPy {
             .0
             .parse_to_json(grammar, text)
             .map_err(|e| ParseError::new_err(e.to_string()))?;
-        let py = unsafe { pyo3::Python::assume_attached() };
         pythonize_json_value(py, value).map_err(|e| ParseError::new_err(e.to_string()))
     }
 
     #[pyo3(signature = (grammar, text, **kwargs))]
     fn parse_to_json_string(
         &mut self,
+        py: Python<'_>,
         grammar: &str,
         text: &str,
         kwargs: Option<&Bound<'_, PyDict>>,
@@ -256,7 +279,6 @@ impl TieXiuPy {
             .0
             .parse_to_json_string(grammar, text)
             .map_err(|e| ParseError::new_err(e.to_string()))?;
-        let py = unsafe { pyo3::Python::assume_attached() };
         Ok(PyString::new(py, &value).into())
     }
 }

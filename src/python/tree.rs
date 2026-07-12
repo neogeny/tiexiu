@@ -71,7 +71,6 @@ fn to_python(tree: &Tree, py: Python<'_>) -> PyResult<Py<PyAny>> {
 }
 
 /// Converts a TieXiu `Tree` into a Python object (dict, list, str, or None).
-pub fn tree_to_py(tree: Tree) -> PyResult<Py<PyAny>> {
-    let py = unsafe { Python::assume_attached() };
+pub fn tree_to_py(py: Python<'_>, tree: Tree) -> PyResult<Py<PyAny>> {
     to_python(&tree, py)
 }
