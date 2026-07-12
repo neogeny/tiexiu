@@ -8,10 +8,6 @@ A high-performance port of **TatSu** to Rust.
 
 [TatSu]: https://tatsu.readthedocs.io/en/stable/
 
-### Beta
-
-**TieXiu** is functionally complete, and correct respect its predecessor **TatSu**. A _beta_ period will allow for adjusting the API and its signatures to the user experience.
-
 ## About
 
 **TieXiu** is a tool that takes grammars in extended `EBNF`_ as input, and
@@ -23,68 +19,90 @@ The [TatSu Documentation][] provides a vision of where the **TieXiu** project is
 
 [TatSu Documentation]: https://tatsu.readthedocs.io/
 
-**TieXiu** is foremost a _Rust library_ that is also published as a Python library with the help of _PyO3/Maturin_. The Rust API may return objects of types in the internal parser or tree model. The Python API has strings as input and `json.dumps()` compatible Python objects as output.
+**TieXiu** is a _Rust library_ published as a Python library with _PyO3/Maturin_. The Rust API exposes the internal parser and tree model directly. The Python API has strings as input and `json.dumps()` compatible Python objects as output.
 
-**TatSu** is a mature project with an important user base. It's difficult to make certain changes to it even if they are improvements or fixes for long-standing quirks (as well known within experienced software engineers, a long-lived quirk becomes a feature). **TieXiu** is an opportunity to start from scratch, with a modern approach, even if the grammar syntax and its semantics are preserved.
+**TatSu** is a mature project with an important user base. It's difficult to make certain changes to it even if they are improvements or fixes for long-standing quirks. **TieXiu** preserves the grammar syntax and semantics while allowing the implementation to evolve freely.
 
-## On The (Non-Blazing) Speed
+## Performance
 
-**TieXiu** was started with the aim of learning `Rust` and applying AI Agents over a meaningful project (versus books or simple exercises). **TatSu** has rich parser-generator semantics that had to be replicated in `Rust` for completeness and compatibility.
+**TieXiu** runs at the hardware-bound performance ceiling for PEG parsing. The engine achieves **Mechanical Sympathy** — the CPU spends its cycles matching input bytes against grammar rules, not fighting the language or runtime.
 
- Not a primary objective, it was expected that parsing with otpimized `Rust` over its runtime would run circles around the `Python` implementation.
-
- **It was not so**.
-
- As if implementing the semantics wasn't difficult enough on a languate so strict about memory management and with so little reasonable and efficient defaults, the first complete runs of parser generation and parsing were `3x` times _slower_ than the best `Python` counterpart.
-
- It took an important amount of _Rust-specific_ optimizations and some algorithm redesign to reach the current `1.08x` speed.`Rust` is not friendly to the deep recursion required to parse a language like, for example, `Java`, and its default data structures, like `Vec`, don't behave well when used as short-lived containers. The complete history of optimizations that include an imported _heap manager_ (jemalloc) figure in the `Git` logs. The custom allocator has since been removed for cross-platform compatibility — the system allocator is used on all platforms.
-
-   The `PyO3` interface is there, but it's easier and more convenient to use **TatSu** directly when working with `Python`.
-
- **TieXiu** is today a powerful PEG parser generator in `Rust`, so it may find a home among the _rustacean_ community wanting to convert flat streams into semantic structures.
-
-### The Theoretical Ceiling: Why Rust Didn't "Run Circles"
-
-The humble `1.08x` speedup over highly optimized Python isn't a failure of Rust—it is a lesson in computer architecture governed by **Amdahl's Law** and the physical constraints of hardware.
-
-When applied to execution cost, Amdahl's Law dictates that the total time $T$ of a process across an optimization scale $n$ is bound by a fixed, unalterable baseline $b$:
+When applied to execution cost, **Amdahl's Law** dictates that the total time $T$ of a process across an optimization scale $n$ is bound by a fixed, unalterable baseline $b$:
 
 $$T(n) = b + \frac{T(1) - b}{n}$$
 
-In an optimized PEG engine like **TatSu**, the algorithmic design is already incredibly refined. The serial baseline $b$ represents the unavoidable physical mechanics of processing a formal language:
+In an optimized PEG engine, the algorithmic design is already refined. The serial baseline $b$ represents the unavoidable physical mechanics of processing a formal language:
 
-1. **The Linear-Scan Lower Bound:** A parser cannot predict the input structure without scanning the _all_ the input. Every single byte must travel from RAM, through the cache hierarchy, and into a CPU register, and _it must be matched_ against _"something"_ as specified by the grammar.
-2. **The Memory Wall:** Once code optimization strips away linguistic bloat (interpreter lookups, heavy object wrapping), the execution becomes entirely *Stream-Bound*. The CPU spends its clock cycles waiting on memory bus bandwidth, or moving through the states of a regexp automata.
+1. **The Linear-Scan Lower Bound:** A parser cannot predict the input structure without scanning _all_ the input. Every single byte must travel from RAM, through the cache hierarchy, and into a CPU register, and _it must be matched_ against the grammar.
+2. **The Memory Wall:** Once code optimization strips away linguistic bloat, the execution becomes entirely *Stream-Bound*. The CPU spends its clock cycles waiting on memory bus bandwidth, or moving through the states of a regexp automaton.
 
 Because **TatSu**'s core execution loop pushes those operations down into optimized C primitives and bitmaps, the remaining runtime overhead left to optimize ($T(1) - b$) is incredibly small.
 
-Rewriting the engine in Rust completely eliminates Python's memory management friction, heavy object boxing, and Garbage Collection pauses, but it cannot bypass the physical limits of silicon. Once an engine achieves true **Mechanical Sympathy** with the underlying hardware, the language it is written in becomes secondary—the physics of the text stream call the shots.
+Rewriting the engine in Rust completely eliminates Python's memory management friction, heavy object boxing, and Garbage Collection pauses, but it cannot bypass the physical limits of silicon. Once an engine achieves true Mechanical Sympathy with the underlying hardware, the language it is written in becomes secondary — the physics of the text stream call the shots.
 
-[OgoPEGo][] is a brand-new implementation of the semantics in `Go`. It's quite beautiful and very efficient, and _it also hits the same asymptotic bound on parsing speed_.
+The humble `1.08x` speedup over **TatSu** is not a limitation — it is proof that both engines have reached the same silicon ceiling. **[OgoPEGo][]** is a brand-new implementation of the semantics in `Go` that independently reached the same asymptotic bound, confirming that the bottleneck is the hardware, not the language.
 
 [OgoPEGo]: https://github.com/neogeny/ogopego
 
+The journey from an initial `3x` slowdown to `1.08x` required Rust-specific optimizations: algorithm redesign for deep recursion, careful short-lived container management, and removing unnecessary allocations. The complete history of optimizations is documented in the `Git` logs.
+
+The `PyO3` interface is available, but for Python-only workflows **TatSu** is more convenient. **TieXiu**'s strength is as a Rust library or CLI tool.
 
 ## Non-Features
 
 Most features of **TatSu** are available in **TieXiu**. Some features have not yet been implemented, and a few never will:
 
 * [ ] Generation of synthetic classes from grammar parameters will not be implemented in Rust.
-* [ ] Generation of source code with an object model for deifinitions in the grammar may be implemented if a way is found to make the parser or postprocessing bind the Tree output of a parse to the model.
-* [ ] Code generation of a parser recently moved in **TatSu** to the loading of a model of the Grammar and using it as parser. Although the generated procedural parser may produce 1.3x increased throughput in Python, supporting generated code is hard, and it complicates the internal interfaces. For Rust, **TieXiu** _alreay knows_ how to load _fast_ a Grammar model from **TatSu** JSON. A generated copy of the grammar model constructor could be precompiled by Rust.
-* [ ] Parsing of boolean and numeric values happens in **TatSu** through synthetic actions, which call the constructors for those types passing the parsed strings. For **TieXiu** the preferred way of transformig a tree (semantics) is through post-processing (folding), but basic numeric types and booleans could be supported.
+* [ ] Generation of source code with an object model for definitions in the grammar may be implemented if a way is found to make the parser or postprocessing bind the Tree output of a parse to the model.
+* [ ] Code generation of a parser recently moved in **TatSu** to the loading of a model of the Grammar and using it as parser. Although the generated procedural parser may produce 1.3x increased throughput in Python, supporting generated code is hard, and it complicates the internal interfaces. For Rust, **TieXiu** _already knows_ how to load _fast_ a Grammar model from **TatSu** JSON. A generated copy of the grammar model constructor could be precompiled by Rust.
+* [ ] Parsing of boolean and numeric values happens in **TatSu** through synthetic actions, which call the constructors for those types passing the parsed strings. For **TieXiu** the preferred way of transforming a tree (semantics) is through post-processing (folding), but basic numeric types and booleans could be supported.
 * [ ] Semantic actions (transformations) during parse are not implemented. Python is friendly to objects of type `Any`, so semantic actions during parse in **TatSu** can produce a _tree_ of any type. Rust is different, and trying to have structures of an _any_ type is not rustacean. The result of a parse is a well-defined Tree which is a small-enough enum that writing a walker for it is easy, so type transformations can be done in postprocessing by folding. See the `fold` modules in **TieXiu** for examples and useful trait definitions.
 * [ ] Interpolation and evaluation of _\`constant\`_ expressions hasn't had any known use cases with **TatSu**. They will not be implemented in **TieXiu** until a use case appears.
 * [ ] The `@@include` directive for textual includes was always a bad idea.
 
-[serde_json]: https://docs.rs/serde_json/latest/serde_json/
+## CLI
+
+The CLI exercises everything currently implemented and is the best starting place to learn about the library.
+
+```
+tiexiu run <grammar> <inputs...>     # Parse files with a grammar
+tiexiu boot --pretty                 # Pretty-print the boot grammar
+tiexiu grammar <grammar> --json      # Grammar transformations
+```
+
+The `run` command supports concurrent parsing (`-n`), JSON output (`-j`), and tracing (`--trace`). The full help is available with `tiexiu --help`.
 
 ## API
 
-The needs of most users are met by parsing input with the rules in a grammar and reciving the structure output as a JSON-compatible value. For other use cases, **TieXiu** exposes its internal model and APIs (to be docummented).
+The needs of most users are met by parsing input with the rules in a grammar and receiving the structure output as a JSON-compatible value. For other use cases, **TieXiu** exposes its internal model and APIs.
 
+### The Rust API
 
-## The Python API
+```rust
+pub fn pegapi() -> TieXiu;
+pub fn parse_grammar(grammar: &str, cfg: &CfgA) -> Result<Tree>;
+pub fn parse_grammar_with<U>(cursor: U, cfg: &CfgA) -> Result<Tree>;
+pub fn compile(grammar: &str, cfg: &CfgA) -> Result<Grammar>;
+pub fn compile_with<U>(cursor: U, cfg: &CfgA) -> Result<Grammar>;
+pub fn load_grammar_from_json(json: &str) -> Result<Grammar>;
+pub fn load_tree_from_json(json: &str) -> Result<Tree>;
+pub fn grammar_pretty(grammar: &str, cfg: &CfgA) -> Result<String>;
+pub fn parse(grammar: &str, text: &str, cfg: &CfgA) -> Result<Tree>;
+pub fn parse_input(parser: &Grammar, text: &str, cfg: &CfgA) -> Result<Tree>;
+pub fn boot_grammar() -> Result<Grammar>;
+pub fn load_boot() -> Result<Grammar>;
+pub fn boot_grammar_pretty() -> Result<String>;
+```
+
+The `TieXiu` struct (available via `pegapi()`) provides an object-oriented API with grammar caching and `&self` method signatures:
+
+```rust
+let tx = pegapi();
+let grammar = tx.compile("start: /hello/")?;
+let tree = tx.parse("start: /hello/", "hello")?;
+```
+
+### The Python API
 
 The return values of `Any` are of the basic Python types, as defined in the `json` module documentation (see [Encoders and Decoders][] ).
 
@@ -103,48 +121,41 @@ The return values of `Any` are of the basic Python types, as defined in the `jso
 
 Keyword arguments can be passed for runtime configuration. The only recognized argument as of writing is `trace=`.
 
-These functions are available from package `tiexiu`.
+#### OO API (recommended)
 
 ```python
-def parse(grammar: str, text: str, **kwargs: Any) -> Any
-def parse_grammar(grammar: str, **kwargs: Any) -> Any:
-def parse_grammar_to_json(grammar: str, **kwargs: Any) -> Any:
-def parse_to_json(grammar: str, text: str, **kwargs: Anyt) -> Any:
-def pretty(grammar: str, **kwargs: Any) -> str:
-def compile_to_json(grammar: str, **kwargs: Any) -> Any:
+from tiexiu import pegapi
+
+tx = pegapi()
+tree = tx.parse("start: /hello/", "hello")
+json_tree = tx.parse_to_json("start: /hello/", "hello")
+grammar = tx.compile("start: /hello/")
 ```
 
-## The Rust API
+The `TieXiu` instance caches compiled grammars. Use `get(grammar)` to check the cache, or `get_or_compile(grammar)` to compile on cache miss.
 
-```rust
-pub fn parse_grammar(grammar: &str, cfg: &CfgA) -> Result<Tree>;
-pub fn parse_grammar_to_json(grammar: &str, cfg: &CfgA) -> Result<serde_json::Value>;
-pub fn parse_grammar_to_json_string(grammar: &str, cfg: &CfgA) -> Result<String>;
-pub fn parse_grammar_with<U>(cursor: U, cfg: &CfgA) -> Result<Tree>
-pub fn parse_grammar_to_json_with<U>(cursor: U, cfg: &CfgA) -> Result<serde_json::Value>
-pub fn compile(grammar: &str, cfg: &CfgA) -> Result<Grammar>;
-pub fn compile_to_json(grammar: &str, cfg: &CfgA) -> Result<serde_json::Value>;
-pub fn compile_to_json_string(grammar: &str, cfg: &CfgA) -> Result<String>;
-pub fn compile_with<U>(cursor: U, cfg: &CfgA) -> Result<Grammar>
-pub fn compile_to_json_with<U>(cursor: U, cfg: &CfgA) -> Result<serde_json::Value>
-pub fn load(json: &str, _cfg: &CfgA) -> Result<Grammar>;
-pub fn load_to_json(json: &str, cfg: &CfgA) -> Result<serde_json::Value>;
-pub fn load_tree(json: &str, _cfg: &CfgA) -> Result<Tree>;
-pub fn load_tree_to_json(json: &str, cfg: &CfgA) -> Result<serde_json::Value>;
-pub fn grammar_pretty(grammar: &str, cfg: &CfgA) -> Result<String>;
-pub fn pretty_tree(tree: &Tree, _cfg: &CfgA) -> Result<String>;
-pub fn pretty_tree_json(tree: &Tree, _cfg: &CfgA) -> Result<String>;
-pub fn parse(grammar: &str, text: &str, cfg: &CfgA) -> Result<Tree>;
-pub fn parse_to_json(grammar: &str, text: &str, cfg: &CfgA) -> Result<serde_json::Value>;
-pub fn parse_to_json_string(grammar: &str, text: &str, cfg: &CfgA) -> Result<String>;
-pub fn parse_input(parser: &Grammar, text: &str, cfg: &CfgA) -> Result<Tree>;
-pub fn parse_input_to_json(parser: &Grammar, text: &str, cfg: &CfgA) -> Result<serde_json::Value>;
-pub fn parse_input_to_json_string(parser: &Grammar, text: &str, cfg: &CfgA) -> Result<String>;
+#### Functional API
+
+```python
+from tiexiu import parse, compile, pretty, boot_grammar
+
+tree = parse("start: /hello/", "hello")
+json_tree = parse_to_json("start: /hello/", "hello")
+grammar = compile("start: /hello/")
+```
+
+All parse and compile functions have `_to_json` and `_to_json_string` variants that return JSON-compatible Python objects or strings directly.
+
+#### Compiled Grammar
+
+```python
+grammar = compile("start: /hello/")
+tree = grammar.parse("hello")
 ```
 
 ## Roadmap
 
-The project is functionally complete. Comments about the implementation strategies and possible improvements are now in [RODADMAP](ROADMAP.md).
+The project is functionally complete. All improvement clusters have been completed. Comments about the implementation strategies and possible improvements are in [ROADMAP](ROADMAP.md).
 
 ## License
 

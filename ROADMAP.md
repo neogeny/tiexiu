@@ -14,7 +14,7 @@ The CLI (`cargo run -- --help`) exercises everything currently implemented and i
 
 ---
 
-## Cluster 0: Safe Cleanup
+## Cluster 0: Safe Cleanup ✅
 
 **Goal:** Remove dead code, fix documentation typos, eliminate stale artifacts. No behavioral changes. Lowest risk.
 
@@ -71,7 +71,7 @@ Empty placeholder for `@@include` which will never be implemented.
 
 ---
 
-## Cluster 1: Safety Fixes
+## Cluster 1: Safety Fixes ✅
 
 **Goal:** Eliminate unsafe code and panicking paths in production code.
 
@@ -97,7 +97,7 @@ All `#[pymethods]` functions in `src/python/pyooapi.rs` and `src/python/pyfnapi.
 
 ---
 
-## Cluster 2: NullTracer Hot-Path Fix
+## Cluster 2: NullTracer Hot-Path Fix ✅
 
 **Goal:** Eliminate the single largest performance waste: String allocations on every token match when tracing is off.
 
@@ -122,7 +122,7 @@ impl Tracer for NullTracer {
 
 ---
 
-## Cluster 3: FlagMap to bitflags
+## Cluster 3: FlagMap to bitflags ✅
 
 **Goal:** Replace hash-map-based flag storage with a zero-allocation bitfield. Simplifies `Rule` and eliminates 6 hash lookups per flag access.
 
@@ -159,7 +159,7 @@ Add `bitflags` as a dependency.
 
 ---
 
-## Cluster 4: TreeMap Optimization
+## Cluster 4: TreeMap Optimization ✅
 
 **Goal:** Eliminate O(n^2) mutation pattern in `TreeMap`. Each `insert` currently clones the entire slice, does linear scans, and re-wraps in `Arc`.
 
@@ -190,7 +190,7 @@ impl TreeMapBuilder {
 
 ---
 
-## Cluster 5: ExpKind Visitor / Trait Simplification
+## Cluster 5: ExpKind Visitor / Trait Simplification ✅
 
 **Goal:** Reduce the ~35-variant match duplication across 9+ files. When a new `ExpKind` variant is added, only one place needs updating instead of 9.
 
@@ -222,7 +222,7 @@ Update these files to use the new helpers instead of re-matching every variant:
 
 ---
 
-## Cluster 6: API Surface Simplification
+## Cluster 6: API Surface Simplification ✅
 
 **Goal:** Reduce the public API from ~24 functions to ~10. Eliminate the `_*_to_json` / `_*_to_json_string` combinatorial explosion. Fix `&mut self` requirements.
 
@@ -267,7 +267,7 @@ Fix thread-safety: wrap `cfg` field in `Arc<[CfgKey]>` or `RwLock<Box<[CfgKey]>>
 
 ---
 
-## Cluster 7: Tree merge/append Performance
+## Cluster 7: Tree merge/append Performance ✅
 
 **Goal:** Eliminate quadratic allocation in tree construction.
 
@@ -289,7 +289,7 @@ Fix thread-safety: wrap `cfg` field in `Arc<[CfgKey]>` or `RwLock<Box<[CfgKey]>>
 
 ---
 
-## Cluster 8: Memoization and Context Optimization
+## Cluster 8: Memoization and Context Optimization ✅
 
 **Goal:** Reduce Arc clone overhead in the parsing hot path.
 
@@ -317,7 +317,7 @@ Fix thread-safety: wrap `cfg` field in `Arc<[CfgKey]>` or `RwLock<Box<[CfgKey]>>
 
 ---
 
-## Cluster 9: Test Coverage
+## Cluster 9: Test Coverage ✅
 
 **Goal:** Fill critical test gaps so future clusters have a safety net.
 
@@ -359,7 +359,7 @@ Replace overly broad assertions in:
 
 ---
 
-## Cluster 10: Benchmark Improvements
+## Cluster 10: Benchmark Improvements ✅
 
 **Goal:** Add meaningful benchmarks for regression detection.
 
@@ -383,11 +383,11 @@ Benchmark parsing TatSu's own grammar (`grammar/tatsu.ebnf`) as a regression tes
 
 ---
 
-## Cluster 11: Documentation and Housekeeping
+## Cluster 11: Documentation and Housekeeping ❌ Dropped
 
 **Goal:** Final polish after all functional changes.
 
-**Verification:** `cargo doc` + `just book` (mdbook build/test).
+**Status:** Dropped. The `fragments/` directory and `trees/fold.rs` lack documentation and tests, making this cluster inadvisable without first addressing those gaps.
 
 ### 11a. Update README.md API section
 
@@ -413,30 +413,21 @@ Document the `nostak` decorator (present in `tatsu.ebnf:89` but undocumented).
 
 ---
 
-## Cluster Execution Order
+## Cluster Execution Order (Completed)
 
 ```
-Cluster 0  (Safe cleanup)        -- no deps
-Cluster 1  (Safety fixes)        -- no deps
-Cluster 2  (NullTracer fix)      -- no deps
-Cluster 3  (FlagMap -> bitflags) -- no deps
-    |
-    v  (Clusters 0-3 are independent, can be done in parallel)
-    |
-Cluster 4  (TreeMap optimization) -- benefits from Cluster 0 cleanup
-Cluster 5  (ExpKind visitor)      -- benefits from Cluster 0 cleanup
-Cluster 6  (API simplification)   -- benefits from Clusters 1, 3
-Cluster 7  (Tree merge perf)      -- benefits from Cluster 0 cleanup
-    |
-    v  (Clusters 4-7 are mostly independent)
-    |
-Cluster 8  (Memoization/context)  -- benefits from Clusters 1, 2
-Cluster 9  (Test coverage)        -- benefits from all prior clusters
-    |
-    v  (Cluster 9 provides safety net for remaining work)
-    |
-Cluster 10 (Benchmarks)           -- after Clusters 2-8 for accurate measurements
-Cluster 11 (Documentation)        -- after all functional changes
+Cluster 0  (Safe cleanup)        -- DONE
+Cluster 1  (Safety fixes)        -- DONE
+Cluster 2  (NullTracer fix)      -- DONE
+Cluster 3  (FlagMap -> bitflags) -- DONE
+Cluster 4  (TreeMap optimization) -- DONE
+Cluster 5  (ExpKind visitor)      -- DONE
+Cluster 6  (API simplification)   -- DONE
+Cluster 7  (Tree merge perf)      -- DONE
+Cluster 8  (Memoization/context)  -- DONE
+Cluster 9  (Test coverage)        -- DONE
+Cluster 10 (Benchmarks)           -- DONE
+Cluster 11 (Documentation)        -- DROPPED (fragments/ fold.rs undocumented/untested)
 ```
 
-**Minimum viable path:** Clusters 0 -> 1 -> 2 -> 9 (safety + tests) before any other work.
+**All functional clusters completed.**
