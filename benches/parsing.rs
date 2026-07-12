@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use criterion::{Criterion, black_box, criterion_group, criterion_main};
+use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
 use tiexiu::context::StrCtx;
 use tiexiu::input::StrCursor;
 use tiexiu::peg::{Exp, Grammar};
@@ -89,10 +89,10 @@ fn bench_nested_expression(c: &mut Criterion) {
 }
 
 fn bench_grammar_from_json(c: &mut Criterion) {
-    let json = std::fs::read_to_string("grammar/calc.json").expect("calc.json missing");
+    let json = include_str!("../grammar/calc.json");
 
     c.bench_function("grammar_load_calc_json", |b| {
-        b.iter(|| black_box(Grammar::from_json(&json).unwrap()));
+        b.iter(|| black_box(Grammar::from_json(json).unwrap()));
     });
 }
 
@@ -141,6 +141,84 @@ fn bench_named_parse(c: &mut Criterion) {
     });
 }
 
+// --- 10a. End-to-end benchmark ---
+
+fn bench_end_to_end(c: &mut Criterion) {
+    let grammar_src = include_str!("../grammar/calc.ebnf");
+    let input = "1 + 2 * 3";
+
+    c.bench_function("e2e_compile_parse_json", |b| {
+        b.iter(|| {
+            let grammar = tiexiu::api::compile(grammar_src, &[]).unwrap();
+            let tree = tiexiu::parse_input(&grammar, input, &[]).unwrap();
+            black_box(tree.to_json_string());
+        });
+    });
+}
+
+// --- 10b. Input-size-scaling benchmarks ---
+
+fn bench_scaling_sequence(c: &mut Criterion) {
+    let mut group = c.benchmark_group("scaling_sequence");
+    for n in [10, 100, 1_000] {
+        let tokens: Vec<&str> = (0..n).map(|_| "x").collect();
+        let input = tokens.join(" ");
+        let seq = Exp::sequence((0..n).map(|_| Exp::token("x")).collect::<Vec<_>>());
+        group.bench_with_input(BenchmarkId::from_parameter(n), &seq, |b, seq| {
+            b.iter_with_setup(
+                || (StrCtx::new(StrCursor::new(&input), &[]), seq.clone()),
+                |(mut ctx, s)| black_box(s.parse_at(&mut ctx)),
+            );
+        });
+    }
+    group.finish();
+}
+
+fn bench_scaling_choice(c: &mut Criterion) {
+    let mut group = c.benchmark_group("scaling_choice");
+    for n in [10, 100, 1_000] {
+        let alts: Vec<Exp> = (0..n).map(|i| Exp::token(&format!("alt{i}"))).collect();
+        let last = format!("alt{}", n - 1);
+        let input = format!("{last} rest");
+        let choice = Exp::choice(alts);
+        group.bench_with_input(BenchmarkId::from_parameter(n), &choice, |b, ch| {
+            b.iter_with_setup(
+                || (StrCtx::new(StrCursor::new(&input), &[]), ch.clone()),
+                |(mut ctx, c)| black_box(c.parse_at(&mut ctx)),
+            );
+        });
+    }
+    group.finish();
+}
+
+fn bench_scaling_closure(c: &mut Criterion) {
+    let mut group = c.benchmark_group("scaling_closure");
+    for n in [10, 100, 1_000] {
+        let input = (0..n).map(|_| "a").collect::<Vec<_>>().join(" ");
+        let closure = Exp::closure(Exp::token("a"));
+        group.bench_with_input(BenchmarkId::from_parameter(n), &closure, |b, cl| {
+            b.iter_with_setup(
+                || (StrCtx::new(StrCursor::new(&input), &[]), cl.clone()),
+                |(mut ctx, c)| black_box(c.parse_at(&mut ctx)),
+            );
+        });
+    }
+    group.finish();
+}
+
+// --- 10d. TatSu grammar benchmark ---
+
+fn bench_tatsu_grammar(c: &mut Criterion) {
+    let grammar_src = include_str!("../grammar/tatsu.ebnf");
+
+    let mut group = c.benchmark_group("tatsu_grammar");
+    group.sample_size(10);
+    group.bench_function("compile_tatsu_grammar", |b| {
+        b.iter(|| black_box(tiexiu::api::compile(grammar_src, &[]).unwrap()));
+    });
+    group.finish();
+}
+
 criterion_group!(
     name = benches;
     config = Criterion::default().without_plots();
@@ -153,5 +231,10 @@ criterion_group!(
             bench_optional_parse,
             bench_lookahead_parse,
             bench_named_parse,
+            bench_end_to_end,
+            bench_scaling_sequence,
+            bench_scaling_choice,
+            bench_scaling_closure,
+            bench_tatsu_grammar,
 );
 criterion_main!(benches);
