@@ -46,10 +46,17 @@ pub trait Cursor: Debug + Configurable {
 
     fn pos_at(&self, mut mark: usize) -> (usize, usize) {
         mark = mark.min(self.as_str().len());
-        let text = self.as_str();
-        let head = &text[0..mark];
-        let line = head.lines().count();
-        let col = head.lines().last().map_or(0, |l| l.chars().count());
+        let head = &self.as_str()[0..mark];
+        let mut line = 1;
+        let mut col = 0;
+        for ch in head.chars() {
+            if ch == '\n' {
+                line += 1;
+                col = 0;
+            } else {
+                col += 1;
+            }
+        }
         (line, col)
     }
 

@@ -124,13 +124,13 @@ impl Exp {
                     }
                     lastmark = endmark;
                     lasttree = tree.clone();
-                    ctx.memoize(key, &lasttree.clone(), lastmark);
+                    ctx.memoize(key, &lasttree, lastmark);
                 }
             }
         }
 
         ctx.reset(lastmark);
-        ctx.memoize(key, &lasttree.clone(), lastmark);
+        ctx.memoize(key, &lasttree, lastmark);
 
         if *lasttree == Tree::Bottom {
             let nope = lastnope.unwrap_or_else(|| {

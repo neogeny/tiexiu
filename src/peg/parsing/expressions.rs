@@ -34,11 +34,11 @@ impl Exp {
     pub fn parse_at<C: CtxSem>(&self, ctx: &mut C) -> ParseResult {
         match self.do_parse_at(ctx) {
             Err(err) => Err(err),
-            Ok(tree) => {
+            Ok(mut tree) => {
                 if let Some(df) = self.df.as_ref() {
-                    let mut cloned = tree.as_ref().clone();
-                    cloned.define(df);
-                    Ok(cloned.into())
+                    let inner = std::sync::Arc::make_mut(&mut tree);
+                    inner.define(df);
+                    Ok(tree)
                 } else {
                     Ok(tree)
                 }
