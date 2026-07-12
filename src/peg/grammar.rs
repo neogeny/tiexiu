@@ -214,11 +214,6 @@ impl Grammar {
         self.rules.get_index(id).map(|(_, r)| r.as_ref())
     }
 
-    /// Returns a reference to the rule by its numeric id.
-    pub fn get_rule_by_id(&self, id: usize) -> Option<&Rule> {
-        self.get_rule_at(id)
-    }
-
     /// Returns the index of the rule with the given name.
     pub fn get_rule_id(&self, name: &str) -> Result<usize, ParseFailure> {
         self.rules

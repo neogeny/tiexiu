@@ -1,34 +1,12 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::pythonize;
 use crate::ParseError;
 use crate::api::ooapi::TieXiu;
-use crate::cfg::*;
-use json::JsonValue;
 use pyo3::prelude::*;
 use pyo3::types::*;
 
-fn pykwargs_to_cfg(kwargs: &Bound<'_, PyDict>) -> PyResult<Vec<CfgKey>> {
-    let mut cfg: Vec<CfgKey> = Vec::new();
-    for (key, value) in kwargs.iter() {
-        let key_str: String = key.extract().unwrap_or_default();
-        let value_str = value.str().map(|s| s.to_string()).unwrap_or_default();
-        if let Some(opt) = CfgKey::map(&key_str, &value_str) {
-            cfg.push(opt);
-        } else {
-            return Err(pyo3::exceptions::PyValueError::new_err(format!(
-                "unknown configuration option: {}",
-                key_str
-            )));
-        }
-    }
-    Ok(cfg)
-}
-
-fn pythonize_json_value(py: pyo3::Python<'_>, value: JsonValue) -> PyResult<Py<PyAny>> {
-    pythonize(py, &value)
-}
+use super::util::{pykwargs_to_cfg, pythonize_json_value};
 
 fn update_cfg_from_kwargs(tx: &mut TieXiu, kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<()> {
     if let Some(k) = kwargs {
@@ -75,11 +53,11 @@ impl TieXiuPy {
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
         update_cfg_from_kwargs(&mut self.0, kwargs)?;
-        let value = self
+        let tree = self
             .0
-            .parse_grammar_to_json(grammar)
+            .parse_grammar(grammar)
             .map_err(|e| ParseError::new_err(e.to_string()))?;
-        pythonize_json_value(py, value).map_err(|e| ParseError::new_err(e.to_string()))
+        super::tree::tree_to_py(py, tree)
     }
 
     #[pyo3(signature = (grammar, **kwargs))]
@@ -90,26 +68,25 @@ impl TieXiuPy {
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
         update_cfg_from_kwargs(&mut self.0, kwargs)?;
-        let value = self
+        let tree = self
             .0
-            .parse_grammar_to_json(grammar)
+            .parse_grammar(grammar)
             .map_err(|e| ParseError::new_err(e.to_string()))?;
-        pythonize_json_value(py, value).map_err(|e| ParseError::new_err(e.to_string()))
+        pythonize_json_value(py, tree.to_json()).map_err(|e| ParseError::new_err(e.to_string()))
     }
 
     #[pyo3(signature = (grammar, **kwargs))]
     fn compile(
         &mut self,
-        py: Python<'_>,
         grammar: &str,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<Py<PyAny>> {
+    ) -> PyResult<super::grammar::GrammarPy> {
         update_cfg_from_kwargs(&mut self.0, kwargs)?;
-        let value = self
+        let grammar = self
             .0
-            .compile_to_json(grammar)
+            .compile(grammar)
             .map_err(|e| ParseError::new_err(e.to_string()))?;
-        pythonize_json_value(py, value).map_err(|e| ParseError::new_err(e.to_string()))
+        Ok(super::grammar::GrammarPy::new(grammar))
     }
 
     #[pyo3(signature = (grammar, **kwargs))]
@@ -120,11 +97,11 @@ impl TieXiuPy {
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
         update_cfg_from_kwargs(&mut self.0, kwargs)?;
-        let value = self
+        let grammar = self
             .0
-            .compile_to_json(grammar)
+            .compile(grammar)
             .map_err(|e| ParseError::new_err(e.to_string()))?;
-        pythonize_json_value(py, value).map_err(|e| ParseError::new_err(e.to_string()))
+        pythonize_json_value(py, grammar.to_json()).map_err(|e| ParseError::new_err(e.to_string()))
     }
 
     #[pyo3(signature = (json, **kwargs))]
@@ -140,7 +117,7 @@ impl TieXiuPy {
             .load(json)
             .map_err(|e| ParseError::new_err(e.to_string()))?;
         let value = grammar.to_json();
-        pythonize(py, &value).map_err(|e| ParseError::new_err(e.to_string()))
+        pythonize_json_value(py, value).map_err(|e| ParseError::new_err(e.to_string()))
     }
 
     #[pyo3(signature = (json, **kwargs))]
@@ -188,26 +165,24 @@ impl TieXiuPy {
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
         update_cfg_from_kwargs(&mut self.0, kwargs)?;
-        let value = self
+        let grammar = self
             .0
-            .boot_grammar_to_json()
+            .boot_grammar()
             .map_err(|e| ParseError::new_err(e.to_string()))?;
-        pythonize_json_value(py, value).map_err(|e| ParseError::new_err(e.to_string()))
+        pythonize_json_value(py, grammar.to_json()).map_err(|e| ParseError::new_err(e.to_string()))
     }
 
     #[pyo3(signature = (**kwargs))]
     fn load_boot(
         &mut self,
-        py: Python<'_>,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<Py<PyAny>> {
+    ) -> PyResult<super::grammar::GrammarPy> {
         update_cfg_from_kwargs(&mut self.0, kwargs)?;
         let grammar = self
             .0
             .load_boot()
             .map_err(|e| ParseError::new_err(e.to_string()))?;
-        let value = grammar.to_json();
-        pythonize_json_value(py, value).map_err(|e| ParseError::new_err(e.to_string()))
+        Ok(super::grammar::GrammarPy::new(grammar))
     }
 
     #[pyo3(signature = (**kwargs))]
@@ -217,11 +192,11 @@ impl TieXiuPy {
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
         update_cfg_from_kwargs(&mut self.0, kwargs)?;
-        let value = self
+        let grammar = self
             .0
-            .boot_grammar_to_json()
+            .boot_grammar()
             .map_err(|e| ParseError::new_err(e.to_string()))?;
-        pythonize_json_value(py, value).map_err(|e| ParseError::new_err(e.to_string()))
+        pythonize_json_value(py, grammar.to_json()).map_err(|e| ParseError::new_err(e.to_string()))
     }
 
     #[pyo3(signature = (grammar, **kwargs))]
@@ -259,11 +234,11 @@ impl TieXiuPy {
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyAny>> {
         update_cfg_from_kwargs(&mut self.0, kwargs)?;
-        let value = self
+        let tree = self
             .0
-            .parse_to_json(grammar, text)
+            .parse(grammar, text)
             .map_err(|e| ParseError::new_err(e.to_string()))?;
-        pythonize_json_value(py, value).map_err(|e| ParseError::new_err(e.to_string()))
+        pythonize_json_value(py, tree.to_json()).map_err(|e| ParseError::new_err(e.to_string()))
     }
 
     #[pyo3(signature = (grammar, text, **kwargs))]
@@ -275,10 +250,11 @@ impl TieXiuPy {
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<PyString>> {
         update_cfg_from_kwargs(&mut self.0, kwargs)?;
-        let value = self
+        let tree = self
             .0
-            .parse_to_json_string(grammar, text)
+            .parse(grammar, text)
             .map_err(|e| ParseError::new_err(e.to_string()))?;
-        Ok(PyString::new(py, &value).into())
+        let json = tree.to_json_string();
+        Ok(PyString::new(py, &json).into())
     }
 }

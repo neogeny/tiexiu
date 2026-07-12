@@ -1,8 +1,32 @@
+use crate::cfg::*;
 use json::JsonValue;
 use pyo3::prelude::*;
 // These trait imports make methods like .append() and .set_item() visible
 use pyo3::IntoPyObjectExt;
 use pyo3::types::{PyDict, PyDictMethods, PyList, PyListMethods};
+
+/// Extracts configuration keys from Python keyword arguments.
+pub fn pykwargs_to_cfg(kwargs: &Bound<'_, PyDict>) -> PyResult<Vec<CfgKey>> {
+    let mut cfg: Vec<CfgKey> = Vec::new();
+    for (key, value) in kwargs.iter() {
+        let key_str: String = key.extract().unwrap_or_default();
+        let value_str = value.str().map(|s| s.to_string()).unwrap_or_default();
+        if let Some(opt) = CfgKey::map(&key_str, &value_str) {
+            cfg.push(opt);
+        } else {
+            return Err(pyo3::exceptions::PyValueError::new_err(format!(
+                "unknown configuration option: {}",
+                key_str
+            )));
+        }
+    }
+    Ok(cfg)
+}
+
+/// Converts a `json::JsonValue` into a Python object.
+pub fn pythonize_json_value(py: Python<'_>, value: JsonValue) -> PyResult<Py<PyAny>> {
+    pythonize(py, &value)
+}
 
 /// Converts a `json::JsonValue` into the equivalent Python object.
 pub fn pythonize(py: Python<'_>, value: &JsonValue) -> PyResult<Py<PyAny>> {
