@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Juancarlo Añez (apalala@gmail.com)
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::map::TreeMap;
+use super::map::{TreeMap, TreeMapBuilder};
 use crate::cfg::types::{Define, Str};
 use crate::types::Ref;
 use std::collections::LinkedList;
@@ -104,10 +104,9 @@ impl From<TreeList> for Tree {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
 struct TreeMerge {
     pub root: TreeRef,
-    pub map: TreeMap,
+    pub map: TreeMapBuilder,
 }
 
 impl TreeMerge {
@@ -115,7 +114,7 @@ impl TreeMerge {
     pub fn new() -> Self {
         Self {
             root: Tree::Nil.into(),
-            map: TreeMap::new(),
+            map: TreeMapBuilder::new(),
         }
     }
 }
@@ -128,10 +127,13 @@ impl Tree {
 
         if gather.root.as_ref() != &Tree::Nil {
             Self::closed(gather.root)
-        } else if !gather.map.is_empty() {
-            Tree::Map(gather.map.into()).into()
         } else {
-            Self::closed(tree)
+            let map = gather.map.build();
+            if !map.is_empty() {
+                Tree::Map(map.into()).into()
+            } else {
+                Self::closed(tree)
+            }
         }
     }
 

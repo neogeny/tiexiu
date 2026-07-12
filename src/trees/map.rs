@@ -9,6 +9,46 @@ use crate::types::{Ref, Str};
 /// A reference-counted slice of key-tree entries for TreeMap.
 pub type TreeEntrySlice = Ref<[(Str, TreeRef)]>;
 
+/// A builder for accumulating TreeMap entries without O(n²) cloning.
+/// Converts to TreeMap once at the end.
+pub(crate) struct TreeMapBuilder {
+    entries: Vec<(Str, TreeRef)>,
+}
+
+impl TreeMapBuilder {
+    /// Creates a new empty builder.
+    pub fn new() -> Self {
+        Self {
+            entries: Vec::new(),
+        }
+    }
+
+    /// Inserts a value, merging with any existing entry for the same key.
+    pub fn insert(&mut self, key: &str, item: TreeRef) {
+        let key: Str = key.into();
+        if let Some(existing) = self.entries.iter_mut().find(|(k, _)| k == &key) {
+            existing.1 = Tree::append(&existing.1, &item);
+        } else {
+            self.entries.push((key, item));
+        }
+    }
+
+    /// Inserts a value into a list entry for this key.
+    pub fn insert_as_list(&mut self, key: &str, item: TreeRef) {
+        let key: Str = key.into();
+        if let Some(existing) = self.entries.iter_mut().find(|(k, _)| k == &key) {
+            existing.1 = Tree::append_as_list(&existing.1, &item);
+        } else {
+            self.entries.push((key, Tree::Seq([item].into()).into()));
+        }
+    }
+
+    /// Converts the accumulated entries into a TreeMap.
+    pub fn build(self) -> TreeMap {
+        TreeMap(self.entries.into())
+    }
+}
+
 /// An ordered map of named tree elements.
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct TreeMap(pub TreeEntrySlice);
