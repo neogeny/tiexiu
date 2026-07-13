@@ -1,7 +1,3 @@
-orphan
-
-:
-
 # Grammar Syntax
 
 **铁修 TieXiu** grammars use an extension of
@@ -20,10 +16,6 @@ A grammar consists of a sequence of one or more rules of the form:
 ```ebnf
 rulename: <expre>
 ```
-
-If a *name* collides with a [Python](http://python.org) keyword or
-builtin, an underscore (`_`) will be appended to it on the generated
-parser.
 
 Rule names that start with an uppercase character:
 
@@ -48,16 +40,14 @@ This is the `enum Tree` that defines the posible results of a parse:
 
 ```rust
 pub enum Tree {
-    Void,                          // The result of the () expression
-    Text(Box<str>),                // Tokens or patterns
-    List(Box<[Tree]>),             // Sequences of expressions
-    Map(Box<TreeMap>),             // A mapping of named elements
-
-    Node {                         // The result of parsing a rule
-        meta: NodeMetaRef,         // Metadata
-        tree: Box<Tree>            // The result of parsing a rule
-    },
+    Text(Str),                     // Tokens or patterns
+    Seq(Ref<[TreeRef]>),           // Mergeable sequence of values
+    List(Ref<[TreeRef]>),          // Non-mergeable list of values
+    Map(Ref<TreeMap>),             // Ordered map of named elements
+    Node { typename, tree },       // Result of parsing a rule call
+    Nil,                           // No input consumed (internal)
     // ...
+}
 ```
 
 
@@ -75,7 +65,7 @@ the following.
 
 ### `# comment ...`
 
-[Python](http://python.org)-style end-of-line comments are allowed.
+End-of-line comments are allowed.
 
 ### `// comment ...`
 
@@ -182,8 +172,7 @@ parameters: ','.{name '=' ~ expression}
 
 ### `s%{ e }+`
 
-Positive join. Inspired by [Python](http://python.org)\'s `str.join()`,
-it parses the same as this expression:
+Positive join. It parses the same as this expression:
 
 ```ebnf
 e {s ~ e}
@@ -256,10 +245,8 @@ of names:
 
 ### `r'text'` or `r"text"`
 
-Match the token *text* within the triple quotation marks, interpreting
-*text* like [Python](http://python.org)\'s [raw string
-literal](https://docs.python.org/3/reference/lexical_analysis.html#string-and-bytes-literals)s.
-This is useful
+Match the token *text* within the quotation marks, interpreting
+*text* with escape sequences interpreted literally.
 
 ### `'''text'''` or `"""text"""`
 
@@ -271,20 +258,15 @@ worry about indentation. The resulting text is matched as a token.
 ### `/regexp/`
 
 Also `?"regexp"` or `?'regexp'`, The *pattern* expression. Match the
-[Python](http://python.org) regular expression `regexp` at the current
-text position. Unlike other expressions, this one does not advance over
-whitespace or comments. For that, place the `regexp` as the only term in
-its own rule.
+regular expression `regexp` at the current text position. Unlike other
+expressions, this one does not advance over whitespace or comments. For
+that, place the `regexp` as the only term in its own rule.
 
-The *regex* is interpreted as a [Python](http://python.org) [raw string
-literal](https://docs.python.org/3/reference/lexical_analysis.html#string-and-bytes-literals)
-and passed the [Python](http://python.org)
-[re](https://docs.python.org/3.4/library/re.html) module using `match()`
+The *regex* is compiled once and cached for reuse. Matching is performed
 at the current position in the text. The returned
-[AST](http://en.wikipedia.org/wiki/Abstract_syntax_tree) has the
-semantics of `re.findall(pattern, text)[0]` (a [tuple]{.title-ref} if
-there is more than one group), so use `(?:)` for groups that should not
-be in the resulting
+[AST](http://en.wikipedia.org/wiki/Abstract_syntax_tree) contains the
+matched text (or a tuple if there are capture groups), so use `(?:)` for
+groups that should not be in the resulting
 [AST](http://en.wikipedia.org/wiki/Abstract_syntax_tree).
 
 Consecutive *patterns* are concatenated to form a single one.
@@ -342,16 +324,11 @@ example:
 boolean_option: name ['=' (boolean|`true`) ]
 ```
 
-If the text evaluates to a Python literal (with `ast.literal_eval()`),
-that will be the returned value. Otherwise, string interpolation in the
+Constant text is returned as-is. String interpolation in the
 style of `str.format()` over the names in the current
 [AST](http://en.wikipedia.org/wiki/Abstract_syntax_tree) is applied for
 *constant* elements. Occurrences of the `{` character must be escaped to
-`\{` if they are not intended for interpolation. A *constant* expression
-that hast type `str` is evaluated using:
-
-``` {.python force=""}
-eval(f'{"f" + repr(text)}', {}, ast)
+`\{` if they are not intended for interpolation.
 ```
 
 ### ``[constant]{.title-ref}``
@@ -416,8 +393,7 @@ not yet defined.
 
 Add the result of `e` to the
 [AST](http://en.wikipedia.org/wiki/Abstract_syntax_tree) using `name` as
-key. If `name` collides with any attribute or method of `dict`, or is a
-[Python](http://python.org) keyword, an underscore (`_`) will be
+key. If `name` collides with any reserved word, an underscore (`_`) will be
 appended to the name.
 
 > **Note**
@@ -448,8 +424,7 @@ ignored).
 Add the result of `e` to the
 [AST](http://en.wikipedia.org/wiki/Abstract_syntax_tree) using `name` as
 key. Force the AST entry to be a `list` even if only one element is
-added. Collisions with `dict` attributes or [Python](http://python.org)
-keywords are resolved by appending an underscore to `name`.
+added. Collisions with reserved words are resolved by appending an underscore to `name`.
 
 ### `=e` or `@:e`
 
@@ -499,7 +474,7 @@ The *end of line* symbol. Verify that the end of the current line has
 been reached. This is useful for parsing line-based formats, such as
 configuration files, or for parsing comments.
 
-The `$->` (EOL) expression will consume the whitespace up to and including the next line break, using the Python semantics of `os.linesep`. The match interprets whitespace using the Python definition as implemented by `str .isspace()`, so beware when a particular definition of *whitespace* is part of the language being parsed.
+The `$->` (EOL) expression will consume the whitespace up to and including the next line break.
 
 Comments, as defined for the grammar, will also be skipped by the `$->` expression in search of a newline, which means that newlines consummed by the comments patterns will not be *"seen"* by `$->`.
 

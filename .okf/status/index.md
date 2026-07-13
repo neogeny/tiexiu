@@ -16,7 +16,7 @@ timestamp: 2026-07-12T00:00:00Z
 
 ## Roadmap
 
-All improvement clusters have been completed. See [ROADMAP](/status/roadmap.md).
+All improvement clusters have been completed. See [ROADMAP](roadmap.md).
 
 ## Recent Milestones
 
@@ -34,4 +34,4 @@ All improvement clusters have been completed. See [ROADMAP](/status/roadmap.md).
 
 ## Status Documents
 
-- [Roadmap](/status/roadmap.md) — Improvement clusters (all completed)
+- [Roadmap](roadmap.md) — Improvement clusters (all completed)
