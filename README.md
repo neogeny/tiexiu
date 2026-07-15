@@ -153,10 +153,6 @@ grammar = compile("start: /hello/")
 tree = grammar.parse("hello")
 ```
 
-## Roadmap
-
-The project is functionally complete. All improvement clusters have been completed.
-
 ## License
 
 Licensed under either of:
