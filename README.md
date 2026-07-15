@@ -155,7 +155,7 @@ tree = grammar.parse("hello")
 
 ## Roadmap
 
-The project is functionally complete. All improvement clusters have been completed. Comments about the implementation strategies and possible improvements are in [ROADMAP](.okf/status/roadmap.md).
+The project is functionally complete. All improvement clusters have been completed.
 
 ## License
 
