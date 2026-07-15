@@ -4,6 +4,24 @@ apply: always
 
 # AGENTS
 
+## Project
+
+**TieXiu** (铁修) is a high-performance PEG parser engine — a Rust port of TatSu with PyO3 Python bindings. It takes grammars in extended EBNF and outputs memoizing (Packrat) PEG parsers.
+
+- **Repository:** https://github.com/neogeny/tiexiu
+- **License:** MIT OR Apache-2.0
+- **Language:** Rust (library + CLI) with Python bindings via PyO3/Maturin
+
+## Build & Test
+
+Use `just` for all development tasks. Do not invoke `cargo` directly.
+
+- `just test` — lint (`cargo fix`, `cargo fmt`, `cargo clippy`) + run all tests (`cargo nextest run --lib --all-features`)
+- `just build-release` — release build via Maturin
+- `just build-debug` — debug build via Maturin
+- `just pdoc` — regenerate Python API docs
+- `just rails-diagram` — generate railroad diagram PNG
+
 ## Research First
 
 Study [README.md](README.md) to understand the project context before making changes. Analyze the current project structure.
