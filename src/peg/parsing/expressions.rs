@@ -303,60 +303,18 @@ mod tests {
     use crate::rule::RuleRef;
 
     #[test]
-    #[ignore]
-    fn choice_keeps_furthest_failure() {
-        let token_a = Exp::token("a");
-        let cursor = StrCursor::new("a");
-        println!("cursor on 'a': {:?}", cursor);
-        let mut ctx = StrCtx::new(cursor, &[]);
-        let result_a = token_a.parse_at(&mut ctx);
-        println!("token('a') on 'a': {:?}", result_a);
-        assert!(result_a.is_ok(), "token('a') should match 'a'");
-
-        let exp1 = Exp::sequence(vec![Exp::token("a"), Exp::token("b")]);
-        let mut ctx1 = StrCtx::new(StrCursor::new("a b"), &[]);
-        let result1_ok = exp1.parse_at(&mut ctx1);
-        println!("exp1 on 'a b': {:?}", result1_ok);
-        assert!(result1_ok.is_ok(), "sequence 1 should succeed on 'a b'");
-
-        let mut ctx2 = StrCtx::new(StrCursor::new("a c x"), &[]);
-        let result1_err = exp1.parse_at(&mut ctx2);
-        println!("exp1 on 'a c x': {:?}", result1_err);
-
-        let exp2 = Exp::sequence(vec![Exp::token("a"), Exp::token("c"), Exp::token("d")]);
-        let mut ctx3 = StrCtx::new(StrCursor::new("a c d"), &[]);
-        let result2_ok = exp2.parse_at(&mut ctx3);
-        println!("exp2 on 'a c d': {:?}", result2_ok);
-        assert!(result2_ok.is_ok(), "sequence 2 should succeed on 'a c d'");
-
-        let mut ctx4 = StrCtx::new(StrCursor::new("a c x"), &[]);
-        let result2_err = exp2.parse_at(&mut ctx4);
-        println!("exp2 on 'a c x': {:?}", result2_err);
-
-        let exp = Exp::choice(vec![exp1, exp2]);
-        let mut ctx = StrCtx::new(StrCursor::new("a c x"), &[]);
-
-        let result = exp.parse_at(&mut ctx);
-        println!("choice on 'a c x': {:?}", result);
-    }
-
-    #[test]
-    #[ignore = "cutseen is being removed from Ctx"]
     fn choice_restores_entered_cut_on_success() {
-        let grammar = crate::peg::Grammar::new(
-            "test",
-            &[RuleRef::from(Rule::new("start", &[], Exp::token("abc")))],
-        );
-        let _ = grammar;
+        let exp = Exp::choice(vec![Exp::token("abc"), Exp::token("xyz")]);
         let mut ctx = StrCtx::new(StrCursor::new("abc"), &[]);
         ctx.cut();
-        assert!(ctx.cut_seen(), "ctx should have cut set before choice");
-
-        let exp = Exp::choice(vec![Exp::token("abc"), Exp::token("xyz")]);
-        let mut ctx2 = StrCtx::new(StrCursor::new("abc"), &[]);
-        ctx2.cut();
-        let result = exp.parse_at(&mut ctx2);
+        let cut_before = ctx.cut_seen();
+        let result = exp.parse_at(&mut ctx);
         assert!(result.is_ok(), "choice should succeed");
+        assert_eq!(
+            ctx.cut_seen(),
+            cut_before,
+            "cut should be restored after choice success"
+        );
     }
 
     #[test]

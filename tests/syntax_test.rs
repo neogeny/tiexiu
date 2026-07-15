@@ -127,28 +127,6 @@ fn test_partial_options() -> Result<()> {
     Ok(())
 }
 
-// Deprecated comments override API is not supported.
-// TODO: remove this test after deprecated comments_re is no longer supported.
-#[ignore = "deprecated comments override API not supported"]
-#[test]
-fn test_deprecated_comments_override() -> Result<()> {
-    let grammar = r#"
-        @@comments :: /@@@@@@/
-        @@eol_comments :: /@@@@@@/
-
-        start = 'a' $;
-    "#;
-
-    let cfg = [CfgKey::Eol(r"(?m)#[^\n]*$".to_string())];
-    let parser = compile(grammar, &cfg)?;
-
-    let text = "        # This comment should be stripped\n        a\n    ";
-    let ast = parser.parse_input(text, &cfg)?;
-    assert_eq!(ast.to_json(), value!("a"));
-
-    Ok(())
-}
-
 // ============================================================================
 // Override Tests
 // ============================================================================
@@ -280,7 +258,7 @@ fn test_any() -> Result<()> {
 }
 
 // TODO: constant evaluation is not implemented
-#[ignore = "constant evaluation is not implemented"]
+#[ignore = "constant evaluation not implemented"]
 #[test]
 fn test_constant() -> Result<()> {
     let grammar = r#"

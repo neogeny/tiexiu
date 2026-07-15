@@ -12,7 +12,7 @@ use tiexiu::Result;
 use tiexiu::api::parse;
 
 #[test]
-#[ignore = "TODO: interpolation not yet implemented"]
+#[ignore = "alert interpolation not yet implemented"]
 fn test_alert_interpolation() -> Result<()> {
     let grammar = r#"
         start = a:number b: number i:^`seen: {a}, {b}` $ ;

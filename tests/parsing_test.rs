@@ -9,47 +9,6 @@ use tiexiu::api::compile;
 use tiexiu::{Result, parse};
 
 #[test]
-#[ignore = "@@include will not be implemented"]
-fn test_include() -> Result<()> {
-    // WARNING
-    //  Textual includes are a nightmare for bookkeeping and semantics.
-    //  The only reasonable approach would be a use/import feature, but
-    //  the use cases for that are currently lacking.
-    let grammar = r#"
-        @@include :: "included.ebnf"
-        start = item $ ;
-        item = /\w+/ ;
-    "#;
-
-    let result = compile(grammar, &[]);
-    assert!(
-        result.is_err(),
-        "Expected error for @@include, got success: {:?}",
-        result
-    );
-    Ok(())
-}
-
-#[test]
-#[ignore = "@@include will not be implemented"]
-fn test_multiple_include() -> Result<()> {
-    let grammar = r#"
-        @@include :: "a.ebnf"
-        @@include :: "b.ebnf"
-        start = item $ ;
-        item = /\w+/ ;
-    "#;
-
-    let result = compile(grammar, &[]);
-    assert!(
-        result.is_err(),
-        "Expected error for @@include, got success: {:?}",
-        result
-    );
-    Ok(())
-}
-
-#[test]
 fn test_escape_sequences() -> Result<()> {
     let grammar = r#"
         @@whitespace :: /\s+/

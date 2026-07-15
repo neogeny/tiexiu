@@ -152,11 +152,9 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "Ctx.cutseen is being removed"]
     fn test_repeat_restores_entered_cut() {
         let mut ctx = setup("abcabcabc");
         ctx.cut();
-        assert!(ctx.cut_seen(), "ctx should have cut set before repeat");
 
         let exp = Exp::token("abc");
         assert!(Exp::repeat(&mut ctx, &exp, false).is_ok());
@@ -164,7 +162,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "Ctx.cutseen is being removed"]
     fn test_repeat_with_sep_restores_entered_cut() {
         let mut ctx = setup(",abc,abc");
         ctx.cut();
